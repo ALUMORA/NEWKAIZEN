@@ -1018,6 +1018,7 @@ class Handler(BaseHTTPRequestHandler):
             elif parts[0] == "magic_one" and len(parts) > 1: result = get_magic_one(parts[1])
             elif parts[0] == "insiders" and len(parts) > 1: result = get_insiders(parts[1])
             elif parts[0] == "momentum" and len(parts) > 1: result = get_momentum(parts[1])
+            elif parts[0] == "health":                       result = {"status": "ok"}
             else:                                            result = {"error": "Ruta no encontrada"}
         except Exception as e:
             result = {"error": str(e)}
@@ -1040,8 +1041,11 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    server = HTTPServer(("localhost", PORT), Handler)
-    print(f"\n  MOMENTUM Backend  →  http://localhost:{PORT}")
-    print("  Endpoints: /stock /chart /rf /news /macro /dcf /insiders /momentum")
+    import os
+    host = "0.0.0.0"
+    port = int(os.environ.get("PORT", PORT))
+    server = HTTPServer((host, port), Handler)
+    print(f"\n  KAIZEN Backend  →  http://{host}:{port}")
+    print("  Endpoints: /stock /chart /rf /news /macro /dcf /insiders /momentum /health")
     print("  Ctrl+C para detener\n")
     server.serve_forever()

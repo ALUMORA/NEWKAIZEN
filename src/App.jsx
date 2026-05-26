@@ -3,7 +3,24 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import kaizenLogo from './assets/kaizen-logo.jpg';
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
-const BACKEND = "http://localhost:8002";
+const BACKEND_CANDIDATES = [
+  "https://kaizen-backend-railway.up.railway.app",  // Railway (primario)
+  "https://kaizen-backend.onrender.com",             // Render (secundario)
+  "http://localhost:8002",                            // Local dev
+];
+
+async function detectBackend() {
+  for (const url of BACKEND_CANDIDATES) {
+    try {
+      const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(4000) });
+      const data = await res.json();
+      if (data?.status === "ok") return url;
+    } catch {}
+  }
+  return null;
+}
+
+let BACKEND = null;
 
 const DEFAULT_PORTFOLIO = [
   { ticker: "AAPL", shares: 10, cost: 150 },
@@ -848,6 +865,17 @@ function LoginScreen({ onAuth }) {
 
 export default function App() {
   const [authed, setAuthed] = useState(false);
+  const [backendUrl, setBackendUrl] = useState(null);
+  const [backendSearching, setBackendSearching] = useState(true);
+
+  useEffect(() => {
+    detectBackend().then(url => {
+      BACKEND = url;
+      setBackendUrl(url);
+      setBackendSearching(false);
+    });
+  }, []);
+
   const [tab, setTab] = useState("news");
   const [rfRate, setRfRate] = useState(null);
   const [rfLabel, setRfLabel] = useState("MX 5Y");
@@ -1659,6 +1687,29 @@ export default function App() {
 
   // ── RENDER ──────────────────────────────────────────────────────────────────
   if (!authed) return <LoginScreen onAuth={() => setAuthed(true)} />;
+
+  if (backendSearching) return (
+    <div style={{ minHeight:"100vh", background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Syne',sans-serif" }}>
+      <div style={{ fontSize:13, color:"#4b5563", letterSpacing:3 }}>CONECTANDO AL SERVIDOR…</div>
+      <div style={{ marginTop:16, width:180, height:3, background:"#1f2937", borderRadius:4, overflow:"hidden" }}>
+        <div style={{ height:"100%", background:"#00ff88", borderRadius:4, animation:"loadbar 1.5s ease-in-out infinite" }} />
+      </div>
+      <style>{`@keyframes loadbar { 0%{width:0%} 60%{width:100%} 100%{width:100%} }`}</style>
+    </div>
+  );
+
+  if (!backendUrl) return (
+    <div style={{ minHeight:"100vh", background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Syne',sans-serif", gap:12 }}>
+      <div style={{ fontSize:20, color:"#f87171", fontWeight:800 }}>SIN CONEXIÓN AL SERVIDOR</div>
+      <div style={{ fontSize:12, color:"#4b5563", letterSpacing:1, textAlign:"center", maxWidth:340 }}>
+        Ningún backend respondió. Asegúrate de que Railway o Render estén activos, o corre <span style={{color:"#00ff88",fontFamily:"'DM Mono',monospace"}}>python backend.py</span> localmente.
+      </div>
+      <button onClick={() => { setBackendSearching(true); detectBackend().then(url => { BACKEND=url; setBackendUrl(url); setBackendSearching(false); }); }}
+        style={{ marginTop:12, background:"#00ff88", color:"#0a0a0a", border:"none", borderRadius:10, padding:"12px 28px", fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:13, cursor:"pointer" }}>
+        REINTENTAR
+      </button>
+    </div>
+  );
 
   return (
     <div style={{
