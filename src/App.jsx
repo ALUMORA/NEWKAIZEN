@@ -779,7 +779,75 @@ function MonteCarloChart({ portStats, spyStats, weeks }) {
 }
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
+function LoginScreen({ onAuth }) {
+  const [pw, setPw] = useState("");
+  const [error, setError] = useState(false);
+  const [shake, setShake] = useState(false);
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    if (pw === "KAIZEN") {
+      onAuth();
+    } else {
+      setError(true);
+      setShake(true);
+      setTimeout(() => setShake(false), 500);
+    }
+  }
+
+  return (
+    <div style={{
+      minHeight: "100vh", background: "#0a0a0a",
+      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+      fontFamily: "'Syne', sans-serif",
+    }}>
+      <img src={kaizenLogo} alt="KAIZEN" style={{ width: 80, height: 80, borderRadius: 20, marginBottom: 28, objectFit: "cover" }} />
+      <div style={{ fontSize: 28, fontWeight: 800, color: "#ffffff", letterSpacing: 4, marginBottom: 6 }}>KAIZEN</div>
+      <div style={{ fontSize: 12, color: "#4b5563", marginBottom: 40, letterSpacing: 2 }}>INVESTMENT PLATFORM</div>
+
+      <form onSubmit={handleSubmit} style={{
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
+        animation: shake ? "shake 0.4s ease" : "none",
+      }}>
+        <input
+          type="password"
+          placeholder="Contraseña"
+          value={pw}
+          onChange={e => { setPw(e.target.value); setError(false); }}
+          autoFocus
+          style={{
+            background: "#111111", border: `1.5px solid ${error ? "#f87171" : "#1f2937"}`,
+            borderRadius: 12, padding: "14px 20px", color: "#ffffff",
+            fontFamily: "'DM Mono', monospace", fontSize: 16, width: 260,
+            outline: "none", textAlign: "center", letterSpacing: 6,
+            transition: "border-color 0.2s",
+          }}
+        />
+        {error && <div style={{ color: "#f87171", fontSize: 12, fontFamily: "'DM Mono', monospace" }}>Contraseña incorrecta</div>}
+        <button type="submit" style={{
+          background: "#00ff88", color: "#0a0a0a", border: "none", borderRadius: 12,
+          padding: "14px 0", width: 260, fontFamily: "'Syne', sans-serif",
+          fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: 2,
+        }}>
+          ENTRAR →
+        </button>
+      </form>
+
+      <style>{`
+        @keyframes shake {
+          0%,100% { transform: translateX(0); }
+          20%      { transform: translateX(-10px); }
+          40%      { transform: translateX(10px); }
+          60%      { transform: translateX(-6px); }
+          80%      { transform: translateX(6px); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export default function App() {
+  const [authed, setAuthed] = useState(false);
   const [tab, setTab] = useState("news");
   const [rfRate, setRfRate] = useState(null);
   const [rfLabel, setRfLabel] = useState("MX 5Y");
@@ -1590,6 +1658,8 @@ export default function App() {
   const removeStock = (t) => setPortfolio((prev) => prev.filter((p) => p.ticker !== t));
 
   // ── RENDER ──────────────────────────────────────────────────────────────────
+  if (!authed) return <LoginScreen onAuth={() => setAuthed(true)} />;
+
   return (
     <div style={{
       fontFamily: "'Inter', sans-serif",
