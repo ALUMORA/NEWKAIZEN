@@ -204,12 +204,22 @@ def get_stock(ticker: str) -> dict:
     except Exception:
         pass
 
+    # Obtener shares para cálculos
+    shares_out = safe(info.get("sharesOutstanding"))
+    if shares_out is None:
+        try:
+            shares_out = safe(getattr(t.fast_info, "shares", None))
+        except Exception:
+            pass
+
     # Métricas calculadas como fallback cuando .info está vacío
-    roe_val   = pct(info.get("returnOnEquity"))
+    roe_val    = pct(info.get("returnOnEquity"))
     margin_val = pct(info.get("profitMargins"))
-    de_val    = r2(safe(info.get("debtToEquity")))
-    beta_val  = r2(safe(info.get("beta")))
+    de_val     = r2(safe(info.get("debtToEquity")))
+    beta_val   = r2(safe(info.get("beta")))
     market_cap = safe(info.get("marketCap"))
+    pb_val     = r2(safe(info.get("priceToBook")))
+    eps_val    = r2(safe(info.get("trailingEps")))
 
     if roe_val is None and net_income is not None and equity is not None and equity > 0:
         roe_val = round((net_income / equity) * 100, 2)
@@ -217,14 +227,23 @@ def get_stock(ticker: str) -> dict:
         margin_val = round((net_income / total_revenue) * 100, 2)
     if de_val is None and total_debt is not None and equity is not None and equity > 0:
         de_val = round((total_debt / equity) * 100, 2)
-    if market_cap is None and price is not None:
+    if market_cap is None:
         try:
-            mc = safe(getattr(t.fast_info, "market_cap", None) or getattr(t.fast_info, "marketCap", None))
-            market_cap = mc
+            market_cap = safe(getattr(t.fast_info, "market_cap", None))
         except Exception:
             pass
+    # P/B desde equity y shares
+    if pb_val is None and equity is not None and shares_out and shares_out > 0 and price:
+        bvps = equity / shares_out
+        if bvps > 0:
+            pb_val = round(price / bvps, 2)
+    # EPS y P/E desde net income y shares
+    if eps_val is None and net_income is not None and shares_out and shares_out > 0:
+        eps_val = round(net_income / shares_out, 4)
 
     pe         = r2(safe(info.get("trailingPE")))
+    if pe is None and eps_val is not None and eps_val > 0 and price is not None:
+        pe = round(price / eps_val, 2)
     growth_raw = safe(info.get("earningsGrowth") or info.get("earningsQuarterlyGrowth"))
     div_raw    = safe(info.get("dividendYield"))
     growth     = growth_raw * 100 if growth_raw else None
@@ -237,11 +256,11 @@ def get_stock(ticker: str) -> dict:
         "name":               name,
         "price":              r2(price),
         "pe":                 pe,
-        "eps":                r2(safe(info.get("trailingEps"))),
+        "eps":                eps_val,
         "peg":                peg,
         "pegy":               pegy,
         "evEbitda":           r2(safe(info.get("enterpriseToEbitda"))),
-        "pb":                 r2(safe(info.get("priceToBook"))),
+        "pb":                 pb_val,
         "roe":                roe_val,
         "profitMargin":       margin_val,
         "debtEquity":         de_val,
@@ -1020,6 +1039,54 @@ def get_fibras() -> dict:
             total_debt  = safe(info.get("totalDebt"))  or 0
             total_cash  = safe(info.get("totalCash"))  or 0
             fcf         = safe(info.get("freeCashflow"))
+
+            # Fallback: fast_info para shares y market_cap
+            if market_cap is None or shares == 1:
+                try:
+                    fi = t.fast_info
+                    if market_cap is None:
+                        market_cap = safe(getattr(fi, "market_cap", None))
+                    if shares == 1:
+                        sh = safe(getattr(fi, "shares", None))
+                        if sh: shares = sh
+                except Exception:
+                    pass
+
+            # Fallback: estados financieros para NAV (equity), deuda y FCF
+            try:
+                bal = t.balance_sheet
+                if bal is not None and not bal.empty:
+                    for row in ["Stockholders Equity", "Common Stock Equity",
+                                "Total Equity Gross Minority Interest"]:
+                        if row in bal.index and nav_ps is None and shares > 1:
+                            eq = safe(float(bal.loc[row].iloc[0]))
+                            if eq and eq > 0:
+                                nav_ps = round(eq / shares, 4)
+                            break
+                    for row in ["Total Debt", "Long Term Debt"]:
+                        if row in bal.index and total_debt == 0:
+                            total_debt = safe(float(bal.loc[row].iloc[0])) or 0
+                            break
+            except Exception:
+                pass
+            try:
+                cf = t.cashflow
+                if cf is not None and not cf.empty and fcf is None:
+                    for row in ["Free Cash Flow", "Operating Cash Flow"]:
+                        if row in cf.index:
+                            fcf = safe(float(cf.loc[row].iloc[0]))
+                            break
+                inc = t.income_stmt
+                if inc is not None and not inc.empty and op_income is None:
+                    for row in ["Operating Income", "EBIT", "Ebit"]:
+                        if row in inc.index:
+                            op_income = safe(float(inc.loc[row].iloc[0]))
+                            break
+            except Exception:
+                pass
+            # market_cap fallback desde precio × shares
+            if market_cap is None and price is not None and shares > 1:
+                market_cap = price * shares
 
             # Cap Rate = NOI / EV
             cap_rate = None

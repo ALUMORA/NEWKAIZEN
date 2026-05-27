@@ -1823,6 +1823,10 @@ export default function App() {
 
           /* Bento cards: texto más grande en mobile */
           .bento-grid .bento-val { font-size: 22px !important; }
+
+          /* Portfolio y Screener cards: 1 columna en mobile */
+          .portfolio-grid { grid-template-columns: 1fr !important; }
+          .screener-cards { grid-template-columns: 1fr !important; }
         }
       `}</style>
 
@@ -2734,7 +2738,7 @@ export default function App() {
               })()}
 
             {/* Portfolio cards */}
-            <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fill, minmax(460px, 1fr))" }}>
+            <div className="portfolio-grid" style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fill, minmax(460px, 1fr))" }}>
               {portfolio.map((pos) => {
                 const sd = stockData[pos.ticker];
                 const isLoading = loading[pos.ticker];
@@ -2946,24 +2950,24 @@ export default function App() {
               </div>
 
               {/* Period selector */}
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, marginBottom: 16 }}>
                 <span style={{ fontSize: 12, color: "#999999", letterSpacing: "0.07em", fontWeight: 500 }}>DATOS HISTÓRICOS:</span>
-                <div style={{ display: "flex", gap: 6 }}>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {["1y", "5y", "10y"].map((p) => (
                     <button key={p} onClick={() => setOptimPeriod(p)} style={{
                       background: optimPeriod === p ? "#111111" : "#e5e5e5",
                       border: "none",
                       borderRadius: 999, color: optimPeriod === p ? "#fff" : "#666666",
-                      padding: "5px 18px", cursor: "pointer", fontSize: 13, fontWeight: 600,
+                      padding: "5px 16px", cursor: "pointer", fontSize: 13, fontWeight: 600,
                       fontFamily: "'DM Mono', monospace",
                     }}>
-                      {p === "1y" ? "1 Año" : p === "5y" ? "5 Años" : "10 Años"}
+                      {p === "1y" ? "1A" : p === "5y" ? "5A" : "10A"}
                     </button>
                   ))}
+                  <span style={{ fontSize: 11, color: "#999999", alignSelf: "center" }}>
+                    (~{optimPeriod === "1y" ? "52" : optimPeriod === "5y" ? "260" : "520"} sem.)
+                  </span>
                 </div>
-                <span style={{ fontSize: 11, color: "#999999" }}>
-                  (~{optimPeriod === "1y" ? "52" : optimPeriod === "5y" ? "260" : "520"} semanas)
-                </span>
               </div>
 
               <button onClick={runOptimization} disabled={optimLoading} className="btn-exec" style={{
@@ -3268,7 +3272,7 @@ export default function App() {
             </div>
 
             {screenerData.length > 0 && (
-              <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))" }}>
+              <div className="screener-cards" style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))" }}>
                 {[...screenerData].sort((a, b) => (b.scores?.overall_score ?? 0) - (a.scores?.overall_score ?? 0)).map((stock) => {
                   const s = stock.scores;
                   const recColor = s?.recommendation === "BUY" ? "#16a34a" : s?.recommendation === "SELL" ? "#dc2626" : "#eab308";
