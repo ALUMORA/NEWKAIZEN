@@ -1789,7 +1789,31 @@ export default function App() {
           .resp-hide-mobile { display:none !important; }
           td, th { padding: 8px 10px; font-size:12px; }
           .hero-title { font-size:32px !important; }
-          html, body { overflow-x:hidden; }
+          html, body { overflow-x:hidden; max-width:100vw; }
+
+          /* Rebalanceo table — scroll horizontal */
+          .rebal-table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
+          /* Noticias: StyleBox + GlobalMarkets stacked */
+          .stylebox-wrap { grid-template-columns: 1fr !important; }
+
+          /* Portfolio stock cards: 2 cols instead of 3 */
+          .stock-metrics-grid { grid-template-columns: 1fr 1fr !important; }
+
+          /* Analisis: metricas + ML side by side → stacked */
+          .analisis-metrics-wrap { grid-template-columns: 1fr !important; }
+
+          /* Analisis: metricas 4x2 → 2x4 */
+          .analisis-kpis { grid-template-columns: repeat(2,1fr) !important; }
+
+          /* Correlation matrix + optimizer table */
+          .corr-matrix-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
+          /* Screener auto-fill min → full width */
+          .screener-grid { grid-template-columns: 1fr !important; }
+
+          /* Fixed-width col → fluid */
+          .stylebox-col-fixed { grid-template-columns: 1fr !important; }
         }
       `}</style>
 
@@ -2504,6 +2528,7 @@ export default function App() {
                       </div>
 
                       {/* Encabezados tabla */}
+                      <div className="rebal-table-wrap">
                       <div style={{
                         display: "grid",
                         gridTemplateColumns: "10px minmax(90px,1fr) 130px 110px 90px",
@@ -2630,9 +2655,10 @@ export default function App() {
                           );
                         })}
                       </div>
+                      </div>{/* /rebal-table-wrap */}
 
                       {/* Footer botones */}
-                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, paddingTop: 14, borderTop: "1px solid #f4f4f4" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 16, paddingTop: 14, borderTop: "1px solid #f4f4f4", flexWrap: "wrap" }}>
                         <button
                           disabled={!tSumOk}
                           onClick={() => {
@@ -2750,7 +2776,7 @@ export default function App() {
                     <div style={{ padding: "16px 20px" }}>
 
                     {/* P&L detalle */}
-                    <div style={{
+                    <div className="stock-metrics-grid" style={{
                       display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 14
                     }}>
                       {[
@@ -3638,7 +3664,7 @@ export default function App() {
                   return { p, bg, fg };
                 };
                 return (
-                  <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 16, alignItems: "start" }}>
+                  <div className="stylebox-wrap" style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 16, alignItems: "start" }}>
 
                     {/* ── Style Box ── */}
                     <div style={{
@@ -5011,12 +5037,12 @@ export default function App() {
                   </div>
 
                   {/* ── MÉTRICAS + ML SCORE ── */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16 }}>
+                  <div className="analisis-metrics-wrap" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16 }}>
 
                     {/* Métricas 4x2 */}
                     <div style={{ background: "#0d0d0d", borderRadius: 16, padding: "20px 24px" }}>
                       <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 10, fontWeight: 700, color: "#4b5563", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 14 }}>Métricas Clave</div>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
+                      <div className="analisis-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
                         {metrics.map(({ label, val, lo, hi }) => {
                           const cheap  = lo && val != null && lo(val);
                           const pricey = hi && val != null && hi(val);
