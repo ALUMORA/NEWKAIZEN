@@ -1754,8 +1754,13 @@ export default function App() {
         .rebal-slider::-moz-range-track { height: 3px; background: #e0e0d8; border-radius: 99px; }
 
         /* ── RESPONSIVE ── */
-        .nav-tabs-scroll { display:flex; gap:4px; flex:1; justify-content:center; }
+        .nav-tabs-scroll { display:flex; gap:4px; flex:1; justify-content:center; overflow-x:auto; scrollbar-width:none; }
+        .nav-tabs-scroll::-webkit-scrollbar { display:none; }
         .nav-status { display:flex; align-items:center; gap:20px; flex-shrink:0; padding:18px 0; }
+
+        @media (max-width: 1100px) and (min-width: 769px) {
+          .nav-tabs-scroll button { padding: 7px 11px !important; font-size: 11px !important; }
+        }
         .main-pad { padding: 16px 20px; animation: fadeIn 0.3s ease; }
         .resp-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
         .resp-grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }

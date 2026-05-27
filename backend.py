@@ -1093,7 +1093,7 @@ def get_fibras() -> dict:
                 continue
 
             market_cap  = safe(info.get("marketCap"))
-            shares      = safe(info.get("sharesOutstanding")) or 1
+            shares      = safe(info.get("sharesOutstanding")) or 0
             op_income   = safe(info.get("operatingIncome") or info.get("ebit"))
             ev          = safe(info.get("enterpriseValue"))
             nav_ps      = safe(info.get("bookValue"))          # NAV/acción en MXN
@@ -1104,14 +1104,14 @@ def get_fibras() -> dict:
             fcf         = safe(info.get("freeCashflow"))
 
             # Fallback: fast_info para shares y market_cap
-            if market_cap is None or shares == 1:
+            if market_cap is None or shares == 0:
                 try:
                     fi = t.fast_info
                     if market_cap is None:
                         market_cap = safe(getattr(fi, "market_cap", None))
-                    if shares == 1:
+                    if shares == 0:
                         sh = safe(getattr(fi, "shares", None))
-                        if sh: shares = sh
+                        if sh and sh > 100: shares = sh
                 except Exception:
                     pass
 
@@ -1147,9 +1147,13 @@ def get_fibras() -> dict:
                             break
             except Exception:
                 pass
-            # market_cap fallback desde precio × shares
-            if market_cap is None and price is not None and shares > 1:
+            # market_cap fallback desde precio × shares (solo si shares parece real)
+            if market_cap is None and price is not None and shares > 100:
                 market_cap = price * shares
+
+            # EV fallback = market_cap + deuda - caja
+            if ev is None and market_cap and market_cap > 0:
+                ev = market_cap + total_debt - total_cash
 
             # Cap Rate = NOI / EV
             cap_rate = None
