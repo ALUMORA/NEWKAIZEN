@@ -1531,6 +1531,14 @@ class Handler(BaseHTTPRequestHandler):
             elif parts[0] == "insiders" and len(parts) > 1: result = get_insiders(parts[1])
             elif parts[0] == "momentum" and len(parts) > 1: result = get_momentum(parts[1])
             elif parts[0] == "health":                       result = {"status": "ok"}
+            elif parts[0] == "debug" and len(parts) > 1 and parts[1] == "macro":
+                fred10 = _fred_rate("DGS10")
+                fred2  = _fred_rate("DGS2")
+                vix_c  = _cboe_vix()
+                dxy_s  = _stooq_dxy()
+                bulk   = _bulk_download({"^VIX":"vix","^TNX":"t10y","^IRX":"t2y","DX-Y.NYB":"dxy"})
+                result = {"fred10": fred10, "fred2": fred2, "cboe_vix": vix_c,
+                          "stooq_dxy": dxy_s, "yf_bulk": bulk, "macro_cache": get_macro()}
             else:                                            result = {"error": "Ruta no encontrada"}
         except Exception as e:
             result = {"error": str(e)}
