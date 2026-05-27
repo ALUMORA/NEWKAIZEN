@@ -4869,26 +4869,26 @@ export default function App() {
               </div>
             );
             const maxV = Math.max(...allVals.map(Math.abs));
-            const BH = 160, BW = 820;
+            const BH = 160, BW = 820, TP = 20;
             const groupW = BW / 4;
             const barW = groupW / (bars.length + 1);
             return (
-              <svg viewBox={`0 0 ${BW} ${BH + 40}`} style={{ width: "100%", display: "block" }}>
+              <svg viewBox={`0 0 ${BW} ${BH + 40 + TP}`} style={{ width: "100%", display: "block" }}>
                 {[0.25, 0.5, 0.75, 1].map(pct => {
-                  const y = BH - pct * BH;
+                  const y = TP + BH - pct * BH;
                   return <line key={pct} x1="0" y1={y} x2={BW} y2={y} stroke="#1a1a1a" strokeWidth="1" />;
                 })}
                 {QLABELS.map((ql, qi) => {
                   const gx = qi * groupW;
                   return (
                     <g key={qi}>
-                      <text x={gx + groupW / 2} y={BH + 28} textAnchor="middle" fill="#6b7280" fontSize="11" fontFamily="monospace">{ql}</text>
+                      <text x={gx + groupW / 2} y={TP + BH + 28} textAnchor="middle" fill="#6b7280" fontSize="11" fontFamily="monospace">{ql}</text>
                       {bars.map((bar, bi) => {
                         const v = bar.vals[qi];
                         if (v == null) return null;
                         const bx = gx + (bi + 0.5) * barW + (groupW - bars.length * barW) / 2;
                         const bh = Math.max(2, (Math.abs(v) / maxV) * BH);
-                        const by = BH - bh;
+                        const by = TP + BH - bh;
                         return (
                           <g key={bi}>
                             <rect x={bx} y={by} width={barW - 4} height={bh} fill={bar.color} rx="2" />
