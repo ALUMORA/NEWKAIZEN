@@ -4875,7 +4875,7 @@ export default function App() {
                           <g key={bi}>
                             <rect x={bx} y={by} width={barW - 4} height={bh} fill={bar.color} rx="2" />
                             <text x={bx + (barW - 4) / 2} y={by - 4} textAnchor="middle" fill="#9ca3af" fontSize="9" fontFamily="monospace">
-                              {v.toFixed(1)}{bar.unit}
+                              {bar.fmt(v)}{bar.unit}
                             </text>
                           </g>
                         );
@@ -5120,13 +5120,15 @@ export default function App() {
                       </thead>
                       <tbody>
                         {fin.table.map(({ label, val, unit }) => {
-                          const qVals = fin.bars.find(b => b.label.toLowerCase().includes(label.toLowerCase().split(" ")[0].toLowerCase()))?.vals;
+                          const qBar = fin.bars.find(b => b.label.toLowerCase().includes(label.toLowerCase().split(" ")[0].toLowerCase()));
+                          const qVals = qBar?.vals;
+                          const qFmt = qBar?.fmt ?? (v => v?.toFixed(1));
                           return (
                             <tr key={label}>
                               <td style={{ color: "#6b7280", fontSize: 12, padding: "8px 0", borderBottom: "1px solid #1a1a1a" }}>{label}</td>
                               {QLABELS.map((_, qi) => (
                                 <td key={qi} style={{ textAlign: "right", fontFamily: "'DM Mono',monospace", fontSize: 12, color: "#ffffff", padding: "8px 0", borderBottom: "1px solid #1a1a1a" }}>
-                                  {qVals?.[qi] != null ? `${qVals[qi].toFixed(1)}${unit ?? ""}` : val ?? "—"}
+                                  {qVals?.[qi] != null ? `${qFmt(qVals[qi])}${unit ?? ""}` : val ?? "—"}
                                 </td>
                               ))}
                             </tr>
