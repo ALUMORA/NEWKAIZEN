@@ -1760,21 +1760,36 @@ export default function App() {
         .resp-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
         .resp-grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
         .table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+        .bottom-nav { display:none; }
+        .nav-active-label { display:none; }
 
         @media (max-width: 768px) {
-          .nav-tabs-scroll {
-            overflow-x: auto; overflow-y: hidden;
-            -webkit-overflow-scrolling: touch;
-            justify-content: flex-start;
-            scrollbar-width: none; flex:1; padding: 8px 0;
-          }
-          .nav-tabs-scroll::-webkit-scrollbar { display:none; }
+          .nav-tabs-scroll { display:none; }
           .nav-status { display:none; }
-          .main-pad { padding: 10px 10px; }
+          .nav-active-label {
+            display:flex; align-items:center;
+            background:#00ff88; color:#0a0a0a;
+            border-radius:999px; padding:7px 16px;
+            font-family:'Syne',sans-serif; font-weight:800; font-size:13px;
+            white-space:nowrap; max-width:160px; overflow:hidden; text-overflow:ellipsis;
+          }
+          .bottom-nav {
+            display:flex; position:fixed; bottom:0; left:0; right:0; z-index:200;
+            background:#0a0a0a; border-top:1px solid #1f2937;
+            overflow-x:auto; overflow-y:hidden;
+            -webkit-overflow-scrolling:touch;
+            scrollbar-width:none; padding:8px 6px;
+            padding-bottom: max(8px, env(safe-area-inset-bottom));
+          }
+          .bottom-nav::-webkit-scrollbar { display:none; }
+          .bottom-nav button { flex-shrink:0; }
+          .main-pad { padding: 10px 10px; padding-bottom: 80px; }
           .resp-grid-2 { grid-template-columns: 1fr !important; }
           .resp-grid-3 { grid-template-columns: 1fr !important; }
           .resp-hide-mobile { display:none !important; }
           td, th { padding: 8px 10px; font-size:12px; }
+          .hero-title { font-size:32px !important; }
+          html, body { overflow-x:hidden; }
         }
       `}</style>
 
@@ -1783,9 +1798,9 @@ export default function App() {
         background: "#0a0a0a",
         position: "sticky", top: 0, zIndex: 100,
         boxShadow: "none",
-        padding: "0 32px",
+        padding: "0 16px",
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        gap: 32,
+        gap: 12,
       }}>
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, padding: "18px 0" }}>
@@ -1825,6 +1840,17 @@ export default function App() {
           ))}
         </div>
 
+        {/* Tab activo visible en móvil */}
+        <div className="nav-active-label">
+          {[
+            { id:"news",label:"Noticias"},{id:"portfolio",label:"Portfolio"},
+            {id:"optimize",label:"Sharpe"},{id:"screener",label:"ML Screener"},
+            {id:"analytics",label:"Analytics"},{id:"insiders",label:"Insiders"},
+            {id:"fibras",label:"FIBRAs"},{id:"magic",label:"Fórmula Mágica"},
+            {id:"analisis",label:"Análisis"},
+          ].find(t=>t.id===tab)?.label}
+        </div>
+
         {/* Right: status + RF */}
         <div className="nav-status">
           <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
@@ -1847,6 +1873,31 @@ export default function App() {
           )}
         </div>
       </div>
+
+      {/* Bottom nav — solo móvil */}
+      {(() => {
+        const TABS = [
+          { id:"news",label:"Noticias" },{ id:"portfolio",label:"Portfolio" },
+          { id:"optimize",label:"Sharpe" },{ id:"screener",label:"ML Screener" },
+          { id:"analytics",label:"Analytics" },{ id:"insiders",label:"Insiders" },
+          { id:"fibras",label:"FIBRAs" },{ id:"magic",label:"Fórmula Mágica" },
+          { id:"analisis",label:"Análisis" },
+        ];
+        return (
+          <div className="bottom-nav">
+            {TABS.map(t => (
+              <button key={t.id} onClick={() => setTab(t.id)} style={{
+                background: tab===t.id ? "#00ff88" : "transparent",
+                border:"none", cursor:"pointer", borderRadius:999,
+                padding:"8px 16px", fontSize:12,
+                fontWeight: tab===t.id ? 800 : 500,
+                color: tab===t.id ? "#0a0a0a" : "#666666",
+                whiteSpace:"nowrap",
+              }}>{t.label}</button>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Macro strip */}
       {macroData && (
@@ -3448,7 +3499,7 @@ export default function App() {
               {/* ── HERO ── */}
               <div style={{ background: "#f5f5f0", borderRadius: 20, padding: "32px 28px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 16 }}>
                 <div>
-                  <div style={{ fontSize: 48, fontWeight: 800, color: "#0a0a0a", letterSpacing: "-0.04em", fontFamily: "'Syne', sans-serif", lineHeight: 1.05 }}>
+                  <div className="hero-title" style={{ fontSize: 48, fontWeight: 800, color: "#0a0a0a", letterSpacing: "-0.04em", fontFamily: "'Syne', sans-serif", lineHeight: 1.05 }}>
                     Panorama de<br />Mercados
                   </div>
                   <div style={{ fontSize: 13, color: "#888888", marginTop: 12 }}>
