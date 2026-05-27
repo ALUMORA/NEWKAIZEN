@@ -3678,27 +3678,27 @@ export default function App() {
                   return { p, bg, fg };
                 };
                 return (
-                  <div className="stylebox-wrap" style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: 16, alignItems: "start" }}>
+                  <div className="stylebox-wrap" style={{ display: "grid", gridTemplateColumns: "minmax(340px, 2fr) 3fr", gap: 16, alignItems: "stretch" }}>
 
                     {/* ── Style Box ── */}
                     <div style={{
                       background: "#ffffff", border: "1.5px solid #e0e0d8", borderRadius: 20,
-                      padding: "20px 24px", width: "100%", boxSizing: "border-box"
+                      padding: "24px 28px", width: "100%", boxSizing: "border-box"
                     }}>
-                      <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 13, fontWeight: 800, color: "#0a0a0a", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 16 }}>
+                      <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 800, color: "#0a0a0a", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 20 }}>
                         US Market Style Box
                       </div>
                       {/* Headers */}
-                      <div style={{ display: "grid", gridTemplateColumns: "52px repeat(3,1fr)", gap: 6, marginBottom: 6 }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "64px repeat(3,1fr)", gap: 8, marginBottom: 8 }}>
                         <div />
                         {COLS.map(c => (
-                          <div key={c} style={{ textAlign: "center", fontFamily: "'Syne',sans-serif", fontSize: 10, fontWeight: 700, color: "#888888", textTransform: "uppercase", letterSpacing: "0.06em" }}>{c}</div>
+                          <div key={c} style={{ textAlign: "center", fontFamily: "'Syne',sans-serif", fontSize: 11, fontWeight: 700, color: "#888888", textTransform: "uppercase", letterSpacing: "0.06em" }}>{c}</div>
                         ))}
                       </div>
                       {/* Rows */}
                       {BOX.map(({ label, keys }) => (
-                        <div key={label} style={{ display: "grid", gridTemplateColumns: "52px repeat(3,1fr)", gap: 6, marginBottom: 6 }}>
-                          <div style={{ display: "flex", alignItems: "center", fontFamily: "'Syne',sans-serif", fontSize: 10, fontWeight: 700, color: "#0a0a0a" }}>{label}</div>
+                        <div key={label} style={{ display: "grid", gridTemplateColumns: "64px repeat(3,1fr)", gap: 8, marginBottom: 8 }}>
+                          <div style={{ display: "flex", alignItems: "center", fontFamily: "'Syne',sans-serif", fontSize: 11, fontWeight: 700, color: "#0a0a0a" }}>{label}</div>
                           {keys.map((k) => {
                             const { p, bg: _bg, fg: _fg } = toCell(k);
                             const isUp = p != null && p >= 0;
@@ -3706,8 +3706,8 @@ export default function App() {
                             const cellBg = isUp ? "#00ff8820" : isDown ? "#ff3b3b15" : "#f5f5f0";
                             const cellFg = isUp ? "#00aa55" : isDown ? "#ff3b3b" : "#94a3b8";
                             return (
-                              <div key={k} style={{ background: cellBg, borderRadius: 8, padding: "14px 10px", textAlign: "center" }}>
-                                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700, color: cellFg }}>
+                              <div key={k} style={{ background: cellBg, borderRadius: 10, padding: "18px 10px", textAlign: "center" }}>
+                                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 16, fontWeight: 700, color: cellFg }}>
                                   {p != null ? `${p >= 0 ? "+" : ""}${p.toFixed(2)}%` : "—"}
                                 </div>
                               </div>
