@@ -377,41 +377,47 @@ def _fred_rate(series_id: str):
     return None
 
 
-def _get_macro_fresh() -> dict:
-    results = {}
-    tickers = {
-        "vix":  "^VIX",
-        "t10y": "^TNX",
-        "t2y":  "^IRX",
-        "dxy":  "DX-Y.NYB",
-    }
-    for key, sym in tickers.items():
-        try:
-            hist = _fetch_hist(sym)
-            if hist is not None and not hist.empty:
-                val  = float(hist["Close"].iloc[-1])
-                prev = float(hist["Close"].iloc[-2]) if len(hist) >= 2 else val
-                results[key] = {"value": round(val, 2), "change": round(val - prev, 2)}
-            else:
-                results[key] = None
-        except Exception:
-            results[key] = None
+def _cboe_vix():
+    """VIX desde el CSV público de CBOE — funciona desde cloud."""
+    try:
+        resp = _session.get(
+            "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv",
+            timeout=8
+        )
+        for line in reversed(resp.text.strip().split("\n")[1:]):
+            parts = line.split(",")
+            if len(parts) >= 5 and parts[4].strip():
+                return float(parts[4].strip())
+    except Exception:
+        pass
+    return None
 
-    # Fallback FRED para tasas del Tesoro (API pública de la Fed, funciona desde cloud)
+
+def _get_macro_fresh() -> dict:
+    # Un solo bulk download para VIX, T10Y, T2Y y DXY (menos bloqueado que 4 llamadas individuales)
+    bulk = _bulk_download({"^VIX": "vix", "^TNX": "t10y", "^IRX": "t2y", "DX-Y.NYB": "dxy"})
+    results = {k: bulk.get(k) for k in ("vix", "t10y", "t2y", "dxy")}
+
+    # Fallback FRED para tasas del Tesoro
     if results.get("t10y") is None:
         v = _fred_rate("DGS10")
         if v is not None:
             results["t10y"] = {"value": round(v, 2), "change": 0}
-
     if results.get("t2y") is None:
         v = _fred_rate("DGS2")
         if v is not None:
             results["t2y"] = {"value": round(v, 2), "change": 0}
 
+    # Fallback CBOE para VIX
+    if results.get("vix") is None:
+        v = _cboe_vix()
+        if v is not None:
+            results["vix"] = {"value": round(v, 2), "change": 0}
+
     # Spread 10Y - 2Y
     try:
-        t10 = results.get("t10y", {}) or {}
-        t2  = results.get("t2y",  {}) or {}
+        t10 = results.get("t10y") or {}
+        t2  = results.get("t2y")  or {}
         if t10.get("value") and t2.get("value"):
             spread = round(t10["value"] - t2["value"] / 10, 2)
             results["spread"] = {"value": spread, "inverted": spread < 0}
@@ -571,14 +577,27 @@ def get_market_news() -> dict:
         except Exception:
             pass
 
-    # Fallback: RSS feeds públicos de Yahoo Finance si yfinance no dio noticias
+    # Fallback: RSS feeds públicos si yfinance no dio noticias
     if len(all_news) < 5:
         rss_feeds = [
+            # Yahoo Finance
             "https://feeds.finance.yahoo.com/rss/2.0/headline?s=%5EGSPC&region=US&lang=en-US",
             "https://feeds.finance.yahoo.com/rss/2.0/headline?s=USDMXN%3DX&region=US&lang=en-US",
             "https://feeds.finance.yahoo.com/rss/2.0/headline?s=GC%3DF&region=US&lang=en-US",
+            # MarketWatch
+            "https://feeds.content.dowjones.io/public/rss/mw_topstories",
+            "https://feeds.content.dowjones.io/public/rss/mw_marketpulse",
+            # CNBC
+            "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+            "https://www.cnbc.com/id/10000664/device/rss/rss.html",
+            # Seeking Alpha
+            "https://seekingalpha.com/market_currents.xml",
+            # Investing.com
+            "https://www.investing.com/rss/news.rss",
         ]
         for feed in rss_feeds:
+            if len(all_news) >= 20:
+                break
             for item in _rss_news(feed):
                 if item["url"] not in seen:
                     seen.add(item["url"])
@@ -822,106 +841,146 @@ EXCLUDED_SECTORS = {
 }
 
 
-def get_magic_formula() -> dict:
-    """
-    Fórmula Mágica de Joel Greenblatt (The Little Book That Beats the Market).
-
-    Rankings combinados por:
-      Earnings Yield (EY) = EBIT / Enterprise Value  — qué tan barata está la acción
-      Return on Capital (ROC) = EBIT / (NWC + Net PP&E)  — calidad del negocio
-
-    Filtros:
-      - Market Cap > $50M USD
-      - Excluir Financieras, Utilities y Real Estate
-      - EBIT positivo (empresa rentable operativamente)
-
-    Resultado: top 30 por rango combinado (menor rango = mejor)
-    """
-    candidates = []
-    seen = set()
-
-    for ticker in MAGIC_UNIVERSE:
-        if ticker in seen:
-            continue
-        seen.add(ticker)
+def _fetch_magic_ticker(ticker: str):
+    """Datos Magic Formula para un ticker — .info primero, luego income_stmt/balance_sheet."""
+    try:
+        t = yft(ticker)
+        info = {}
         try:
-            t    = yft(ticker)
-            info = t.info
-
-            sector = info.get("sector") or ""
-            if sector in EXCLUDED_SECTORS:
-                continue
-
-            market_cap = safe(info.get("marketCap"))
-            if not market_cap or market_cap < 50_000_000:
-                continue
-
-            ebit = safe(info.get("ebit"))
-            ev   = safe(info.get("enterpriseValue"))
-            if not ebit or ebit <= 0 or not ev or ev <= 0:
-                continue
-
-            # Earnings Yield = EBIT / EV
-            ey = ebit / ev
-
-            # Return on Capital = EBIT / (Net Working Capital + Net PP&E)
-            ca  = safe(info.get("totalCurrentAssets"))
-            cl  = safe(info.get("totalCurrentLiabilities"))
-            ppe = safe(info.get("netPPE") or info.get("propertyPlantEquipmentNet"))
-
-            if ca is None or cl is None or ppe is None:
-                continue
-
-            nwc = ca - cl
-            # NWC negativo (ej. Amazon por pagos adelantados de clientes) es válido
-            capital_employed = nwc + ppe
-            if capital_employed <= 0:
-                continue   # capital negativo no interpretable con esta fórmula
-
-            roc = ebit / capital_employed
-
-            price = safe(info.get("currentPrice") or info.get("regularMarketPrice"))
-
-            candidates.append({
-                "ticker":    ticker,
-                "name":      info.get("shortName") or info.get("longName") or ticker,
-                "sector":    sector,
-                "marketCap": market_cap,
-                "price":     round(price, 2) if price else None,
-                "ebit":      ebit,
-                "ev":        ev,
-                "ey":        round(ey  * 100, 2),   # %
-                "roc":       round(roc * 100, 2),   # %
-                "pe":        r2(safe(info.get("trailingPE"))),
-                "pb":        r2(safe(info.get("priceToBook"))),
-            })
-            time.sleep(0.1)
+            r = t.info
+            if r and isinstance(r, dict) and len(r) > 5:
+                info = r
         except Exception:
             pass
 
-    if not candidates:
-        return {"stocks": [], "count": 0, "universe": len(MAGIC_UNIVERSE)}
+        sector = info.get("sector") or ""
+        if sector in EXCLUDED_SECTORS:
+            return None
 
-    # ── Rankings ──────────────────────────────────────────────────────────────
-    # EY: descendente (mayor yield = más barata = mejor rank)
+        # Market cap
+        market_cap = safe(info.get("marketCap"))
+        if market_cap is None:
+            try:
+                fi = t.fast_info
+                market_cap = safe(getattr(fi, "market_cap", None))
+            except Exception:
+                pass
+        if not market_cap or market_cap < 50_000_000:
+            return None
+
+        ebit       = safe(info.get("ebit"))
+        ev         = safe(info.get("enterpriseValue"))
+        ca         = safe(info.get("totalCurrentAssets"))
+        cl         = safe(info.get("totalCurrentLiabilities"))
+        ppe        = safe(info.get("netPPE") or info.get("propertyPlantEquipmentNet"))
+        total_debt = safe(info.get("totalDebt"))
+        total_cash = safe(info.get("totalCash"))
+
+        # Fallback: estados financieros cuando .info está bloqueado
+        if any(v is None for v in [ebit, ca, cl, ppe]):
+            try:
+                inc = t.income_stmt
+                if inc is not None and not inc.empty and ebit is None:
+                    for row in ["EBIT", "Ebit", "Operating Income",
+                                "Total Operating Income As Reported"]:
+                        if row in inc.index:
+                            v = safe(float(inc.loc[row].iloc[0]))
+                            if v is not None:
+                                ebit = v; break
+            except Exception:
+                pass
+            try:
+                bal = t.balance_sheet
+                if bal is not None and not bal.empty:
+                    for row in ["Current Assets", "Total Current Assets"]:
+                        if row in bal.index and ca is None:
+                            ca = safe(float(bal.loc[row].iloc[0])); break
+                    for row in ["Current Liabilities",
+                                "Total Current Liabilities Net Minority Interest",
+                                "Current Liabilities Net Minority Interest"]:
+                        if row in bal.index and cl is None:
+                            cl = safe(float(bal.loc[row].iloc[0])); break
+                    for row in ["Net PPE", "Net Property Plant And Equipment",
+                                "Properties"]:
+                        if row in bal.index and ppe is None:
+                            ppe = safe(float(bal.loc[row].iloc[0])); break
+                    for row in ["Total Debt", "Long Term Debt And Capital Lease Obligation"]:
+                        if row in bal.index and total_debt is None:
+                            total_debt = safe(float(bal.loc[row].iloc[0])); break
+                    for row in ["Cash And Cash Equivalents",
+                                "Cash Cash Equivalents And Short Term Investments"]:
+                        if row in bal.index and total_cash is None:
+                            total_cash = safe(float(bal.loc[row].iloc[0])); break
+            except Exception:
+                pass
+
+        if ev is None and market_cap:
+            ev = market_cap + (total_debt or 0) - (total_cash or 0)
+
+        if not ebit or ebit <= 0 or not ev or ev <= 0:
+            return None
+        if ca is None or cl is None or ppe is None:
+            return None
+
+        nwc = ca - cl
+        capital_employed = nwc + ppe
+        if capital_employed <= 0:
+            return None
+
+        ey  = ebit / ev
+        roc = ebit / capital_employed
+
+        price = safe(info.get("currentPrice") or info.get("regularMarketPrice"))
+        if price is None:
+            try:
+                fi = t.fast_info
+                price = safe(getattr(fi, "last_price", None))
+            except Exception:
+                pass
+
+        return {
+            "ticker":    ticker,
+            "name":      info.get("shortName") or info.get("longName") or ticker,
+            "sector":    sector,
+            "marketCap": market_cap,
+            "price":     round(price, 2) if price else None,
+            "ebit":      ebit,
+            "ev":        ev,
+            "ey":        round(ey  * 100, 2),
+            "roc":       round(roc * 100, 2),
+            "pe":        r2(safe(info.get("trailingPE"))),
+            "pb":        r2(safe(info.get("priceToBook"))),
+        }
+    except Exception:
+        return None
+
+
+def _get_magic_formula_fresh() -> dict:
+    universe = list(dict.fromkeys(MAGIC_UNIVERSE))  # dedup manteniendo orden
+    with ThreadPoolExecutor(max_workers=10) as pool:
+        results = list(pool.map(_fetch_magic_ticker, universe))
+    candidates = [r for r in results if r is not None]
+
+    if not candidates:
+        return {"stocks": [], "count": 0, "universe": len(universe)}
+
     sorted_ey  = sorted(candidates, key=lambda x: x["ey"],  reverse=True)
     sorted_roc = sorted(candidates, key=lambda x: x["roc"], reverse=True)
-
-    rank_ey  = {r["ticker"]: i + 1 for i, r in enumerate(sorted_ey)}
-    rank_roc = {r["ticker"]: i + 1 for i, r in enumerate(sorted_roc)}
+    rank_ey    = {r["ticker"]: i + 1 for i, r in enumerate(sorted_ey)}
+    rank_roc   = {r["ticker"]: i + 1 for i, r in enumerate(sorted_roc)}
 
     for c in candidates:
-        c["rank_ey"]  = rank_ey[c["ticker"]]
-        c["rank_roc"] = rank_roc[c["ticker"]]
-        c["magic_rank"] = c["rank_ey"] + c["rank_roc"]   # menor = mejor
+        c["rank_ey"]    = rank_ey[c["ticker"]]
+        c["rank_roc"]   = rank_roc[c["ticker"]]
+        c["magic_rank"] = c["rank_ey"] + c["rank_roc"]
 
     candidates.sort(key=lambda x: x["magic_rank"])
+    return {"stocks": candidates[:30], "count": len(candidates), "universe": len(universe)}
 
-    return {
-        "stocks":   candidates[:30],
-        "count":    len(candidates),
-        "universe": len(MAGIC_UNIVERSE),
-    }
+
+def get_magic_formula() -> dict:
+    """Fórmula Mágica de Greenblatt — cacheada 12h (no cambia intradía)."""
+    return _cached("magic", _get_magic_formula_fresh, ttl=43200)
 
 
 def get_magic_one(ticker: str) -> dict:
