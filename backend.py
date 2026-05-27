@@ -8,10 +8,23 @@ Correr: python backend.py
 """
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
-import json, math, time
+import json, math, time, requests
 from concurrent.futures import ThreadPoolExecutor
 import yfinance as yf
 from urllib.parse import urlparse, parse_qs
+
+# Sesión con headers de navegador para evitar bloqueos de Yahoo Finance en cloud
+_session = requests.Session()
+_session.headers.update({
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
+})
+
+def yft(ticker: str):
+    """Crea un Ticker con sesión custom para evitar bloqueos de Yahoo en cloud."""
+    return yf.Ticker(ticker, session=_session)
 
 PORT = 8002
 
@@ -53,7 +66,7 @@ def _leverage_ratio(info):
 
 
 def get_stock(ticker: str) -> dict:
-    t = yf.Ticker(ticker)
+    t = yft(ticker)
     info = {}
     for attempt in range(3):
         try:
@@ -131,7 +144,7 @@ def get_chart(ticker: str, period: str = "5y") -> dict:
         "10y": ("10y", "1wk"),
     }
     yf_period, interval = period_interval.get(period, ("1y", "1wk"))
-    hist = yf.Ticker(ticker).history(period=yf_period, interval=interval)
+    hist = yft(ticker).history(period=yf_period, interval=interval)
     closes = [round(float(v), 4) for v in hist["Close"].tolist() if not math.isnan(float(v))]
     return {"closes": closes, "period": period, "bars": len(closes)}
 
@@ -147,7 +160,7 @@ def get_macro() -> dict:
     }
     for key, sym in tickers.items():
         try:
-            hist = yf.Ticker(sym).history(period="5d")
+            hist = yft(sym).history(period="5d")
             if not hist.empty:
                 val = float(hist["Close"].iloc[-1])
                 prev = float(hist["Close"].iloc[-2]) if len(hist) >= 2 else val
@@ -187,7 +200,7 @@ def get_market() -> dict:
     def _fetch(args):
         key, sym = args
         try:
-            hist = yf.Ticker(sym).history(period="5d")
+            hist = yft(sym).history(period="5d")
             if not hist.empty:
                 val  = float(hist["Close"].iloc[-1])
                 prev = float(hist["Close"].iloc[-2]) if len(hist) >= 2 else val
@@ -238,7 +251,7 @@ def get_worldmap() -> dict:
     def _fetch(args):
         key, sym = args
         try:
-            hist = yf.Ticker(sym).history(period="5d")
+            hist = yft(sym).history(period="5d")
             if not hist.empty:
                 val  = float(hist["Close"].iloc[-1])
                 prev = float(hist["Close"].iloc[-2]) if len(hist) >= 2 else val
@@ -262,7 +275,7 @@ def get_market_news() -> dict:
     seen, all_news = set(), []
     for ticker in tickers:
         try:
-            raw = yf.Ticker(ticker).news or []
+            raw = yft(ticker).news or []
             for item in raw[:10]:
                 parsed = _extract_news_item(item)
                 if not parsed["title"] or parsed["url"] in seen:
@@ -313,7 +326,7 @@ def get_dcf(ticker: str) -> dict:
                         "Energy":8,"Materials":10,"Real Estate":18,
                         "Utilities":12,"Basic Materials":10}
     try:
-        t    = yf.Ticker(ticker)
+        t    = yft(ticker)
         info = t.info
 
         # ── Detectar ETFs y fondos: múltiplos de acciones no aplican ─────────
@@ -341,7 +354,7 @@ def get_dcf(ticker: str) -> dict:
         if price_currency != financial_currency:
             pair = f"{financial_currency}{price_currency}=X"
             try:
-                fx_hist = yf.Ticker(pair).history(period="2d")
+                fx_hist = yft(pair).history(period="2d")
                 if not fx_hist.empty:
                     fx_rate = float(fx_hist["Close"].iloc[-1])
                     fx_note = (f"Financieros en {financial_currency} → {price_currency} "
@@ -532,7 +545,7 @@ def get_magic_formula() -> dict:
             continue
         seen.add(ticker)
         try:
-            t    = yf.Ticker(ticker)
+            t    = yft(ticker)
             info = t.info
 
             sector = info.get("sector") or ""
@@ -624,7 +637,7 @@ def get_magic_one(ticker: str) -> dict:
       ROC ← returnOnAssets * (1 + debtToEquity/100)  (ajuste por apalancamiento)
     """
     try:
-        t    = yf.Ticker(ticker)
+        t    = yft(ticker)
         info = t.info
 
         sector = info.get("sector") or ""
@@ -753,7 +766,7 @@ def get_fibras() -> dict:
     results = []
     for ticker in FIBRAS_LIST:
         try:
-            t    = yf.Ticker(ticker)
+            t    = yft(ticker)
             info = t.info
 
             price = safe(info.get("currentPrice") or info.get("regularMarketPrice"))
@@ -783,7 +796,7 @@ def get_fibras() -> dict:
             fx = 1.0
             if price_cur != fin_cur:
                 try:
-                    fxh = yf.Ticker(f"{fin_cur}{price_cur}=X").history(period="2d")
+                    fxh = yft(f"{fin_cur}{price_cur}=X").history(period="2d")
                     if not fxh.empty:
                         fx = float(fxh["Close"].iloc[-1])
                 except Exception:
@@ -841,7 +854,7 @@ def get_fibras() -> dict:
 def get_insiders(ticker: str) -> dict:
     """Insider transactions + top institutional holders."""
     try:
-        t = yf.Ticker(ticker)
+        t = yft(ticker)
         result = {"transactions": [], "institutions": []}
 
         # Insider transactions
@@ -898,13 +911,13 @@ def get_momentum(ticker: str) -> dict:
     Compara el retorno del activo contra el ETF de su sector.
     """
     try:
-        t    = yf.Ticker(ticker)
+        t    = yft(ticker)
         info = t.info
         sector = info.get("sector")
         etf    = SECTOR_ETF.get(sector, "SPY")
 
-        hist_stock = yf.Ticker(ticker).history(period="1y", interval="1wk")
-        hist_etf   = yf.Ticker(etf).history(period="1y", interval="1wk")
+        hist_stock = yft(ticker).history(period="1y", interval="1wk")
+        hist_etf   = yft(etf).history(period="1y", interval="1wk")
 
         def ret(hist, weeks):
             if hist.empty or len(hist) < weeks:
@@ -983,7 +996,7 @@ def _extract_news_item(item: dict) -> dict:
 
 def get_news(ticker: str) -> dict:
     try:
-        raw  = yf.Ticker(ticker).news or []
+        raw  = yft(ticker).news or []
         news = []
         for item in raw[:20]:
             parsed = _extract_news_item(item)
@@ -1009,7 +1022,7 @@ def get_rf() -> dict:
     ]
     for sym, label in mx_proxies:
         try:
-            hist = yf.Ticker(sym).history(period="5d")
+            hist = yft(sym).history(period="5d")
             if not hist.empty:
                 val = float(hist["Close"].iloc[-1])
                 rate = val / 100 if val > 1 else val
