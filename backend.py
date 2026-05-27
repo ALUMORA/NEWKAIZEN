@@ -53,16 +53,32 @@ def _leverage_ratio(info):
 
 
 def get_stock(ticker: str) -> dict:
+    t = yf.Ticker(ticker)
+    info = {}
     for attempt in range(3):
         try:
-            info = yf.Ticker(ticker).info
+            info = t.info
             if info.get("regularMarketPrice") or info.get("currentPrice"):
                 break
         except Exception:
             pass
         time.sleep(1.5 * (attempt + 1))
-    else:
-        info = yf.Ticker(ticker).info
+
+    # Precio robusto: varios fallbacks
+    price = safe(info.get("currentPrice") or info.get("regularMarketPrice"))
+    if price is None:
+        try:
+            fi = t.fast_info
+            price = safe(getattr(fi, "last_price", None))
+        except Exception:
+            pass
+    if price is None:
+        try:
+            hist = t.history(period="2d")
+            if not hist.empty:
+                price = round(float(hist["Close"].iloc[-1]), 2)
+        except Exception:
+            pass
 
     pe           = r2(safe(info.get("trailingPE")))
     growth_raw   = safe(info.get("earningsGrowth") or info.get("earningsQuarterlyGrowth"))
@@ -74,33 +90,48 @@ def get_stock(ticker: str) -> dict:
     price52chg   = safe(info.get("52WeekChange"))
 
     return {
-        "name":          info.get("shortName") or info.get("longName") or ticker,
-        "price":         r2(safe(info.get("currentPrice") or info.get("regularMarketPrice"))),
-        "pe":            pe,
-        "eps":           r2(safe(info.get("trailingEps"))),
-        "peg":           peg,
-        "pegy":          pegy,
-        "evEbitda":      r2(safe(info.get("enterpriseToEbitda"))),
-        "pb":            r2(safe(info.get("priceToBook"))),
-        "roe":           pct(info.get("returnOnEquity")),
-        "profitMargin":  pct(info.get("profitMargins")),
-        "debtEquity":    r2(safe(info.get("debtToEquity"))),
-        "revenueGrowth": pct(info.get("revenueGrowth")),
-        "priceChange52w": round(price52chg * 100, 2) if price52chg is not None else None,
-        "beta":          r2(safe(info.get("beta"))),
-        "marketCap":     safe(info.get("marketCap")),
-        "dividendYield": div_raw,
-        "pcf":           r2(safe(info.get("priceToFreeCashflow"))),
-        "debtToAssets":  _debt_to_assets(info),
-        "leverageRatio": _leverage_ratio(info),
-        "sector":        info.get("sector"),
+        "name":               info.get("shortName") or info.get("longName") or ticker,
+        "price":              r2(price),
+        "pe":                 pe,
+        "eps":                r2(safe(info.get("trailingEps"))),
+        "peg":                peg,
+        "pegy":               pegy,
+        "evEbitda":           r2(safe(info.get("enterpriseToEbitda"))),
+        "pb":                 r2(safe(info.get("priceToBook"))),
+        "roe":                pct(info.get("returnOnEquity")),
+        "profitMargin":       pct(info.get("profitMargins")),
+        "debtEquity":         r2(safe(info.get("debtToEquity"))),
+        "revenueGrowth":      pct(info.get("revenueGrowth")),
+        "priceChange52w":     round(price52chg * 100, 2) if price52chg is not None else None,
+        "beta":               r2(safe(info.get("beta"))),
+        "marketCap":          safe(info.get("marketCap")),
+        "dividendYield":      div_raw,
+        "pcf":                r2(safe(info.get("priceToFreeCashflow"))),
+        "debtToAssets":       _debt_to_assets(info),
+        "leverageRatio":      _leverage_ratio(info),
+        "sector":             info.get("sector"),
+        # Financials para Análisis tab
+        "totalRevenue":       safe(info.get("totalRevenue")),
+        "netIncomeToCommon":  safe(info.get("netIncomeToCommon")),
+        "totalAssets":        safe(info.get("totalAssets")),
+        "totalDebt":          safe(info.get("totalDebt")),
+        "operatingCashflow":  safe(info.get("operatingCashflow")),
+        "freeCashflow":       safe(info.get("freeCashflow")),
     }
 
 
 def get_chart(ticker: str, period: str = "5y") -> dict:
-    allowed = {"1y", "2y", "5y", "10y"}
-    if period not in allowed: period = "5y"
-    hist = yf.Ticker(ticker).history(period=period, interval="1wk")
+    period_interval = {
+        "1mo": ("1mo", "1d"),
+        "3mo": ("3mo", "1d"),
+        "6mo": ("6mo", "1wk"),
+        "1y":  ("1y",  "1wk"),
+        "2y":  ("2y",  "1wk"),
+        "5y":  ("5y",  "1wk"),
+        "10y": ("10y", "1wk"),
+    }
+    yf_period, interval = period_interval.get(period, ("1y", "1wk"))
+    hist = yf.Ticker(ticker).history(period=yf_period, interval=interval)
     closes = [round(float(v), 4) for v in hist["Close"].tolist() if not math.isnan(float(v))]
     return {"closes": closes, "period": period, "bars": len(closes)}
 
