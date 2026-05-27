@@ -422,7 +422,7 @@ function GlobalMarketsTable({ data, loading }) {
     .sort((a, b) => (b.d?.change_pct ?? -999) - (a.d?.change_pct ?? -999));
 
   return (
-    <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:"1px 4px" }}>
+    <div className="resp-grid-3" style={{ gap:"1px 4px" }}>
       {rows.map(({ id, flag, name, etf, d }) => {
         const p = d?.change_pct;
         const up = p != null && p >= 0;
@@ -1752,6 +1752,30 @@ export default function App() {
         .rebal-slider::-webkit-slider-runnable-track { height: 3px; background: #e0e0d8; border-radius: 99px; }
         .rebal-slider::-moz-range-thumb { width: 12px; height: 12px; background: #0a0a0a; border-radius: 50%; cursor: pointer; border: none; }
         .rebal-slider::-moz-range-track { height: 3px; background: #e0e0d8; border-radius: 99px; }
+
+        /* ── RESPONSIVE ── */
+        .nav-tabs-scroll { display:flex; gap:4px; flex:1; justify-content:center; }
+        .nav-status { display:flex; align-items:center; gap:20px; flex-shrink:0; padding:18px 0; }
+        .main-pad { padding: 16px 20px; animation: fadeIn 0.3s ease; }
+        .resp-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+        .resp-grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+        .table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
+        @media (max-width: 768px) {
+          .nav-tabs-scroll {
+            overflow-x: auto; overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            justify-content: flex-start;
+            scrollbar-width: none; flex:1; padding: 8px 0;
+          }
+          .nav-tabs-scroll::-webkit-scrollbar { display:none; }
+          .nav-status { display:none; }
+          .main-pad { padding: 10px 10px; }
+          .resp-grid-2 { grid-template-columns: 1fr !important; }
+          .resp-grid-3 { grid-template-columns: 1fr !important; }
+          .resp-hide-mobile { display:none !important; }
+          td, th { padding: 8px 10px; font-size:12px; }
+        }
       `}</style>
 
       {/* Header + Tabs — unified bar */}
@@ -1777,7 +1801,7 @@ export default function App() {
         </div>
 
         {/* Tabs — pill style, centered */}
-        <div style={{ display: "flex", gap: 4, flex: 1, justifyContent: "center" }}>
+        <div className="nav-tabs-scroll">
           {[
             { id: "news",       label: "Noticias" },
             { id: "portfolio",  label: "Portfolio" },
@@ -1802,7 +1826,7 @@ export default function App() {
         </div>
 
         {/* Right: status + RF */}
-        <div style={{ display: "flex", alignItems: "center", gap: 20, flexShrink: 0, padding: "18px 0" }}>
+        <div className="nav-status">
           <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
             <div style={{
               width: 7, height: 7, borderRadius: "50%",
@@ -1877,7 +1901,7 @@ export default function App() {
       )}
 
       {/* Content */}
-      <div style={{ padding: "16px 20px", animation: "fadeIn 0.3s ease" }}>
+      <div className="main-pad">
 
         {/* ─── TAB: PORTFOLIO ─── */}
         {tab === "portfolio" && (
@@ -2256,7 +2280,7 @@ export default function App() {
                     const effTotal = parseFloat(customTotal) > 0 ? parseFloat(customTotal) : totalValue;
                     const fmt = (n) => n >= 1000 ? n.toFixed(1) : n >= 10 ? n.toFixed(2) : n >= 1 ? n.toFixed(3) : n.toFixed(4);
                     return (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, alignItems: "start" }}>
+                  <div className="resp-grid-2" style={{ alignItems: "start" }}>
 
                     {/* ── Donut — siempre usa pesos reales ── */}
                     <div style={{ background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8", padding: "24px 20px 20px" }}>
@@ -2871,7 +2895,7 @@ export default function App() {
               <div style={{ animation: "fadeIn 0.5s ease" }}>
 
                 {/* ── Comparativa Actual vs Óptimo ── */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+                <div className="resp-grid-2" style={{ marginBottom: 24 }}>
                   {/* Portafolio Actual */}
                   <div style={{
                     background: "#ffffff", boxShadow: "none", border: "1.5px solid #e0e0d8",
@@ -3661,7 +3685,7 @@ export default function App() {
               })()}
 
               {/* ── MÉXICO ── */}
-              <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 16 }}>
+              <div className="resp-grid-2" style={{ gap: 16 }}>
 
                 {/* Panel izquierdo: Mercado en vivo */}
                 <Panel title="México · Mercado" color="#16a34a">
@@ -4169,7 +4193,7 @@ export default function App() {
             </div>
 
             {insidersData && !insidersData.error && (
-              <div style={{ display: "grid", gap: 20, gridTemplateColumns: "1fr 1fr" }}>
+              <div className="resp-grid-2" style={{ gap: 20 }}>
 
                 {/* Transacciones de insiders */}
                 <div style={{ background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8", padding: 24 }}>
