@@ -8,7 +8,7 @@ Correr: python backend.py
 """
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
-import json, math, time, requests
+import json, math, time, requests, threading
 from concurrent.futures import ThreadPoolExecutor
 import yfinance as yf
 from urllib.parse import urlparse, parse_qs
@@ -25,6 +25,50 @@ _session.headers.update({
 def yft(ticker: str):
     """Crea un Ticker con sesión custom para evitar bloqueos de Yahoo en cloud."""
     return yf.Ticker(ticker, session=_session)
+
+# ─── Cache en memoria con TTL ─────────────────────────────────────────────────
+_cache: dict = {}
+_cache_lock = threading.Lock()
+
+def _cached(key: str, fn, ttl: int = 300):
+    now = time.time()
+    with _cache_lock:
+        if key in _cache:
+            val, ts = _cache[key]
+            if now - ts < ttl:
+                return val
+    result = fn()
+    with _cache_lock:
+        _cache[key] = (result, now)
+    return result
+
+# ─── Helper robusto para histórico ───────────────────────────────────────────
+def _fetch_hist(sym: str, period: str = "5d", interval: str = "1d"):
+    """Intenta obtener histórico con múltiples estrategias."""
+    # Estrategia 1: yft().history() con sesión custom (2 intentos)
+    for attempt in range(2):
+        try:
+            hist = yft(sym).history(period=period, interval=interval)
+            if hist is not None and not hist.empty:
+                return hist
+        except Exception:
+            pass
+        if attempt == 0:
+            time.sleep(1.5)
+    # Estrategia 2: yf.download() usa endpoint distinto de Yahoo
+    try:
+        hist = yf.download(
+            sym, period=period, interval=interval,
+            progress=False, auto_adjust=True,
+        )
+        if hist is not None and not hist.empty:
+            # Aplanar MultiIndex si lo hay (ocurre con múltiples tickers)
+            if hasattr(hist.columns, "levels"):
+                hist.columns = hist.columns.get_level_values(0)
+            return hist
+    except Exception:
+        pass
+    return None
 
 PORT = 8002
 
@@ -204,8 +248,23 @@ def get_chart(ticker: str, period: str = "5y") -> dict:
     return {"closes": closes, "period": period, "bars": len(closes)}
 
 
-def get_macro() -> dict:
-    """VIX, spread 10Y-2Y, DXY — indicadores macro clave."""
+def _fred_rate(series_id: str):
+    """Obtiene la tasa más reciente de FRED (API pública de la Reserva Federal)."""
+    try:
+        resp = _session.get(
+            f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}",
+            timeout=8
+        )
+        for line in reversed(resp.text.strip().split("\n")[1:]):
+            parts = line.split(",")
+            if len(parts) == 2 and parts[1].strip() not in (".", ""):
+                return float(parts[1].strip())
+    except Exception:
+        pass
+    return None
+
+
+def _get_macro_fresh() -> dict:
     results = {}
     tickers = {
         "vix":  "^VIX",
@@ -215,13 +274,26 @@ def get_macro() -> dict:
     }
     for key, sym in tickers.items():
         try:
-            hist = yft(sym).history(period="5d")
-            if not hist.empty:
-                val = float(hist["Close"].iloc[-1])
+            hist = _fetch_hist(sym)
+            if hist is not None and not hist.empty:
+                val  = float(hist["Close"].iloc[-1])
                 prev = float(hist["Close"].iloc[-2]) if len(hist) >= 2 else val
                 results[key] = {"value": round(val, 2), "change": round(val - prev, 2)}
+            else:
+                results[key] = None
         except Exception:
             results[key] = None
+
+    # Fallback FRED para tasas del Tesoro (API pública de la Fed, funciona desde cloud)
+    if results.get("t10y") is None:
+        v = _fred_rate("DGS10")
+        if v is not None:
+            results["t10y"] = {"value": round(v, 2), "change": 0}
+
+    if results.get("t2y") is None:
+        v = _fred_rate("DGS2")
+        if v is not None:
+            results["t2y"] = {"value": round(v, 2), "change": 0}
 
     # Spread 10Y - 2Y
     try:
@@ -235,9 +307,12 @@ def get_macro() -> dict:
 
     return results
 
+def get_macro() -> dict:
+    """VIX, spread 10Y-2Y, DXY — indicadores macro clave. Cacheado 5 min."""
+    return _cached("macro", _get_macro_fresh, ttl=300)
 
-def get_market() -> dict:
-    """Mercados globales: índices, divisas, commodities, crypto."""
+
+def _get_market_fresh() -> dict:
     symbols_map = {
         "sp500":  "^GSPC",  "nasdaq": "^IXIC",  "dow":    "^DJI",
         "ipc":    "^MXX",   "nikkei": "^N225",   "ftse":   "^FTSE",
@@ -247,6 +322,7 @@ def get_market() -> dict:
         "wti":    "CL=F",   "brent":  "BZ=F",    "gold":   "GC=F",
         "silver": "SI=F",   "copper": "HG=F",    "natgas": "NG=F",
         "btc":    "BTC-USD", "eth":   "ETH-USD",
+        "vix":    "^VIX",
         # Style Box (Morningstar-style 3×3 US equity)
         "sb_lv": "IVE",  "sb_lb": "IVV",  "sb_lg": "IVW",
         "sb_mv": "IJJ",  "sb_mb": "IJH",  "sb_mg": "IJK",
@@ -255,8 +331,8 @@ def get_market() -> dict:
     def _fetch(args):
         key, sym = args
         try:
-            hist = yft(sym).history(period="5d")
-            if not hist.empty:
+            hist = _fetch_hist(sym)
+            if hist is not None and not hist.empty:
                 val  = float(hist["Close"].iloc[-1])
                 prev = float(hist["Close"].iloc[-2]) if len(hist) >= 2 else val
                 chg  = round(val - prev, 4)
@@ -267,14 +343,17 @@ def get_market() -> dict:
         return key, None
 
     results = {}
-    with ThreadPoolExecutor(max_workers=8) as ex:
+    with ThreadPoolExecutor(max_workers=4) as ex:
         for key, val in ex.map(_fetch, symbols_map.items()):
             results[key] = val
     return results
 
+def get_market() -> dict:
+    """Mercados globales: índices, divisas, commodities, crypto. Cacheado 2 min."""
+    return _cached("market", _get_market_fresh, ttl=120)
 
-def get_worldmap() -> dict:
-    """ETFs de países para el mapa mundial de desempeño."""
+
+def _get_worldmap_fresh() -> dict:
     symbols_map = {
         "840": "SPY",   # USA
         "124": "EWC",   # Canada
@@ -306,8 +385,8 @@ def get_worldmap() -> dict:
     def _fetch(args):
         key, sym = args
         try:
-            hist = yft(sym).history(period="5d")
-            if not hist.empty:
+            hist = _fetch_hist(sym)
+            if hist is not None and not hist.empty:
                 val  = float(hist["Close"].iloc[-1])
                 prev = float(hist["Close"].iloc[-2]) if len(hist) >= 2 else val
                 chg  = round(val - prev, 4)
@@ -318,10 +397,14 @@ def get_worldmap() -> dict:
         return key, None
 
     results = {}
-    with ThreadPoolExecutor(max_workers=12) as ex:
+    with ThreadPoolExecutor(max_workers=6) as ex:
         for key, val in ex.map(_fetch, symbols_map.items()):
             results[key] = val
     return results
+
+def get_worldmap() -> dict:
+    """ETFs de países para el mapa mundial de desempeño. Cacheado 5 min."""
+    return _cached("worldmap", _get_worldmap_fresh, ttl=300)
 
 
 def get_market_news() -> dict:
@@ -821,10 +904,29 @@ def get_fibras() -> dict:
     results = []
     for ticker in FIBRAS_LIST:
         try:
-            t    = yft(ticker)
-            info = t.info
+            t = yft(ticker)
 
+            # Intentar .info con guard (puede retornar None en cloud)
+            info = {}
+            try:
+                result = t.info
+                if result and isinstance(result, dict) and len(result) > 5:
+                    info = result
+            except Exception:
+                pass
+
+            # Precio con fallback chain
             price = safe(info.get("currentPrice") or info.get("regularMarketPrice"))
+            if price is None:
+                try:
+                    fi = t.fast_info
+                    price = safe(getattr(fi, "last_price", None))
+                except Exception:
+                    pass
+            if price is None:
+                hist = _fetch_hist(ticker)
+                if hist is not None and not hist.empty:
+                    price = round(float(hist["Close"].iloc[-1]), 2)
             if not price:
                 continue
 
