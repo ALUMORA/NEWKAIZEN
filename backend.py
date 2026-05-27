@@ -801,38 +801,27 @@ def get_dcf(ticker: str) -> dict:
         return {"error": str(e)}
 
 
-# ─── Magic Formula Universe (S&P 500, excl. financieros y utilities) ──────────
+# ─── Magic Formula Universe — 60 tickers curados, ~15s con 12 workers ─────────
 MAGIC_UNIVERSE = [
     # Technology
-    "AAPL","MSFT","NVDA","GOOGL","GOOG","META","AVGO","ORCL","ADBE","CRM",
-    "AMD","INTC","QCOM","TXN","MU","AMAT","LRCX","KLAC","MRVL","ASML",
-    "NOW","SNOW","UBER","ABNB","SHOP","PYPL","NFLX","SPOT","RBLX","PLTR",
-    "PALO","CRWD","ZS","OKTA","DDOG","NET","MDB","TEAM","WDAY","ANSS",
-    "CDNS","SNPS","FTNT","KEYS","EPAM","CTSH","ACN","IBM","HPQ","DELL",
+    "AAPL","MSFT","NVDA","GOOGL","META","AVGO","ORCL","ADBE","CRM","AMD",
+    "INTC","QCOM","TXN","NOW","NFLX","IBM","ACN","CTSH","FTNT","CDNS",
     # Healthcare
-    "LLY","UNH","JNJ","ABBV","MRK","TMO","DHR","ABT","BMY","AMGN",
-    "GILD","VRTX","REGN","ISRG","BSX","EW","DXCM","IDXX","HOLX","BIO",
-    "IQV","A","MTD","WAT","TECH","RMD","STE","PODD","ALGN","ZBH",
-    "MCK","ABC","CAH","CVS","CI","HUM","MOH","CNC","ELV",
+    "LLY","UNH","JNJ","ABBV","MRK","TMO","ABT","BMY","AMGN","GILD",
+    "VRTX","ISRG","MCK","CVS","CI",
     # Consumer Cyclical
-    "AMZN","TSLA","HD","LOW","MCD","SBUX","NKE","YUM","CMG","BKNG",
-    "MAR","HLT","ABNB","LVS","WYNN","MGM","TJX","ROST","ULTA","DRI",
-    "F","GM","APTV","BWA","LEA","LKQ","ORLY","AZO","GPC",
+    "AMZN","TSLA","HD","MCD","SBUX","NKE","BKNG","TJX","ROST","CMG",
+    "LOW","F","GM","ORLY","AZO",
     # Consumer Defensive
-    "WMT","COST","TGT","PG","KO","PEP","PM","MO","CL","KMB",
-    "GIS","K","CAG","HRL","MKC","SJM","MDLZ","HSY","EL","CHD",
+    "WMT","COST","PG","KO","PEP","PM","TGT","MO","CL","MDLZ",
     # Industrials
-    "CAT","DE","HON","RTX","LMT","GE","BA","MMM","EMR","ETN",
-    "PH","ROK","IR","CARR","OTIS","FDX","UPS","CSX","NSC","UNP",
-    "GD","NOC","HII","L3H","TDG","AXON","CPRT","FAST","GWW","VRSK",
+    "CAT","DE","HON","RTX","GE","BA","FDX","UPS","UNP","LMT",
     # Energy
-    "XOM","CVX","COP","EOG","SLB","MPC","PSX","VLO","OXY","HES",
-    "DVN","FANG","MRO","APA","HAL","BKR","CTRA","PR","SM","NOG",
+    "XOM","CVX","COP","SLB","OXY","MPC","EOG",
     # Materials
-    "LIN","APD","ECL","NEM","FCX","NUE","STLD","ALB","CF","MOS",
-    "PPG","SHW","IFF","EMN","CE","OLN","RPM","ATI","AA","HUN",
-    # Communication Services (excl. telecom puro)
-    "DIS","CMCSA","PARA","WBD","FOXA","LYV","EA","TTWO","MTCH",
+    "LIN","APD","NEM","FCX","SHW",
+    # Communication Services
+    "DIS","CMCSA","EA","FOXA",
 ]
 
 EXCLUDED_SECTORS = {
@@ -956,10 +945,18 @@ def _fetch_magic_ticker(ticker: str):
 
 
 def _get_magic_formula_fresh() -> dict:
-    universe = list(dict.fromkeys(MAGIC_UNIVERSE))  # dedup manteniendo orden
-    with ThreadPoolExecutor(max_workers=10) as pool:
-        results = list(pool.map(_fetch_magic_ticker, universe))
-    candidates = [r for r in results if r is not None]
+    from concurrent.futures import as_completed
+    universe = list(dict.fromkeys(MAGIC_UNIVERSE))
+    candidates = []
+    with ThreadPoolExecutor(max_workers=12) as pool:
+        futures = {pool.submit(_fetch_magic_ticker, t): t for t in universe}
+        for fut in as_completed(futures, timeout=25):
+            try:
+                r = fut.result(timeout=8)
+                if r is not None:
+                    candidates.append(r)
+            except Exception:
+                pass
 
     if not candidates:
         return {"stocks": [], "count": 0, "universe": len(universe)}
@@ -1514,12 +1511,22 @@ class Handler(BaseHTTPRequestHandler):
         print(f"  {args[1]}  {args[0]}")
 
 
+def _prewarm():
+    """Pre-calienta el cache de Fórmula Mágica en background al arrancar."""
+    time.sleep(8)  # espera a que el servidor esté listo
+    try:
+        get_magic_formula()
+        print("  [prewarm] Fórmula Mágica cacheada.")
+    except Exception as e:
+        print(f"  [prewarm] Error: {e}")
+
 if __name__ == "__main__":
     import os
     host = "0.0.0.0"
     port = int(os.environ.get("PORT", PORT))
     server = HTTPServer((host, port), Handler)
     print(f"\n  KAIZEN Backend  →  http://{host}:{port}")
-    print("  Endpoints: /stock /chart /rf /news /macro /dcf /insiders /momentum /health")
+    print("  Endpoints: /stock /chart /rf /news /macro /dcf /momentum /health")
     print("  Ctrl+C para detener\n")
+    threading.Thread(target=_prewarm, daemon=True).start()
     server.serve_forever()
