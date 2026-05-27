@@ -158,8 +158,7 @@ def get_stock(ticker: str) -> dict:
 
     # Variables que se poblan desde estados financieros
     equity = None
-    roe_computed = None
-    de_computed  = None
+    inc = bal = None  # guardadas para reusar en cálculos posteriores
 
     # Intentar estados financieros para métricas que .info no pudo dar
     try:
@@ -185,7 +184,7 @@ def get_stock(ticker: str) -> dict:
                 if row in bal.index and total_debt is None:
                     total_debt = safe(float(bal.loc[row].iloc[0]))
                     break
-            # Equity para calcular ROE y D/E
+            # Equity para calcular ROE, D/E, P/B
             for row in ["Stockholders Equity", "Common Stock Equity",
                         "Total Equity Gross Minority Interest", "stockholdersEquity"]:
                 if row in bal.index:
@@ -237,20 +236,84 @@ def get_stock(ticker: str) -> dict:
         bvps = equity / shares_out
         if bvps > 0:
             pb_val = round(price / bvps, 2)
+
     # EPS y P/E desde net income y shares
     if eps_val is None and net_income is not None and shares_out and shares_out > 0:
         eps_val = round(net_income / shares_out, 4)
-
-    pe         = r2(safe(info.get("trailingPE")))
+    pe = r2(safe(info.get("trailingPE")))
     if pe is None and eps_val is not None and eps_val > 0 and price is not None:
         pe = round(price / eps_val, 2)
+
+    # EV/EBITDA desde estados financieros
+    ev_ebitda = r2(safe(info.get("enterpriseToEbitda")))
+    if ev_ebitda is None:
+        try:
+            # EV = MarketCap + Deuda - Caja
+            cash = safe(info.get("totalCash"))
+            if cash is None and bal is not None and not bal.empty:
+                for row in ["Cash And Cash Equivalents", "Cash Cash Equivalents And Short Term Investments",
+                            "Cash Financial", "Available For Sale Securities"]:
+                    if row in bal.index:
+                        cash = safe(float(bal.loc[row].iloc[0]))
+                        break
+            ev_computed = None
+            if market_cap and total_debt is not None:
+                ev_computed = market_cap + (total_debt or 0) - (cash or 0)
+            # EBITDA desde income statement
+            ebitda = None
+            if inc is not None and not inc.empty:
+                for row in ["Normalized EBITDA", "EBITDA", "Ebitda", "Reconciled Depreciation"]:
+                    if row in inc.index:
+                        v = safe(float(inc.loc[row].iloc[0]))
+                        if row in ("Normalized EBITDA", "EBITDA", "Ebitda") and v:
+                            ebitda = v
+                            break
+            if ebitda is None and op_cashflow is not None and total_revenue is not None:
+                ebitda = op_cashflow  # proxy: operating CF ≈ EBITDA para estimación
+            if ev_computed and ebitda and ebitda > 0 and ev_computed > 0:
+                ev_ebitda = round(ev_computed / ebitda, 2)
+        except Exception:
+            pass
+
+    # BETA desde datos históricos semanales vs SPY
+    if beta_val is None:
+        try:
+            h_stock = _fetch_hist(ticker, period="1y", interval="1wk")
+            h_spy   = _fetch_hist("SPY",  period="1y", interval="1wk")
+            if h_stock is not None and h_spy is not None and not h_stock.empty and not h_spy.empty:
+                sc = h_stock["Close"].dropna().tolist()
+                mc = h_spy["Close"].dropna().tolist()
+                n  = min(len(sc), len(mc)) - 1
+                if n >= 12:
+                    sr = [sc[i] / sc[i-1] - 1 for i in range(1, n+1)]
+                    mr = [mc[i] / mc[i-1] - 1 for i in range(1, n+1)]
+                    sm = sum(sr) / n;  mm = sum(mr) / n
+                    cov = sum((sr[i] - sm) * (mr[i] - mm) for i in range(n)) / n
+                    var = sum((mr[i] - mm) ** 2 for i in range(n)) / n
+                    if var > 0:
+                        beta_val = round(cov / var, 2)
+        except Exception:
+            pass
+
+    # 52-week change desde histórico si .info no lo dio
+    price52chg = safe(info.get("52WeekChange"))
+    if price52chg is None:
+        try:
+            h52 = _fetch_hist(ticker, period="1y", interval="1wk")
+            if h52 is not None and not h52.empty and len(h52) >= 2:
+                first = float(h52["Close"].dropna().iloc[0])
+                last  = float(h52["Close"].dropna().iloc[-1])
+                if first > 0:
+                    price52chg = (last - first) / first
+        except Exception:
+            pass
+
     growth_raw = safe(info.get("earningsGrowth") or info.get("earningsQuarterlyGrowth"))
     div_raw    = safe(info.get("dividendYield"))
     growth     = growth_raw * 100 if growth_raw else None
     div_pct    = div_raw  * 100 if div_raw  else None
     peg        = round(pe / growth,             2) if (pe and growth and growth > 0) else None
     pegy       = round(pe / (growth + div_pct), 2) if (pe and growth and growth > 0 and div_pct) else None
-    price52chg = safe(info.get("52WeekChange"))
 
     return {
         "name":               name,
@@ -259,7 +322,7 @@ def get_stock(ticker: str) -> dict:
         "eps":                eps_val,
         "peg":                peg,
         "pegy":               pegy,
-        "evEbitda":           r2(safe(info.get("enterpriseToEbitda"))),
+        "evEbitda":           ev_ebitda,
         "pb":                 pb_val,
         "roe":                roe_val,
         "profitMargin":       margin_val,
