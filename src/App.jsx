@@ -4,9 +4,8 @@ import kaizenLogo from './assets/kaizen-logo.jpg';
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 const BACKEND_CANDIDATES = [
-  "https://kaizen-backend-railway.up.railway.app",  // Railway (primario)
-  "https://kaizen-backend.onrender.com",             // Render (secundario)
-  "http://localhost:8002",                            // Local dev
+  "https://app-4-everyone.onrender.com",  // Render (primario)
+  "http://localhost:8002",                // Local dev
 ];
 
 async function detectBackend() {
