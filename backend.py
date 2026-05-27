@@ -393,26 +393,67 @@ def _cboe_vix():
     return None
 
 
+def _stooq_dxy():
+    """DXY desde Stooq (CSV público, no requiere auth)."""
+    try:
+        resp = _session.get("https://stooq.com/q/d/l/?s=dxy.fo&i=d", timeout=8)
+        lines = [l for l in resp.text.strip().split("\n") if l and not l.lower().startswith("date")]
+        for line in reversed(lines):
+            parts = line.split(",")
+            if len(parts) >= 5 and parts[4].strip():
+                return float(parts[4].strip())
+    except Exception:
+        pass
+    return None
+
+
+def _make_entry(value, prev=None):
+    chg = round(value - prev, 4) if prev is not None else 0
+    return {"value": round(value, 4), "change": chg}
+
+
 def _get_macro_fresh() -> dict:
-    # Un solo bulk download para VIX, T10Y, T2Y y DXY (menos bloqueado que 4 llamadas individuales)
-    bulk = _bulk_download({"^VIX": "vix", "^TNX": "t10y", "^IRX": "t2y", "DX-Y.NYB": "dxy"})
-    results = {k: bulk.get(k) for k in ("vix", "t10y", "t2y", "dxy")}
+    results = {}
 
-    # Fallback FRED para tasas del Tesoro
-    if results.get("t10y") is None:
-        v = _fred_rate("DGS10")
-        if v is not None:
-            results["t10y"] = {"value": round(v, 2), "change": 0}
-    if results.get("t2y") is None:
-        v = _fred_rate("DGS2")
-        if v is not None:
-            results["t2y"] = {"value": round(v, 2), "change": 0}
+    # ── FRED como fuente PRIMARIA para tasas (API pública de la Fed, sin restricciones) ──
+    def _fred_entry(series):
+        v = _fred_rate(series)
+        return {"value": round(v, 2), "change": 0} if v is not None else None
 
-    # Fallback CBOE para VIX
-    if results.get("vix") is None:
-        v = _cboe_vix()
-        if v is not None:
-            results["vix"] = {"value": round(v, 2), "change": 0}
+    with ThreadPoolExecutor(max_workers=4) as ex:
+        f10  = ex.submit(_fred_entry, "DGS10")
+        f2   = ex.submit(_fred_entry, "DGS2")
+        fvix = ex.submit(_cboe_vix)
+        fdxy = ex.submit(_stooq_dxy)
+
+    v10 = f10.result(); v2 = f2.result()
+    if v10: results["t10y"] = v10
+    if v2:  results["t2y"]  = v2
+    raw_vix = fvix.result()
+    if raw_vix is not None: results["vix"] = {"value": round(raw_vix, 2), "change": 0}
+    raw_dxy = fdxy.result()
+    if raw_dxy is not None: results["dxy"] = {"value": round(raw_dxy, 2), "change": 0}
+
+    # ── Fallback Yahoo Finance (bulk) para lo que siga faltando ──
+    missing = {}
+    if "vix"  not in results: missing["^VIX"]    = "vix"
+    if "t10y" not in results: missing["^TNX"]    = "t10y"
+    if "t2y"  not in results: missing["^IRX"]    = "t2y"
+    if "dxy"  not in results: missing["DX-Y.NYB"] = "dxy"
+    if missing:
+        bulk = _bulk_download(missing)
+        for k, v in bulk.items():
+            if v is not None and k not in results:
+                results[k] = v
+
+    # ── VIX desde market cache como último recurso ──
+    if "vix" not in results:
+        try:
+            mkt = get_market()
+            if mkt.get("vix"):
+                results["vix"] = mkt["vix"]
+        except Exception:
+            pass
 
     # Spread 10Y - 2Y
     try:
