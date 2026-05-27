@@ -1814,6 +1814,15 @@ export default function App() {
 
           /* Fixed-width col → fluid */
           .stylebox-col-fixed { grid-template-columns: 1fr !important; }
+
+          /* Bento grid de índices/commodities: 4 cols → 2 cols */
+          .bento-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+          /* Indicadores principales: 4 cols → 2 cols */
+          .ind-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+          /* Bento cards: texto más grande en mobile */
+          .bento-grid .bento-val { font-size: 22px !important; }
         }
       `}</style>
 
@@ -3555,7 +3564,7 @@ export default function App() {
 
               {/* ── BENTO GRID ── */}
               {md && (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
+                <div className="bento-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
                   {[
                     { key: "sp500",  label: "S&P 500",  dec: 2,              bg: "#0a0a0a", fg: "#ffffff" },
                     { key: "nasdaq", label: "NASDAQ",    dec: 2,              bg: "#00ff88", fg: "#0a0a0a" },
@@ -3577,7 +3586,7 @@ export default function App() {
                         display: "flex", flexDirection: "column", gap: 8,
                       }}>
                         <div style={{ fontSize: 10, fontWeight: 700, color: isDark ? "#888888" : "#666666", textTransform: "uppercase", letterSpacing: "0.1em" }}>{label}</div>
-                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 32, fontWeight: 500, color: fg, lineHeight: 1, letterSpacing: "-0.02em" }}>
+                        <div className="bento-val" style={{ fontFamily: "'DM Mono', monospace", fontSize: 32, fontWeight: 500, color: fg, lineHeight: 1, letterSpacing: "-0.02em" }}>
                           {d ? fv(d.value, dec) + (unit ? " " + unit : "") : "—"}
                         </div>
                         {d?.change_pct != null && (
@@ -3604,7 +3613,7 @@ export default function App() {
                 <div style={{ padding: "8px 16px", borderBottom: "1px solid #e0e0d8", background: "#ffffff" }}>
                   <span style={{ fontSize: 9, fontWeight: 700, color: "#888888", textTransform: "uppercase", letterSpacing: "0.2em", fontFamily: "'Syne', sans-serif" }}>Indicadores Principales</span>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)" }}>
+                <div className="ind-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)" }}>
                   {[
                     { key: "sp500",  label: "S&P 500",        dec: 2 },
                     { key: "nasdaq", label: "NASDAQ",           dec: 2 },
@@ -3816,7 +3825,7 @@ export default function App() {
               </div>
 
               {/* ── MATERIAS PRIMAS & CRYPTO + ÍNDICES GLOBALES ── */}
-              <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16 }}>
+              <div className="resp-grid-2" style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16 }}>
 
                 <Panel title="Materias Primas y Criptoactivos" color="#d97706">
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
