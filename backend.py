@@ -68,42 +68,98 @@ def _leverage_ratio(info):
 def get_stock(ticker: str) -> dict:
     t = yft(ticker)
     info = {}
-    for attempt in range(3):
+
+    # 1) Intentar .info (puede ser lento o None en cloud)
+    for attempt in range(2):
         try:
-            info = t.info
-            if info.get("regularMarketPrice") or info.get("currentPrice"):
+            result = t.info
+            if result and isinstance(result, dict) and len(result) > 5:
+                info = result
                 break
         except Exception:
             pass
-        time.sleep(1.5 * (attempt + 1))
+        time.sleep(2)
 
-    # Precio robusto: varios fallbacks
+    # 2) Precio robusto con múltiples fallbacks
     price = safe(info.get("currentPrice") or info.get("regularMarketPrice"))
     if price is None:
         try:
             fi = t.fast_info
-            price = safe(getattr(fi, "last_price", None))
+            price = safe(getattr(fi, "last_price", None) or getattr(fi, "regularMarketPrice", None))
         except Exception:
             pass
     if price is None:
         try:
-            hist = t.history(period="2d")
+            hist = t.history(period="5d")
             if not hist.empty:
                 price = round(float(hist["Close"].iloc[-1]), 2)
         except Exception:
             pass
 
-    pe           = r2(safe(info.get("trailingPE")))
-    growth_raw   = safe(info.get("earningsGrowth") or info.get("earningsQuarterlyGrowth"))
-    div_raw      = safe(info.get("dividendYield"))
-    growth       = growth_raw * 100 if growth_raw else None
-    div_pct      = div_raw  * 100 if div_raw  else None
-    peg  = round(pe / growth,             2) if (pe and growth and growth > 0) else None
-    pegy = round(pe / (growth + div_pct), 2) if (pe and growth and growth > 0 and div_pct) else None
-    price52chg   = safe(info.get("52WeekChange"))
+    # 3) Nombre desde fast_info si info está vacío
+    name = info.get("shortName") or info.get("longName")
+    if not name:
+        try:
+            name = getattr(t.fast_info, "name", None) or ticker
+        except Exception:
+            name = ticker
+
+    # 4) Financials desde DataFrames de yfinance (más confiables que .info)
+    total_revenue = safe(info.get("totalRevenue"))
+    net_income    = safe(info.get("netIncomeToCommon"))
+    total_assets  = safe(info.get("totalAssets"))
+    total_debt    = safe(info.get("totalDebt"))
+    op_cashflow   = safe(info.get("operatingCashflow"))
+    free_cashflow = safe(info.get("freeCashflow"))
+
+    if total_revenue is None:
+        try:
+            fin = t.financials
+            if fin is not None and not fin.empty:
+                for row in ["Total Revenue", "totalRevenue"]:
+                    if row in fin.index:
+                        total_revenue = safe(float(fin.loc[row].iloc[0]))
+                        break
+            inc = t.income_stmt
+            if inc is not None and not inc.empty and net_income is None:
+                for row in ["Net Income", "netIncome"]:
+                    if row in inc.index:
+                        net_income = safe(float(inc.loc[row].iloc[0]))
+                        break
+            bal = t.balance_sheet
+            if bal is not None and not bal.empty:
+                for row in ["Total Assets", "totalAssets"]:
+                    if row in bal.index and total_assets is None:
+                        total_assets = safe(float(bal.loc[row].iloc[0]))
+                        break
+                for row in ["Total Debt", "totalDebt", "Long Term Debt"]:
+                    if row in bal.index and total_debt is None:
+                        total_debt = safe(float(bal.loc[row].iloc[0]))
+                        break
+            cf = t.cashflow
+            if cf is not None and not cf.empty:
+                for row in ["Operating Cash Flow", "operatingCashflow"]:
+                    if row in cf.index and op_cashflow is None:
+                        op_cashflow = safe(float(cf.loc[row].iloc[0]))
+                        break
+                for row in ["Free Cash Flow", "freeCashflow"]:
+                    if row in cf.index and free_cashflow is None:
+                        free_cashflow = safe(float(cf.loc[row].iloc[0]))
+                        break
+        except Exception:
+            pass
+
+    pe         = r2(safe(info.get("trailingPE")))
+    growth_raw = safe(info.get("earningsGrowth") or info.get("earningsQuarterlyGrowth"))
+    div_raw    = safe(info.get("dividendYield"))
+    growth     = growth_raw * 100 if growth_raw else None
+    div_pct    = div_raw  * 100 if div_raw  else None
+    peg        = round(pe / growth,             2) if (pe and growth and growth > 0) else None
+    pegy       = round(pe / (growth + div_pct), 2) if (pe and growth and growth > 0 and div_pct) else None
+    price52chg = safe(info.get("52WeekChange"))
 
     return {
-        "name":               info.get("shortName") or info.get("longName") or ticker,
+        "name":               name,
         "price":              r2(price),
         "pe":                 pe,
         "eps":                r2(safe(info.get("trailingEps"))),
@@ -123,13 +179,12 @@ def get_stock(ticker: str) -> dict:
         "debtToAssets":       _debt_to_assets(info),
         "leverageRatio":      _leverage_ratio(info),
         "sector":             info.get("sector"),
-        # Financials para Análisis tab
-        "totalRevenue":       safe(info.get("totalRevenue")),
-        "netIncomeToCommon":  safe(info.get("netIncomeToCommon")),
-        "totalAssets":        safe(info.get("totalAssets")),
-        "totalDebt":          safe(info.get("totalDebt")),
-        "operatingCashflow":  safe(info.get("operatingCashflow")),
-        "freeCashflow":       safe(info.get("freeCashflow")),
+        "totalRevenue":       total_revenue,
+        "netIncomeToCommon":  net_income,
+        "totalAssets":        total_assets,
+        "totalDebt":          total_debt,
+        "operatingCashflow":  op_cashflow,
+        "freeCashflow":       free_cashflow,
     }
 
 
