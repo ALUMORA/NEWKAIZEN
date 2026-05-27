@@ -960,9 +960,6 @@ export default function App() {
   const [newsSentimentFilter, setNewsSentimentFilter] = useState("all");
   const [macroData, setMacroData] = useState(null);
   const [dcfData, setDcfData] = useState({});       // { ticker: {...} }
-  const [insidersData, setInsidersData] = useState(null);
-  const [insidersTicker, setInsidersTicker] = useState("");
-  const [insidersLoading, setInsidersLoading] = useState(false);
   const [momentumData, setMomentumData] = useState({}); // { ticker: {...} }
   const [corrMatrix, setCorrMatrix] = useState(null);
   const [fibrasData, setFibrasData] = useState(null);
@@ -1865,7 +1862,6 @@ export default function App() {
             { id: "optimize",   label: "Sharpe Optimizer" },
             { id: "screener",   label: "ML Screener" },
             { id: "analytics",  label: "Analytics vs SPY" },
-            { id: "insiders",   label: "Insiders" },
             { id: "fibras",     label: "FIBRA Screener" },
             { id: "magic",      label: "Fórmula Mágica" },
             { id: "analisis",   label: "Análisis" },
@@ -1887,7 +1883,7 @@ export default function App() {
           {[
             { id:"news",label:"Noticias"},{id:"portfolio",label:"Portfolio"},
             {id:"optimize",label:"Sharpe"},{id:"screener",label:"ML Screener"},
-            {id:"analytics",label:"Analytics"},{id:"insiders",label:"Insiders"},
+            {id:"analytics",label:"Analytics"},
             {id:"fibras",label:"FIBRAs"},{id:"magic",label:"Fórmula Mágica"},
             {id:"analisis",label:"Análisis"},
           ].find(t=>t.id===tab)?.label}
@@ -1921,7 +1917,7 @@ export default function App() {
         const TABS = [
           { id:"news",label:"Noticias" },{ id:"portfolio",label:"Portfolio" },
           { id:"optimize",label:"Sharpe" },{ id:"screener",label:"ML Screener" },
-          { id:"analytics",label:"Analytics" },{ id:"insiders",label:"Insiders" },
+          { id:"analytics",label:"Analytics" },
           { id:"fibras",label:"FIBRAs" },{ id:"magic",label:"Fórmula Mágica" },
           { id:"analisis",label:"Análisis" },
         ];
@@ -4234,140 +4230,6 @@ export default function App() {
         )}
 
         {/* ─── TAB: INSIDERS ─── */}
-        {tab === "insiders" && (
-          <div>
-            {/* Buscador */}
-            <div style={{ background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8", padding: 20, marginBottom: 24 }}>
-              <div style={{ fontSize: 10, color: "#bbbbbb", letterSpacing: "0.14em", fontWeight: 600, marginBottom: 12 }}>BUSCAR TRANSACCIONES DE INSIDERS Y FLUJO INSTITUCIONAL</div>
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 16 }}>
-                <input
-                  value={insidersTicker}
-                  onChange={(e) => setInsidersTicker(e.target.value.toUpperCase())}
-                  onKeyDown={(e) => e.key === "Enter" && (async () => {
-                    setInsidersLoading(true); setInsidersData(null);
-                    const d = await fetch(`${BACKEND}/insiders/${encodeURIComponent(insidersTicker)}`).then(r => r.json()).catch(() => null);
-                    setInsidersData(d); setInsidersLoading(false);
-                  })()}
-                  placeholder="AAPL / MSFT / WALMEX.MX"
-                  style={{ background: "#f8f8f8", border: "1px solid #e5e5e5", borderRadius: 10, color: "#111111", padding: "8px 14px", fontSize: 13, width: 220, fontFamily: "'DM Mono', monospace" }}
-                />
-                <button disabled={insidersLoading || !insidersTicker} onClick={async () => {
-                  setInsidersLoading(true); setInsidersData(null);
-                  const d = await fetch(`${BACKEND}/insiders/${encodeURIComponent(insidersTicker)}`).then(r => r.json()).catch(() => null);
-                  setInsidersData(d); setInsidersLoading(false);
-                }} style={{
-                  background: insidersLoading || !insidersTicker ? "#e5e5e5" : "#111111",
-                  border: "none", borderRadius: 999, color: "#fff",
-                  padding: "9px 24px", cursor: "pointer", fontSize: 13, fontWeight: 600,
-                  display: "flex", alignItems: "center", gap: 8
-                }}>
-                  {insidersLoading && <Spinner size={14} />}
-                  {insidersLoading ? "Buscando..." : "◉ Buscar"}
-                </button>
-                {/* Accesos rápidos */}
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {portfolio.map(p => (
-                    <button key={p.ticker} onClick={async () => {
-                      setInsidersTicker(p.ticker); setInsidersLoading(true); setInsidersData(null);
-                      const d = await fetch(`${BACKEND}/insiders/${encodeURIComponent(p.ticker)}`).then(r => r.json()).catch(() => null);
-                      setInsidersData(d); setInsidersLoading(false);
-                    }} style={{
-                      background: insidersTicker === p.ticker ? "#fff7ed" : "#ffffff",
-                      border: `1px solid ${insidersTicker === p.ticker ? "#00ff88" : "#e5e5e5"}`,
-                      borderRadius: 999, color: insidersTicker === p.ticker ? "#00ff88" : "#666666",
-                      padding: "5px 12px", cursor: "pointer", fontSize: 11,
-                      fontFamily: "'DM Mono', monospace"
-                    }}>{p.ticker}</button>
-                  ))}
-                </div>
-              </div>
-              <div style={{ fontSize: 12, color: "#bbbbbb", lineHeight: 1.6 }}>
-                Las compras de insiders (directivos, consejeros) con su propio dinero son una señal alcista fuerte. Las ventas son ambiguas — pueden ser por liquidez personal.
-                Datos vía SEC / Yahoo Finance.
-              </div>
-            </div>
-
-            {insidersData && !insidersData.error && (
-              <div className="resp-grid-2" style={{ gap: 20 }}>
-
-                {/* Transacciones de insiders */}
-                <div style={{ background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8", padding: 24 }}>
-                  <div style={{ fontSize: 10, color: "#bbbbbb", letterSpacing: "0.14em", fontWeight: 600, marginBottom: 16 }}>TRANSACCIONES RECIENTES DE INSIDERS</div>
-                  {insidersData.transactions?.length > 0 ? (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                      {insidersData.transactions.map((t, i) => {
-                        const isBuy = t.action === "BUY";
-                        return (
-                          <div key={i} style={{
-                            display: "flex", justifyContent: "space-between", alignItems: "center",
-                            padding: "10px 14px", borderRadius: 12,
-                            background: isBuy ? "#f0fdf4" : "#fff7f7",
-                            borderLeft: `3px solid ${isBuy ? "#16a34a" : "#dc2626"}`
-                          }}>
-                            <div>
-                              <div style={{ fontWeight: 600, fontSize: 13, color: "#111111" }}>{t.name}</div>
-                              <div style={{ fontSize: 11, color: "#999999", marginTop: 2 }}>{t.date} · {t.text}</div>
-                            </div>
-                            <div style={{ textAlign: "right" }}>
-                              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, color: isBuy ? "#16a34a" : "#dc2626" }}>
-                                {isBuy ? " COMPRA" : " VENTA"}
-                              </div>
-                              {t.value > 0 && <div style={{ fontSize: 11, color: "#999999", marginTop: 2 }}>${(t.value / 1000).toFixed(0)}k</div>}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div style={{ color: "#bbbbbb", fontSize: 13 }}>No hay transacciones disponibles para este ticker.</div>
-                  )}
-                </div>
-
-                {/* Principales accionistas institucionales */}
-                <div style={{ background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8", padding: 24 }}>
-                  <div style={{ fontSize: 10, color: "#bbbbbb", letterSpacing: "0.14em", fontWeight: 600, marginBottom: 16 }}>PRINCIPALES ACCIONISTAS INSTITUCIONALES</div>
-                  {insidersData.institutions?.length > 0 ? (
-                    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                      {insidersData.institutions.map((inst, i) => {
-                        const pct = inst.pct;
-                        return (
-                          <div key={i} style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                            <div style={{ minWidth: 28, height: 28, borderRadius: 8, background: "#f2f2f2", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 700, color: "#555555" }}>
-                              {i + 1}
-                            </div>
-                            <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: 13, fontWeight: 600, color: "#111111", marginBottom: 4 }}>{inst.name}</div>
-                              <div style={{ background: "#f2f2f2", borderRadius: 99, height: 6, overflow: "hidden" }}>
-                                <div style={{ width: `${Math.min(pct * 3, 100)}%`, height: "100%", background: "#00ff88", borderRadius: 99, transition: "width 0.6s ease" }} />
-                              </div>
-                            </div>
-                            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700, color: "#00cc6a", minWidth: 48, textAlign: "right" }}>
-                              {pct.toFixed(1)}%
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div style={{ color: "#bbbbbb", fontSize: 13 }}>No hay datos institucionales disponibles.</div>
-                  )}
-                </div>
-
-              </div>
-            )}
-
-            {insidersData?.error && (
-              <div style={{ color: "#dc2626", fontSize: 13 }}>Error: {insidersData.error}</div>
-            )}
-
-            {!insidersData && !insidersLoading && (
-              <div style={{ textAlign: "center", color: "#bbbbbb", fontSize: 13, marginTop: 60 }}>
-                Ingresa un ticker para ver las transacciones de insiders y flujo institucional
-              </div>
-            )}
-          </div>
-        )}
-
         {/* ─── TAB: FIBRA SCREENER ─── */}
         {tab === "fibras" && (
           <div>
