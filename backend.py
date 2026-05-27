@@ -156,40 +156,71 @@ def get_stock(ticker: str) -> dict:
     op_cashflow   = safe(info.get("operatingCashflow"))
     free_cashflow = safe(info.get("freeCashflow"))
 
-    if total_revenue is None:
+    # Variables que se poblan desde estados financieros
+    equity = None
+    roe_computed = None
+    de_computed  = None
+
+    # Intentar estados financieros para métricas que .info no pudo dar
+    try:
+        fin = t.financials
+        if fin is not None and not fin.empty:
+            for row in ["Total Revenue", "totalRevenue"]:
+                if row in fin.index and total_revenue is None:
+                    total_revenue = safe(float(fin.loc[row].iloc[0]))
+                    break
+        inc = t.income_stmt
+        if inc is not None and not inc.empty and net_income is None:
+            for row in ["Net Income", "netIncome", "Net Income Common Stockholders"]:
+                if row in inc.index:
+                    net_income = safe(float(inc.loc[row].iloc[0]))
+                    break
+        bal = t.balance_sheet
+        if bal is not None and not bal.empty:
+            for row in ["Total Assets", "totalAssets"]:
+                if row in bal.index and total_assets is None:
+                    total_assets = safe(float(bal.loc[row].iloc[0]))
+                    break
+            for row in ["Total Debt", "totalDebt", "Long Term Debt"]:
+                if row in bal.index and total_debt is None:
+                    total_debt = safe(float(bal.loc[row].iloc[0]))
+                    break
+            # Equity para calcular ROE y D/E
+            for row in ["Stockholders Equity", "Common Stock Equity",
+                        "Total Equity Gross Minority Interest", "stockholdersEquity"]:
+                if row in bal.index:
+                    equity = safe(float(bal.loc[row].iloc[0]))
+                    break
+        cf = t.cashflow
+        if cf is not None and not cf.empty:
+            for row in ["Operating Cash Flow", "operatingCashflow"]:
+                if row in cf.index and op_cashflow is None:
+                    op_cashflow = safe(float(cf.loc[row].iloc[0]))
+                    break
+            for row in ["Free Cash Flow", "freeCashflow"]:
+                if row in cf.index and free_cashflow is None:
+                    free_cashflow = safe(float(cf.loc[row].iloc[0]))
+                    break
+    except Exception:
+        pass
+
+    # Métricas calculadas como fallback cuando .info está vacío
+    roe_val   = pct(info.get("returnOnEquity"))
+    margin_val = pct(info.get("profitMargins"))
+    de_val    = r2(safe(info.get("debtToEquity")))
+    beta_val  = r2(safe(info.get("beta")))
+    market_cap = safe(info.get("marketCap"))
+
+    if roe_val is None and net_income is not None and equity is not None and equity > 0:
+        roe_val = round((net_income / equity) * 100, 2)
+    if margin_val is None and net_income is not None and total_revenue is not None and total_revenue > 0:
+        margin_val = round((net_income / total_revenue) * 100, 2)
+    if de_val is None and total_debt is not None and equity is not None and equity > 0:
+        de_val = round((total_debt / equity) * 100, 2)
+    if market_cap is None and price is not None:
         try:
-            fin = t.financials
-            if fin is not None and not fin.empty:
-                for row in ["Total Revenue", "totalRevenue"]:
-                    if row in fin.index:
-                        total_revenue = safe(float(fin.loc[row].iloc[0]))
-                        break
-            inc = t.income_stmt
-            if inc is not None and not inc.empty and net_income is None:
-                for row in ["Net Income", "netIncome"]:
-                    if row in inc.index:
-                        net_income = safe(float(inc.loc[row].iloc[0]))
-                        break
-            bal = t.balance_sheet
-            if bal is not None and not bal.empty:
-                for row in ["Total Assets", "totalAssets"]:
-                    if row in bal.index and total_assets is None:
-                        total_assets = safe(float(bal.loc[row].iloc[0]))
-                        break
-                for row in ["Total Debt", "totalDebt", "Long Term Debt"]:
-                    if row in bal.index and total_debt is None:
-                        total_debt = safe(float(bal.loc[row].iloc[0]))
-                        break
-            cf = t.cashflow
-            if cf is not None and not cf.empty:
-                for row in ["Operating Cash Flow", "operatingCashflow"]:
-                    if row in cf.index and op_cashflow is None:
-                        op_cashflow = safe(float(cf.loc[row].iloc[0]))
-                        break
-                for row in ["Free Cash Flow", "freeCashflow"]:
-                    if row in cf.index and free_cashflow is None:
-                        free_cashflow = safe(float(cf.loc[row].iloc[0]))
-                        break
+            mc = safe(getattr(t.fast_info, "market_cap", None) or getattr(t.fast_info, "marketCap", None))
+            market_cap = mc
         except Exception:
             pass
 
@@ -211,13 +242,13 @@ def get_stock(ticker: str) -> dict:
         "pegy":               pegy,
         "evEbitda":           r2(safe(info.get("enterpriseToEbitda"))),
         "pb":                 r2(safe(info.get("priceToBook"))),
-        "roe":                pct(info.get("returnOnEquity")),
-        "profitMargin":       pct(info.get("profitMargins")),
-        "debtEquity":         r2(safe(info.get("debtToEquity"))),
+        "roe":                roe_val,
+        "profitMargin":       margin_val,
+        "debtEquity":         de_val,
         "revenueGrowth":      pct(info.get("revenueGrowth")),
         "priceChange52w":     round(price52chg * 100, 2) if price52chg is not None else None,
-        "beta":               r2(safe(info.get("beta"))),
-        "marketCap":          safe(info.get("marketCap")),
+        "beta":               beta_val,
+        "marketCap":          market_cap,
         "dividendYield":      div_raw,
         "pcf":                r2(safe(info.get("priceToFreeCashflow"))),
         "debtToAssets":       _debt_to_assets(info),
@@ -312,105 +343,139 @@ def get_macro() -> dict:
     return _cached("macro", _get_macro_fresh, ttl=300)
 
 
-def _get_market_fresh() -> dict:
-    symbols_map = {
-        "sp500":  "^GSPC",  "nasdaq": "^IXIC",  "dow":    "^DJI",
-        "ipc":    "^MXX",   "nikkei": "^N225",   "ftse":   "^FTSE",
-        "dax":    "^GDAXI", "cac":    "^FCHI",   "hsi":    "^HSI",
-        "usdmxn": "USDMXN=X", "eurusd": "EURUSD=X", "eurmxn": "EURMXN=X",
-        "gbpusd": "GBPUSD=X", "usdjpy": "USDJPY=X",
-        "wti":    "CL=F",   "brent":  "BZ=F",    "gold":   "GC=F",
-        "silver": "SI=F",   "copper": "HG=F",    "natgas": "NG=F",
-        "btc":    "BTC-USD", "eth":   "ETH-USD",
-        "vix":    "^VIX",
-        # Style Box (Morningstar-style 3×3 US equity)
-        "sb_lv": "IVE",  "sb_lb": "IVV",  "sb_lg": "IVW",
-        "sb_mv": "IJJ",  "sb_mb": "IJH",  "sb_mg": "IJK",
-        "sb_sv": "IJS",  "sb_sb": "IJR",  "sb_sg": "IJT",
-    }
-    def _fetch(args):
-        key, sym = args
-        try:
-            hist = _fetch_hist(sym)
-            if hist is not None and not hist.empty:
-                val  = float(hist["Close"].iloc[-1])
-                prev = float(hist["Close"].iloc[-2]) if len(hist) >= 2 else val
-                chg  = round(val - prev, 4)
-                pct  = round((chg / prev) * 100, 2) if prev != 0 else 0
-                return key, {"value": round(val, 4), "change": chg, "change_pct": pct}
-        except Exception:
-            pass
-        return key, None
+_MARKET_SYMS = {
+    "sp500":  "^GSPC",  "nasdaq": "^IXIC",  "dow":    "^DJI",
+    "ipc":    "^MXX",   "nikkei": "^N225",   "ftse":   "^FTSE",
+    "dax":    "^GDAXI", "cac":    "^FCHI",   "hsi":    "^HSI",
+    "usdmxn": "USDMXN=X", "eurusd": "EURUSD=X", "eurmxn": "EURMXN=X",
+    "gbpusd": "GBPUSD=X", "usdjpy": "USDJPY=X",
+    "wti":    "CL=F",   "brent":  "BZ=F",    "gold":   "GC=F",
+    "silver": "SI=F",   "copper": "HG=F",    "natgas": "NG=F",
+    "btc":    "BTC-USD", "eth":   "ETH-USD",
+    "vix":    "^VIX",
+    "sb_lv": "IVE",  "sb_lb": "IVV",  "sb_lg": "IVW",
+    "sb_mv": "IJJ",  "sb_mb": "IJH",  "sb_mg": "IJK",
+    "sb_sv": "IJS",  "sb_sb": "IJR",  "sb_sg": "IJT",
+}
 
+def _bulk_download(sym_to_key: dict, period: str = "5d") -> dict:
+    """
+    Descarga todos los símbolos en UNA sola llamada yf.download().
+    Mucho menos propenso a rate-limiting que múltiples requests individuales.
+    """
     results = {}
-    with ThreadPoolExecutor(max_workers=4) as ex:
-        for key, val in ex.map(_fetch, symbols_map.items()):
-            results[key] = val
+    syms = list(sym_to_key.keys())
+    try:
+        raw = yf.download(
+            syms, period=period, interval="1d",
+            progress=False, auto_adjust=True,
+        )
+        if raw is None or raw.empty:
+            raise ValueError("empty")
+        # Con múltiples tickers, columns es MultiIndex (Price, Ticker)
+        closes = raw["Close"] if "Close" in raw.columns.get_level_values(0) else raw
+        for sym, key in sym_to_key.items():
+            try:
+                col = closes[sym].dropna()
+                if len(col) >= 1:
+                    val  = float(col.iloc[-1])
+                    prev = float(col.iloc[-2]) if len(col) >= 2 else val
+                    chg  = round(val - prev, 4)
+                    pct_v = round((chg / prev) * 100, 2) if prev != 0 else 0
+                    results[key] = {"value": round(val, 4), "change": chg, "change_pct": pct_v}
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    # Fallback individual para símbolos que fallaron
+    missing = {s: k for s, k in sym_to_key.items() if k not in results}
+    if missing:
+        def _fetch_one(args):
+            sym, key = args
+            try:
+                hist = _fetch_hist(sym)
+                if hist is not None and not hist.empty:
+                    val  = float(hist["Close"].iloc[-1])
+                    prev = float(hist["Close"].iloc[-2]) if len(hist) >= 2 else val
+                    chg  = round(val - prev, 4)
+                    pct_v = round((chg / prev) * 100, 2) if prev != 0 else 0
+                    return key, {"value": round(val, 4), "change": chg, "change_pct": pct_v}
+            except Exception:
+                pass
+            return key, None
+        with ThreadPoolExecutor(max_workers=4) as ex:
+            for key, val in ex.map(_fetch_one, missing.items()):
+                if val is not None:
+                    results[key] = val
+
     return results
+
+
+def _get_market_fresh() -> dict:
+    sym_to_key = {v: k for k, v in _MARKET_SYMS.items()}
+    return _bulk_download(sym_to_key)
 
 def get_market() -> dict:
     """Mercados globales: índices, divisas, commodities, crypto. Cacheado 2 min."""
     return _cached("market", _get_market_fresh, ttl=120)
 
 
-def _get_worldmap_fresh() -> dict:
-    symbols_map = {
-        "840": "SPY",   # USA
-        "124": "EWC",   # Canada
-        "484": "EWW",   # Mexico
-        "076": "EWZ",   # Brazil
-        "152": "ECH",   # Chile
-        "826": "EWU",   # UK
-        "276": "EWG",   # Germany
-        "250": "EWQ",   # France
-        "380": "EWI",   # Italy
-        "724": "EWP",   # Spain
-        "528": "EWN",   # Netherlands
-        "756": "EWL",   # Switzerland
-        "752": "EWD",   # Sweden
-        "040": "EWO",   # Austria
-        "392": "EWJ",   # Japan
-        "156": "FXI",   # China
-        "036": "EWA",   # Australia
-        "356": "INDA",  # India
-        "410": "EWY",   # South Korea
-        "158": "EWT",   # Taiwan
-        "344": "EWH",   # Hong Kong
-        "702": "EWS",   # Singapore
-        "710": "EZA",   # South Africa
-        "682": "KSA",   # Saudi Arabia
-        "792": "TUR",   # Turkey
-        "616": "EPOL",  # Poland
-    }
-    def _fetch(args):
-        key, sym = args
-        try:
-            hist = _fetch_hist(sym)
-            if hist is not None and not hist.empty:
-                val  = float(hist["Close"].iloc[-1])
-                prev = float(hist["Close"].iloc[-2]) if len(hist) >= 2 else val
-                chg  = round(val - prev, 4)
-                pct  = round((chg / prev) * 100, 2) if prev != 0 else 0
-                return key, {"value": round(val, 4), "change": chg, "change_pct": pct}
-        except Exception:
-            pass
-        return key, None
+_WORLDMAP_SYMS = {
+    "SPY":  "840", "EWC": "124", "EWW": "484", "EWZ": "076",
+    "ECH":  "152", "EWU": "826", "EWG": "276", "EWQ": "250",
+    "EWI":  "380", "EWP": "724", "EWN": "528", "EWL": "756",
+    "EWD":  "752", "EWO": "040", "EWJ": "392", "FXI": "156",
+    "EWA":  "036", "INDA":"356", "EWY": "410", "EWT": "158",
+    "EWH":  "344", "EWS": "702", "EZA": "710", "KSA": "682",
+    "TUR":  "792", "EPOL":"616",
+}
 
-    results = {}
-    with ThreadPoolExecutor(max_workers=6) as ex:
-        for key, val in ex.map(_fetch, symbols_map.items()):
-            results[key] = val
-    return results
+def _get_worldmap_fresh() -> dict:
+    sym_to_key = _WORLDMAP_SYMS
+    raw = _bulk_download(sym_to_key)
+    # _bulk_download retorna {key: {...}} donde key es el valor del mapa (country_id)
+    return raw
 
 def get_worldmap() -> dict:
     """ETFs de países para el mapa mundial de desempeño. Cacheado 5 min."""
     return _cached("worldmap", _get_worldmap_fresh, ttl=300)
 
 
+def _rss_news(url: str) -> list:
+    """Obtiene noticias de un feed RSS público (no requiere auth)."""
+    items = []
+    try:
+        resp = _session.get(url, timeout=6)
+        text = resp.text
+        import re as _re
+        entries = _re.findall(r"<item>(.*?)</item>", text, _re.DOTALL)
+        for entry in entries[:8]:
+            def _tag(tag, s=entry):
+                m = _re.search(rf"<{tag}[^>]*>(.*?)</{tag}>", s, _re.DOTALL)
+                return (m.group(1).strip().replace("<![CDATA[","").replace("]]>","") if m else "")
+            title = _tag("title")
+            link  = _tag("link") or _tag("guid")
+            desc  = _tag("description")[:250]
+            pub   = _tag("pubDate")
+            try:
+                from email.utils import parsedate_to_datetime
+                ts = int(parsedate_to_datetime(pub).timestamp())
+            except Exception:
+                ts = 0
+            if title:
+                items.append({"title": title, "summary": desc, "url": link, "publisher": "Yahoo Finance", "time": ts})
+    except Exception:
+        pass
+    return items
+
+
 def get_market_news() -> dict:
-    """Noticias agregadas de los principales mercados."""
-    tickers = ["^MXX", "^GSPC", "USDMXN=X", "GC=F", "CL=F", "BTC-USD"]
+    """Noticias de mercados — intenta yfinance y luego RSS como fallback."""
     seen, all_news = set(), []
+
+    # Primario: yfinance .news (puede fallar en cloud)
+    tickers = ["^MXX", "^GSPC", "USDMXN=X", "GC=F", "CL=F", "BTC-USD"]
     for ticker in tickers:
         try:
             raw = yft(ticker).news or []
@@ -423,6 +488,21 @@ def get_market_news() -> dict:
                 all_news.append(parsed)
         except Exception:
             pass
+
+    # Fallback: RSS feeds públicos de Yahoo Finance si yfinance no dio noticias
+    if len(all_news) < 5:
+        rss_feeds = [
+            "https://feeds.finance.yahoo.com/rss/2.0/headline?s=%5EGSPC&region=US&lang=en-US",
+            "https://feeds.finance.yahoo.com/rss/2.0/headline?s=USDMXN%3DX&region=US&lang=en-US",
+            "https://feeds.finance.yahoo.com/rss/2.0/headline?s=GC%3DF&region=US&lang=en-US",
+        ]
+        for feed in rss_feeds:
+            for item in _rss_news(feed):
+                if item["url"] not in seen:
+                    seen.add(item["url"])
+                    item["sentiment"] = classify_sentiment(item["title"] + " " + item["summary"])
+                    all_news.append(item)
+
     all_news.sort(key=lambda x: x.get("time", 0), reverse=True)
     return {"news": all_news[:30]}
 

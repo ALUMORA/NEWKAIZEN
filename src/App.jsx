@@ -414,7 +414,7 @@ function GlobalMarketsTable({ data, loading }) {
     </div>
   );
   if (!data) return (
-    <div style={{ textAlign:"center", padding:"16px 0", color:"#94a3b8", fontSize:11 }}>Sin datos — carga la pestaña Noticias</div>
+    <div style={{ textAlign:"center", padding:"16px 0", color:"#94a3b8", fontSize:11 }}>Cargando datos de mercados globales…</div>
   );
 
   const rows = COUNTRY_ROWS
