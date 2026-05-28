@@ -813,11 +813,11 @@ function LoginScreen({ onAuth }) {
 
   return (
     <div style={{
-      minHeight: "100vh", background: "#0a0a0a",
+      minHeight: "100vh", background: "#000000",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       fontFamily: "'Syne', sans-serif",
     }}>
-      <img src={kaizenLogo} alt="KAIZEN" style={{ width: 80, height: 80, borderRadius: 20, marginBottom: 28, objectFit: "cover" }} />
+      <img src={kaizenLogo} alt="KAIZEN" style={{ width: 80, height: 80, borderRadius: 0, marginBottom: 28, objectFit: "cover" }} />
       <div style={{ fontSize: 28, fontWeight: 800, color: "#ffffff", letterSpacing: 4, marginBottom: 6 }}>KAIZEN</div>
       <div style={{ fontSize: 12, color: "#4b5563", marginBottom: 40, letterSpacing: 2 }}>INVESTMENT GROUP</div>
 
