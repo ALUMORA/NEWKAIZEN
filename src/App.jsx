@@ -1834,7 +1834,7 @@ export default function App() {
 
       {/* Header + Tabs — unified bar */}
       <div style={{
-        background: "#0a0a0a",
+        background: "#000000",
         position: "sticky", top: 0, zIndex: 100,
         boxShadow: "none",
         padding: "0 16px",
