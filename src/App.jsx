@@ -819,7 +819,7 @@ function LoginScreen({ onAuth }) {
     }}>
       <img src={kaizenLogo} alt="KAIZEN" style={{ width: 80, height: 80, borderRadius: 20, marginBottom: 28, objectFit: "cover" }} />
       <div style={{ fontSize: 28, fontWeight: 800, color: "#ffffff", letterSpacing: 4, marginBottom: 6 }}>KAIZEN</div>
-      <div style={{ fontSize: 12, color: "#4b5563", marginBottom: 40, letterSpacing: 2 }}>INVESTMENT PLATFORM</div>
+      <div style={{ fontSize: 12, color: "#4b5563", marginBottom: 40, letterSpacing: 2 }}>INVESTMENT GROUP</div>
 
       <form onSubmit={handleSubmit} style={{
         display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
@@ -1850,7 +1850,7 @@ export default function App() {
           />
           <div>
             <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 15, color: "#ffffff", letterSpacing: "0.05em" }}>KAIZEN</div>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 9, color: "#555555", letterSpacing: "0.15em", textTransform: "uppercase" }}>Investment Platform</div>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 9, color: "#555555", letterSpacing: "0.15em", textTransform: "uppercase" }}>Investment Group</div>
           </div>
         </div>
 
