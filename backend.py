@@ -1144,7 +1144,7 @@ FIBRAS_LIST = [
     "STORAGE.MX", "LFPE.MX",
 ]
 
-def get_fibras() -> dict:
+def get_fibras(extra: str = "") -> dict:
     """
     Screener de FIBRAs mexicanas con métricas de valuación propias de REITs.
 
@@ -1160,8 +1160,11 @@ def get_fibras() -> dict:
       PRECIO JUSTO si 0.85 ≤ P/NAV ≤ 1.15
       CARA         si P/NAV > 1.15
     """
+    extra_tickers = [t.strip().upper() for t in extra.split(",") if t.strip()] if extra else []
+    extra_tickers = [t if "." in t else t + ".MX" for t in extra_tickers]
+    tickers = FIBRAS_LIST + [t for t in extra_tickers if t not in FIBRAS_LIST]
     results = []
-    for ticker in FIBRAS_LIST:
+    for ticker in tickers:
         try:
             t = yft(ticker)
 
@@ -1525,6 +1528,7 @@ class Handler(BaseHTTPRequestHandler):
             elif parts[0] == "market":                       result = get_market()
             elif parts[0] == "worldmap":                     result = get_worldmap()
             elif parts[0] == "dcf"      and len(parts) > 1: result = get_dcf(parts[1])
+            elif parts[0] == "fibras" and len(parts) > 1:   result = get_fibras(parts[1])
             elif parts[0] == "fibras":                       result = get_fibras()
             elif parts[0] == "magic":                        result = get_magic_formula()
             elif parts[0] == "magic_one" and len(parts) > 1: result = get_magic_one(parts[1])

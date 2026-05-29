@@ -964,6 +964,7 @@ export default function App() {
   const [corrMatrix, setCorrMatrix] = useState(null);
   const [fibrasData, setFibrasData] = useState(null);
   const [fibrasLoading, setFibrasLoading] = useState(false);
+  const [fibrasExtra, setFibrasExtra] = useState("");
   const [magicData, setMagicData] = useState(null);
   const [magicLoading, setMagicLoading] = useState(false);
   const [magicProgress, setMagicProgress] = useState({ done: 0, total: 0, current: "" });
@@ -1451,7 +1452,9 @@ export default function App() {
   const runFibrasScreener = async () => {
     setFibrasLoading(true);
     try {
-      const data = await fetch(`${BACKEND}/fibras`).then(r => r.json());
+      const extra = fibrasExtra.trim();
+      const url = extra ? `${BACKEND}/fibras/${encodeURIComponent(extra)}` : `${BACKEND}/fibras`;
+      const data = await fetch(url).then(r => r.json());
       setFibrasData(data);
     } catch {}
     setFibrasLoading(false);
@@ -4244,16 +4247,34 @@ export default function App() {
                     Cap Rate alto indica mayor rendimiento operativo sobre el valor del portafolio.
                   </div>
                 </div>
-                <button onClick={runFibrasScreener} disabled={fibrasLoading} className="btn-exec" style={{
-                  background: fibrasLoading ? "#e5e5e5" : "#0a0a0a",
-                  border: "none", borderRadius: 999, color: "#ffffff",
-                  padding: "12px 28px", fontSize: 14, fontWeight: 700,
-                  cursor: fibrasLoading ? "not-allowed" : "pointer",
-                  display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap"
-                }}>
-                  {fibrasLoading && <Spinner size={16} />}
-                  {fibrasLoading ? "Cargando FIBRAs..." : " Analizar FIBRAs"}
-                </button>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
+                  <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                    <input
+                      value={fibrasExtra}
+                      onChange={e => setFibrasExtra(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && !fibrasLoading && runFibrasScreener()}
+                      placeholder="Agregar tickers: FREAL.MX, VESTA.MX..."
+                      style={{
+                        background: "#f8f8f8", border: "1.5px solid #e0e0d8", borderRadius: 10,
+                        padding: "10px 14px", fontSize: 12, color: "#111111",
+                        fontFamily: "'DM Mono', monospace", width: 240, outline: "none"
+                      }}
+                    />
+                    <button onClick={runFibrasScreener} disabled={fibrasLoading} className="btn-exec" style={{
+                      background: fibrasLoading ? "#e5e5e5" : "#0a0a0a",
+                      border: "none", borderRadius: 999, color: "#ffffff",
+                      padding: "12px 28px", fontSize: 14, fontWeight: 700,
+                      cursor: fibrasLoading ? "not-allowed" : "pointer",
+                      display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap"
+                    }}>
+                      {fibrasLoading && <Spinner size={16} />}
+                      {fibrasLoading ? "Cargando..." : "Analizar FIBRAs"}
+                    </button>
+                  </div>
+                  <div style={{ fontSize: 10, color: "#bbbbbb", textAlign: "right" }}>
+                    Las FIBRAs básicas siempre se incluyen · Agrega tickers extra separados por coma
+                  </div>
+                </div>
               </div>
 
               {/* Leyenda de métricas */}
