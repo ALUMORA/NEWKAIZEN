@@ -1518,7 +1518,7 @@ def _get_users() -> dict:
 
 def check_login(username: str, password: str) -> bool:
     users = _get_users()
-    return bool(username and password and users.get(username.strip()) == password.strip())
+    return bool(username and password and users.get(username.strip().lower()) == password.strip())
 
 
 # ─── HTTP Handler ─────────────────────────────────────────────────────────────
