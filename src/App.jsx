@@ -802,7 +802,7 @@ function LoginScreen({ onAuth }) {
 
   function handleSubmit(e) {
     e.preventDefault();
-    if (pw === "KAIZEN") {
+    if (pw === "Investments") {
       onAuth();
     } else {
       setError(true);
