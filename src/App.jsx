@@ -795,21 +795,47 @@ function MonteCarloChart({ portStats, spyStats, weeks }) {
 }
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
-function LoginScreen({ onAuth }) {
-  const [pw, setPw] = useState("");
-  const [error, setError] = useState(false);
-  const [shake, setShake] = useState(false);
+function LoginScreen({ onAuth, backendUrl }) {
+  const [user, setUser] = useState("");
+  const [pw, setPw]     = useState("");
+  const [error, setError]   = useState("");
+  const [shake, setShake]   = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    if (pw === "Investments") {
-      onAuth();
-    } else {
-      setError(true);
-      setShake(true);
-      setTimeout(() => setShake(false), 500);
+    if (!user.trim() || !pw.trim()) {
+      setError("Ingresa usuario y contraseña");
+      return;
     }
+    setLoading(true);
+    setError("");
+    try {
+      const res  = await fetch(`${backendUrl}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: user.trim(), password: pw.trim() }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        onAuth();
+      } else {
+        setError("Usuario o contraseña incorrectos");
+        setShake(true);
+        setTimeout(() => setShake(false), 500);
+      }
+    } catch {
+      setError("No se pudo conectar al servidor");
+    }
+    setLoading(false);
   }
+
+  const inputStyle = (hasError) => ({
+    background: "#111111", border: `1.5px solid ${hasError ? "#f87171" : "#1f2937"}`,
+    borderRadius: 12, padding: "14px 20px", color: "#ffffff",
+    fontFamily: "'DM Mono', monospace", fontSize: 15, width: 260,
+    outline: "none", letterSpacing: 2, transition: "border-color 0.2s",
+  });
 
   return (
     <div style={{
@@ -822,30 +848,34 @@ function LoginScreen({ onAuth }) {
       <div style={{ fontSize: 12, color: "#4b5563", marginBottom: 40, letterSpacing: 2 }}>INVESTMENT GROUP</div>
 
       <form onSubmit={handleSubmit} style={{
-        display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 14,
         animation: shake ? "shake 0.4s ease" : "none",
       }}>
+        <input
+          type="text"
+          placeholder="Usuario"
+          value={user}
+          onChange={e => { setUser(e.target.value); setError(""); }}
+          autoFocus
+          autoComplete="username"
+          style={inputStyle(!!error)}
+        />
         <input
           type="password"
           placeholder="Contraseña"
           value={pw}
-          onChange={e => { setPw(e.target.value); setError(false); }}
-          autoFocus
-          style={{
-            background: "#111111", border: `1.5px solid ${error ? "#f87171" : "#1f2937"}`,
-            borderRadius: 12, padding: "14px 20px", color: "#ffffff",
-            fontFamily: "'DM Mono', monospace", fontSize: 16, width: 260,
-            outline: "none", textAlign: "center", letterSpacing: 6,
-            transition: "border-color 0.2s",
-          }}
+          onChange={e => { setPw(e.target.value); setError(""); }}
+          autoComplete="current-password"
+          style={inputStyle(!!error)}
         />
-        {error && <div style={{ color: "#f87171", fontSize: 12, fontFamily: "'DM Mono', monospace" }}>Contraseña incorrecta</div>}
-        <button type="submit" style={{
-          background: "#00ff88", color: "#0a0a0a", border: "none", borderRadius: 12,
+        {error && <div style={{ color: "#f87171", fontSize: 12, fontFamily: "'DM Mono', monospace" }}>{error}</div>}
+        <button type="submit" disabled={loading} style={{
+          background: loading ? "#444444" : "#00ff88", color: "#0a0a0a", border: "none", borderRadius: 12,
           padding: "14px 0", width: 260, fontFamily: "'Syne', sans-serif",
-          fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: 2,
+          fontWeight: 800, fontSize: 14, cursor: loading ? "not-allowed" : "pointer", letterSpacing: 2,
+          marginTop: 4,
         }}>
-          ENTRAR →
+          {loading ? "VERIFICANDO..." : "ENTRAR →"}
         </button>
       </form>
 
@@ -1685,8 +1715,6 @@ export default function App() {
   const removeStock = (t) => setPortfolio((prev) => prev.filter((p) => p.ticker !== t));
 
   // ── RENDER ──────────────────────────────────────────────────────────────────
-  if (!authed) return <LoginScreen onAuth={() => setAuthed(true)} />;
-
   if (backendSearching) return (
     <div style={{ minHeight:"100vh", background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Syne',sans-serif" }}>
       <div style={{ fontSize:13, color:"#4b5563", letterSpacing:3 }}>CONECTANDO AL SERVIDOR…</div>
@@ -1709,6 +1737,8 @@ export default function App() {
       </button>
     </div>
   );
+
+  if (!authed) return <LoginScreen onAuth={() => setAuthed(true)} backendUrl={backendUrl} />;
 
   return (
     <div style={{

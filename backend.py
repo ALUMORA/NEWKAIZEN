@@ -8,7 +8,7 @@ Correr: python backend.py
 """
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
-import json, math, time, requests, threading
+import json, math, time, requests, threading, os
 from concurrent.futures import ThreadPoolExecutor
 import yfinance as yf
 from urllib.parse import urlparse, parse_qs
@@ -1505,6 +1505,22 @@ def get_rf() -> dict:
     return {"rate": 0.0860, "label": "Bono M 10Y"}
 
 
+# ─── Autenticación ────────────────────────────────────────────────────────────
+def _get_users() -> dict:
+    """Lee usuarios desde variable de entorno USERS (JSON).
+    Formato en Render: {"arturo":"pass1","juan":"pass2"}
+    """
+    raw = os.environ.get("USERS", "{}")
+    try:
+        return json.loads(raw)
+    except Exception:
+        return {}
+
+def check_login(username: str, password: str) -> bool:
+    users = _get_users()
+    return bool(username and password and users.get(username.strip()) == password.strip())
+
+
 # ─── HTTP Handler ─────────────────────────────────────────────────────────────
 class Handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
@@ -1555,9 +1571,38 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def do_POST(self):
+        parsed = urlparse(self.path)
+        parts  = parsed.path.strip("/").split("/")
+        length = int(self.headers.get("Content-Length", 0))
+        body_raw = self.rfile.read(length) if length > 0 else b"{}"
+        try:
+            body = json.loads(body_raw)
+        except Exception:
+            body = {}
+        try:
+            if parts[0] == "login":
+                username = str(body.get("username", "")).strip()
+                password = str(body.get("password", "")).strip()
+                if check_login(username, password):
+                    result = {"ok": True}
+                else:
+                    result = {"ok": False, "error": "Credenciales incorrectas"}
+            else:
+                result = {"error": "Not found"}
+        except Exception as e:
+            result = {"error": str(e)}
+        resp = json.dumps(result, default=str).encode()
+        self.send_response(200)
+        self._cors()
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(resp)))
+        self.end_headers()
+        self.wfile.write(resp)
+
     def _cors(self):
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "*")
 
     def log_message(self, fmt, *args):
