@@ -811,13 +811,37 @@ function LoginScreen({ onAuth }) {
     }
   }
 
+  const [hoverLogo, setHoverLogo] = useState(false);
+
   return (
     <div style={{
       minHeight: "100vh", background: "#000000",
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       fontFamily: "'Syne', sans-serif",
     }}>
-      <img src={kaizenLogo} alt="KAIZEN" style={{ width: 80, height: 80, borderRadius: 0, marginBottom: 28, objectFit: "cover" }} />
+
+      {/* Logo con animación float + glow */}
+      <div
+        onMouseEnter={() => setHoverLogo(true)}
+        onMouseLeave={() => setHoverLogo(false)}
+        style={{
+          marginBottom: 32,
+          animation: "float 3s ease-in-out infinite",
+          filter: hoverLogo
+            ? "drop-shadow(0 0 24px #00ff88) drop-shadow(0 0 48px #00ff8866)"
+            : "drop-shadow(0 0 10px #00ff8844)",
+          transition: "filter 0.4s ease",
+          cursor: "pointer",
+          transform: hoverLogo ? "scale(1.08)" : "scale(1)",
+        }}
+      >
+        <img
+          src={kaizenLogo}
+          alt="KAIZEN"
+          style={{ width: 140, height: 140, borderRadius: 0, objectFit: "cover", display: "block" }}
+        />
+      </div>
+
       <div style={{ fontSize: 28, fontWeight: 800, color: "#ffffff", letterSpacing: 4, marginBottom: 6 }}>KAIZEN</div>
       <div style={{ fontSize: 12, color: "#4b5563", marginBottom: 40, letterSpacing: 2 }}>INVESTMENT GROUP</div>
 
@@ -850,6 +874,10 @@ function LoginScreen({ onAuth }) {
       </form>
 
       <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px); }
+          50%       { transform: translateY(-10px); }
+        }
         @keyframes shake {
           0%,100% { transform: translateX(0); }
           20%      { transform: translateX(-10px); }
