@@ -481,7 +481,7 @@ _MARKET_SYMS = {
     "wti":    "CL=F",   "brent":  "BZ=F",    "gold":   "GC=F",
     "silver": "SI=F",   "copper": "HG=F",    "natgas": "NG=F",
     "btc":    "BTC-USD", "eth":   "ETH-USD",
-    "vix":    "^VIX",
+    "vix":    "^VIX",   "dxy":   "DX-Y.NYB", "t10y":  "^TNX",
     "sb_lv": "IVE",  "sb_lb": "IVV",  "sb_lg": "IVW",
     "sb_mv": "IJJ",  "sb_mb": "IJH",  "sb_mg": "IJK",
     "sb_sv": "IJS",  "sb_sb": "IJR",  "sb_sg": "IJT",

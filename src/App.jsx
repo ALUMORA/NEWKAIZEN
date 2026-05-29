@@ -3627,9 +3627,9 @@ export default function App() {
                     { key: "nasdaq", label: "NASDAQ",           dec: 2 },
                     { key: "dow",    label: "Dow Jones",        dec: 2 },
                     { key: "ipc",    label: "IPC México",       dec: 2 },
-                    { key: "vix",    label: "VIX",              dec: 2, macro: true },
-                    { key: "dxy",    label: "DXY (Dólar)",      dec: 2, macro: true },
-                    { key: "t10y",   label: "US 10Y Treasury",  dec: 2, macro: true, unit: "%" },
+                    { key: "vix",    label: "VIX",              dec: 2 },
+                    { key: "dxy",    label: "DXY (Dólar)",      dec: 2 },
+                    { key: "t10y",   label: "US 10Y Treasury",  dec: 2, unit: "%" },
                     { key: "usdmxn", label: "USD / MXN",        dec: 4 },
                   ].map(({ key, label, dec, macro, unit }, idx) => {
                     const d = C(key, dec, macro);
