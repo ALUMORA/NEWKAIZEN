@@ -2062,6 +2062,17 @@ export default function App() {
                       }}
                     >{p.name}{p.experimental ? " ⚗" : ""}</button>
                   )}
+                  <button
+                    onClick={() => {
+                      const id = "p" + Date.now();
+                      const copy = { id, name: `Copia de ${p.name}`, positions: p.positions.map(x => ({ ...x })), experimental: p.experimental };
+                      const next = [...portfolios, copy];
+                      setPortfolios(next); savePortfolios(next);
+                      setActivePortfolioId(id);
+                    }}
+                    title="Duplicar portafolio"
+                    style={{ background: "none", border: "none", color: "#bbbbbb", cursor: "pointer", fontSize: 12, padding: "0 2px", lineHeight: 1 }}
+                  >⧉</button>
                   {portfolios.length > 1 && (
                     <button
                       onClick={() => {
