@@ -342,7 +342,33 @@ def get_stock(ticker: str) -> dict:
         "totalDebt":          total_debt,
         "operatingCashflow":  op_cashflow,
         "freeCashflow":       free_cashflow,
+        "description":        info.get("longBusinessSummary"),
+        "industry":           info.get("industry"),
+        "website":            info.get("website"),
+        "employees":          info.get("fullTimeEmployees"),
+        "country":            info.get("country"),
     }
+
+
+def get_returns(ticker: str) -> dict:
+    """Retorna el rendimiento (%) para cada período estándar usando datos semanales de 5 años."""
+    try:
+        hist = yft(ticker.upper()).history(period="5y", interval="1wk")
+        closes = hist["Close"].dropna()
+        n = len(closes)
+        last = float(closes.iloc[-1]) if n >= 1 else None
+
+        period_weeks = [("1mo", 4), ("3mo", 13), ("6mo", 26), ("1y", 52), ("2y", 104), ("5y", 260)]
+        result = {}
+        for pid, weeks in period_weeks:
+            if last and n >= weeks:
+                first = float(closes.iloc[-weeks])
+                result[pid] = round((last / first - 1) * 100, 2) if first > 0 else None
+            else:
+                result[pid] = None
+        return result
+    except Exception as e:
+        return {pid: None for pid in ["1mo", "3mo", "6mo", "1y", "2y", "5y"]}
 
 
 def get_chart(ticker: str, period: str = "5y") -> dict:
@@ -1550,6 +1576,7 @@ class Handler(BaseHTTPRequestHandler):
             elif parts[0] == "magic_one" and len(parts) > 1: result = get_magic_one(parts[1])
             elif parts[0] == "insiders" and len(parts) > 1: result = get_insiders(parts[1])
             elif parts[0] == "momentum" and len(parts) > 1: result = get_momentum(parts[1])
+            elif parts[0] == "returns"  and len(parts) > 1: result = get_returns(parts[1])
             elif parts[0] == "health":                       result = {"status": "ok"}
             elif parts[0] == "debug" and len(parts) > 1 and parts[1] == "macro":
                 fred10 = _fred_rate("DGS10")

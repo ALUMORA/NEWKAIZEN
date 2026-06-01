@@ -1001,6 +1001,8 @@ export default function App() {
   const [analisisPeriod, setAnalisisPeriod] = useState("1y");
   const [analisisFinTab, setAnalisisFinTab] = useState("income");
   const [analisisHoverIdx, setAnalisisHoverIdx] = useState(null);
+  const [analisisReturns, setAnalisisReturns] = useState(null);
+  const [analisisDescExpanded, setAnalisisDescExpanded] = useState(false);
 
   // Persistir screener en localStorage
   useEffect(() => {
@@ -1544,6 +1546,8 @@ export default function App() {
     setAnalisisNews([]);
     setAnalisisError(null);
     setAnalisisHoverIdx(null);
+    setAnalisisReturns(null);
+    setAnalisisDescExpanded(false);
     try {
       const [stockRes, chartRes] = await Promise.all([
         fetch(`${BACKEND}/stock/${t}`),
@@ -1559,6 +1563,7 @@ export default function App() {
     } finally {
       setAnalisisLoading(false);
     }
+    fetch(`${BACKEND}/returns/${t}`).then(r => r.ok ? r.json() : null).then(rd => setAnalisisReturns(rd)).catch(() => {});
     setAnalisisNewsLoading(true);
     try {
       const nr = await fetch(`${BACKEND}/news/${encodeURIComponent(t)}`);
@@ -4866,6 +4871,8 @@ export default function App() {
                           {f.sector && <span style={{ background: "#1a1a1a", color: "#6b7280", padding: "3px 12px", borderRadius: 999, fontSize: 11, fontWeight: 600 }}>{f.sector}</span>}
                           {f.industry && <span style={{ background: "#1a1a1a", color: "#6b7280", padding: "3px 12px", borderRadius: 999, fontSize: 11 }}>{f.industry}</span>}
                           {f.exchange && <span style={{ background: "#1a1a1a", color: "#6b7280", padding: "3px 12px", borderRadius: 999, fontSize: 11 }}>{f.exchange}</span>}
+                          {f.country && <span style={{ background: "#1a1a1a", color: "#6b7280", padding: "3px 12px", borderRadius: 999, fontSize: 11 }}>{f.country}</span>}
+                          {f.employees != null && <span style={{ background: "#1a1a1a", color: "#6b7280", padding: "3px 12px", borderRadius: 999, fontSize: 11 }}>{Number(f.employees).toLocaleString()} empleados</span>}
                         </div>
                       </div>
                       <div style={{ textAlign: "right" }}>
@@ -4884,25 +4891,59 @@ export default function App() {
                             </span>
                           )}
                         </div>
+                        {f.website && (
+                          <a href={f.website} target="_blank" rel="noopener noreferrer"
+                            style={{ color: "#4b5563", fontSize: 11, textDecoration: "none", marginTop: 6, display: "block" }}>
+                            {f.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+                          </a>
+                        )}
                       </div>
                     </div>
+                    {/* Descripción del negocio */}
+                    {f.description && (
+                      <div style={{ marginTop: 20, borderTop: "1px solid #1a1a1a", paddingTop: 16 }}>
+                        <p style={{
+                          color: "#9ca3af", fontSize: 13, lineHeight: 1.7, margin: 0,
+                          display: "-webkit-box", WebkitLineClamp: analisisDescExpanded ? "unset" : 3,
+                          WebkitBoxOrient: "vertical", overflow: analisisDescExpanded ? "visible" : "hidden",
+                        }}>
+                          {f.description}
+                        </p>
+                        <button onClick={() => setAnalisisDescExpanded(v => !v)}
+                          style={{ background: "none", border: "none", color: "#00ff88", fontSize: 12, cursor: "pointer", marginTop: 8, padding: 0, fontFamily: "'DM Mono',monospace" }}>
+                          {analisisDescExpanded ? "Ver menos ▲" : "Ver más ▼"}
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* ── GRÁFICA ── */}
                   <div style={{ background: "#0d0d0d", borderRadius: 16, padding: "20px 24px" }}>
                     {/* Tabs de período */}
                     <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
-                      {PERIODS.map(p => (
-                        <button key={p.id} onClick={() => fetchAnalisisChart(p.id)}
-                          style={{
-                            background: analisisPeriod === p.id ? "#00ff88" : "#1a1a1a",
-                            color: analisisPeriod === p.id ? "#0a0a0a" : "#6b7280",
-                            border: "none", borderRadius: 8, padding: "5px 14px",
-                            cursor: "pointer", fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 12,
-                            transition: "all 0.12s",
-                          }}
-                        >{p.label}</button>
-                      ))}
+                      {PERIODS.map(p => {
+                        const ret = analisisReturns?.[p.id];
+                        const retColor = ret == null ? "#6b7280" : ret >= 0 ? "#4ade80" : "#f87171";
+                        const isActive = analisisPeriod === p.id;
+                        return (
+                          <button key={p.id} onClick={() => fetchAnalisisChart(p.id)}
+                            style={{
+                              background: isActive ? "#00ff88" : "#1a1a1a",
+                              color: isActive ? "#0a0a0a" : "#6b7280",
+                              border: "none", borderRadius: 8, padding: "5px 14px 6px",
+                              cursor: "pointer", fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 12,
+                              transition: "all 0.12s", display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+                            }}
+                          >
+                            <span>{p.label}</span>
+                            {ret != null && (
+                              <span style={{ fontSize: 9, fontWeight: 600, color: isActive ? (ret >= 0 ? "#006633" : "#cc0000") : retColor, lineHeight: 1 }}>
+                                {ret >= 0 ? "+" : ""}{ret.toFixed(1)}%
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
                       {hPt && (
                         <div style={{ marginLeft: "auto", fontFamily: "'DM Mono',monospace", fontSize: 13, color: lineColor, alignSelf: "center" }}>
                           ${hPt.v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
