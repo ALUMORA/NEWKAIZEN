@@ -11,7 +11,7 @@ const BACKEND_CANDIDATES = [
 async function detectBackend() {
   for (const url of BACKEND_CANDIDATES) {
     try {
-      const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(4000) });
+      const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(15000) });
       const data = await res.json();
       if (data?.status === "ok") return url;
     } catch {}
