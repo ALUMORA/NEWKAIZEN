@@ -63,8 +63,9 @@ async function fetchStock(ticker) {
   return data?.error ? null : data;
 }
 
-async function fetchChart(ticker, period = "5y") {
-  const res = await fetch(`${BACKEND}/chart/${encodeURIComponent(ticker)}?period=${period}`);
+async function fetchChart(ticker, period = "5y", timeoutMs = 12000) {
+  const res = await fetch(`${BACKEND}/chart/${encodeURIComponent(ticker)}?period=${period}`,
+    { signal: AbortSignal.timeout(timeoutMs) });
   const data = await res.json();
   return data?.closes ?? [];
 }
@@ -1168,28 +1169,22 @@ export default function App() {
     const actualStats = portStats(actualWeights);
     const optimalStats = portStats(best.weights);
 
-    // ── Recomendaciones de candidatos ──────────────────────────────────────
-    setOptimLoadingMsg("Evaluando candidatos para tu portafolio...");
+    // ── Recomendaciones de candidatos (en batches paralelos) ───────────────
     const candidates = CANDIDATE_TICKERS.filter((t) => !tickers.includes(t));
     const recommendations = [];
+    const BATCH = 5;
 
-    for (const cand of candidates) {
+    const evalCandidate = async (cand) => {
       try {
-        const closes = await fetchChart(cand, optimPeriod);
-        if (closes.length < 30) { await sleep(80); continue; }
+        const closes = await fetchChart(cand, optimPeriod, 10000);
+        if (closes.length < 30) return null;
         const candReturns = closes.slice(1).map((v, i) => (v - closes[i]) / closes[i]).filter(isFinite);
         const candMean = candReturns.reduce((a, b) => a + b, 0) / candReturns.length;
         const candStd  = Math.sqrt(candReturns.reduce((a, b) => a + (b - candMean) ** 2, 0) / candReturns.length) || 1e-9;
-
-        // Criterio 1: Correlación media con portafolio (menor = mejor diversificación)
         const avgCorr = means.map((_, i) => Math.abs(
           corrBetween(returnsAll[i], candReturns, means[i], candMean, stds[i], candStd)
         )).reduce((a, b) => a + b, 0) / n;
-
-        // Criterio 2: Sharpe individual histórico
         const candSharpe = sharpeOf(candReturns, rf);
-
-        // Criterio 3: Mejora marginal de Sharpe (portafolio con 5% del candidato)
         const w0 = best.weights.map((w) => w * 0.95);
         const newReturnsAll = [...returnsAll, candReturns];
         const newMeans = [...means, candMean];
@@ -1202,22 +1197,18 @@ export default function App() {
         );
         const newSharpe = calcPortfolioSharpe(newWeights, newCovMatrix, newMeans, rf);
         const sharpeDelta = newSharpe - currentSharpe;
+        const corrScore   = Math.max(0, (1 - avgCorr)) * 35;
+        const sharpeScore = Math.min(Math.max(candSharpe / 3, 0), 1) * 25;
+        const deltaScore  = Math.min(Math.max(sharpeDelta / 0.5 + 0.5, 0), 1) * 40;
+        return { ticker: cand, avgCorr: +avgCorr.toFixed(3), candSharpe: +candSharpe.toFixed(3), sharpeDelta: +sharpeDelta.toFixed(3), score: +(corrScore + sharpeScore + deltaScore).toFixed(1) };
+      } catch { return null; }
+    };
 
-        // Score compuesto (normalizado 0-100)
-        const corrScore   = Math.max(0, (1 - avgCorr)) * 35;          // 35%: baja corr = mejor
-        const sharpeScore = Math.min(Math.max(candSharpe / 3, 0), 1) * 25; // 25%: sharpe individual
-        const deltaScore  = Math.min(Math.max(sharpeDelta / 0.5 + 0.5, 0), 1) * 40; // 40%: mejora marginal
-        const totalScore  = corrScore + sharpeScore + deltaScore;
-
-        recommendations.push({
-          ticker: cand,
-          avgCorr: +avgCorr.toFixed(3),
-          candSharpe: +candSharpe.toFixed(3),
-          sharpeDelta: +sharpeDelta.toFixed(3),
-          score: +totalScore.toFixed(1),
-        });
-        await sleep(80);
-      } catch { /* skip */ }
+    for (let i = 0; i < candidates.length; i += BATCH) {
+      const batch = candidates.slice(i, i + BATCH);
+      setOptimLoadingMsg(`Evaluando candidatos... (${Math.min(i + BATCH, candidates.length)}/${candidates.length})`);
+      const results = await Promise.all(batch.map(evalCandidate));
+      results.forEach(r => { if (r) recommendations.push(r); });
     }
 
     recommendations.sort((a, b) => b.score - a.score);
