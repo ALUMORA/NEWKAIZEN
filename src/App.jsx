@@ -936,6 +936,20 @@ export default function App() {
   const [newCost, setNewCost] = useState("");
   const [addError, setAddError] = useState("");
   const [stockData, setStockData] = useState({});
+  const [usdMxn, setUsdMxn] = useState(17.5);
+
+  // Convierte el precio de un ticker a MXN (detecta USD por currency o por ausencia de .MX)
+  const toMXN = (ticker, price) => {
+    const currency = stockData[ticker]?.currency ?? (ticker.endsWith('.MX') ? 'MXN' : 'USD');
+    return (price ?? 0) * (currency === 'USD' ? usdMxn : 1);
+  };
+  const posVal = (p) => {
+    const sd = stockData[p.ticker];
+    if (!sd?.price) return 0;
+    return p.shares * toMXN(p.ticker, sd.price);
+  };
+  const posCost = (p) => p.shares * toMXN(p.ticker, p.cost);
+
   const [loading, setLoading] = useState({});
   const [optimResult, setOptimResult] = useState(null);
   const [optimLoading, setOptimLoading] = useState(false);
@@ -1014,13 +1028,13 @@ export default function App() {
   useEffect(() => {
     if (Object.keys(stockData).length === 0) return;
     let totalValue = 0;
-    portfolio.forEach(p => { totalValue += p.shares * (stockData[p.ticker]?.price ?? 0); });
+    portfolio.forEach(p => { totalValue += posVal(p); });
     if (totalValue <= 0) return;
     setTargetPcts(prev => {
       const next = { ...prev };
       let changed = false;
       portfolio.forEach(p => {
-        const val = p.shares * (stockData[p.ticker]?.price ?? 0);
+        const val = posVal(p);
         const pct = (val / totalValue * 100).toFixed(1);
         if (next[p.ticker] === undefined) { next[p.ticker] = pct; changed = true; }
       });
@@ -1034,6 +1048,7 @@ export default function App() {
       .then((r) => { setRfRate(r.rate); setRfLabel(r.label); setBackendOk(true); })
       .catch(() => setBackendOk(false));
     fetch(`${BACKEND}/macro`).then(r => r.json()).then(setMacroData).catch(() => {});
+    fetch(`${BACKEND}/fx`).then(r => r.json()).then(d => { if (d?.USDMXN) setUsdMxn(d.USDMXN); }).catch(() => {});
   }, []);
 
   // Load stock data for portfolio
@@ -1227,9 +1242,9 @@ export default function App() {
         returnsMap[t] = closes.slice(1).map((v, i) => (v - closes[i]) / closes[i]).filter(isFinite);
       }
 
-      const totalValue = portfolio.reduce((s, p) => s + p.shares * (stockData[p.ticker]?.price ?? 0), 0);
+      const totalValue = portfolio.reduce((s, p) => s + posVal(p), 0);
       const weights = portfolio.map((p) => {
-        const val = p.shares * (stockData[p.ticker]?.price ?? 0);
+        const val = posVal(p);
         return totalValue > 0 ? val / totalValue : 1 / portfolio.length;
       });
 
@@ -1300,9 +1315,9 @@ export default function App() {
         returnsMap[t] = closes.slice(1).map((v, i) => (v - closes[i]) / closes[i]).filter(isFinite);
       }
 
-      const totalValue = portfolio.reduce((s, p) => s + p.shares * (stockData[p.ticker]?.price ?? 0), 0);
+      const totalValue = portfolio.reduce((s, p) => s + posVal(p), 0);
       const weights = portfolio.map(p => {
-        const val = p.shares * (stockData[p.ticker]?.price ?? 0);
+        const val = posVal(p);
         return totalValue > 0 ? val / totalValue : 1 / portfolio.length;
       });
 
@@ -1679,9 +1694,9 @@ export default function App() {
         if (sd?.price) { price = sd.price; setStockData((prev) => ({ ...prev, [t]: sd })); }
       }
       if (!price) { setAddError("No se pudo obtener el precio actual. Intenta en modo Acciones."); return; }
-      const totalValue = portfolio.reduce((s, p) => s + p.shares * (stockData[p.ticker]?.price ?? 0), 0);
+      const totalValue = portfolio.reduce((s, p) => s + posVal(p), 0);
       if (totalValue <= 0) { setAddError("El portafolio tiene valor $0. Agrega otras posiciones con precio primero."); return; }
-      shares = (pct / 100 * totalValue) / price;
+      shares = (pct / 100 * totalValue) / toMXN(t, price);
     } else {
       shares = parseFloat(newShares);
       if (!shares || shares <= 0) { setAddError("Ingresa un número de acciones válido (> 0)."); return; }
@@ -2281,9 +2296,9 @@ export default function App() {
                         const pct = parseFloat(newPct);
                         const ticker = newTicker.toUpperCase().trim();
                         const price = stockData[ticker]?.price;
-                        const totalValue = portfolio.reduce((s, p) => s + p.shares * (stockData[p.ticker]?.price ?? 0), 0);
+                        const totalValue = portfolio.reduce((s, p) => s + posVal(p), 0);
                         if (pct > 0 && price && totalValue > 0) {
-                          const sharesCalc = (pct / 100 * totalValue) / price;
+                          const sharesCalc = (pct / 100 * totalValue) / toMXN(ticker, price);
                           return <div style={{ fontSize: 10, color: "#00cc6a", marginTop: 4 }}>≈ {sharesCalc.toFixed(4)} acciones</div>;
                         }
                         return <div style={{ fontSize: 10, color: "#bbbbbb", marginTop: 4 }}>Carga el ticker primero</div>;
@@ -2322,10 +2337,9 @@ export default function App() {
               const slices = [];
               const COLORS = ["#111111","#555555","#888888","#aaaaaa","#cccccc","#333333","#777777","#bbbbbb","#444444","#999999","#666666","#dddddd"];
               portfolio.forEach((p, i) => {
-                const sd = stockData[p.ticker];
-                const val = sd?.price ? p.shares * sd.price : 0;
+                const val = posVal(p);
                 totalValue += val;
-                totalCost += p.shares * p.cost;
+                totalCost += posCost(p);
                 slices.push({ ticker: p.ticker, value: val, colorIdx: i });
               });
               // Sort descending so the biggest slice gets the accent color
@@ -2339,8 +2353,7 @@ export default function App() {
               const wMetric = (key) => {
                 let sum = 0, wSum = 0;
                 portfolio.forEach((p) => {
-                  const sd = stockData[p.ticker];
-                  const val = sd?.price ? p.shares * sd.price : 0;
+                  const val = posVal(p);
                   const v = sd?.[key];
                   if (v != null && isFinite(v) && val > 0) { sum += v * val; wSum += val; }
                 });
@@ -2409,7 +2422,7 @@ export default function App() {
                           const hp = paths.find(x => x.ticker === hoveredTicker);
                           const sd = stockData[hoveredTicker];
                           const pos = portfolio.find(x => x.ticker === hoveredTicker);
-                          const val = pos && sd?.price ? pos.shares * sd.price : null;
+                          const val = pos ? posVal(pos) : null;
                           if (!hp) return null;
                           return (
                             <div style={{
@@ -2519,6 +2532,9 @@ export default function App() {
                       {/* Header */}
                       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
                         <span style={{ fontSize: 10, color: "#bbbbbb", letterSpacing: "0.14em", fontWeight: 600 }}>REBALANCEO</span>
+                        <span style={{ fontSize: 10, color: "#6b7280", background: "#f5f5f5", borderRadius: 999, padding: "2px 8px" }}>
+                          USD/MXN {usdMxn.toFixed(2)}
+                        </span>
                         <div style={{ flex: 1 }} />
                         {/* Monto total */}
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -2592,7 +2608,8 @@ export default function App() {
                           const rawVal = targetPcts[p.ticker] ?? (p.pct * 100).toFixed(1);
                           const tPct   = parseFloat(rawVal) || 0;
                           const price  = stockData[p.ticker]?.price;
-                          const tShares = effTotal > 0 && price ? (tPct / 100 * effTotal) / price : null;
+                          const priceMXN = price ? toMXN(p.ticker, price) : null;
+                          const tShares = effTotal > 0 && priceMXN ? (tPct / 100 * effTotal) / priceMXN : null;
                           const currentShares = portfolio.find(x => x.ticker === p.ticker)?.shares ?? 0;
                           const delta = tShares !== null ? tShares - currentShares : null;
                           const isTop = p.color === accentColor;
@@ -2619,12 +2636,18 @@ export default function App() {
                                 gap: "0 16px", alignItems: "center",
                               }}>
                                 <div style={{ width: 10, height: 10, borderRadius: 2, background: p.color, flexShrink: 0 }} />
-                                <span style={{
-                                  fontFamily: "'Syne', sans-serif",
-                                  color: "#0a0a0a",
-                                  fontSize: 13, fontWeight: 700,
-                                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"
-                                }}>{p.ticker}</span>
+                                <div style={{ display: "flex", alignItems: "center", gap: 5, overflow: "hidden" }}>
+                                  <span style={{
+                                    fontFamily: "'Syne', sans-serif",
+                                    color: "#0a0a0a",
+                                    fontSize: 13, fontWeight: 700,
+                                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"
+                                  }}>{p.ticker}</span>
+                                  {(() => {
+                                    const cur = stockData[p.ticker]?.currency ?? (p.ticker.endsWith('.MX') ? 'MXN' : 'USD');
+                                    return <span style={{ fontSize: 9, color: cur === 'USD' ? '#3b82f6' : '#16a34a', background: cur === 'USD' ? '#eff6ff' : '#f0fdf4', borderRadius: 999, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>{cur}</span>;
+                                  })()}
+                                </div>
 
                                 {/* Input % + slider */}
                                 <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -2737,10 +2760,10 @@ export default function App() {
                         <button
                           onClick={() => {
                             let tv = 0;
-                            portfolio.forEach(p => { tv += p.shares * (stockData[p.ticker]?.price ?? 0); });
+                            portfolio.forEach(p => { tv += posVal(p); });
                             const next = {};
                             portfolio.forEach(p => {
-                              const val = p.shares * (stockData[p.ticker]?.price ?? 0);
+                              const val = posVal(p);
                               next[p.ticker] = tv > 0 ? (val / tv * 100).toFixed(1) : "0.0";
                             });
                             setTargetPcts(next);
@@ -3093,8 +3116,8 @@ export default function App() {
                         const pos = portfolio.find((p) => p.ticker === t);
                         const sd = stockData[t];
                         const price = sd?.price ?? 0;
-                        const totalValue = portfolio.reduce((s, p) => s + p.shares * (stockData[p.ticker]?.price ?? 0), 0);
-                        const currW = totalValue > 0 && pos && price ? (pos.shares * price) / totalValue : 0;
+                        const totalValue = portfolio.reduce((s, p) => s + posVal(p), 0);
+                        const currW = totalValue > 0 && pos ? posVal(pos) / totalValue : 0;
                         const diff = optW - currW;
                         const action = Math.abs(diff) < 0.02 ? "MANTENER" : diff > 0 ? "AUMENTAR" : "REDUCIR";
                         const actionColor = action === "AUMENTAR" ? "#16a34a" : action === "REDUCIR" ? "#dc2626" : "#666666";

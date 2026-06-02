@@ -347,7 +347,19 @@ def get_stock(ticker: str) -> dict:
         "website":            info.get("website"),
         "employees":          info.get("fullTimeEmployees"),
         "country":            info.get("country"),
+        "currency":           info.get("currency", "USD"),
     }
+
+
+def get_fx() -> dict:
+    """Retorna tipo de cambio USD/MXN actual desde Yahoo Finance."""
+    try:
+        hist = yft("USDMXN=X").history(period="2d")
+        if not hist.empty:
+            return {"USDMXN": round(float(hist["Close"].iloc[-1]), 4)}
+    except Exception:
+        pass
+    return {"USDMXN": 17.5}
 
 
 def get_returns(ticker: str) -> dict:
@@ -1577,6 +1589,7 @@ class Handler(BaseHTTPRequestHandler):
             elif parts[0] == "insiders" and len(parts) > 1: result = get_insiders(parts[1])
             elif parts[0] == "momentum" and len(parts) > 1: result = get_momentum(parts[1])
             elif parts[0] == "returns"  and len(parts) > 1: result = get_returns(parts[1])
+            elif parts[0] == "fx":                           result = get_fx()
             elif parts[0] == "health":                       result = {"status": "ok"}
             elif parts[0] == "debug" and len(parts) > 1 and parts[1] == "macro":
                 fred10 = _fred_rate("DGS10")
