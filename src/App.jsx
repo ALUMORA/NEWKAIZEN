@@ -1243,9 +1243,10 @@ export default function App() {
         returnsMap[t] = closes.slice(1).map((v, i) => (v - closes[i]) / closes[i]).filter(isFinite);
       }
 
-      const totalValue = portfolio.reduce((s, p) => s + posVal(p), 0);
+      const _pv1 = (p) => { const sd = stockData[p.ticker]; if (!sd?.price) return 0; return p.shares * (p.ticker.endsWith('.MX') ? sd.price : sd.price * usdMxn); };
+      const totalValue = portfolio.reduce((s, p) => s + _pv1(p), 0);
       const weights = portfolio.map((p) => {
-        const val = posVal(p);
+        const val = _pv1(p);
         return totalValue > 0 ? val / totalValue : 1 / portfolio.length;
       });
 
@@ -1316,9 +1317,10 @@ export default function App() {
         returnsMap[t] = closes.slice(1).map((v, i) => (v - closes[i]) / closes[i]).filter(isFinite);
       }
 
-      const totalValue = portfolio.reduce((s, p) => s + posVal(p), 0);
+      const _pv2 = (p) => { const sd = stockData[p.ticker]; if (!sd?.price) return 0; return p.shares * (p.ticker.endsWith('.MX') ? sd.price : sd.price * usdMxn); };
+      const totalValue = portfolio.reduce((s, p) => s + _pv2(p), 0);
       const weights = portfolio.map(p => {
-        const val = posVal(p);
+        const val = _pv2(p);
         return totalValue > 0 ? val / totalValue : 1 / portfolio.length;
       });
 
