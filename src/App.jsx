@@ -2353,6 +2353,7 @@ export default function App() {
               const wMetric = (key) => {
                 let sum = 0, wSum = 0;
                 portfolio.forEach((p) => {
+                  const sd = stockData[p.ticker];
                   const val = posVal(p);
                   const v = sd?.[key];
                   if (v != null && isFinite(v) && val > 0) { sum += v * val; wSum += val; }
