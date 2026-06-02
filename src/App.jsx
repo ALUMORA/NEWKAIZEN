@@ -2,6 +2,20 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import kaizenLogo from './assets/kaizen-logo.jpg';
 
+// ─── CURRENCY UTILS (fuera del componente — sin closure) ─────────────────────
+// .MX  → precio ya en MXN (BMV y SIC)
+// sin .MX → precio en USD, se multiplica por el tipo de cambio
+function isMXN(ticker) { return ticker.endsWith('.MX'); }
+function priceMXN(ticker, price, usdMxn) { return isMXN(ticker) ? price : price * usdMxn; }
+function posValMXN(p, stockData, usdMxn) {
+  const sd = stockData[p.ticker];
+  if (!sd?.price) return 0;
+  return p.shares * priceMXN(p.ticker, sd.price, usdMxn);
+}
+function posCostMXN(p, usdMxn) {
+  return p.shares * priceMXN(p.ticker, p.cost ?? 0, usdMxn);
+}
+
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 const BACKEND_CANDIDATES = [
   "https://app-4-everyone.onrender.com",  // Render (primario)
@@ -938,18 +952,10 @@ export default function App() {
   const [stockData, setStockData] = useState({});
   const [usdMxn, setUsdMxn] = useState(17.5);
 
-  // .MX siempre es MXN (yfinance ya retorna precios en MXN para SIC y BMV)
-  // Sin .MX se asume USD y se convierte al tipo de cambio actual
-  const toMXN = (ticker, price) => {
-    const isUSD = !ticker.endsWith('.MX');
-    return (price ?? 0) * (isUSD ? usdMxn : 1);
-  };
-  const posVal = (p) => {
-    const sd = stockData[p.ticker];
-    if (!sd?.price) return 0;
-    return p.shares * toMXN(p.ticker, sd.price);
-  };
-  const posCost = (p) => p.shares * toMXN(p.ticker, p.cost);
+  // Wrappers del render — usan siempre usdMxn y stockData actuales
+  const toMXN  = (ticker, price) => priceMXN(ticker, price ?? 0, usdMxn);
+  const posVal  = (p) => posValMXN(p, stockData, usdMxn);
+  const posCost = (p) => posCostMXN(p, usdMxn);
 
   const [loading, setLoading] = useState({});
   const [optimResult, setOptimResult] = useState(null);
@@ -1243,10 +1249,10 @@ export default function App() {
         returnsMap[t] = closes.slice(1).map((v, i) => (v - closes[i]) / closes[i]).filter(isFinite);
       }
 
-      const _pv1 = (p) => { const sd = stockData[p.ticker]; if (!sd?.price) return 0; return p.shares * (p.ticker.endsWith('.MX') ? sd.price : sd.price * usdMxn); };
-      const totalValue = portfolio.reduce((s, p) => s + _pv1(p), 0);
+      const _fx = usdMxn;
+      const totalValue = portfolio.reduce((s, p) => s + posValMXN(p, stockData, _fx), 0);
       const weights = portfolio.map((p) => {
-        const val = _pv1(p);
+        const val = posValMXN(p, stockData, _fx);
         return totalValue > 0 ? val / totalValue : 1 / portfolio.length;
       });
 
@@ -1317,10 +1323,10 @@ export default function App() {
         returnsMap[t] = closes.slice(1).map((v, i) => (v - closes[i]) / closes[i]).filter(isFinite);
       }
 
-      const _pv2 = (p) => { const sd = stockData[p.ticker]; if (!sd?.price) return 0; return p.shares * (p.ticker.endsWith('.MX') ? sd.price : sd.price * usdMxn); };
-      const totalValue = portfolio.reduce((s, p) => s + _pv2(p), 0);
+      const _fx = usdMxn;
+      const totalValue = portfolio.reduce((s, p) => s + posValMXN(p, stockData, _fx), 0);
       const weights = portfolio.map(p => {
-        const val = _pv2(p);
+        const val = posValMXN(p, stockData, _fx);
         return totalValue > 0 ? val / totalValue : 1 / portfolio.length;
       });
 
@@ -1515,15 +1521,15 @@ export default function App() {
       const returnsMatrix = tickers.map(t => returnsMap[t]);
       const { cov, means } = buildCovMatrix(returnsMatrix);
 
-      // Pesos por valor de mercado usando el último cierre del historial descargado
-      // (evita depender de stockData que puede no estar cargado aún)
+      // Pesos por valor de mercado en MXN usando el último cierre del historial
+      const _fx = usdMxn;
       const totalVal = tickers.reduce((s, t) => {
         const pos = portfolio.find(p => p.ticker === t);
-        return s + (pos?.shares ?? 0) * (lastPriceMap[t] ?? 0);
+        return s + (pos?.shares ?? 0) * priceMXN(t, lastPriceMap[t] ?? 0, _fx);
       }, 0);
       const weights = tickers.map(t => {
         const pos = portfolio.find(p => p.ticker === t);
-        const val = (pos?.shares ?? 0) * (lastPriceMap[t] ?? 0);
+        const val = (pos?.shares ?? 0) * priceMXN(t, lastPriceMap[t] ?? 0, _fx);
         return totalVal > 0 ? val / totalVal : 1 / tickers.length;
       });
 
