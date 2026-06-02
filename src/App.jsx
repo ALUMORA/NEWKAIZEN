@@ -938,10 +938,11 @@ export default function App() {
   const [stockData, setStockData] = useState({});
   const [usdMxn, setUsdMxn] = useState(17.5);
 
-  // Convierte el precio de un ticker a MXN (detecta USD por currency o por ausencia de .MX)
+  // .MX siempre es MXN (yfinance ya retorna precios en MXN para SIC y BMV)
+  // Sin .MX se asume USD y se convierte al tipo de cambio actual
   const toMXN = (ticker, price) => {
-    const currency = stockData[ticker]?.currency ?? (ticker.endsWith('.MX') ? 'MXN' : 'USD');
-    return (price ?? 0) * (currency === 'USD' ? usdMxn : 1);
+    const isUSD = !ticker.endsWith('.MX');
+    return (price ?? 0) * (isUSD ? usdMxn : 1);
   };
   const posVal = (p) => {
     const sd = stockData[p.ticker];
@@ -2645,7 +2646,7 @@ export default function App() {
                                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"
                                   }}>{p.ticker}</span>
                                   {(() => {
-                                    const cur = stockData[p.ticker]?.currency ?? (p.ticker.endsWith('.MX') ? 'MXN' : 'USD');
+                                    const cur = p.ticker.endsWith('.MX') ? 'MXN' : 'USD';
                                     return <span style={{ fontSize: 9, color: cur === 'USD' ? '#3b82f6' : '#16a34a', background: cur === 'USD' ? '#eff6ff' : '#f0fdf4', borderRadius: 999, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>{cur}</span>;
                                   })()}
                                 </div>
