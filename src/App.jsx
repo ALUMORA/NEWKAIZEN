@@ -2568,9 +2568,9 @@ export default function App() {
                       {/* Métricas resumen */}
                       <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
                         {[
-                          { label: "Valor total",  value: `$${totalValue.toLocaleString("en-US", { maximumFractionDigits: 0 })}`, color: "#ffffff" },
-                          { label: "Costo total",  value: `$${totalCost.toLocaleString("en-US",  { maximumFractionDigits: 0 })}`, color: "#ffffff" },
-                          { label: "P&L ($)",      value: `${totalPnl >= 0 ? "+" : "−"}$${Math.abs(totalPnl).toLocaleString("en-US", { maximumFractionDigits: 0 })}`, color: totalPnl >= 0 ? "#00ff88" : "#ff3b3b" },
+                          { label: "Valor total · MXN", value: `$${totalValue.toLocaleString("en-US", { maximumFractionDigits: 0 })}`, color: "#ffffff", sub: `≈ USD $${(totalValue / usdMxn).toLocaleString("en-US", { maximumFractionDigits: 0 })}` },
+                          { label: "Costo total · MXN",  value: `$${totalCost.toLocaleString("en-US",  { maximumFractionDigits: 0 })}`, color: "#ffffff", sub: `≈ USD $${(totalCost / usdMxn).toLocaleString("en-US", { maximumFractionDigits: 0 })}` },
+                          { label: "P&L ($)",      value: `${totalPnl >= 0 ? "+" : "−"}$${Math.abs(totalPnl).toLocaleString("en-US", { maximumFractionDigits: 0 })}`, color: totalPnl >= 0 ? "#00ff88" : "#ff3b3b", sub: `≈ USD ${totalPnl >= 0 ? "+" : "−"}$${Math.abs(totalPnl / usdMxn).toLocaleString("en-US", { maximumFractionDigits: 0 })}` },
                           { label: "P&L (%)",      value: `${totalPnlPct >= 0 ? "+" : ""}${totalPnlPct.toFixed(2)}%`, color: totalPnl >= 0 ? "#00ff88" : "#ff3b3b" },
                           { label: "Sharpe · 1y",  value: approxSharpe ?? "—", color: "#ffffff", sub: "cov. completa" },
                         ].map((m) => (
