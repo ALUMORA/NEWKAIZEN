@@ -1703,7 +1703,9 @@ export default function App() {
         if (sd?.price) { price = sd.price; setStockData(prev => ({ ...prev, [t]: sd })); }
       }
       if (!price) { setAddError("No se pudo obtener el precio actual."); addingRef.current = false; return; }
-      shares = (pct / 100 * expTotal) / price;
+      // Convertir precio a MXN: si es USD se multiplica por el tipo de cambio
+      const priceMXNVal = toMXN(t, price);
+      shares = (pct / 100 * expTotal) / priceMXNVal;
       if (portfolio.find(p => p.ticker === t)) {
         setPortfolio(prev => prev.map(p => p.ticker === t ? { ...p, shares, cost: isNaN(cost) ? p.cost : cost, expPct: pct } : p));
       } else {
@@ -2260,9 +2262,11 @@ export default function App() {
                       const ticker = newTicker.toUpperCase().trim();
                       const price = stockData[ticker]?.price;
                       if (pct > 0 && expTotal > 0 && price) {
-                        const sharesCalc = (pct / 100 * expTotal) / price;
+                        const priceMXN_ = toMXN(ticker, price);
+                        const sharesCalc = (pct / 100 * expTotal) / priceMXN_;
                         const val = pct / 100 * expTotal;
-                        return <div style={{ fontSize: 10, color: "#8b5cf6", marginTop: 4, fontFamily: "'DM Mono', monospace" }}>≈ {sharesCalc.toFixed(4)} acc · ${val.toLocaleString("en-US", { maximumFractionDigits: 0 })}</div>;
+                        const cur = ticker.endsWith('.MX') ? 'MXN' : 'USD';
+                        return <div style={{ fontSize: 10, color: "#8b5cf6", marginTop: 4, fontFamily: "'DM Mono', monospace" }}>≈ {sharesCalc.toFixed(4)} acc · ${val.toLocaleString("en-US", { maximumFractionDigits: 0 })} MXN · precio ${cur === 'USD' ? price.toFixed(2) + ' USD' : price.toFixed(2) + ' MXN'}</div>;
                       }
                       if (pct > 0 && !expTotal) return <div style={{ fontSize: 10, color: "#dc2626", marginTop: 4 }}>Define el monto total primero</div>;
                       return null;
@@ -2285,7 +2289,8 @@ export default function App() {
                           const pct = parseFloat(targetPcts[pos.ticker]) || pos.expPct || 0;
                           const price = stockData[pos.ticker]?.price;
                           if (!price || pct <= 0) return pos;
-                          return { ...pos, shares: +((pct / 100 * expTotal / price).toFixed(6)), expPct: pct };
+                          const pMXN = toMXN(pos.ticker, price);
+                          return { ...pos, shares: +((pct / 100 * expTotal / pMXN).toFixed(6)), expPct: pct };
                         }));
                       }
                     }}
@@ -2529,8 +2534,8 @@ export default function App() {
                               <text x={CX} y={CY + 12} textAnchor="middle" fill="#111111" fontSize="22" fontWeight="bold" fontFamily="monospace">{(hp.pct * 100).toFixed(1)}%</text>
                             </> : null;
                           })() : <>
-                            <text x={CX} y={CY - 10} textAnchor="middle" fill="#bbbbbb" fontSize="10" fontFamily="monospace" letterSpacing="1">TOTAL</text>
-                            <text x={CX} y={CY + 12} textAnchor="middle" fill="#111111" fontSize="20" fontWeight="bold" fontFamily="monospace">${(totalValue/1000).toFixed(1)}k</text>
+                            <text x={CX} y={CY - 10} textAnchor="middle" fill="#bbbbbb" fontSize="10" fontFamily="monospace" letterSpacing="1">{isExperimental ? "PRESUPUESTO" : "TOTAL"}</text>
+                            <text x={CX} y={CY + 12} textAnchor="middle" fill={isExperimental ? "#8b5cf6" : "#111111"} fontSize="20" fontWeight="bold" fontFamily="monospace">${((isExperimental && expTotal > 0 ? expTotal : totalValue) / 1000).toFixed(1)}k</text>
                           </>}
                         </svg>
                       </div>
@@ -2633,7 +2638,10 @@ export default function App() {
                       {/* Métricas resumen */}
                       <div style={{ display: "flex", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
                         {[
-                          { label: "Valor total · MXN", value: `$${totalValue.toLocaleString("en-US", { maximumFractionDigits: 0 })}`, color: "#ffffff", sub: `≈ USD $${(totalValue / usdMxn).toLocaleString("en-US", { maximumFractionDigits: 0 })}` },
+                          { label: isExperimental ? "Presupuesto exp." : "Valor total · MXN",
+                            value: `$${(isExperimental && expTotal > 0 ? expTotal : totalValue).toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
+                            color: isExperimental ? "#8b5cf6" : "#ffffff",
+                            sub: isExperimental && expTotal > 0 ? `≈ USD $${(expTotal / usdMxn).toLocaleString("en-US", { maximumFractionDigits: 0 })}` : `≈ USD $${(totalValue / usdMxn).toLocaleString("en-US", { maximumFractionDigits: 0 })}` },
                           { label: "Costo total · MXN",  value: `$${totalCost.toLocaleString("en-US",  { maximumFractionDigits: 0 })}`, color: "#ffffff", sub: `≈ USD $${(totalCost / usdMxn).toLocaleString("en-US", { maximumFractionDigits: 0 })}` },
                           { label: "P&L ($)",      value: `${totalPnl >= 0 ? "+" : "−"}$${Math.abs(totalPnl).toLocaleString("en-US", { maximumFractionDigits: 0 })}`, color: totalPnl >= 0 ? "#00ff88" : "#ff3b3b", sub: `≈ USD ${totalPnl >= 0 ? "+" : "−"}$${Math.abs(totalPnl / usdMxn).toLocaleString("en-US", { maximumFractionDigits: 0 })}` },
                           { label: "P&L (%)",      value: `${totalPnlPct >= 0 ? "+" : ""}${totalPnlPct.toFixed(2)}%`, color: totalPnl >= 0 ? "#00ff88" : "#ff3b3b" },
@@ -2818,7 +2826,9 @@ export default function App() {
                               const tPct  = parseFloat(targetPcts[x.ticker]) || 0;
                               const price = stockData[x.ticker]?.price;
                               if (!price || base <= 0) return x;
-                              const newShares = +(((tPct / 100 * base) / price).toFixed(6));
+                              // Siempre dividir entre precio en MXN para obtener acciones correctas
+                              const priceMXN_ = toMXN(x.ticker, price);
+                              const newShares = +(((tPct / 100 * base) / priceMXN_).toFixed(6));
                               return isExperimental
                                 ? { ...x, shares: newShares, expPct: tPct }
                                 : { ...x, shares: newShares };
