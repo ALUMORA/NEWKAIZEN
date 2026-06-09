@@ -1037,21 +1037,51 @@ export default function App() {
 
   // Inicializar targetPcts cuando cambian los precios o el portafolio
   useEffect(() => {
+    if (portfolio.length === 0) return;
+
+    if (isExperimental) {
+      // Modo experimental: fuente de verdad = expPct en cada posición.
+      // Corrige inicializaciones parciales (ej. JNJ al 100% cuando es el único precio cargado).
+      setTargetPcts(prev => {
+        const next = { ...prev };
+        let changed = false;
+        portfolio.forEach(p => {
+          if (p.expPct !== undefined) {
+            const expected = String(p.expPct);
+            // Sobrescribir si aún no está inicializado O si difiere del expPct guardado
+            if (next[p.ticker] === undefined || Math.abs(parseFloat(next[p.ticker] ?? "0") - p.expPct) > 0.1) {
+              next[p.ticker] = expected;
+              changed = true;
+            }
+          }
+        });
+        return changed ? next : prev;
+      });
+      return;
+    }
+
+    // Modo normal: solo inicializar cuando TODOS los precios estén cargados
+    // (evita que el primero en cargar ocupe el 100%)
     if (Object.keys(stockData).length === 0) return;
+    const allPricesLoaded = portfolio.every(p => stockData[p.ticker]?.price);
+    if (!allPricesLoaded) return;
+
     let totalValue = 0;
     portfolio.forEach(p => { totalValue += posVal(p); });
     if (totalValue <= 0) return;
+
     setTargetPcts(prev => {
       const next = { ...prev };
       let changed = false;
       portfolio.forEach(p => {
-        const val = posVal(p);
-        const pct = (val / totalValue * 100).toFixed(1);
-        if (next[p.ticker] === undefined) { next[p.ticker] = pct; changed = true; }
+        if (next[p.ticker] === undefined) {
+          next[p.ticker] = (posVal(p) / totalValue * 100).toFixed(1);
+          changed = true;
+        }
       });
       return changed ? next : prev;
     });
-  }, [portfolio, stockData]);
+  }, [portfolio, stockData, isExperimental]);
 
   // Fetch RF rate + macro on mount
   useEffect(() => {
@@ -1770,7 +1800,15 @@ export default function App() {
     setNewTicker(""); setNewShares(""); setNewCost(""); setNewPct("");
     addingRef.current = false;
   };
-  const removeStock = (t) => setPortfolio((prev) => prev.filter((p) => p.ticker !== t));
+  const removeStock = (t) => {
+    setPortfolio((prev) => prev.filter((p) => p.ticker !== t));
+    // Limpiar targetPcts del ticker eliminado para liberar su % en modo experimental
+    setTargetPcts(prev => {
+      const next = { ...prev };
+      delete next[t];
+      return next;
+    });
+  };
 
   // ── RENDER ──────────────────────────────────────────────────────────────────
   if (backendSearching) return (
