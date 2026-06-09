@@ -1326,12 +1326,21 @@ export default function App() {
         returnsMap[t] = closes.slice(1).map((v, i) => (v - closes[i]) / closes[i]).filter(isFinite);
       }
 
+      // Pesos: usa expPct en experimental (exactamente lo configurado por el usuario)
+      // o valor de mercado en portafolios normales
       const _fx = usdMxn;
-      const totalValue = portfolio.reduce((s, p) => s + posValMXN(p, stockData, _fx), 0);
-      const weights = portfolio.map((p) => {
-        const val = posValMXN(p, stockData, _fx);
-        return totalValue > 0 ? val / totalValue : 1 / portfolio.length;
-      });
+      const allHaveExpPct = portfolio.every(p => p.expPct != null && p.expPct > 0);
+      let weights;
+      if (allHaveExpPct) {
+        const totalPct = portfolio.reduce((s, p) => s + p.expPct, 0);
+        weights = portfolio.map(p => p.expPct / (totalPct || 1));
+      } else {
+        const totalValue = portfolio.reduce((s, p) => s + posValMXN(p, stockData, _fx), 0);
+        weights = portfolio.map(p => {
+          const val = posValMXN(p, stockData, _fx);
+          return totalValue > 0 ? val / totalValue : 1 / portfolio.length;
+        });
+      }
 
       const tickerLensBack = tickers.map(t => ({ t, len: returnsMap[t]?.length ?? 0 }));
       const minLen = Math.min(spyReturnsRaw.length, ...tickerLensBack.map(x => x.len));
@@ -1433,12 +1442,20 @@ export default function App() {
         returnsMap[t] = closes.slice(1).map((v, i) => (v - closes[i]) / closes[i]).filter(isFinite);
       }
 
+      // Pesos: usa expPct en experimental (exactamente lo configurado por el usuario)
       const _fx = usdMxn;
-      const totalValue = portfolio.reduce((s, p) => s + posValMXN(p, stockData, _fx), 0);
-      const weights = portfolio.map(p => {
-        const val = posValMXN(p, stockData, _fx);
-        return totalValue > 0 ? val / totalValue : 1 / portfolio.length;
-      });
+      const allHaveExpPctMC = portfolio.every(p => p.expPct != null && p.expPct > 0);
+      let weights;
+      if (allHaveExpPctMC) {
+        const totalPct = portfolio.reduce((s, p) => s + p.expPct, 0);
+        weights = portfolio.map(p => p.expPct / (totalPct || 1));
+      } else {
+        const totalValue = portfolio.reduce((s, p) => s + posValMXN(p, stockData, _fx), 0);
+        weights = portfolio.map(p => {
+          const val = posValMXN(p, stockData, _fx);
+          return totalValue > 0 ? val / totalValue : 1 / portfolio.length;
+        });
+      }
 
       const tickerLens = tickers.map(t => ({ t, len: returnsMap[t]?.length ?? 0 }));
       const minLen = Math.min(spyRet.length, ...tickerLens.map(x => x.len));
@@ -4261,7 +4278,11 @@ export default function App() {
               </div>
               <div style={{ fontSize: 14, color: "#555555", marginBottom: 16, lineHeight: 1.6 }}>
                 Backtesting de <b style={{ color: "#111111" }}>5 años</b> con datos semanales comparado contra{" "}
-                <b style={{ color: "#888888" }}>SPY (S&P 500)</b>. Los pesos se calculan con los valores de mercado actuales.
+                <b style={{ color: "#888888" }}>SPY (S&P 500)</b>.{" "}
+                {isExperimental
+                  ? <span style={{ color: "#8b5cf6" }}>Pesos: % objetivo del portafolio experimental.</span>
+                  : "Los pesos se calculan con los valores de mercado actuales."
+                }
               </div>
               <button onClick={runBacktest} disabled={backtestLoading} className="btn-exec" style={{
                 background: backtestLoading ? "#999999" : "#0a0a0a",
