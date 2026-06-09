@@ -63,11 +63,22 @@ async function fetchStock(ticker) {
   return data?.error ? null : data;
 }
 
-async function fetchChart(ticker, period = "5y", timeoutMs = 12000) {
-  const res = await fetch(`${BACKEND}/chart/${encodeURIComponent(ticker)}?period=${period}`,
-    { signal: AbortSignal.timeout(timeoutMs) });
-  const data = await res.json();
-  return data?.closes ?? [];
+async function fetchChart(ticker, period = "5y", timeoutMs = 90000) {
+  // Reintenta automáticamente en caso de fallo de red (Render cold start)
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(`${BACKEND}/chart/${encodeURIComponent(ticker)}?period=${period}`,
+        { signal: AbortSignal.timeout(timeoutMs) });
+      const data = await res.json();
+      return data?.closes ?? [];
+    } catch (e) {
+      if (attempt < 2) {
+        await new Promise(r => setTimeout(r, 8000 * (attempt + 1))); // 8s, 16s
+      } else {
+        throw e;
+      }
+    }
+  }
 }
 
 async function fetchRiskFreeRate() {
@@ -1092,12 +1103,13 @@ export default function App() {
     fetch(`${BACKEND}/fx`).then(r => r.json()).then(d => { if (d?.USDMXN) setUsdMxn(d.USDMXN); }).catch(() => {});
   }, []);
 
-  // Keep-alive: ping cada 10 min para evitar que Render (free tier) duerma
+  // Keep-alive: ping cada 9 min para evitar que Render (free tier) duerma
+  // Usa /fx para asegurarse de que el servicio Python esté activo (no solo el proxy)
   useEffect(() => {
     if (!backendUrl) return;
     const id = setInterval(() => {
-      fetch(`${backendUrl}/health`, { signal: AbortSignal.timeout(8000) }).catch(() => {});
-    }, 10 * 60 * 1000);
+      fetch(`${backendUrl}/fx`, { signal: AbortSignal.timeout(10000) }).catch(() => {});
+    }, 9 * 60 * 1000);
     return () => clearInterval(id);
   }, [backendUrl]);
 
@@ -1266,17 +1278,19 @@ export default function App() {
     setOptimLoading(false);
   };
 
-  // Asegura que el backend esté despierto; reintenta hasta 90s
+  // Asegura que el servicio Python de Render esté COMPLETAMENTE despierto.
+  // Usa /fx (no /health) porque /health puede ser respondido por el proxy de Render
+  // sin que el servicio Python haya cargado; /fx requiere el servicio real.
   const ensureBackend = async () => {
     if (!BACKEND) return false;
-    const deadline = Date.now() + 90000;
+    const deadline = Date.now() + 120000; // hasta 2 minutos
     while (Date.now() < deadline) {
       try {
-        const r = await fetch(`${BACKEND}/health`, { signal: AbortSignal.timeout(12000) });
+        const r = await fetch(`${BACKEND}/fx`, { signal: AbortSignal.timeout(15000) });
         const d = await r.json();
-        if (d?.status === "ok") return true;
+        if (d?.USDMXN || d?.usdmxn) return true; // respuesta real del servicio
       } catch {}
-      await sleep(5000);
+      await sleep(6000);
     }
     return false;
   };
