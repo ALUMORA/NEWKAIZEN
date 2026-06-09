@@ -1258,6 +1258,18 @@ export default function App() {
 
       const tickerLensBack = tickers.map(t => ({ t, len: returnsMap[t]?.length ?? 0 }));
       const minLen = Math.min(spyReturnsRaw.length, ...tickerLensBack.map(x => x.len));
+
+      if (minLen < 10) {
+        const empties = tickerLensBack.filter(x => x.len === 0).map(x => x.t);
+        setBacktestError(
+          `No hay suficientes datos históricos (${minLen} semanas). ` +
+          (empties.length ? `Sin datos: ${empties.join(", ")}. ` : "") +
+          "Verifica que los tickers del portafolio existen en yfinance y que el backend está activo."
+        );
+        setBacktestLoading(false);
+        return;
+      }
+
       const limitingTickerBack = tickerLensBack.reduce((a, b) => a.len <= b.len ? a : b).t;
       const spyReturns = spyReturnsRaw.slice(0, minLen);
       const portReturns = Array.from({ length: minLen }, (_, i) =>
@@ -1344,6 +1356,18 @@ export default function App() {
 
       const tickerLens = tickers.map(t => ({ t, len: returnsMap[t]?.length ?? 0 }));
       const minLen = Math.min(spyRet.length, ...tickerLens.map(x => x.len));
+
+      if (minLen < 10) {
+        const empties = tickerLens.filter(x => x.len === 0).map(x => x.t);
+        setMonteCarloError(
+          `No hay suficientes datos históricos (${minLen} semanas). ` +
+          (empties.length ? `Sin datos: ${empties.join(", ")}. ` : "") +
+          "Verifica que los tickers del portafolio existen en yfinance y que el backend está activo."
+        );
+        setMonteCarloLoading(false);
+        return;
+      }
+
       const limitingTicker = tickerLens.reduce((a, b) => a.len <= b.len ? a : b).t;
       const portRet = Array.from({ length: minLen }, (_, i) =>
         tickers.reduce((s, t, wi) => s + weights[wi] * (returnsMap[t]?.[i] ?? 0), 0)
@@ -4164,6 +4188,11 @@ export default function App() {
 
             {backtestResult && (() => {
               const { portCum, spyCum, dates, beta, trackingError, treynor, alpha, infoRatio, sharpe, annPortReturn, annSpyReturn, yearsBacktest, limitingTickerBack, tickerYearsBack } = backtestResult;
+              if (!portCum?.length || portCum.length < 5) return (
+                <div style={{ padding: "20px", background: "#fff8e6", border: "1px solid #fcd34d", borderRadius: 12, margin: "12px 0", color: "#92400e", fontSize: 13 }}>
+                  ⚠️ No hay suficientes datos para mostrar el backtest. Puede que algunos tickers del portafolio no tengan historial en yfinance. Revisa la consola del navegador para más detalles.
+                </div>
+              );
               const outperforms = annPortReturn > annSpyReturn;
 
               const statCard = (label, value, unit, _hint) => (
