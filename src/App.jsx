@@ -4413,7 +4413,7 @@ export default function App() {
             </div>
 
             {monteCarloResult && (() => {
-              const { portStats, spyStats, weeks, N, yearsData, muPort, sigPort, muSpy, sigSpy, probBeat } = monteCarloResult;
+              const { portStats, spyStats, weeks, N, yearsData, limitingTicker, tickerYears, muPort, sigPort, muSpy, sigSpy, probBeat } = monteCarloResult;
               const portMeanEnd   = portStats[portStats.length - 1].mean;
               const spyMeanEnd    = spyStats[spyStats.length - 1].mean;
               const portAnnReturn = (Math.pow(portMeanEnd, 52 / portStats.length) - 1) * 100;
