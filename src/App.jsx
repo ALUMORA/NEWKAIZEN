@@ -988,6 +988,7 @@ export default function App() {
   const countdownTimerRef = useRef(null);
   const [backtestResult, setBacktestResult] = useState(null);
   const [backtestLoading, setBacktestLoading] = useState(false);
+  const [backtestError, setBacktestError] = useState(null);
   const [newsTicker, setNewsTicker] = useState("");
   const [newsSentimentFilter, setNewsSentimentFilter] = useState("all");
   const [macroData, setMacroData] = useState(null);
@@ -1013,6 +1014,7 @@ export default function App() {
   const [customTotal, setCustomTotal] = useState("");
   const [monteCarloResult, setMonteCarloResult] = useState(null);
   const [monteCarloLoading, setMonteCarloLoading] = useState(false);
+  const [monteCarloError, setMonteCarloError] = useState(null);
   const [analisisTicker, setAnalisisTicker] = useState("");
   const [analisisData, setAnalisisData] = useState(null);
   const [analisisChart, setAnalisisChart] = useState(null);
@@ -1228,15 +1230,21 @@ export default function App() {
   const runBacktest = async () => {
     setBacktestLoading(true);
     setBacktestResult(null);
+    setBacktestError(null);
+    if (!BACKEND) {
+      setBacktestError("El backend no está disponible. Espera a que Render despierte (30–60 s) y reintenta.");
+      setBacktestLoading(false);
+      return;
+    }
     try {
-      const spyCloses = await fetchChart("SPY", "1y");
+      const spyCloses = await fetchChart("SPY", "5y");
       const spyReturnsRaw = spyCloses.slice(1).map((v, i) => (v - spyCloses[i]) / spyCloses[i]).filter(isFinite);
 
       const tickers = portfolio.map((p) => p.ticker);
       const returnsMap = {};
       for (const t of tickers) {
         await sleep(200);
-        const closes = await fetchChart(t, "1y");
+        const closes = await fetchChart(t, "5y");
         returnsMap[t] = closes.slice(1).map((v, i) => (v - closes[i]) / closes[i]).filter(isFinite);
       }
 
@@ -1255,10 +1263,11 @@ export default function App() {
 
       // Generar etiquetas de semanas hacia atrás desde hoy
       const today = new Date();
+      const MONTHS = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
       const dates = Array.from({ length: minLen }, (_, i) => {
         const d = new Date(today);
         d.setDate(d.getDate() - (minLen - 1 - i) * 7);
-        return `${d.getMonth() + 1}/${d.getDate()}`;
+        return `${MONTHS[d.getMonth()]} '${String(d.getFullYear()).slice(2)}`;
       });
 
       const rf = rfRate ?? 0.0860;
@@ -1294,6 +1303,7 @@ export default function App() {
       });
     } catch (e) {
       console.error("Backtest error:", e);
+      setBacktestError(`Error al obtener datos: ${e?.message ?? e}. Verifica que el backend esté activo.`);
     }
     setBacktestLoading(false);
   };
@@ -1302,6 +1312,12 @@ export default function App() {
   const runMonteCarlo = async () => {
     setMonteCarloLoading(true);
     setMonteCarloResult(null);
+    setMonteCarloError(null);
+    if (!BACKEND) {
+      setMonteCarloError("El backend no está disponible. Espera a que Render despierte (30–60 s) y reintenta.");
+      setMonteCarloLoading(false);
+      return;
+    }
     try {
       const spyCloses = await fetchChart("SPY", "5y");
       const spyRet = spyCloses.slice(1).map((v, i) => (v - spyCloses[i]) / spyCloses[i]).filter(isFinite);
@@ -1373,6 +1389,7 @@ export default function App() {
       });
     } catch (e) {
       console.error("MC error:", e);
+      setMonteCarloError(`Error en simulación: ${e?.message ?? e}. Verifica que el backend esté activo.`);
     }
     setMonteCarloLoading(false);
   };
@@ -4046,7 +4063,7 @@ export default function App() {
                 ))}
               </div>
               <div style={{ fontSize: 14, color: "#555555", marginBottom: 16, lineHeight: 1.6 }}>
-                Backtesting de <b style={{ color: "#111111" }}>1 año</b> con datos semanales comparado contra{" "}
+                Backtesting de <b style={{ color: "#111111" }}>5 años</b> con datos semanales comparado contra{" "}
                 <b style={{ color: "#888888" }}>SPY (S&P 500)</b>. Los pesos se calculan con los valores de mercado actuales.
               </div>
               <button onClick={runBacktest} disabled={backtestLoading} className="btn-exec" style={{
@@ -4056,8 +4073,13 @@ export default function App() {
                 fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", gap: 10
               }}>
                 {backtestLoading && <Spinner size={16} />}
-                {backtestLoading ? "Calculando backtest..." : " Ejecutar Backtest vs SPY"}
+                {backtestLoading ? "Calculando backtest... (puede tardar 1–2 min con 5 años)" : " Ejecutar Backtest vs SPY"}
               </button>
+              {backtestError && (
+                <div style={{ marginTop: 12, padding: "10px 16px", background: "#fff0f0", border: "1px solid #ffcccc", borderRadius: 10, fontSize: 13, color: "#cc0000", lineHeight: 1.5 }}>
+                  ⚠️ {backtestError}
+                </div>
+              )}
             </div>
 
             {backtestResult && (() => {
@@ -4080,7 +4102,7 @@ export default function App() {
                 <div style={{ animation: "fadeIn 0.5s ease" }}>
                   <div style={{ background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8", padding: 20, marginBottom: 24 }}>
                     <div style={{ fontSize: 12, color: "#999999", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 16 }}>
-                      RETORNOS ACUMULADOS — PORTAFOLIO vs SPY (1 AÑO SEMANAL)
+                      RETORNOS ACUMULADOS — PORTAFOLIO vs SPY (5 AÑOS SEMANAL)
                     </div>
                     <LineChart
                       series={[
@@ -4219,8 +4241,13 @@ export default function App() {
                 fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", gap: 10
               }}>
                 {monteCarloLoading && <Spinner size={16} />}
-                {monteCarloLoading ? "Simulando..." : " Ejecutar Monte Carlo (5 años)"}
+                {monteCarloLoading ? "Simulando... (puede tardar 1–2 min)" : " Ejecutar Monte Carlo (5 años)"}
               </button>
+              {monteCarloError && (
+                <div style={{ marginTop: 12, padding: "10px 16px", background: "#fff0f0", border: "1px solid #ffcccc", borderRadius: 10, fontSize: 13, color: "#cc0000", lineHeight: 1.5 }}>
+                  ⚠️ {monteCarloError}
+                </div>
+              )}
             </div>
 
             {monteCarloResult && (() => {
