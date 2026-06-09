@@ -1255,7 +1255,9 @@ export default function App() {
         return totalValue > 0 ? val / totalValue : 1 / portfolio.length;
       });
 
-      const minLen = Math.min(spyReturnsRaw.length, ...tickers.map((t) => returnsMap[t]?.length ?? 0));
+      const tickerLensBack = tickers.map(t => ({ t, len: returnsMap[t]?.length ?? 0 }));
+      const minLen = Math.min(spyReturnsRaw.length, ...tickerLensBack.map(x => x.len));
+      const limitingTickerBack = tickerLensBack.reduce((a, b) => a.len <= b.len ? a : b).t;
       const spyReturns = spyReturnsRaw.slice(0, minLen);
       const portReturns = Array.from({ length: minLen }, (_, i) =>
         tickers.reduce((s, t, wi) => s + weights[wi] * (returnsMap[t]?.[i] ?? 0), 0)
@@ -1295,11 +1297,13 @@ export default function App() {
         })
       );
 
+      const yearsBacktest = (minLen / 52).toFixed(1);
       setBacktestResult({
         portCum: cumulativeReturns(portReturns),
         spyCum: cumulativeReturns(spyReturns),
         dates, beta, trackingError, treynor, alpha, infoRatio, sharpe, annPortReturn, annSpyReturn,
-        corrMatrix, tickers,
+        corrMatrix, tickers, yearsBacktest, limitingTickerBack,
+        tickerYearsBack: tickerLensBack.map(x => ({ t: x.t, y: (x.len / 52).toFixed(1) })),
       });
     } catch (e) {
       console.error("Backtest error:", e);
@@ -1337,7 +1341,9 @@ export default function App() {
         return totalValue > 0 ? val / totalValue : 1 / portfolio.length;
       });
 
-      const minLen = Math.min(spyRet.length, ...tickers.map(t => returnsMap[t]?.length ?? 0));
+      const tickerLens = tickers.map(t => ({ t, len: returnsMap[t]?.length ?? 0 }));
+      const minLen = Math.min(spyRet.length, ...tickerLens.map(x => x.len));
+      const limitingTicker = tickerLens.reduce((a, b) => a.len <= b.len ? a : b).t;
       const portRet = Array.from({ length: minLen }, (_, i) =>
         tickers.reduce((s, t, wi) => s + weights[wi] * (returnsMap[t]?.[i] ?? 0), 0)
       );
@@ -1379,11 +1385,12 @@ export default function App() {
       // Probabilidad de superar al SPY al final
       const probBeat = portPaths.filter((p, i) => p[H] > spyPaths[i][H]).length / N;
 
-      // Años de datos usados
+      // Años de datos usados (mínimo entre todos los tickers)
       const yearsData = (minLen / 52).toFixed(1);
+      const tickerYears = tickerLens.map(x => ({ t: x.t, y: (x.len / 52).toFixed(1) }));
 
       setMonteCarloResult({
-        portStats, spyStats, H, N, yearsData,
+        portStats, spyStats, H, N, yearsData, limitingTicker, tickerYears,
         muPort, sigPort, muSpy, sigSpy, probBeat,
         weeks: Array.from({ length: H + 1 }, (_, i) => i === 0 ? "Hoy" : `S${i}`),
       });
@@ -4083,7 +4090,7 @@ export default function App() {
             </div>
 
             {backtestResult && (() => {
-              const { portCum, spyCum, dates, beta, trackingError, treynor, alpha, infoRatio, sharpe, annPortReturn, annSpyReturn } = backtestResult;
+              const { portCum, spyCum, dates, beta, trackingError, treynor, alpha, infoRatio, sharpe, annPortReturn, annSpyReturn, yearsBacktest, limitingTickerBack, tickerYearsBack } = backtestResult;
               const outperforms = annPortReturn > annSpyReturn;
 
               const statCard = (label, value, unit, _hint) => (
@@ -4101,9 +4108,25 @@ export default function App() {
               return (
                 <div style={{ animation: "fadeIn 0.5s ease" }}>
                   <div style={{ background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8", padding: 20, marginBottom: 24 }}>
-                    <div style={{ fontSize: 12, color: "#999999", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 16 }}>
-                      RETORNOS ACUMULADOS — PORTAFOLIO vs SPY (5 AÑOS SEMANAL)
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
+                      <div style={{ fontSize: 12, color: "#999999", letterSpacing: "0.07em", fontWeight: 500 }}>
+                        RETORNOS ACUMULADOS — PORTAFOLIO vs SPY ({yearsBacktest ?? "5"} AÑOS SEMANAL)
+                      </div>
+                      {yearsBacktest && parseFloat(yearsBacktest) < 4.5 && (
+                        <div style={{ fontSize: 11, color: "#92400e", background: "#fffbe6", border: "1px solid #fcd34d", borderRadius: 6, padding: "2px 8px" }}>
+                          ⚠️ Limitado a {yearsBacktest}a por {limitingTickerBack}
+                        </div>
+                      )}
                     </div>
+                    {yearsBacktest && parseFloat(yearsBacktest) < 4.5 && tickerYearsBack && (
+                      <div style={{ marginBottom: 12, display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
+                        {tickerYearsBack.map(({ t, y }) => (
+                          <span key={t} style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: parseFloat(y) < 3 ? "#dc2626" : "#888888" }}>
+                            {t.split(".")[0]}: {y}a
+                          </span>
+                        ))}
+                      </div>
+                    )}
                     <LineChart
                       series={[
                         { name: "Mi Portafolio", color: "#00cc6a", data: portCum },
@@ -4302,6 +4325,21 @@ export default function App() {
                       </div>
                     ))}
                   </div>
+                  {limitingTicker && parseFloat(yearsData) < 4.5 && (
+                    <div style={{ marginTop: 12, padding: "10px 14px", background: "#fffbe6", border: "1px solid #fcd34d", borderRadius: 10, fontSize: 12, color: "#92400e" }}>
+                      ⚠️ El historial está limitado a <b>{yearsData} años</b> por <b style={{ fontFamily: "'DM Mono',monospace" }}>{limitingTicker}</b> (el ticker con menos datos disponibles en yfinance).
+                      Los demás activos sí tienen más historial pero se recortan al mínimo común para mantener consistencia estadística.
+                      {tickerYears && (
+                        <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: "6px 16px" }}>
+                          {tickerYears.map(({ t, y }) => (
+                            <span key={t} style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: parseFloat(y) < 3 ? "#dc2626" : "#555555" }}>
+                              {t.split(".")[0]}: {y}a
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })()}
