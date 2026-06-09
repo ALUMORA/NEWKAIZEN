@@ -25,7 +25,7 @@ const BACKEND_CANDIDATES = [
 async function detectBackend() {
   for (const url of BACKEND_CANDIDATES) {
     try {
-      const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(15000) });
+      const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(60000) });
       const data = await res.json();
       if (data?.status === "ok") return url;
     } catch {}
@@ -1237,14 +1237,14 @@ export default function App() {
       return;
     }
     try {
-      const spyCloses = await fetchChart("SPY", "5y");
+      const spyCloses = await fetchChart("SPY", "5y", 60000);
       const spyReturnsRaw = spyCloses.slice(1).map((v, i) => (v - spyCloses[i]) / spyCloses[i]).filter(isFinite);
 
       const tickers = portfolio.map((p) => p.ticker);
       const returnsMap = {};
       for (const t of tickers) {
         await sleep(200);
-        const closes = await fetchChart(t, "5y");
+        const closes = await fetchChart(t, "5y", 60000);
         returnsMap[t] = closes.slice(1).map((v, i) => (v - closes[i]) / closes[i]).filter(isFinite);
       }
 
@@ -1319,14 +1319,14 @@ export default function App() {
       return;
     }
     try {
-      const spyCloses = await fetchChart("SPY", "5y");
+      const spyCloses = await fetchChart("SPY", "5y", 60000);
       const spyRet = spyCloses.slice(1).map((v, i) => (v - spyCloses[i]) / spyCloses[i]).filter(isFinite);
 
       const tickers = portfolio.map(p => p.ticker);
       const returnsMap = {};
       for (const t of tickers) {
         await sleep(200);
-        const closes = await fetchChart(t, "5y");
+        const closes = await fetchChart(t, "5y", 60000);
         returnsMap[t] = closes.slice(1).map((v, i) => (v - closes[i]) / closes[i]).filter(isFinite);
       }
 
