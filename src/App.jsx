@@ -1412,8 +1412,8 @@ export default function App() {
       // Box-Muller para números normales
       const randn = () => Math.sqrt(-2 * Math.log(Math.random() + 1e-12)) * Math.cos(2 * Math.PI * Math.random());
 
-      const H = 52;   // semanas
-      const N = 50000; // simulaciones
+      const H = 52;    // semanas
+      const N = 10000; // simulaciones (reducido de 50k para evitar freeze del browser)
 
       const simPaths = (mu, sig) => Array.from({ length: N }, () => {
         const path = [1];
@@ -1424,14 +1424,13 @@ export default function App() {
       const portPaths = simPaths(muPort, sigPort);
       const spyPaths  = simPaths(muSpy,  sigSpy);
 
-      const pct = (arr, p) => {
-        const s = [...arr].sort((a, b) => a - b);
-        return s[Math.max(0, Math.floor((p / 100) * (s.length - 1)))];
-      };
-
+      // Ordenar UNA vez por paso de tiempo para calcular todos los percentiles (5x más rápido)
       const buildStats = (paths) => Array.from({ length: H + 1 }, (_, t) => {
         const vals = paths.map(p => p[t]);
-        return { p5: pct(vals, 5), p25: pct(vals, 25), median: pct(vals, 50), p75: pct(vals, 75), p95: pct(vals, 95), mean: mean(vals) };
+        const sorted = [...vals].sort((a, b) => a - b);
+        const idx = (q) => Math.max(0, Math.floor((q / 100) * (sorted.length - 1)));
+        const m = vals.reduce((a, b) => a + b, 0) / vals.length;
+        return { p5: sorted[idx(5)], p25: sorted[idx(25)], median: sorted[idx(50)], p75: sorted[idx(75)], p95: sorted[idx(95)], mean: m };
       });
 
       const portStats = buildStats(portPaths);
@@ -4394,7 +4393,7 @@ export default function App() {
                 PROYECCIÓN FUTURA — MONTE CARLO
               </div>
               <div style={{ fontSize: 13, color: "#555555", marginBottom: 14, lineHeight: 1.6 }}>
-                Simulación de <b style={{ color: "#111111" }}>50,000 escenarios</b> a 52 semanas usando retornos históricos de{" "}
+                Simulación de <b style={{ color: "#111111" }}>10,000 escenarios</b> a 52 semanas usando retornos históricos de{" "}
                 <b style={{ color: "#111111" }}>5 años</b>. Muestra el rango p5–p95 del portafolio vs SPY.
               </div>
               <button onClick={runMonteCarlo} disabled={monteCarloLoading || portfolio.length === 0} className="btn-exec" style={{
