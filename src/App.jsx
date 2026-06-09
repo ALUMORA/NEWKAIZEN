@@ -1092,6 +1092,15 @@ export default function App() {
     fetch(`${BACKEND}/fx`).then(r => r.json()).then(d => { if (d?.USDMXN) setUsdMxn(d.USDMXN); }).catch(() => {});
   }, []);
 
+  // Keep-alive: ping cada 10 min para evitar que Render (free tier) duerma
+  useEffect(() => {
+    if (!backendUrl) return;
+    const id = setInterval(() => {
+      fetch(`${backendUrl}/health`, { signal: AbortSignal.timeout(8000) }).catch(() => {});
+    }, 10 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [backendUrl]);
+
   // Load stock data for portfolio
   const loadStockData = useCallback(async (ticker) => {
     setLoading((p) => ({ ...p, [ticker]: true }));
@@ -1257,13 +1266,37 @@ export default function App() {
     setOptimLoading(false);
   };
 
+  // Asegura que el backend esté despierto; reintenta hasta 90s
+  const ensureBackend = async () => {
+    if (!BACKEND) return false;
+    const deadline = Date.now() + 90000;
+    while (Date.now() < deadline) {
+      try {
+        const r = await fetch(`${BACKEND}/health`, { signal: AbortSignal.timeout(12000) });
+        const d = await r.json();
+        if (d?.status === "ok") return true;
+      } catch {}
+      await sleep(5000);
+    }
+    return false;
+  };
+
   // Backtest vs SPY
   const runBacktest = async () => {
     setBacktestLoading(true);
     setBacktestResult(null);
     setBacktestError(null);
     if (!BACKEND) {
-      setBacktestError("El backend no está disponible. Espera a que Render despierte (30–60 s) y reintenta.");
+      setBacktestError("El backend no está disponible. Recarga la página e intenta de nuevo.");
+      setBacktestLoading(false);
+      return;
+    }
+    // Despertar backend si está dormido (Render free tier puede tardar hasta 90s)
+    setBacktestError("⏳ Despertando backend... (primera vez puede tardar hasta 90 s)");
+    const alive = await ensureBackend();
+    setBacktestError(null);
+    if (!alive) {
+      setBacktestError("El backend no respondió en 90 s. Intenta de nuevo en 1-2 minutos.");
       setBacktestLoading(false);
       return;
     }
@@ -1361,7 +1394,16 @@ export default function App() {
     setMonteCarloResult(null);
     setMonteCarloError(null);
     if (!BACKEND) {
-      setMonteCarloError("El backend no está disponible. Espera a que Render despierte (30–60 s) y reintenta.");
+      setMonteCarloError("El backend no está disponible. Recarga la página e intenta de nuevo.");
+      setMonteCarloLoading(false);
+      return;
+    }
+    // Despertar backend si está dormido
+    setMonteCarloError("⏳ Despertando backend... (primera vez puede tardar hasta 90 s)");
+    const alive = await ensureBackend();
+    setMonteCarloError(null);
+    if (!alive) {
+      setMonteCarloError("El backend no respondió en 90 s. Intenta de nuevo en 1-2 minutos.");
       setMonteCarloLoading(false);
       return;
     }
