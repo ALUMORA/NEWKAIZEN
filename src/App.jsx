@@ -950,6 +950,7 @@ export default function App() {
   const [newShares, setNewShares] = useState("");
   const [newCost, setNewCost] = useState("");
   const [addError, setAddError] = useState("");
+  const addingRef = useRef(false);
   const [stockData, setStockData] = useState({});
   const [usdMxn, setUsdMxn] = useState(17.5);
 
@@ -1679,33 +1680,39 @@ export default function App() {
   }, [tab, autoRefresh, loadMarketData]);
 
   const addStock = async () => {
+    if (addingRef.current) return;
+    addingRef.current = true;
     setAddError("");
-    if (!newTicker) return;
+    if (!newTicker) { addingRef.current = false; return; }
     const t = newTicker.toUpperCase().trim();
     const cost = parseFloat(newCost);
     let shares;
 
     if (isExperimental) {
       const pct = parseFloat(newPct);
-      if (!pct || pct <= 0) { setAddError("Ingresa un porcentaje válido (> 0)."); return; }
-      const existingPct = portfolio.find(p => p.ticker === t)?.expPct ?? 0;
-      const available = remainingExpPct + existingPct;
-      if (pct > available + 0.01) { setAddError(`Solo quedan ${available.toFixed(1)}% disponibles.`); return; }
-      if (!expTotal || expTotal <= 0) { setAddError("Define el Monto Total antes de agregar posiciones."); return; }
+      if (!pct || pct <= 0) { setAddError("Ingresa un porcentaje válido (> 0)."); addingRef.current = false; return; }
+      // Usar targetPcts como fuente de verdad para calcular el % ya asignado
+      const existingPct = parseFloat(targetPcts[t]) || portfolio.find(p => p.ticker === t)?.expPct || 0;
+      const currentAllocated = portfolio.reduce((s, p) => s + (parseFloat(targetPcts[p.ticker]) || p.expPct || 0), 0);
+      const available = Math.max(0, 100 - currentAllocated + existingPct);
+      if (pct > available + 0.01) { setAddError(`Solo quedan ${available.toFixed(1)}% disponibles.`); addingRef.current = false; return; }
+      if (!expTotal || expTotal <= 0) { setAddError("Define el Monto Total antes de agregar posiciones."); addingRef.current = false; return; }
       let price = stockData[t]?.price;
       if (!price) {
         const sd = await fetchStock(t);
         if (sd?.price) { price = sd.price; setStockData(prev => ({ ...prev, [t]: sd })); }
       }
-      if (!price) { setAddError("No se pudo obtener el precio actual."); return; }
+      if (!price) { setAddError("No se pudo obtener el precio actual."); addingRef.current = false; return; }
       shares = (pct / 100 * expTotal) / price;
       if (portfolio.find(p => p.ticker === t)) {
         setPortfolio(prev => prev.map(p => p.ticker === t ? { ...p, shares, cost: isNaN(cost) ? p.cost : cost, expPct: pct } : p));
-        loadStockData(t);
       } else {
         setPortfolio(prev => [...prev, { ticker: t, shares, cost: isNaN(cost) ? 0 : cost, expPct: pct }]);
       }
+      // targetPcts es la fuente de verdad — sincronizar siempre
+      setTargetPcts(prev => ({ ...prev, [t]: String(pct) }));
       setNewTicker(""); setNewPct("");
+      addingRef.current = false;
       return;
     }
 
@@ -1735,6 +1742,7 @@ export default function App() {
       setPortfolio((prev) => [...prev, { ticker: t, shares, cost: isNaN(cost) ? 0 : cost }]);
     }
     setNewTicker(""); setNewShares(""); setNewCost(""); setNewPct("");
+    addingRef.current = false;
   };
   const removeStock = (t) => setPortfolio((prev) => prev.filter((p) => p.ticker !== t));
 
@@ -2165,6 +2173,11 @@ export default function App() {
                 padding: "20px 24px", marginBottom: 28
               }}>
                 {/* Header: label + monto total + barra de % */}
+                {(() => {
+                  // % libre calculado SIEMPRE desde targetPcts (fuente de verdad en vivo)
+                  const liveAllocated = portfolio.reduce((s, p) => s + (parseFloat(targetPcts[p.ticker]) || p.expPct || 0), 0);
+                  const liveRemaining = Math.max(0, parseFloat((100 - liveAllocated).toFixed(2)));
+                  return (
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18, flexWrap: "wrap" }}>
                   <span style={{ fontSize: 10, letterSpacing: "0.14em", fontWeight: 700, color: "#8b5cf6" }}>⚗ MODO EXPERIMENTAL</span>
                   <div style={{ flex: 1 }} />
@@ -2187,29 +2200,35 @@ export default function App() {
                   <div style={{
                     fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700,
                     padding: "6px 14px", borderRadius: 999,
-                    background: remainingExpPct > 0.01 ? "#ede9fe" : "#fef2f2",
-                    color: remainingExpPct > 0.01 ? "#7c3aed" : "#dc2626",
-                    border: `1.5px solid ${remainingExpPct > 0.01 ? "#c4b5fd" : "#fca5a5"}`,
+                    background: liveRemaining > 0.01 ? "#ede9fe" : "#fef2f2",
+                    color: liveRemaining > 0.01 ? "#7c3aed" : "#dc2626",
+                    border: `1.5px solid ${liveRemaining > 0.01 ? "#c4b5fd" : "#fca5a5"}`,
                     transition: "all 0.2s"
                   }}>
-                    {remainingExpPct.toFixed(1)}% libre
+                    {liveRemaining.toFixed(1)}% libre
                   </div>
                   {/* Barra de progreso */}
                   <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                     <div style={{ width: 140, height: 7, background: "#e9d5ff", borderRadius: 99, overflow: "hidden" }}>
                       <div style={{
-                        width: `${Math.min(100, allocatedExpPct)}%`, height: "100%",
-                        background: allocatedExpPct >= 99.5 ? "#16a34a" : allocatedExpPct > 90 ? "#00ff88" : "#8b5cf6",
+                        width: `${Math.min(100, liveAllocated)}%`, height: "100%",
+                        background: liveAllocated >= 99.5 ? "#16a34a" : liveAllocated > 90 ? "#00ff88" : "#8b5cf6",
                         borderRadius: 99, transition: "width 0.35s ease"
                       }} />
                     </div>
                     <div style={{ fontSize: 9, color: "#a78bfa", textAlign: "right", fontFamily: "'DM Mono', monospace" }}>
-                      {allocatedExpPct.toFixed(1)}% asignado
+                      {liveAllocated.toFixed(1)}% asignado
                     </div>
                   </div>
                 </div>
+                  );
+                })()}
 
                 {/* Form row */}
+                {(() => {
+                  const liveAllocatedForm = portfolio.reduce((s, p) => s + (parseFloat(targetPcts[p.ticker]) || p.expPct || 0), 0);
+                  const liveRemainingForm = Math.max(0, parseFloat((100 - liveAllocatedForm).toFixed(2)));
+                  return (
                 <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
                   <div>
                     <div style={{ fontSize: 10, color: "#a78bfa", letterSpacing: "0.08em", marginBottom: 6, fontWeight: 600 }}>TICKER</div>
@@ -2226,8 +2245,8 @@ export default function App() {
                     <div style={{ fontSize: 10, color: "#a78bfa", letterSpacing: "0.08em", marginBottom: 6, fontWeight: 600 }}>% ASIGNACIÓN</div>
                     <div style={{ position: "relative" }}>
                       <input value={newPct} onChange={e => setNewPct(e.target.value)}
-                        placeholder={`máx ${remainingExpPct.toFixed(1)}`}
-                        type="number" step="any" min="0.01" max={remainingExpPct}
+                        placeholder={`máx ${liveRemainingForm.toFixed(1)}`}
+                        type="number" step="any" min="0.01" max={liveRemainingForm}
                         onKeyDown={e => e.key === "Enter" && addStock()}
                         style={{
                           background: "#ede9fe", border: "1.5px solid #c4b5fd", borderRadius: 10,
@@ -2250,20 +2269,33 @@ export default function App() {
                     })()}
                   </div>
                   <button onClick={addStock}
-                    disabled={remainingExpPct <= 0.01}
+                    disabled={liveRemainingForm <= 0.01}
                     style={{
-                      background: remainingExpPct > 0.01 ? "#8b5cf6" : "#ede9fe",
+                      background: liveRemainingForm > 0.01 ? "#8b5cf6" : "#ede9fe",
                       border: "none", borderRadius: 999,
-                      color: remainingExpPct > 0.01 ? "#fff" : "#c4b5fd",
-                      padding: "9px 26px", cursor: remainingExpPct > 0.01 ? "pointer" : "not-allowed",
+                      color: liveRemainingForm > 0.01 ? "#fff" : "#c4b5fd",
+                      padding: "9px 26px", cursor: liveRemainingForm > 0.01 ? "pointer" : "not-allowed",
                       fontSize: 13, fontWeight: 700, letterSpacing: "0.04em", transition: "all 0.15s"
                     }}>+ Agregar</button>
-                  <button onClick={async () => { for (const p of portfolio) { await loadStockData(p.ticker); await sleep(400); } }}
+                  <button onClick={async () => {
+                      // Recalcular shares desde targetPcts + expTotal al actualizar precios
+                      for (const p of portfolio) { await loadStockData(p.ticker); await sleep(400); }
+                      if (expTotal > 0) {
+                        setPortfolio(prev => prev.map(pos => {
+                          const pct = parseFloat(targetPcts[pos.ticker]) || pos.expPct || 0;
+                          const price = stockData[pos.ticker]?.price;
+                          if (!price || pct <= 0) return pos;
+                          return { ...pos, shares: +((pct / 100 * expTotal / price).toFixed(6)), expPct: pct };
+                        }));
+                      }
+                    }}
                     style={{
                       background: "#ede9fe", border: "none", borderRadius: 999,
                       color: "#8b5cf6", padding: "9px 20px", cursor: "pointer", fontSize: 13, fontWeight: 600
-                    }}>↻ Actualizar</button>
+                    }}>↻ Recalcular</button>
                 </div>
+                  );
+                })()}
                 {addError && (
                   <div style={{ marginTop: 12, fontSize: 12, color: "#dc2626", display: "flex", alignItems: "center", gap: 6 }}>
                     ⚠ {addError}
@@ -2361,10 +2393,14 @@ export default function App() {
               const slices = [];
               const COLORS = ["#111111","#555555","#888888","#aaaaaa","#cccccc","#333333","#777777","#bbbbbb","#444444","#999999","#666666","#dddddd"];
               portfolio.forEach((p, i) => {
-                const val = posVal(p);
-                totalValue += val;
+                const actualVal = posVal(p);
+                totalValue += actualVal;
                 totalCost += posCost(p);
-                slices.push({ ticker: p.ticker, value: val, colorIdx: i });
+                // En modo experimental: el donut muestra los % objetivo (targetPcts/expPct), no el valor real
+                const donutVal = isExperimental
+                  ? (parseFloat(targetPcts[p.ticker]) || p.expPct || 0)
+                  : actualVal;
+                slices.push({ ticker: p.ticker, value: donutVal, colorIdx: i });
               });
               // Sort descending so the biggest slice gets the accent color
               slices.sort((a, b) => b.value - a.value);
@@ -2411,8 +2447,12 @@ export default function App() {
 
               const R = 110, CX = 130, CY = 130;
               let cumAngle = -Math.PI / 2;
+              // En modo experimental los slices son % (0-100); en normal son valores MXN
+              const donutDenom = isExperimental
+                ? slices.reduce((s, x) => s + x.value, 0) || 100
+                : totalValue || 1;
               const paths = slices.filter(s => s.value > 0).map((s) => {
-                const pct = s.value / totalValue;
+                const pct = s.value / donutDenom;
                 const angle = pct * 2 * Math.PI;
                 const startAngle = cumAngle;
                 const x1 = CX + R * Math.cos(cumAngle);
@@ -2680,6 +2720,12 @@ export default function App() {
                                     <input
                                       value={rawVal}
                                       onChange={e => setTargetPcts(prev => ({ ...prev, [p.ticker]: e.target.value }))}
+                                      onBlur={e => {
+                                        if (isExperimental) {
+                                          const v = parseFloat(e.target.value) || 0;
+                                          setPortfolio(prev => prev.map(pos => pos.ticker === p.ticker ? { ...pos, expPct: v } : pos));
+                                        }
+                                      }}
                                       type="number" step="0.1" min="0" max="100"
                                       style={{
                                         width: "100%", padding: "5px 20px 5px 8px",
@@ -2700,12 +2746,24 @@ export default function App() {
                                       min={0} max={100} step={0.1}
                                       value={tPct}
                                       onChange={e => setTargetPcts(prev => ({ ...prev, [p.ticker]: e.target.value }))}
+                                      onMouseUp={e => {
+                                        if (isExperimental) {
+                                          const v = parseFloat(e.target.value) || 0;
+                                          setPortfolio(prev => prev.map(pos => pos.ticker === p.ticker ? { ...pos, expPct: v } : pos));
+                                        }
+                                      }}
+                                      onTouchEnd={e => {
+                                        if (isExperimental) {
+                                          const v = parseFloat(e.target.value) || 0;
+                                          setPortfolio(prev => prev.map(pos => pos.ticker === p.ticker ? { ...pos, expPct: v } : pos));
+                                        }
+                                      }}
                                       style={{
                                         flex: 1,
                                         height: 6,
                                         appearance: "none",
                                         WebkitAppearance: "none",
-                                        background: `linear-gradient(to right, #00ff88 ${tPct}%, #e0e0d8 ${tPct}%)`,
+                                        background: `linear-gradient(to right, ${isExperimental ? "#8b5cf6" : "#00ff88"} ${tPct}%, #e0e0d8 ${tPct}%)`,
                                         borderRadius: 999,
                                         outline: "none",
                                         border: "none",
@@ -2753,14 +2811,19 @@ export default function App() {
                         <button
                           disabled={!tSumOk}
                           onClick={() => {
-                            const base = parseFloat(customTotal) > 0 ? parseFloat(customTotal) : effTotal;
+                            // En experimental: base = expTotal; en normal: customTotal o valor actual
+                            const base = isExperimental ? expTotal
+                              : (parseFloat(customTotal) > 0 ? parseFloat(customTotal) : effTotal);
                             setPortfolio(prev => prev.map(x => {
                               const tPct  = parseFloat(targetPcts[x.ticker]) || 0;
                               const price = stockData[x.ticker]?.price;
                               if (!price || base <= 0) return x;
-                              return { ...x, shares: +(((tPct / 100 * base) / price).toFixed(6)) };
+                              const newShares = +(((tPct / 100 * base) / price).toFixed(6));
+                              return isExperimental
+                                ? { ...x, shares: newShares, expPct: tPct }
+                                : { ...x, shares: newShares };
                             }));
-                            if (parseFloat(customTotal) > 0) setCustomTotal("");
+                            if (!isExperimental && parseFloat(customTotal) > 0) setCustomTotal("");
                           }}
                           style={{
                             background: tSumOk ? "#111111" : "#e5e5e5",
