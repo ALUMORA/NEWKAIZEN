@@ -1094,6 +1094,15 @@ export default function App() {
     });
   }, [portfolio, stockData, isExperimental]);
 
+  // Limpiar resultados de análisis al cambiar de portafolio activo
+  useEffect(() => {
+    setOptimResult(null);
+    setBacktestResult(null);
+    setBacktestError(null);
+    setMonteCarloResult(null);
+    setMonteCarloError(null);
+  }, [activePortfolioId]);
+
   // Fetch RF rate + macro on mount
   useEffect(() => {
     fetchRiskFreeRate()
@@ -3345,11 +3354,9 @@ export default function App() {
                     <tbody>
                       {optimResult.tickers.map((t, i) => {
                         const optW = optimResult.weights[i];
-                        const pos = portfolio.find((p) => p.ticker === t);
-                        const sd = stockData[t];
-                        const price = sd?.price ?? 0;
-                        const totalValue = portfolio.reduce((s, p) => s + posVal(p), 0);
-                        const currW = totalValue > 0 && pos ? posVal(pos) / totalValue : 0;
+                        // Usa actualWeights guardados al momento de la optimización
+                        // (evita que cambiar de portafolio muestre pesos equivocados)
+                        const currW = optimResult.actualWeights?.[i] ?? 0;
                         const diff = optW - currW;
                         const action = Math.abs(diff) < 0.02 ? "MANTENER" : diff > 0 ? "AUMENTAR" : "REDUCIR";
                         const actionColor = action === "AUMENTAR" ? "#16a34a" : action === "REDUCIR" ? "#dc2626" : "#666666";
