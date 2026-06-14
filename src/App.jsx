@@ -5,7 +5,7 @@ import kaizenLogo from './assets/kaizen-logo.jpg';
 // ─── CURRENCY UTILS (fuera del componente — sin closure) ─────────────────────
 // .MX  → precio ya en MXN (BMV y SIC)
 // sin .MX → precio en USD, se multiplica por el tipo de cambio
-function isMXN(ticker) { return ticker.endsWith('.MX'); }
+function isMXN(ticker) { return ticker.endsWith('.MX') || ticker === '$MXN'; }
 function priceMXN(ticker, price, usdMxn) { return isMXN(ticker) ? price : price * usdMxn; }
 function posValMXN(p, stockData, usdMxn) {
   const sd = stockData[p.ticker];
@@ -1124,6 +1124,10 @@ export default function App() {
 
   // Load stock data for portfolio
   const loadStockData = useCallback(async (ticker) => {
+    if (ticker === '$MXN') {
+      setStockData(prev => ({ ...prev, '$MXN': { price: 1, name: 'Efectivo MXN' } }));
+      return;
+    }
     setLoading((p) => ({ ...p, [ticker]: true }));
     try {
       const sd = await fetchStock(ticker);
@@ -1181,7 +1185,7 @@ export default function App() {
     setOptimResult(null);
     setOptimLoadingMsg("Descargando histórico del portafolio...");
 
-    const tickers = portfolio.map((p) => p.ticker);
+    const tickers = portfolio.map((p) => p.ticker).filter(t => t !== '$MXN');
     const returnsAll = [];
     const lastClosesOptim = []; // último precio del historial por ticker
     for (const t of tickers) {
@@ -1443,7 +1447,7 @@ export default function App() {
       const spyCloses = await fetchChart("SPY", "5y", 60000);
       const spyRet = spyCloses.slice(1).map((v, i) => (v - spyCloses[i]) / spyCloses[i]).filter(isFinite);
 
-      const tickers = portfolio.map(p => p.ticker);
+      const tickers = portfolio.map(p => p.ticker).filter(t => t !== '$MXN');
       const returnsMap = {};
       for (const t of tickers) {
         await sleep(200);
@@ -1654,6 +1658,7 @@ export default function App() {
     const rf = rfRate ?? 0.0860;
 
     for (const p of portfolio) {
+      if (p.ticker === '$MXN') continue;
       try {
         const closes = await fetchChart(p.ticker, period);
         if (closes.length < 10) continue;
@@ -1834,17 +1839,22 @@ export default function App() {
       if (!expTotal || expTotal <= 0) { setAddError("Define el Monto Total antes de agregar posiciones."); addingRef.current = false; return; }
       let price = stockData[t]?.price;
       if (!price) {
-        const sd = await fetchStock(t);
-        if (sd?.price) { price = sd.price; setStockData(prev => ({ ...prev, [t]: sd })); }
+        if (t === '$MXN') {
+          price = 1;
+          setStockData(prev => ({ ...prev, '$MXN': { price: 1, name: 'Efectivo MXN' } }));
+        } else {
+          const sd = await fetchStock(t);
+          if (sd?.price) { price = sd.price; setStockData(prev => ({ ...prev, [t]: sd })); }
+        }
       }
       if (!price) { setAddError("No se pudo obtener el precio actual."); addingRef.current = false; return; }
       // Convertir precio a MXN: si es USD se multiplica por el tipo de cambio
       const priceMXNVal = toMXN(t, price);
       shares = (pct / 100 * expTotal) / priceMXNVal;
       if (portfolio.find(p => p.ticker === t)) {
-        setPortfolio(prev => prev.map(p => p.ticker === t ? { ...p, shares, cost: isNaN(cost) ? p.cost : cost, expPct: pct } : p));
+        setPortfolio(prev => prev.map(p => p.ticker === t ? { ...p, shares, cost: t === '$MXN' ? 1 : isNaN(cost) ? p.cost : cost, expPct: pct } : p));
       } else {
-        setPortfolio(prev => [...prev, { ticker: t, shares, cost: isNaN(cost) ? 0 : cost, expPct: pct }]);
+        setPortfolio(prev => [...prev, { ticker: t, shares, cost: t === '$MXN' ? 1 : isNaN(cost) ? 0 : cost, expPct: pct }]);
       }
       // targetPcts es la fuente de verdad — sincronizar siempre
       setTargetPcts(prev => ({ ...prev, [t]: String(pct) }));
@@ -1858,8 +1868,13 @@ export default function App() {
       if (!pct || pct <= 0 || pct > 100) { setAddError("Porcentaje inválido (debe ser > 0 y ≤ 100)."); return; }
       let price = stockData[t]?.price;
       if (!price) {
-        const sd = await fetchStock(t);
-        if (sd?.price) { price = sd.price; setStockData((prev) => ({ ...prev, [t]: sd })); }
+        if (t === '$MXN') {
+          price = 1;
+          setStockData(prev => ({ ...prev, '$MXN': { price: 1, name: 'Efectivo MXN' } }));
+        } else {
+          const sd = await fetchStock(t);
+          if (sd?.price) { price = sd.price; setStockData((prev) => ({ ...prev, [t]: sd })); }
+        }
       }
       if (!price) { setAddError("No se pudo obtener el precio actual. Intenta en modo Acciones."); return; }
       const totalValue = portfolio.reduce((s, p) => s + posVal(p), 0);
@@ -1867,16 +1882,16 @@ export default function App() {
       shares = (pct / 100 * totalValue) / toMXN(t, price);
     } else {
       shares = parseFloat(newShares);
-      if (!shares || shares <= 0) { setAddError("Ingresa un número de acciones válido (> 0)."); return; }
+      if (!shares || shares <= 0) { setAddError(t === '$MXN' ? "Ingresa el monto en MXN (> 0)." : "Ingresa un número de acciones válido (> 0)."); return; }
     }
 
     if (portfolio.find((p) => p.ticker === t)) {
       setPortfolio((prev) => prev.map((p) =>
-        p.ticker === t ? { ...p, shares, cost: isNaN(cost) ? p.cost : cost } : p
+        p.ticker === t ? { ...p, shares, cost: t === '$MXN' ? 1 : isNaN(cost) ? p.cost : cost } : p
       ));
       loadStockData(t);
     } else {
-      setPortfolio((prev) => [...prev, { ticker: t, shares, cost: isNaN(cost) ? 0 : cost }]);
+      setPortfolio((prev) => [...prev, { ticker: t, shares, cost: t === '$MXN' ? 1 : isNaN(cost) ? 0 : cost }]);
     }
     setNewTicker(""); setNewShares(""); setNewCost(""); setNewPct("");
     addingRef.current = false;
@@ -2377,14 +2392,30 @@ export default function App() {
                 <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
                   <div>
                     <div style={{ fontSize: 10, color: "#a78bfa", letterSpacing: "0.08em", marginBottom: 6, fontWeight: 600 }}>TICKER</div>
-                    <input value={newTicker} onChange={e => setNewTicker(e.target.value.toUpperCase())}
-                      placeholder="AAPL / WALMEX.MX"
-                      onKeyDown={e => e.key === "Enter" && addStock()}
-                      style={{
-                        background: "#ede9fe", border: "1.5px solid #c4b5fd", borderRadius: 10,
-                        color: "#6d28d9", padding: "8px 14px", fontSize: 13, width: 160,
-                        fontFamily: "'DM Mono', monospace", outline: "none"
-                      }} />
+                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      <input value={newTicker} onChange={e => setNewTicker(e.target.value.toUpperCase())}
+                        placeholder="AAPL / WALMEX.MX"
+                        onKeyDown={e => e.key === "Enter" && addStock()}
+                        style={{
+                          background: newTicker === '$MXN' ? "#fefce8" : "#ede9fe",
+                          border: `1.5px solid ${newTicker === '$MXN' ? "#d97706" : "#c4b5fd"}`,
+                          borderRadius: 10,
+                          color: newTicker === '$MXN' ? "#92400e" : "#6d28d9",
+                          padding: "8px 14px", fontSize: 13, width: 160,
+                          fontFamily: "'DM Mono', monospace", outline: "none"
+                        }} />
+                      <button
+                        onClick={() => setNewTicker('$MXN')}
+                        title="Agregar efectivo en MXN"
+                        style={{
+                          background: newTicker === '$MXN' ? "#d97706" : "#fef9c3",
+                          border: "1px solid #d97706", borderRadius: 8,
+                          color: newTicker === '$MXN' ? "#fff" : "#92400e",
+                          fontSize: 11, fontWeight: 700, padding: "6px 10px",
+                          cursor: "pointer", whiteSpace: "nowrap"
+                        }}
+                      >💵 Efectivo</button>
+                    </div>
                   </div>
                   <div>
                     <div style={{ fontSize: 10, color: "#a78bfa", letterSpacing: "0.08em", marginBottom: 6, fontWeight: 600 }}>% ASIGNACIÓN</div>
@@ -2458,20 +2489,35 @@ export default function App() {
               }}>
                 <div>
                   <div style={{ fontSize: 10, color: "#999999", letterSpacing: "0.08em", marginBottom: 6 }}>TICKER</div>
-                  <input value={newTicker} onChange={(e) => setNewTicker(e.target.value.toUpperCase())}
-                    placeholder="AAPL / WALMEX.MX"
-                    onKeyDown={e => e.key === "Enter" && addStock()}
-                    style={{
-                      background: "#f8f8f8", border: "1px solid #e5e5e5", borderRadius: 10,
-                      color: "#111111", padding: "8px 14px", fontSize: 13, width: 160,
-                      fontFamily: "'DM Mono', monospace", outline: "none"
-                    }} />
+                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    <input value={newTicker} onChange={(e) => setNewTicker(e.target.value.toUpperCase())}
+                      placeholder="AAPL / WALMEX.MX"
+                      onKeyDown={e => e.key === "Enter" && addStock()}
+                      style={{
+                        background: newTicker === '$MXN' ? "#fefce8" : "#f8f8f8",
+                        border: `1px solid ${newTicker === '$MXN' ? "#d97706" : "#e5e5e5"}`,
+                        borderRadius: 10,
+                        color: "#111111", padding: "8px 14px", fontSize: 13, width: 160,
+                        fontFamily: "'DM Mono', monospace", outline: "none"
+                      }} />
+                    <button
+                      onClick={() => { setNewTicker('$MXN'); setInputMode('shares'); }}
+                      title="Agregar efectivo en MXN"
+                      style={{
+                        background: newTicker === '$MXN' ? "#d97706" : "#fef9c3",
+                        border: "1px solid #d97706", borderRadius: 8,
+                        color: newTicker === '$MXN' ? "#fff" : "#92400e",
+                        fontSize: 11, fontWeight: 700, padding: "6px 10px",
+                        cursor: "pointer", whiteSpace: "nowrap", letterSpacing: "0.02em"
+                      }}
+                    >💵 Efectivo</button>
+                  </div>
                 </div>
                 {/* Toggle modo + input acciones / % */}
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
                     <div style={{ fontSize: 10, color: "#999999", letterSpacing: "0.08em", fontWeight: 600 }}>
-                      {inputMode === "shares" ? "ACCIONES" : "% DEL PORTAFOLIO"}
+                      {newTicker === '$MXN' ? "MONTO EN MXN" : inputMode === "shares" ? "ACCIONES" : "% DEL PORTAFOLIO"}
                     </div>
                     <div style={{ display: "flex", background: "#f2f2f2", borderRadius: 999, padding: 2, gap: 0 }}>
                       {[["shares","#"], ["pct","%"]].map(([m, lbl]) => (
@@ -2860,6 +2906,7 @@ export default function App() {
                                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"
                                   }}>{p.ticker}</span>
                                   {(() => {
+                                    if (p.ticker === '$MXN') return <span style={{ fontSize: 9, color: '#d97706', background: '#fefce8', borderRadius: 999, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>EFECTIVO</span>;
                                     const cur = p.ticker.endsWith('.MX') ? 'MXN' : 'USD';
                                     return <span style={{ fontSize: 9, color: cur === 'USD' ? '#3b82f6' : '#16a34a', background: cur === 'USD' ? '#eff6ff' : '#f0fdf4', borderRadius: 999, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>{cur}</span>;
                                   })()}
@@ -2934,7 +2981,7 @@ export default function App() {
                                 <div style={{ textAlign: "right" }}>
                                   {tShares !== null ? (
                                     <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#333" }}>
-                                      {fmt(tShares)}
+                                      {p.ticker === '$MXN' ? `$${tShares.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : fmt(tShares)}
                                     </span>
                                   ) : <span style={{ color: "#ccc", fontSize: 11 }}>—</span>}
                                 </div>
@@ -2946,7 +2993,9 @@ export default function App() {
                                       fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700,
                                       color: delta > 0 ? "#00cc6a" : "#ff3b3b"
                                     }}>
-                                      {delta > 0 ? "+" : ""}{fmt(Math.abs(delta))}
+                                      {p.ticker === '$MXN'
+                                        ? `${delta > 0 ? "+" : "−"}$${Math.abs(delta).toLocaleString("en-US", { maximumFractionDigits: 0 })}`
+                                        : `${delta > 0 ? "+" : ""}${fmt(Math.abs(delta))}`}
                                     </span>
                                   ) : <span style={{ color: "#ddd", fontSize: 11 }}>—</span>}
                                 </div>
@@ -3087,8 +3136,8 @@ export default function App() {
                       display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 14
                     }}>
                       {[
-                        { l: "Acciones", v: pos.shares % 1 === 0 ? pos.shares : pos.shares.toFixed(4), mono: true, color: pos.shares % 1 !== 0 ? "#00ff88" : "#666666" },
-                        { l: "Costo/acc", v: `$${pos.cost.toFixed(2)}`, mono: true, color: "#666666" },
+                        { l: pos.ticker === '$MXN' ? "Monto MXN" : "Acciones", v: pos.ticker === '$MXN' ? `$${pos.shares.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : pos.shares % 1 === 0 ? pos.shares : pos.shares.toFixed(4), mono: true, color: pos.ticker === '$MXN' ? "#d97706" : pos.shares % 1 !== 0 ? "#00ff88" : "#666666" },
+                        { l: "Costo/acc", v: pos.ticker === '$MXN' ? "—" : `$${pos.cost.toFixed(2)}`, mono: true, color: "#666666" },
                         { l: "Invertido", v: `$${cost_total.toFixed(2)}`, mono: true, color: "#666666" },
                         { l: "Valor actual", v: value != null ? `$${value.toFixed(2)}` : "—", mono: true, color: "#111111" },
                         { l: "P&L ($)", v: pnl != null ? `${pnl >= 0 ? "+" : ""}$${pnl.toFixed(2)}` : "—", mono: true, color: pnlColor },
