@@ -1945,6 +1945,7 @@ export default function App() {
       minHeight: "100vh",
       width: "100%",
       color: "#e2e8f0",
+      display: "flex",
     }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500&family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -1982,14 +1983,13 @@ export default function App() {
         .rebal-slider::-moz-range-track { height: 3px; background: #1e2d3d; border-radius: 99px; }
 
         /* ── RESPONSIVE ── */
-        .nav-tabs-scroll { display:flex; gap:4px; flex:1; justify-content:center; overflow-x:auto; scrollbar-width:none; }
-        .nav-tabs-scroll::-webkit-scrollbar { display:none; }
-        .nav-status { display:flex; align-items:center; gap:20px; flex-shrink:0; padding:18px 0; }
-
-        @media (max-width: 1100px) and (min-width: 769px) {
-          .nav-tabs-scroll button { padding: 7px 11px !important; font-size: 11px !important; }
-        }
-        .main-pad { padding: 16px 20px; animation: fadeIn 0.3s ease; }
+        .nav-tabs-scroll { display:none; }
+        .nav-status { display:none; }
+        .sidebar { display:flex; flex-direction:column; width:240px; flex-shrink:0; background:#060d18; border-right:1px solid #1a2535; position:fixed; top:0; left:0; bottom:0; z-index:200; overflow-y:auto; }
+        .sidebar-nav-btn { display:flex; align-items:center; gap:10px; width:100%; border:none; border-radius:10px; padding:9px 10px; cursor:pointer; font-size:13px; text-align:left; transition:all 0.15s; margin-bottom:2px; font-family:inherit; }
+        .sidebar-nav-btn:hover { background:rgba(255,255,255,0.05) !important; color:#8fa3b8 !important; }
+        .main-area { margin-left:240px; flex:1; display:flex; flex-direction:column; min-height:100vh; min-width:0; }
+        .main-pad { padding: 20px 24px; animation: fadeIn 0.3s ease; }
         .resp-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
         .resp-grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
         .table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
@@ -1997,8 +1997,8 @@ export default function App() {
         .nav-active-label { display:none; }
 
         @media (max-width: 768px) {
-          .nav-tabs-scroll { display:none; }
-          .nav-status { display:none; }
+          .sidebar { display:none !important; }
+          .main-area { margin-left:0 !important; }
           .nav-active-label {
             display:flex; align-items:center;
             background:#00ff88; color:#0a0a0a;
@@ -2008,7 +2008,7 @@ export default function App() {
           }
           .bottom-nav {
             display:flex; position:fixed; bottom:0; left:0; right:0; z-index:200;
-            background:#0a0a0a; border-top:1px solid #1f2937;
+            background:#060d18; border-top:1px solid #1a2535;
             overflow-x:auto; overflow-y:hidden;
             -webkit-overflow-scrolling:touch;
             scrollbar-width:none; padding:8px 6px;
@@ -2016,7 +2016,7 @@ export default function App() {
           }
           .bottom-nav::-webkit-scrollbar { display:none; }
           .bottom-nav button { flex-shrink:0; }
-          .main-pad { padding: 10px 10px; padding-bottom: 80px; }
+          .main-pad { padding: 12px 12px; padding-bottom: 80px; }
           .resp-grid-2 { grid-template-columns: 1fr !important; }
           .resp-grid-3 { grid-template-columns: 1fr !important; }
           .resp-hide-mobile { display:none !important; }
@@ -2063,165 +2063,165 @@ export default function App() {
         }
       `}</style>
 
-      {/* Header + Tabs — unified bar */}
-      <div style={{
-        background: "#000000",
-        position: "sticky", top: 0, zIndex: 100,
-        boxShadow: "none",
-        padding: "0 16px",
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        gap: 12,
-      }}>
+      {/* ══ SIDEBAR ══ */}
+      <aside className="sidebar">
         {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0, padding: "18px 0" }}>
-          <img
-            src={kaizenLogo}
-            style={{ height: 40, width: 40, objectFit: "contain", borderRadius: 8 }}
-            alt="KAIZEN"
-          />
-          <div>
-            <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 15, color: "#ffffff", letterSpacing: "0.05em" }}>KAIZEN</div>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 9, color: "#6b8099", letterSpacing: "0.15em", textTransform: "uppercase" }}>Investment Group</div>
+        <div style={{ padding: "20px 18px 16px", borderBottom: "1px solid #1a2535" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <img src={kaizenLogo} style={{ height: 36, width: 36, objectFit: "contain", borderRadius: 8 }} alt="KAIZEN" />
+            <div>
+              <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 14, color: "#ffffff", letterSpacing: "0.05em" }}>KAIZEN</div>
+              <div style={{ fontSize: 9, color: "#4a6080", letterSpacing: "0.12em", textTransform: "uppercase" }}>Investment Group</div>
+            </div>
           </div>
         </div>
 
-        {/* Tabs — pill style, centered */}
-        <div className="nav-tabs-scroll">
+        {/* Navigation */}
+        <div style={{ flex: 1, padding: "10px 10px", overflowY: "auto" }}>
           {[
-            { id: "news",       label: "Noticias" },
-            { id: "portfolio",  label: "Portfolio" },
-            { id: "optimize",   label: "Sharpe Optimizer" },
-            { id: "screener",   label: "ML Screener" },
-            { id: "analytics",  label: "Analytics vs SPY" },
-            { id: "fibras",     label: "FIBRA Screener" },
-            { id: "magic",      label: "Fórmula Mágica" },
-            { id: "analisis",   label: "Análisis" },
-          ].map((t) => (
-            <button key={t.id} onClick={() => setTab(t.id)} style={{
-              background: tab === t.id ? "#00ff88" : "transparent",
-              border: "none", cursor: "pointer", borderRadius: 999,
-              padding: "8px 18px", fontSize: 13,
-              fontWeight: tab === t.id ? 700 : 500,
-              color: tab === t.id ? "#0a0a0a" : "#888888",
-              transition: "all 0.15s", letterSpacing: "0.01em",
-              whiteSpace: "nowrap",
-            }}>{t.label}</button>
+            { section: "DASHBOARDS", items: [
+              { id: "portfolio",  label: "Portfolio",        icon: "▣" },
+              { id: "news",       label: "Noticias",         icon: "◎" },
+              { id: "analytics",  label: "Analytics vs SPY", icon: "▲" },
+            ]},
+            { section: "ANÁLISIS", items: [
+              { id: "optimize",   label: "Sharpe Optimizer", icon: "⚡" },
+              { id: "screener",   label: "ML Screener",      icon: "◈" },
+              { id: "analisis",   label: "Análisis",         icon: "◷" },
+            ]},
+            { section: "ESTRATEGIAS", items: [
+              { id: "fibras",     label: "FIBRA Screener",   icon: "⬡" },
+              { id: "magic",      label: "Fórmula Mágica",   icon: "✦" },
+            ]},
+          ].map(({ section, items }) => (
+            <div key={section}>
+              <div style={{ fontSize: 9, color: "#2d3f55", letterSpacing: "0.14em", fontWeight: 700, padding: "14px 10px 6px", textTransform: "uppercase" }}>{section}</div>
+              {items.map(t => (
+                <button key={t.id} onClick={() => setTab(t.id)} className="sidebar-nav-btn" style={{
+                  background: tab === t.id ? "rgba(0,255,136,0.09)" : "transparent",
+                  color: tab === t.id ? "#00ff88" : "#4a6080",
+                  fontWeight: tab === t.id ? 600 : 400,
+                  borderLeft: tab === t.id ? "2px solid #00ff88" : "2px solid transparent",
+                }}>
+                  <span style={{
+                    width: 26, height: 26, borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center",
+                    background: tab === t.id ? "rgba(0,255,136,0.13)" : "rgba(255,255,255,0.04)",
+                    fontSize: 12, flexShrink: 0,
+                  }}>{t.icon}</span>
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{t.label}</span>
+                  {tab === t.id && <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#00ff88", flexShrink: 0 }} />}
+                </button>
+              ))}
+            </div>
           ))}
         </div>
 
-        {/* Tab activo visible en móvil */}
-        <div className="nav-active-label">
-          {[
-            { id:"news",label:"Noticias"},{id:"portfolio",label:"Portfolio"},
-            {id:"optimize",label:"Sharpe"},{id:"screener",label:"ML Screener"},
-            {id:"analytics",label:"Analytics"},
-            {id:"fibras",label:"FIBRAs"},{id:"magic",label:"Fórmula Mágica"},
-            {id:"analisis",label:"Análisis"},
-          ].find(t=>t.id===tab)?.label}
-        </div>
-
-        {/* Right: status + RF */}
-        <div className="nav-status">
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11 }}>
+        {/* Status at bottom */}
+        <div style={{ padding: "16px 18px", borderTop: "1px solid #1a2535" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, marginBottom: rfRate !== null ? 10 : 0 }}>
             <div style={{
-              width: 7, height: 7, borderRadius: "50%",
-              background: backendOk === null ? "#bbbbbb" : backendOk ? "#16a34a" : "#dc2626",
+              width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+              background: backendOk === null ? "#4a6080" : backendOk ? "#16a34a" : "#dc2626",
               boxShadow: backendOk ? "0 0 6px #22c55e" : backendOk === false ? "0 0 6px #ef4444" : "none",
             }} />
-            <span style={{ color: backendOk === null ? "#bbbbbb" : backendOk ? "#16a34a" : "#dc2626" }}>
+            <span style={{ color: backendOk === null ? "#4a6080" : backendOk ? "#16a34a" : "#dc2626" }}>
               {backendOk === null ? "Conectando..." : backendOk ? "Backend OK" : "Sin conexión"}
             </span>
           </div>
           {rfRate !== null && (
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 9, color: "#bbbbbb", letterSpacing: "0.1em" }}>{rfLabel}</div>
-              <div style={{ fontFamily: "'DM Mono', monospace", color: "#00cc6a", fontSize: 15, fontWeight: 700 }}>
+            <div>
+              <div style={{ fontSize: 9, color: "#4a6080", letterSpacing: "0.1em" }}>{rfLabel}</div>
+              <div style={{ fontFamily: "'DM Mono', monospace", color: "#00cc6a", fontSize: 14, fontWeight: 700 }}>
                 {(rfRate * 100).toFixed(2)}%
               </div>
             </div>
           )}
         </div>
-      </div>
+      </aside>
 
-      {/* Bottom nav — solo móvil */}
-      {(() => {
-        const TABS = [
-          { id:"news",label:"Noticias" },{ id:"portfolio",label:"Portfolio" },
-          { id:"optimize",label:"Sharpe" },{ id:"screener",label:"ML Screener" },
-          { id:"analytics",label:"Analytics" },
-          { id:"fibras",label:"FIBRAs" },{ id:"magic",label:"Fórmula Mágica" },
-          { id:"analisis",label:"Análisis" },
-        ];
-        return (
-          <div className="bottom-nav">
-            {TABS.map(t => (
-              <button key={t.id} onClick={() => setTab(t.id)} style={{
-                background: tab===t.id ? "#00ff88" : "transparent",
-                border:"none", cursor:"pointer", borderRadius:999,
-                padding:"8px 16px", fontSize:12,
-                fontWeight: tab===t.id ? 800 : 500,
-                color: tab===t.id ? "#0a0a0a" : "#666666",
-                whiteSpace:"nowrap",
-              }}>{t.label}</button>
-            ))}
-          </div>
-        );
-      })()}
+      {/* ══ MAIN AREA ══ */}
+      <div className="main-area">
 
-      {/* Macro strip */}
-      {macroData && (
+        {/* ── Top bar ── */}
         <div style={{
-          background: "#111111", padding: "7px 32px",
-          display: "flex", gap: 0, alignItems: "center", flexWrap: "wrap",
-          fontFamily: "'DM Mono', monospace", fontSize: 11,
+          background: "#060d18", borderBottom: "1px solid #1a2535",
+          padding: "0 24px", height: 54,
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          position: "sticky", top: 0, zIndex: 100, gap: 16, flexShrink: 0,
         }}>
-          {[
-            {
-              label: "VIX",
-              val: macroData.vix?.value != null ? macroData.vix.value.toFixed(2) : null,
-              chg: macroData.vix?.change,
-              tooltip: macroData.vix?.value > 30 ? "Miedo extremo" : macroData.vix?.value > 20 ? "Volatilidad elevada" : "Mercado tranquilo",
-            },
-            {
-              label: "SPREAD 10Y-2Y",
-              val: macroData.spread?.value != null ? `${macroData.spread.value > 0 ? "+" : ""}${macroData.spread.value}` : null,
-              chg: null,
-              chgOverride: macroData.spread?.inverted ? "#f87171" : "#4ade80",
-              tooltip: macroData.spread?.inverted ? "⚠ Curva invertida" : "Curva normal",
-            },
-            {
-              label: "DXY",
-              val: macroData.dxy?.value != null ? macroData.dxy.value.toFixed(2) : null,
-              chg: macroData.dxy?.change,
-              tooltip: "Índice del dólar USD",
-            },
-            {
-              label: "10Y YIELD",
-              val: macroData.t10y?.value != null ? `${macroData.t10y.value.toFixed(2)}%` : null,
-              chg: macroData.t10y?.change,
-              tooltip: "Bono del Tesoro 10 años",
-            },
-          ].filter(m => m.val != null).map((m, i, arr) => (
-            <div key={m.label} title={m.tooltip} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ color: "#6b7280", fontWeight: 500 }}>{m.label}</span>
-              <span style={{ color: "#ffffff", fontWeight: 700 }}>{m.val}</span>
-              {m.chg != null && (
-                <span style={{ color: m.chg >= 0 ? "#4ade80" : "#f87171", fontWeight: 600 }}>
-                  {m.chg >= 0 ? "+" : ""}{m.chg.toFixed(2)}
-                </span>
-              )}
-              {m.chgOverride && <span style={{ color: m.chgOverride, fontSize: 10 }}>●</span>}
-              {i < arr.length - 1 && <span style={{ color: "#374151", margin: "0 10px" }}>·</span>}
+          {/* Breadcrumb + tab móvil */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#4a6080", flexShrink: 0 }}>
+            <span style={{ fontSize: 11 }}>Dashboard</span>
+            <span style={{ color: "#2d3f55" }}>/</span>
+            <span style={{ color: "#e2e8f0", fontWeight: 600, fontSize: 13 }}>
+              {[
+                {id:"portfolio",label:"Portfolio"},{id:"news",label:"Noticias"},
+                {id:"optimize",label:"Sharpe Optimizer"},{id:"screener",label:"ML Screener"},
+                {id:"analytics",label:"Analytics vs SPY"},{id:"fibras",label:"FIBRA Screener"},
+                {id:"magic",label:"Fórmula Mágica"},{id:"analisis",label:"Análisis"},
+              ].find(t => t.id === tab)?.label}
+            </span>
+          </div>
+          {/* Macro strip inline */}
+          {macroData && (
+            <div style={{ display: "flex", gap: 0, alignItems: "center", fontFamily: "'DM Mono', monospace", fontSize: 10.5, overflow: "hidden", flex: 1, justifyContent: "center" }}>
+              {[
+                { label: "VIX",        val: macroData.vix?.value != null ? macroData.vix.value.toFixed(2) : null, chg: macroData.vix?.change },
+                { label: "SPREAD 10Y", val: macroData.spread?.value != null ? `${macroData.spread.value > 0 ? "+" : ""}${macroData.spread.value}` : null, chg: null, chgOverride: macroData.spread?.inverted ? "#f87171" : "#4ade80" },
+                { label: "DXY",        val: macroData.dxy?.value != null ? macroData.dxy.value.toFixed(2) : null, chg: macroData.dxy?.change },
+                { label: "10Y YIELD",  val: macroData.t10y?.value != null ? `${macroData.t10y.value.toFixed(2)}%` : null, chg: macroData.t10y?.change },
+              ].filter(m => m.val != null).map((m, i, arr) => (
+                <div key={m.label} style={{ display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
+                  <span style={{ color: "#2d3f55", fontWeight: 500 }}>{m.label}</span>
+                  <span style={{ color: "#8fa3b8", fontWeight: 700 }}>{m.val}</span>
+                  {m.chg != null && <span style={{ color: m.chg >= 0 ? "#4ade80" : "#f87171", fontWeight: 600 }}>{m.chg >= 0 ? "+" : ""}{m.chg.toFixed(2)}</span>}
+                  {m.chgOverride && <span style={{ color: m.chgOverride, fontSize: 9 }}>●</span>}
+                  {i < arr.length - 1 && <span style={{ color: "#1e2d3d", margin: "0 8px" }}>·</span>}
+                </div>
+              ))}
+              {macroData.spread?.inverted && <span style={{ marginLeft: 8, color: "#f87171", fontWeight: 700, fontSize: 9 }}>⚠ CURVA INVERTIDA</span>}
             </div>
-          ))}
-          {macroData.spread?.inverted && (
-            <span style={{ marginLeft: "auto", color: "#f87171", fontWeight: 700, fontSize: 10 }}>⚠ CURVA INVERTIDA</span>
           )}
+          {/* RF label — tab label mobile */}
+          <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
+            <div className="nav-active-label">
+              {[
+                {id:"portfolio",label:"Portfolio"},{id:"news",label:"Noticias"},
+                {id:"optimize",label:"Sharpe"},{id:"screener",label:"ML Screener"},
+                {id:"analytics",label:"Analytics"},{id:"fibras",label:"FIBRAs"},
+                {id:"magic",label:"Fórmula Mágica"},{id:"analisis",label:"Análisis"},
+              ].find(t=>t.id===tab)?.label}
+            </div>
+          </div>
         </div>
-      )}
 
-      {/* Content */}
-      <div className="main-pad">
+        {/* Bottom nav — solo móvil */}
+        {(() => {
+          const TABS = [
+            { id:"news",label:"Noticias" },{ id:"portfolio",label:"Portfolio" },
+            { id:"optimize",label:"Sharpe" },{ id:"screener",label:"ML Screener" },
+            { id:"analytics",label:"Analytics" },
+            { id:"fibras",label:"FIBRAs" },{ id:"magic",label:"Fórmula Mágica" },
+            { id:"analisis",label:"Análisis" },
+          ];
+          return (
+            <div className="bottom-nav">
+              {TABS.map(t => (
+                <button key={t.id} onClick={() => setTab(t.id)} style={{
+                  background: tab===t.id ? "#00ff88" : "transparent",
+                  border:"none", cursor:"pointer", borderRadius:999,
+                  padding:"8px 16px", fontSize:12,
+                  fontWeight: tab===t.id ? 800 : 500,
+                  color: tab===t.id ? "#0a0a0a" : "#4a6080",
+                  whiteSpace:"nowrap",
+                }}>{t.label}</button>
+              ))}
+            </div>
+          );
+        })()}
+
+        {/* Content */}
+        <div className="main-pad">
 
         {/* ─── TAB: PORTFOLIO ─── */}
         {tab === "portfolio" && (
@@ -5511,6 +5511,7 @@ export default function App() {
           );
         })()}
 
+        </div>
       </div>
     </div>
   );
