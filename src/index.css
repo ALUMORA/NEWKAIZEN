@@ -9,7 +9,7 @@
 html, body {
   width: 100%;
   min-height: 100vh;
-  background: #ffffff;
+  background: #0d1117;
   font-family: 'DM Sans', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -30,8 +30,8 @@ input[type="range"]::-webkit-slider-thumb {
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: #0a0a0a;
+  background: #00ff88;
   cursor: pointer;
-  border: 2px solid #ffffff;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  border: 2px solid #0d1117;
+  box-shadow: 0 1px 3px rgba(0,255,136,0.4);
 }

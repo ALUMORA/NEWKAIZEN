@@ -318,10 +318,10 @@ function ScoreBar({ value, label }) {
   const color = value >= 7 ? "#16a34a" : value >= 5 ? "#d97706" : "#dc2626";
   return (
     <div style={{ marginBottom: 6 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#666666", marginBottom: 3 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#4a6080", marginBottom: 3 }}>
         <span>{label}</span><span style={{ color, fontWeight: 600 }}>{value}/10</span>
       </div>
-      <div style={{ background: "#f5f5f0", borderRadius: 4, height: 4, overflow: "hidden" }}>
+      <div style={{ background: "#0d1825", borderRadius: 4, height: 4, overflow: "hidden" }}>
         <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 4, transition: "width 0.8s ease" }} />
       </div>
     </div>
@@ -339,7 +339,7 @@ function MetricBadge({ label, value, good, neutral }) {
   }
   return (
     <div style={{
-      background: "#f8f8f8", borderRadius: 12,
+      background: "#141e2d", borderRadius: 12,
       padding: "8px 12px", minWidth: 90, textAlign: "center"
     }}>
       <div style={{ fontSize: 10, color: "#999999", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 4 }}>{label}</div>
@@ -363,14 +363,14 @@ function LineChart({ series, dates }) {
   const toX = (i, len) => PAD.left + (i / Math.max(len - 1, 1)) * plotW;
   const toY = (v) => PAD.top + plotH - ((v - minY) / rangeY) * plotH;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }}>
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", background: "#0a1220", borderRadius: 12 }}>
       {[0, 0.25, 0.5, 0.75, 1].map((frac, i) => {
         const val = maxY - frac * rangeY;
         const y = PAD.top + frac * plotH;
         return (
           <g key={i}>
-            <line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke="#e5e5e5" strokeWidth={1} />
-            <text x={PAD.left - 6} y={y + 4} textAnchor="end" fill="#999999" fontSize={9}>
+            <line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke="#1e2d3d" strokeWidth={1} />
+            <text x={PAD.left - 6} y={y + 4} textAnchor="end" fill="#4a6080" fontSize={9}>
               {(val * 100).toFixed(1)}%
             </text>
           </g>
@@ -378,24 +378,30 @@ function LineChart({ series, dates }) {
       })}
       {minY < 0 && (
         <line x1={PAD.left} y1={toY(0)} x2={W - PAD.right} y2={toY(0)}
-          stroke="#999999" strokeWidth={1} strokeDasharray="4,3" />
+          stroke="#2d3f55" strokeWidth={1} strokeDasharray="4,3" />
       )}
-      {series.map((s) => (
-        <polyline key={s.name}
-          points={s.data.map((v, i) => `${toX(i, s.data.length)},${toY(v)}`).join(" ")}
-          fill="none" stroke={s.color} strokeWidth={2.5} strokeLinejoin="round" />
-      ))}
+      {series.map((s) => {
+        const pts = s.data.map((v, i) => `${toX(i, s.data.length)},${toY(v)}`);
+        const lastX = toX(s.data.length - 1, s.data.length);
+        const areaPath = `M${pts[0]} L${pts.join(" L")} L${lastX},${PAD.top + plotH} L${PAD.left},${PAD.top + plotH} Z`;
+        return (
+          <g key={s.name}>
+            <path d={areaPath} fill={s.color} fillOpacity={0.08} />
+            <polyline points={pts.join(" ")} fill="none" stroke={s.color} strokeWidth={2.5} strokeLinejoin="round" />
+          </g>
+        );
+      })}
       {dates && dates.map((d, i) => {
         const step = Math.max(1, Math.floor(dates.length / 6));
         if (i % step !== 0 && i !== dates.length - 1) return null;
         return (
-          <text key={i} x={toX(i, dates.length)} y={H - 8} textAnchor="middle" fill="#999999" fontSize={9}>{d}</text>
+          <text key={i} x={toX(i, dates.length)} y={H - 8} textAnchor="middle" fill="#4a6080" fontSize={9}>{d}</text>
         );
       })}
       {series.map((s, i) => (
         <g key={s.name} transform={`translate(${PAD.left + i * 160}, 6)`}>
           <line x1={0} y1={6} x2={22} y2={6} stroke={s.color} strokeWidth={2.5} />
-          <text x={28} y={10} fill="#666666" fontSize={10}>{s.name}</text>
+          <text x={28} y={10} fill="#8fa3b8" fontSize={10}>{s.name}</text>
         </g>
       ))}
     </svg>
@@ -482,7 +488,7 @@ function GlobalMarketsTable({ data, loading }) {
 
 function SectionLabel({ children, right }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #e0e0d8", marginBottom: 8 }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #1a2535", marginBottom: 8 }}>
       <span style={{ fontSize: 9, color: "#888888", letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 700, fontFamily: "'Syne', sans-serif" }}>{children}</span>
       {right && <div>{right}</div>}
     </div>
@@ -681,21 +687,21 @@ function MarketNewsItem({ item, index }) {
   })() : "";
   return (
     <div className="news-card" style={{
-      background: "#ffffff", borderRadius: 10, border: "1px solid #e8e8e4",
+      background: "#111e2e", borderRadius: 10, border: "1px solid #1e2d3d",
       borderLeft: `3px solid ${sentColor}`, padding: "10px 14px",
       animation: `slideIn 0.3s ease ${Math.min(index * 0.05, 0.5)}s both`,
     }}>
       <a href={item.url} target="_blank" rel="noreferrer" style={{
-        color: "#111111", fontWeight: 600, fontSize: 13, lineHeight: 1.4,
+        color: "#e2e8f0", fontWeight: 600, fontSize: 13, lineHeight: 1.4,
         textDecoration: "none", display: "block", marginBottom: 3,
         overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
       }}
-        onMouseEnter={(e) => e.currentTarget.style.color = "#00cc6a"}
-        onMouseLeave={(e) => e.currentTarget.style.color = "#111111"}
+        onMouseEnter={(e) => e.currentTarget.style.color = "#00ff88"}
+        onMouseLeave={(e) => e.currentTarget.style.color = "#e2e8f0"}
       >{item.title}</a>
       {item.summary && <div style={{ fontSize: 11, color: "#888888", lineHeight: 1.4, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.summary}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        {item.publisher && <span style={{ fontSize: 10, color: "#555555", fontWeight: 600 }}>{item.publisher}</span>}
+        {item.publisher && <span style={{ fontSize: 10, color: "#6b8099", fontWeight: 600 }}>{item.publisher}</span>}
         {timeAgo && <span style={{ fontSize: 10, color: "#aaaaaa" }}>· {timeAgo}</span>}
         <span style={{ fontSize: 10, fontWeight: 700, color: sentColor, marginLeft: "auto" }}>{sentLabel}</span>
       </div>
@@ -756,14 +762,14 @@ function MonteCarloChart({ portStats, spyStats, weeks }) {
   const gridVals = [0, 0.25, 0.5, 0.75, 1].map(f => minY + f * rangeY);
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block" }}>
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", background: "#0a1220", borderRadius: 12 }}>
       <defs>
         <linearGradient id="portGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#00ff88" stopOpacity="0.18" />
-          <stop offset="100%" stopColor="#00ff88" stopOpacity="0.04" />
+          <stop offset="0%" stopColor="#00ff88" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#00ff88" stopOpacity="0.03" />
         </linearGradient>
         <linearGradient id="spyGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#6366f1" stopOpacity="0.14" />
+          <stop offset="0%" stopColor="#6366f1" stopOpacity="0.20" />
           <stop offset="100%" stopColor="#6366f1" stopOpacity="0.03" />
         </linearGradient>
       </defs>
@@ -771,8 +777,8 @@ function MonteCarloChart({ portStats, spyStats, weeks }) {
       {/* Grid */}
       {gridVals.map((v, i) => (
         <g key={i}>
-          <line x1={PAD.left} y1={toY(v)} x2={W - PAD.right} y2={toY(v)} stroke="#f0f0f0" strokeWidth={1} />
-          <text x={PAD.left - 6} y={toY(v) + 4} textAnchor="end" fill="#aaaaaa" fontSize={9}>
+          <line x1={PAD.left} y1={toY(v)} x2={W - PAD.right} y2={toY(v)} stroke="#1e2d3d" strokeWidth={1} />
+          <text x={PAD.left - 6} y={toY(v) + 4} textAnchor="end" fill="#4a6080" fontSize={9}>
             {((v - 1) * 100).toFixed(1)}%
           </text>
         </g>
@@ -781,7 +787,7 @@ function MonteCarloChart({ portStats, spyStats, weeks }) {
       {/* Línea base 0% */}
       {minY < 1 && maxY > 1 && (
         <line x1={PAD.left} y1={toY(1)} x2={W - PAD.right} y2={toY(1)}
-          stroke="#cccccc" strokeWidth={1} strokeDasharray="4,3" />
+          stroke="#2d3f55" strokeWidth={1} strokeDasharray="4,3" />
       )}
 
       {/* Banda SPY p5–p95 */}
@@ -802,18 +808,18 @@ function MonteCarloChart({ portStats, spyStats, weeks }) {
       {weeks.map((w, i) => {
         if (i % 10 !== 0 && i !== weeks.length - 1) return null;
         return (
-          <text key={i} x={toX(i)} y={H - 8} textAnchor="middle" fill="#aaaaaa" fontSize={9}>{w}</text>
+          <text key={i} x={toX(i)} y={H - 8} textAnchor="middle" fill="#4a6080" fontSize={9}>{w}</text>
         );
       })}
 
       {/* Leyenda */}
       {[
-        { color: "#00cc6a", dash: false, label: "Portafolio (media ± rango 90%)" },
+        { color: "#00ff88", dash: false, label: "Portafolio (media ± rango 90%)" },
         { color: "#6366f1", dash: true,  label: "SPY (media ± rango 90%)" },
       ].map((s, i) => (
         <g key={s.label} transform={`translate(${PAD.left + i * 240}, 8)`}>
           <line x1={0} y1={6} x2={22} y2={6} stroke={s.color} strokeWidth={2.5} strokeDasharray={s.dash ? "5,3" : "none"} />
-          <text x={28} y={10} fill="#666666" fontSize={10}>{s.label}</text>
+          <text x={28} y={10} fill="#8fa3b8" fontSize={10}>{s.label}</text>
         </g>
       ))}
     </svg>
@@ -1935,10 +1941,10 @@ export default function App() {
   return (
     <div style={{
       fontFamily: "'Inter', sans-serif",
-      background: "#edf2f9",
+      background: "#0d1117",
       minHeight: "100vh",
       width: "100%",
-      color: "#1e293b",
+      color: "#e2e8f0",
     }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500&family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -1948,32 +1954,32 @@ export default function App() {
         @keyframes pulse     { 0%,100% { opacity:1; } 50% { opacity:0.35; } }
         @keyframes ticker    { from { transform:translateX(0); } to { transform:translateX(-50%); } }
         @keyframes countRing { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
-        .mkt-card { transition: box-shadow 0.15s ease, border-color 0.15s ease; border: 1.5px solid #e0e0d8; }
-        .mkt-card:hover { box-shadow: 4px 4px 0 #0a0a0a !important; border-color: #0a0a0a !important; }
-        .mkt-card-up:hover   { background: linear-gradient(145deg,#f0fdf4,#f5f5f0) !important; }
-        .mkt-card-down:hover { background: linear-gradient(145deg,#fef2f2,#f5f5f0) !important; }
+        .mkt-card { transition: box-shadow 0.15s ease, border-color 0.15s ease; border: 1.5px solid #1e2d3d; }
+        .mkt-card:hover { box-shadow: 0 0 0 1px #00ff88, 0 4px 20px rgba(0,255,136,0.15) !important; border-color: #00ff88 !important; }
+        .mkt-card-up:hover   { background: linear-gradient(145deg,#0a1f15,#111e2e) !important; }
+        .mkt-card-down:hover { background: linear-gradient(145deg,#1f0a0a,#111e2e) !important; }
         .news-card { transition: box-shadow 0.15s ease, border-color 0.15s ease; }
-        .news-card:hover { box-shadow: 4px 4px 0 #0a0a0a !important; border-color: #0a0a0a !important; transform: none; }
+        .news-card:hover { box-shadow: 0 0 0 1px #00ff88, 0 4px 20px rgba(0,255,136,0.12) !important; border-color: #00ff88 !important; transform: none; }
         .tab-pill { transition: all 0.15s ease; }
         .btn-exec { transition: background 0.15s ease, color 0.15s ease; }
         .btn-exec:hover:not(:disabled) { background: #00ff88 !important; color: #0a0a0a !important; }
-        html, body { margin: 0; padding: 0; background: #ffffff; font-family: 'DM Sans', system-ui, sans-serif; min-height: 100vh; }
+        html, body { margin: 0; padding: 0; background: #0d1117; font-family: 'DM Sans', system-ui, sans-serif; min-height: 100vh; }
         h1, h2, h3 { font-family: 'Syne', sans-serif; }
         * { box-sizing: border-box; }
         ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: #f5f5f0; }
-        ::-webkit-scrollbar-thumb { background: #c0c0bc; border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: #141c28; }
+        ::-webkit-scrollbar-thumb { background: #2d3f55; border-radius: 3px; }
         input { outline: none; }
-        input::placeholder { color: #94a3b8; }
+        input::placeholder { color: #4a5568; }
         table { border-collapse: collapse; width: 100%; }
-        th { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #888888; padding: 10px 14px; text-align: left; border-bottom: 1px solid #e0e0d8; font-weight: 700; font-family: 'Syne', sans-serif; }
-        td { padding: 11px 14px; font-size: 14px; border-bottom: 1px solid #e0e0d8; color: #475569; }
-        tr:hover td { background: #f5f5f0; }
-        .rebal-slider { -webkit-appearance: none; appearance: none; height: 3px; background: #e0e0d8; border-radius: 99px; outline: none; cursor: pointer; }
-        .rebal-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; background: #0a0a0a; border-radius: 50%; cursor: pointer; margin-top: -4.5px; }
-        .rebal-slider::-webkit-slider-runnable-track { height: 3px; background: #e0e0d8; border-radius: 99px; }
-        .rebal-slider::-moz-range-thumb { width: 12px; height: 12px; background: #0a0a0a; border-radius: 50%; cursor: pointer; border: none; }
-        .rebal-slider::-moz-range-track { height: 3px; background: #e0e0d8; border-radius: 99px; }
+        th { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #4a6080; padding: 10px 14px; text-align: left; border-bottom: 1px solid #1e2d3d; font-weight: 700; font-family: 'Syne', sans-serif; }
+        td { padding: 11px 14px; font-size: 14px; border-bottom: 1px solid #1a2535; color: #8fa3b8; }
+        tr:hover td { background: #141e2d; }
+        .rebal-slider { -webkit-appearance: none; appearance: none; height: 3px; background: #1e2d3d; border-radius: 99px; outline: none; cursor: pointer; }
+        .rebal-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; background: #00ff88; border-radius: 50%; cursor: pointer; margin-top: -4.5px; }
+        .rebal-slider::-webkit-slider-runnable-track { height: 3px; background: #1e2d3d; border-radius: 99px; }
+        .rebal-slider::-moz-range-thumb { width: 12px; height: 12px; background: #00ff88; border-radius: 50%; cursor: pointer; border: none; }
+        .rebal-slider::-moz-range-track { height: 3px; background: #1e2d3d; border-radius: 99px; }
 
         /* ── RESPONSIVE ── */
         .nav-tabs-scroll { display:flex; gap:4px; flex:1; justify-content:center; overflow-x:auto; scrollbar-width:none; }
@@ -2075,7 +2081,7 @@ export default function App() {
           />
           <div>
             <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 15, color: "#ffffff", letterSpacing: "0.05em" }}>KAIZEN</div>
-            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 9, color: "#555555", letterSpacing: "0.15em", textTransform: "uppercase" }}>Investment Group</div>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 9, color: "#6b8099", letterSpacing: "0.15em", textTransform: "uppercase" }}>Investment Group</div>
           </div>
         </div>
 
@@ -2222,7 +2228,7 @@ export default function App() {
           <div>
             {/* ── Selector de portafolios ── */}
             <div style={{
-              background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8",
+              background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d",
               padding: "14px 20px", marginBottom: 16,
               display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap"
             }}>
@@ -2248,8 +2254,8 @@ export default function App() {
                       onKeyDown={e => { if (e.key === "Enter") e.target.blur(); if (e.key === "Escape") setRenamingId(null); }}
                       style={{
                         border: "1px solid #00ff88", borderRadius: 999, padding: "4px 12px",
-                        fontSize: 13, fontWeight: 600, color: "#111111",
-                        background: "#fff8f5", outline: "none", width: 120
+                        fontSize: 13, fontWeight: 600, color: "#e2e8f0",
+                        background: "#1a2535", outline: "none", width: 120
                       }}
                     />
                   ) : (
@@ -2484,7 +2490,7 @@ export default function App() {
             ) : (
               /* Add stock form — Modo Normal */
               <div style={{
-                background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8",
+                background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d",
                 padding: 20, marginBottom: 28, display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap"
               }}>
                 <div>
@@ -2497,7 +2503,7 @@ export default function App() {
                         background: newTicker === '$MXN' ? "#fefce8" : "#f8f8f8",
                         border: `1px solid ${newTicker === '$MXN' ? "#d97706" : "#e5e5e5"}`,
                         borderRadius: 10,
-                        color: "#111111", padding: "8px 14px", fontSize: 13, width: 160,
+                        color: "#e2e8f0", padding: "8px 14px", fontSize: 13, width: 160,
                         fontFamily: "'DM Mono', monospace", outline: "none"
                       }} />
                     <button
@@ -2519,7 +2525,7 @@ export default function App() {
                     <div style={{ fontSize: 10, color: "#999999", letterSpacing: "0.08em", fontWeight: 600 }}>
                       {newTicker === '$MXN' ? "MONTO EN MXN" : inputMode === "shares" ? "ACCIONES" : "% DEL PORTAFOLIO"}
                     </div>
-                    <div style={{ display: "flex", background: "#f2f2f2", borderRadius: 999, padding: 2, gap: 0 }}>
+                    <div style={{ display: "flex", background: "#1a2535", borderRadius: 999, padding: 2, gap: 0 }}>
                       {[["shares","#"], ["pct","%"]].map(([m, lbl]) => (
                         <button key={m} onClick={() => setInputMode(m)} style={{
                           background: inputMode === m ? "#111111" : "transparent",
@@ -2534,13 +2540,13 @@ export default function App() {
                     <input value={newShares} onChange={(e) => setNewShares(e.target.value)}
                       placeholder="0 (decimal OK)" type="number" step="any"
                       onKeyDown={e => e.key === "Enter" && addStock()}
-                      style={{ background: "#f8f8f8", border: "1px solid #e5e5e5", borderRadius: 10, color: "#111111", padding: "8px 14px", fontSize: 13, width: 130, outline: "none" }} />
+                      style={{ background: "#141e2d", border: "1px solid #2d3f55", borderRadius: 10, color: "#e2e8f0", padding: "8px 14px", fontSize: 13, width: 130, outline: "none" }} />
                   ) : (
                     <div style={{ position: "relative" }}>
                       <input value={newPct} onChange={(e) => setNewPct(e.target.value)}
                         placeholder="20.5" type="number" step="any" min="0.01" max="100"
                         onKeyDown={e => e.key === "Enter" && addStock()}
-                        style={{ background: "#fff7ed", border: "1px solid #00ff88", borderRadius: 10, color: "#111111", padding: "8px 32px 8px 14px", fontSize: 13, width: 130, outline: "none" }} />
+                        style={{ background: "#0a1f10", border: "1px solid #00ff88", borderRadius: 10, color: "#00ff88", padding: "8px 32px 8px 14px", fontSize: 13, width: 130, outline: "none" }} />
                       <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "#00cc6a", fontWeight: 700, fontSize: 14 }}>%</span>
                       {(() => {
                         const pct = parseFloat(newPct);
@@ -2560,7 +2566,7 @@ export default function App() {
                   <div style={{ fontSize: 10, color: "#999999", letterSpacing: "0.08em", marginBottom: 6 }}>COSTO PROMEDIO</div>
                   <input value={newCost} onChange={(e) => setNewCost(e.target.value)}
                     placeholder="0.00" type="number"
-                    style={{ background: "#f8f8f8", border: "1px solid #e5e5e5", borderRadius: 10, color: "#111111", padding: "8px 14px", fontSize: 13, width: 120, outline: "none" }} />
+                    style={{ background: "#141e2d", border: "1px solid #2d3f55", borderRadius: 10, color: "#e2e8f0", padding: "8px 14px", fontSize: 13, width: 120, outline: "none" }} />
                 </div>
                 <button onClick={addStock} style={{
                   background: "#111111", border: "none",
@@ -2570,7 +2576,7 @@ export default function App() {
                 <button onClick={async () => {
                   for (const p of portfolio) { await loadStockData(p.ticker); await sleep(400); }
                 }} style={{
-                  background: "#f2f2f2", border: "none", borderRadius: 999,
+                  background: "#1a2535", border: "none", borderRadius: 999,
                   color: "#666666", padding: "9px 20px", cursor: "pointer", fontSize: 13
                 }}>↻ Actualizar</button>
                 {addError && (
@@ -2673,7 +2679,7 @@ export default function App() {
                   <div className="resp-grid-2" style={{ alignItems: "start" }}>
 
                     {/* ── Donut — siempre usa pesos reales ── */}
-                    <div style={{ background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8", padding: "24px 20px 20px" }}>
+                    <div style={{ background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: "24px 20px 20px" }}>
                       <div style={{ fontSize: 10, color: "#bbbbbb", letterSpacing: "0.14em", fontWeight: 600, marginBottom: 16 }}>COMPOSICIÓN DEL PORTAFOLIO</div>
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
                         {/* Tooltip hover */}
@@ -2703,7 +2709,7 @@ export default function App() {
                               key={i}
                               d={p.path}
                               fill={p.color}
-                              stroke="#ffffff"
+                              stroke="#111e2e"
                               strokeWidth="3"
                               style={{
                                 transform: hoveredTicker === p.ticker ? `translate(${p.tx}px, ${p.ty}px)` : "translate(0,0)",
@@ -2715,7 +2721,7 @@ export default function App() {
                               onMouseLeave={() => setHoveredTicker(null)}
                             />
                           ))}
-                          <circle cx={CX} cy={CY} r={R * 0.48} fill="#ffffff" style={{ pointerEvents: "none" }} />
+                          <circle cx={CX} cy={CY} r={R * 0.48} fill="#111e2e" style={{ pointerEvents: "none" }} />
                           {hoveredTicker ? (() => {
                             const hp = paths.find(x => x.ticker === hoveredTicker);
                             return hp ? <>
@@ -2723,8 +2729,8 @@ export default function App() {
                               <text x={CX} y={CY + 12} textAnchor="middle" fill="#111111" fontSize="22" fontWeight="bold" fontFamily="monospace">{(hp.pct * 100).toFixed(1)}%</text>
                             </> : null;
                           })() : <>
-                            <text x={CX} y={CY - 10} textAnchor="middle" fill="#bbbbbb" fontSize="10" fontFamily="monospace" letterSpacing="1">{isExperimental ? "PRESUPUESTO" : "TOTAL"}</text>
-                            <text x={CX} y={CY + 12} textAnchor="middle" fill={isExperimental ? "#8b5cf6" : "#111111"} fontSize="20" fontWeight="bold" fontFamily="monospace">${((isExperimental && expTotal > 0 ? expTotal : totalValue) / 1000).toFixed(1)}k</text>
+                            <text x={CX} y={CY - 10} textAnchor="middle" fill="#4a6080" fontSize="10" fontFamily="monospace" letterSpacing="1">{isExperimental ? "PRESUPUESTO" : "TOTAL"}</text>
+                            <text x={CX} y={CY + 12} textAnchor="middle" fill={isExperimental ? "#a78bfa" : "#00ff88"} fontSize="20" fontWeight="bold" fontFamily="monospace">${((isExperimental && expTotal > 0 ? expTotal : totalValue) / 1000).toFixed(1)}k</text>
                           </>}
                         </svg>
                       </div>
@@ -2736,7 +2742,7 @@ export default function App() {
                               style={{
                                 display: "flex", alignItems: "center", gap: 7,
                                 padding: "6px 10px", borderRadius: 8, cursor: "pointer",
-                                background: hoveredTicker === p.ticker ? (p.color === accentColor ? (isExperimental ? "#ede9fe" : "#fff7ed") : "#f5f5f5") : "transparent",
+                                background: hoveredTicker === p.ticker ? (p.color === accentColor ? (isExperimental ? "#2d1f5e" : "#0a2a1a") : "#1a2535") : "transparent",
                                 opacity: hoveredTicker && hoveredTicker !== p.ticker ? 0.35 : 1,
                                 transition: "all 0.15s"
                               }}
@@ -2744,8 +2750,8 @@ export default function App() {
                               onMouseLeave={() => setHoveredTicker(null)}
                             >
                               <div style={{ width: 10, height: 10, borderRadius: 3, background: p.color, flexShrink: 0 }} />
-                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11.5, color: p.color === accentColor ? accentColor : "#333", fontWeight: p.color === accentColor ? 700 : 500, flex: 1 }}>{p.ticker}</span>
-                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11.5, color: "#888", fontWeight: 600 }}>{(p.pct * 100).toFixed(1)}%</span>
+                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11.5, color: p.color === accentColor ? accentColor : "#8fa3b8", fontWeight: p.color === accentColor ? 700 : 500, flex: 1 }}>{p.ticker}</span>
+                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11.5, color: "#4a6080", fontWeight: 600 }}>{(p.pct * 100).toFixed(1)}%</span>
                             </div>
                           ))}
                         </div>
@@ -2775,7 +2781,7 @@ export default function App() {
                                       </div>
                                       <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color }}>{s >= 0 ? "+" : ""}{s}</span>
                                     </div>
-                                    <div style={{ background: "#f2f2f2", borderRadius: 99, height: 6, overflow: "hidden" }}>
+                                    <div style={{ background: "#1a2535", borderRadius: 99, height: 6, overflow: "hidden" }}>
                                       <div style={{ width: `${barW}%`, height: "100%", background: color, borderRadius: 99, transition: "width 0.6s ease" }} />
                                     </div>
                                   </div>
@@ -2787,7 +2793,7 @@ export default function App() {
                     </div>
 
                     {/* ── Tabla de rebalanceo ── */}
-                    <div style={{ background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8", padding: "28px 24px 24px", minWidth: 0 }}>
+                    <div style={{ background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: "28px 24px 24px", minWidth: 0 }}>
                       {/* Header */}
                       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
                         <span style={{ fontSize: 10, color: "#bbbbbb", letterSpacing: "0.14em", fontWeight: 600 }}>REBALANCEO</span>
@@ -2901,7 +2907,7 @@ export default function App() {
                                 <div style={{ display: "flex", alignItems: "center", gap: 5, overflow: "hidden" }}>
                                   <span style={{
                                     fontFamily: "'Syne', sans-serif",
-                                    color: "#0a0a0a",
+                                    color: "#e2e8f0",
                                     fontSize: 13, fontWeight: 700,
                                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"
                                   }}>{p.ticker}</span>
@@ -3096,9 +3102,9 @@ export default function App() {
 
                 return (
                   <div key={pos.ticker} style={{
-                    background: "#ffffff",
+                    background: "#111e2e",
                     borderRadius: 24, animation: "fadeIn 0.4s ease",
-                    boxShadow: "none", border: "1.5px solid #e0e0d8",
+                    boxShadow: "none", border: "1.5px solid #1e2d3d",
                     overflow: "hidden",
                   }}>
                     {/* Header: ticker + precio + P&L */}
@@ -3139,11 +3145,11 @@ export default function App() {
                         { l: pos.ticker === '$MXN' ? "Monto MXN" : "Acciones", v: pos.ticker === '$MXN' ? `$${pos.shares.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : pos.shares % 1 === 0 ? pos.shares : pos.shares.toFixed(4), mono: true, color: pos.ticker === '$MXN' ? "#d97706" : pos.shares % 1 !== 0 ? "#00ff88" : "#666666" },
                         { l: "Costo/acc", v: pos.ticker === '$MXN' ? "—" : `$${pos.cost.toFixed(2)}`, mono: true, color: "#666666" },
                         { l: "Invertido", v: `$${cost_total.toFixed(2)}`, mono: true, color: "#666666" },
-                        { l: "Valor actual", v: value != null ? `$${value.toFixed(2)}` : "—", mono: true, color: "#111111" },
+                        { l: "Valor actual", v: value != null ? `$${value.toFixed(2)}` : "—", mono: true, color: "#e2e8f0" },
                         { l: "P&L ($)", v: pnl != null ? `${pnl >= 0 ? "+" : ""}$${pnl.toFixed(2)}` : "—", mono: true, color: pnlColor },
                         { l: "P&L (%)", v: pnlPct != null ? `${pnlPct >= 0 ? "+" : ""}${pnlPct.toFixed(2)}%` : "—", mono: true, color: pnlColor },
                       ].map((item) => (
-                        <div key={item.l} style={{ background: "#f5f5f0", borderRadius: 12, padding: "9px 12px" }}>
+                        <div key={item.l} style={{ background: "#0d1825", borderRadius: 12, padding: "9px 12px" }}>
                           <div style={{ fontSize: 10, color: "#999999", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4, fontWeight: 500 }}>{item.l}</div>
                           <div style={{ fontSize: 14, fontFamily: item.mono ? "'DM Mono', monospace" : undefined, color: item.color, fontWeight: 700 }}>{item.v}</div>
                         </div>
@@ -3178,7 +3184,7 @@ export default function App() {
                       // ETF: mostrar nota informativa pequeña
                       if (d.isETF) {
                         return (
-                          <div style={{ marginTop: 10, background: "#f8f8f8", borderRadius: 10, padding: "8px 12px", borderLeft: "3px solid #bbbbbb" }}>
+                          <div style={{ marginTop: 10, background: "#141e2d", borderRadius: 10, padding: "8px 12px", borderLeft: "3px solid #bbbbbb" }}>
                             <div style={{ fontSize: 9, color: "#bbbbbb", letterSpacing: "0.1em", fontWeight: 600 }}>VALUACIÓN</div>
                             <div style={{ fontSize: 11, color: "#999999", marginTop: 3 }}>ETF / Fondo — valuación por múltiplos no aplica para este instrumento.</div>
                           </div>
@@ -3201,13 +3207,13 @@ export default function App() {
                           <div style={{ display: "flex", gap: 16, marginBottom: 12 }}>
                             <div>
                               <div style={{ fontSize: 9, color: "#bbbbbb" }}>PRECIO JUSTO ({d.nMethods} métodos)</div>
-                              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 18, fontWeight: 700, color: "#111111" }}>
+                              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 18, fontWeight: 700, color: "#e2e8f0" }}>
                                 ${d.fairPrice?.toFixed(2) ?? "—"} <span style={{ fontSize: 10, color: "#bbbbbb" }}>{cur}</span>
                               </div>
                             </div>
                             <div>
                               <div style={{ fontSize: 9, color: "#bbbbbb" }}>PRECIO ACTUAL</div>
-                              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 18, fontWeight: 700, color: "#555555" }}>
+                              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 18, fontWeight: 700, color: "#6b8099" }}>
                                 ${d.price?.toFixed(2)} <span style={{ fontSize: 10, color: "#bbbbbb" }}>{cur}</span>
                               </div>
                             </div>
@@ -3226,9 +3232,9 @@ export default function App() {
                               return (
                                 <div key={m.name} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
                                   <span style={{ fontFamily: "'DM Mono', monospace", color: "#bbbbbb", minWidth: 60 }}>{m.name}</span>
-                                  <span style={{ color: "#555555" }}>actual <b style={{ color: sc }}>{m.actual ?? "—"}x</b></span>
-                                  <span style={{ color: "#bbbbbb" }}>vs sector <b style={{ color: "#111111" }}>{m.fair}x</b></span>
-                                  <span style={{ marginLeft: "auto", fontFamily: "'DM Mono', monospace", fontWeight: 700, color: "#111111" }}>
+                                  <span style={{ color: "#6b8099" }}>actual <b style={{ color: sc }}>{m.actual ?? "—"}x</b></span>
+                                  <span style={{ color: "#bbbbbb" }}>vs sector <b style={{ color: "#e2e8f0" }}>{m.fair}x</b></span>
+                                  <span style={{ marginLeft: "auto", fontFamily: "'DM Mono', monospace", fontWeight: 700, color: "#e2e8f0" }}>
                                     obj. ${m.target?.toFixed(2)} {cur}
                                   </span>
                                   <span style={{ fontSize: 9, fontWeight: 700, color: sc, minWidth: 52, textAlign: "right" }}>
@@ -3270,7 +3276,7 @@ export default function App() {
         {tab === "optimize" && (
           <div>
             <div style={{
-              background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8",
+              background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d",
               padding: 20, marginBottom: 28
             }}>
               {/* Selector de portafolio */}
@@ -3285,9 +3291,9 @@ export default function App() {
                   }}>{p.name} <span style={{ opacity: 0.7 }}>({p.positions.length})</span></button>
                 ))}
               </div>
-              <div style={{ fontSize: 14, color: "#555555", marginBottom: 16, lineHeight: 1.6 }}>
-                Optimización de pesos por <b style={{ color: "#111111" }}>Máximo Sharpe Ratio</b> usando simulación Monte Carlo (100,000 portafolios). Restricciones: mín <b style={{ color: "#555555" }}>2%</b> — máx <b style={{ color: "#555555" }}>35%</b> por activo.
-                Tasa libre de riesgo: <b style={{ fontFamily: "'DM Mono', monospace", color: "#555555" }}>
+              <div style={{ fontSize: 14, color: "#6b8099", marginBottom: 16, lineHeight: 1.6 }}>
+                Optimización de pesos por <b style={{ color: "#e2e8f0" }}>Máximo Sharpe Ratio</b> usando simulación Monte Carlo (100,000 portafolios). Restricciones: mín <b style={{ color: "#6b8099" }}>2%</b> — máx <b style={{ color: "#6b8099" }}>35%</b> por activo.
+                Tasa libre de riesgo: <b style={{ fontFamily: "'DM Mono', monospace", color: "#6b8099" }}>
                   {rfRate ? `${(rfRate * 100).toFixed(2)}% (${rfLabel})` : "cargando..."}
                 </b>
               </div>
@@ -3331,7 +3337,7 @@ export default function App() {
                 <div className="resp-grid-2" style={{ marginBottom: 24 }}>
                   {/* Portafolio Actual */}
                   <div style={{
-                    background: "#ffffff", boxShadow: "none", border: "1.5px solid #e0e0d8",
+                    background: "#111e2e", boxShadow: "none", border: "1.5px solid #1e2d3d",
                     borderTop: "3px solid #888888", borderRadius: 24, padding: 24
                   }}>
                     <div style={{ fontSize: 10, color: "#666666", letterSpacing: "0.1em", marginBottom: 12 }}>PORTAFOLIO ACTUAL</div>
@@ -3347,7 +3353,7 @@ export default function App() {
                       </div>
                       <div>
                         <div style={{ fontSize: 9, color: "#999999", marginBottom: 3 }}>VOLATILIDAD ANUAL</div>
-                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 15, color: "#111111", fontWeight: 700 }}>
+                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 15, color: "#e2e8f0", fontWeight: 700 }}>
                           {optimResult.actualStats?.annVol}%
                         </div>
                       </div>
@@ -3357,8 +3363,8 @@ export default function App() {
 
                   {/* Portafolio Óptimo */}
                   <div style={{
-                    background: "#f8f8f8",
-                    boxShadow: "none", border: "1.5px solid #e0e0d8",
+                    background: "#141e2d",
+                    boxShadow: "none", border: "1.5px solid #1e2d3d",
                     borderTop: "3px solid #00ff88", borderRadius: 24, padding: 24
                   }}>
                     <div style={{ fontSize: 10, color: "#00cc6a", letterSpacing: "0.1em", marginBottom: 12 }}>PORTAFOLIO ÓPTIMO (MONTE CARLO)</div>
@@ -3374,7 +3380,7 @@ export default function App() {
                       </div>
                       <div>
                         <div style={{ fontSize: 9, color: "#999999", marginBottom: 3 }}>VOLATILIDAD ANUAL</div>
-                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 15, color: "#111111", fontWeight: 700 }}>
+                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 15, color: "#e2e8f0", fontWeight: 700 }}>
                           {optimResult.optimalStats?.annVol}%
                         </div>
                       </div>
@@ -3393,11 +3399,11 @@ export default function App() {
                   <table>
                     <thead>
                       <tr>
-                        <th style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "#888888", padding: "10px 14px", borderBottom: "1px solid #e0e0d8" }}>TICKER</th>
-                        <th style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "#888888", padding: "10px 14px", borderBottom: "1px solid #e0e0d8" }}>PESO ÓPTIMO</th>
-                        <th style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "#888888", padding: "10px 14px", borderBottom: "1px solid #e0e0d8" }}>PESO ACTUAL</th>
-                        <th style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "#888888", padding: "10px 14px", borderBottom: "1px solid #e0e0d8" }}>DIFERENCIA</th>
-                        <th style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "#888888", padding: "10px 14px", borderBottom: "1px solid #e0e0d8" }}>ACCIÓN</th>
+                        <th style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "#888888", padding: "10px 14px", borderBottom: "1px solid #1a2535" }}>TICKER</th>
+                        <th style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "#888888", padding: "10px 14px", borderBottom: "1px solid #1a2535" }}>PESO ÓPTIMO</th>
+                        <th style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "#888888", padding: "10px 14px", borderBottom: "1px solid #1a2535" }}>PESO ACTUAL</th>
+                        <th style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "#888888", padding: "10px 14px", borderBottom: "1px solid #1a2535" }}>DIFERENCIA</th>
+                        <th style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "#888888", padding: "10px 14px", borderBottom: "1px solid #1a2535" }}>ACCIÓN</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -3412,7 +3418,7 @@ export default function App() {
                         const rowBg = i % 2 === 0 ? "#ffffff" : "#f5f5f0";
                         return (
                           <tr key={t} style={{ background: rowBg }}>
-                            <td style={{ fontFamily: "'DM Mono', monospace", color: "#111111", fontWeight: 700 }}>{t}</td>
+                            <td style={{ fontFamily: "'DM Mono', monospace", color: "#e2e8f0", fontWeight: 700 }}>{t}</td>
                             <td style={{ fontFamily: "'DM Mono', monospace" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                 <div style={{
@@ -3443,7 +3449,7 @@ export default function App() {
 
                 {/* Matriz de correlación */}
                 {optimResult.corrMatrix && (
-                  <div style={{ marginTop: 28, background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8", padding: 24 }}>
+                  <div style={{ marginTop: 28, background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: 24 }}>
                     <div style={{ fontSize: 12, color: "#999999", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 6 }}>MATRIZ DE CORRELACIÓN</div>
                     <div style={{ fontSize: 11, color: "#999999", marginBottom: 18 }}>
                       Rojo = alta correlación (mueven igual) · Azul = baja/negativa (diversifican) · 1.00 = idénticos
@@ -3454,14 +3460,14 @@ export default function App() {
                           <tr>
                             <th style={{ padding: "4px 8px", fontSize: 10, color: "#999999", textAlign: "left", minWidth: 90 }}></th>
                             {optimResult.tickers.map((t) => (
-                              <th key={t} style={{ padding: "4px 8px", fontSize: 10, color: "#0a0a0a", textAlign: "center", minWidth: 80, fontFamily: "'Syne', sans-serif", fontWeight: 700, textTransform: "uppercase" }}>{t}</th>
+                              <th key={t} style={{ padding: "4px 8px", fontSize: 10, color: "#8fa3b8", textAlign: "center", minWidth: 80, fontFamily: "'Syne', sans-serif", fontWeight: 700, textTransform: "uppercase" }}>{t}</th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
                           {optimResult.tickers.map((rowT, i) => (
                             <tr key={rowT}>
-                              <td style={{ padding: "4px 8px", fontSize: 10, color: "#0a0a0a", fontFamily: "'Syne', sans-serif", fontWeight: 700, textTransform: "uppercase", whiteSpace: "nowrap" }}>{rowT}</td>
+                              <td style={{ padding: "4px 8px", fontSize: 10, color: "#8fa3b8", fontFamily: "'Syne', sans-serif", fontWeight: 700, textTransform: "uppercase", whiteSpace: "nowrap" }}>{rowT}</td>
                               {optimResult.corrMatrix[i].map((val, j) => {
                                 let bg, textColor;
                                 if (i === j) {
@@ -3508,7 +3514,7 @@ export default function App() {
 
                 {/* ── Recomendaciones ── */}
                 {optimResult.recommendations?.length > 0 && (
-                  <div style={{ marginTop: 28, background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8", padding: 24 }}>
+                  <div style={{ marginTop: 28, background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: 24 }}>
                     <div style={{ fontSize: 12, color: "#999999", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 4 }}>RECOMENDACIONES PARA TU PORTAFOLIO</div>
                     <div style={{ fontSize: 11, color: "#999999", marginBottom: 18 }}>
                       Top activos que mejorarían tu portafolio — score compuesto: Mejora Sharpe 40% · Baja correlación 35% · Sharpe individual 25%
@@ -3536,10 +3542,10 @@ export default function App() {
                             return (
                               <tr key={r.ticker}>
                                 <td style={{ color: "#999999", fontSize: 12 }}>{idx + 1}</td>
-                                <td style={{ fontFamily: "'DM Mono', monospace", color: "#111111", fontWeight: 700 }}>{r.ticker}</td>
+                                <td style={{ fontFamily: "'DM Mono', monospace", color: "#e2e8f0", fontWeight: 700 }}>{r.ticker}</td>
                                 <td>
                                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                    <div style={{ background: "#ffffff", borderRadius: 4, height: 6, width: 80, overflow: "hidden" }}>
+                                    <div style={{ background: "#1a2535", borderRadius: 4, height: 6, width: 80, overflow: "hidden" }}>
                                       <div style={{ width: `${r.score}%`, height: "100%", background: scoreColor, borderRadius: 4 }} />
                                     </div>
                                     <span style={{ fontFamily: "'DM Mono', monospace", color: scoreColor, fontWeight: 700, fontSize: 13 }}>{r.score}</span>
@@ -3576,14 +3582,14 @@ export default function App() {
         {tab === "screener" && (
           <div>
             <div style={{
-              background: "#ffffff", boxShadow: "none", border: "1.5px solid #e0e0d8",
+              background: "#111e2e", boxShadow: "none", border: "1.5px solid #1e2d3d",
               borderRadius: 24, padding: 20, marginBottom: 28
             }}>
               <div style={{ fontSize: 12, color: "#999999", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 8 }}>TICKERS A ANALIZAR (separados por coma, incluye .MX para México)</div>
               <textarea value={screenerTickers} onChange={(e) => setScreenerTickers(e.target.value)}
                 style={{
-                  width: "100%", background: "#f8f8f8", border: "1px solid #e5e5e5",
-                  borderRadius: 8, color: "#111111", padding: "10px 14px", fontSize: 13,
+                  width: "100%", background: "#141e2d", border: "1px solid #e5e5e5",
+                  borderRadius: 8, color: "#e2e8f0", padding: "10px 14px", fontSize: 13,
                   fontFamily: "'DM Mono', monospace", minHeight: 60, resize: "vertical"
                 }} />
               <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 12 }}>
@@ -3619,13 +3625,13 @@ export default function App() {
                   const recColor = s?.recommendation === "BUY" ? "#16a34a" : s?.recommendation === "SELL" ? "#dc2626" : "#eab308";
                   return (
                     <div key={stock.ticker} style={{
-                      background: "#ffffff", boxShadow: "none", border: "1.5px solid #e0e0d8",
+                      background: "#111e2e", boxShadow: "none", border: "1.5px solid #1e2d3d",
                       borderRadius: 24, padding: 20, animation: "fadeIn 0.4s ease",
                       borderTop: `3px solid ${recColor}`
                     }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
                         <div>
-                          <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: "#111111" }}>{stock.ticker}</div>
+                          <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: "#e2e8f0" }}>{stock.ticker}</div>
                           <div style={{ fontSize: 11, color: "#666666", marginTop: 2 }}>{stock.name ?? "—"}</div>
                           {stock.price && <div style={{ fontSize: 13, color: "#666666", marginTop: 4 }}>
                             ${stock.price.toFixed(2)}
@@ -3686,10 +3692,10 @@ export default function App() {
                           { l: "Lev", v: stock.leverageRatio },
                         ].map((m) => m.v != null && (
                           <span key={m.l} style={{
-                            background: "#f2f2f2", border: "none",
+                            background: "#1a2535", border: "none",
                             borderRadius: 8, padding: "3px 8px", fontSize: 11,
                             fontFamily: "'DM Mono', monospace", color: "#666666"
-                          }}>{m.l}: <b style={{ color: "#111111" }}>{m.v}</b></span>
+                          }}>{m.l}: <b style={{ color: "#e2e8f0" }}>{m.v}</b></span>
                         ))}
                       </div>
 
@@ -3703,7 +3709,7 @@ export default function App() {
                           <ScoreBar value={s.overall_score} label="Overall" />
                           {s.rationale && (
                             <div style={{
-                              marginTop: 12, background: "#f8f8f8", borderRadius: 8,
+                              marginTop: 12, background: "#141e2d", borderRadius: 8,
                               padding: "8px 12px", fontSize: 11, color: "#666666", lineHeight: 1.5
                             }}>
                                {s.rationale}
@@ -3720,20 +3726,20 @@ export default function App() {
                         const d = stock.dcf;
                         const mc = d.margin == null ? "#bbbbbb" : d.margin > 15 ? "#16a34a" : d.margin > 0 ? "#eab308" : "#dc2626";
                         return (
-                          <div style={{ marginTop: 10, padding: "10px 12px", background: "#f8f8f8", borderRadius: 10, borderLeft: `3px solid ${mc}` }}>
+                          <div style={{ marginTop: 10, padding: "10px 12px", background: "#141e2d", borderRadius: 10, borderLeft: `3px solid ${mc}` }}>
                             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
                               <div style={{ fontSize: 9, color: "#bbbbbb", letterSpacing: "0.1em", fontWeight: 600 }}>MÚLTIPLOS · {d.sector || "—"}</div>
                               <div style={{ fontSize: 10, fontWeight: 700, color: mc }}>{d.overall}</div>
                             </div>
                             <div style={{ display: "flex", gap: 10, alignItems: "baseline", marginBottom: 8 }}>
-                              {d.fairPrice != null && <span style={{ fontSize: 12 }}>Justo <b style={{ fontFamily: "'DM Mono', monospace", color: "#111111" }}>${d.fairPrice.toFixed(2)}</b></span>}
+                              {d.fairPrice != null && <span style={{ fontSize: 12 }}>Justo <b style={{ fontFamily: "'DM Mono', monospace", color: "#e2e8f0" }}>${d.fairPrice.toFixed(2)}</b></span>}
                               {d.margin != null && <span style={{ fontSize: 12 }}>Descuento <b style={{ fontFamily: "'DM Mono', monospace", color: mc }}>{d.margin > 0 ? "+" : ""}{d.margin}%</b></span>}
                             </div>
                             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                               {d.methods?.map((m) => {
                                 const sc = m.signal === "barato" ? "#16a34a" : m.signal === "caro" ? "#dc2626" : "#eab308";
                                 return (
-                                  <span key={m.name} style={{ fontSize: 10, background: "#ffffff", borderRadius: 6, padding: "2px 7px", color: "#555555" }}>
+                                  <span key={m.name} style={{ fontSize: 10, background: "#1a2535", borderRadius: 6, padding: "2px 7px", color: "#8fa3b8" }}>
                                     {m.name} <b style={{ fontFamily: "'DM Mono', monospace", color: sc }}>{m.actual ?? "—"}x</b>
                                     <span style={{ color: "#bbbbbb" }}>/{m.fair}x</span>
                                   </span>
@@ -3749,7 +3755,7 @@ export default function App() {
                         const m = stock.momentum;
                         const scoreColor = m.score === 3 ? "#16a34a" : m.score >= 2 ? "#eab308" : "#dc2626";
                         return (
-                          <div style={{ marginTop: 8, padding: "8px 10px", background: "#f8f8f8", borderRadius: 8 }}>
+                          <div style={{ marginTop: 8, padding: "8px 10px", background: "#141e2d", borderRadius: 8 }}>
                             <div style={{ fontSize: 9, color: "#bbbbbb", letterSpacing: "0.1em", marginBottom: 6 }}>MOMENTUM vs {m.benchmark} ({m.sector})</div>
                             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
                               {[["3M", m.alpha?.m3], ["6M", m.alpha?.m6], ["12M", m.alpha?.m12]].map(([label, alpha]) => alpha != null && (
@@ -3839,7 +3845,7 @@ export default function App() {
                   <div style={{ fontSize: 9, color: "#888888", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Syne', sans-serif" }}>{label}</div>
                   {sub && <div style={{ fontSize: 9, color: "#aaaaaa", marginTop: 1 }}>{sub}</div>}
                 </div>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: hero ? 18 : 13, fontWeight: 700, color: "#0a0a0a", marginRight: isN ? 0 : 8, flexShrink: 0 }}>
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: hero ? 18 : 13, fontWeight: 700, color: "#e2e8f0", marginRight: isN ? 0 : 8, flexShrink: 0 }}>
                   {value ?? <span style={{ color: "#d1d5db" }}>—</span>}
                 </div>
                 {!isN
@@ -3858,14 +3864,14 @@ export default function App() {
 
           const Panel = ({ title, color = "#3b82f6", children, style = {} }) => (
             <div style={{
-              background: "#ffffff", borderRadius: 16, overflow: "hidden",
-              border: "1px solid #e8e8e4",
+              background: "#111e2e", borderRadius: 16, overflow: "hidden",
+              border: "1px solid #1e2d3d",
               ...style
             }}>
               <div style={{
                 padding: "8px 16px",
-                borderBottom: "1px solid #e0e0d8",
-                background: "#ffffff",
+                borderBottom: "1px solid #1a2535",
+                background: "#0d1825",
               }}>
                 <span style={{ fontSize: 9, fontWeight: 700, color: "#888888", textTransform: "uppercase", letterSpacing: "0.2em", fontFamily: "'Syne', sans-serif" }}>{title}</span>
               </div>
@@ -3877,12 +3883,12 @@ export default function App() {
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
               {/* ── HERO ── */}
-              <div style={{ background: "#f5f5f0", borderRadius: 20, padding: "32px 28px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 16 }}>
+              <div style={{ background: "linear-gradient(135deg, #0a1628 0%, #111e2e 100%)", borderRadius: 20, padding: "32px 28px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 16, border: "1px solid #1e2d3d" }}>
                 <div>
-                  <div className="hero-title" style={{ fontSize: 48, fontWeight: 800, color: "#0a0a0a", letterSpacing: "-0.04em", fontFamily: "'Syne', sans-serif", lineHeight: 1.05 }}>
+                  <div className="hero-title" style={{ fontSize: 48, fontWeight: 800, color: "#00ff88", letterSpacing: "-0.04em", fontFamily: "'Syne', sans-serif", lineHeight: 1.05 }}>
                     Panorama de<br />Mercados
                   </div>
-                  <div style={{ fontSize: 13, color: "#888888", marginTop: 12 }}>
+                  <div style={{ fontSize: 13, color: "#4a6080", marginTop: 12 }}>
                     Indicadores globales · México · Noticias
                     {lastUpdStr && <span style={{ marginLeft: 10 }}>· Act. {lastUpdStr}</span>}
                   </div>
@@ -3897,7 +3903,7 @@ export default function App() {
                     {marketDataLoading ? <Spinner size={11} /> : "↻"} Mercados
                   </button>
                   <button onClick={loadMarketNews} disabled={marketNewsLoading} style={{
-                    background: "transparent", border: "1px solid #0a0a0a", borderRadius: 8, color: "#0a0a0a",
+                    background: "transparent", border: "1px solid #2d3f55", borderRadius: 8, color: "#8fa3b8",
                     padding: "8px 16px", cursor: marketNewsLoading ? "not-allowed" : "pointer",
                     fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
                     transition: "all 0.15s", opacity: marketNewsLoading ? 0.5 : 1,
@@ -3954,9 +3960,9 @@ export default function App() {
               <ResumenManero md={marketData} macroData={macroData} />
 
               {/* ── INDICADORES PRINCIPALES ── */}
-              <div style={{ border: "1.5px solid #e0e0d8", borderRadius: 16, overflow: "hidden" }}>
-                <div style={{ padding: "8px 16px", borderBottom: "1px solid #e0e0d8", background: "#ffffff" }}>
-                  <span style={{ fontSize: 9, fontWeight: 700, color: "#888888", textTransform: "uppercase", letterSpacing: "0.2em", fontFamily: "'Syne', sans-serif" }}>Indicadores Principales</span>
+              <div style={{ border: "1.5px solid #1e2d3d", borderRadius: 16, overflow: "hidden" }}>
+                <div style={{ padding: "8px 16px", borderBottom: "1px solid #1a2535", background: "#0d1825" }}>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: "#4a6080", textTransform: "uppercase", letterSpacing: "0.2em", fontFamily: "'Syne', sans-serif" }}>Indicadores Principales</span>
                 </div>
                 <div className="ind-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)" }}>
                   {[
@@ -3978,13 +3984,13 @@ export default function App() {
                     return (
                       <div key={key} style={{
                         padding: "12px 16px",
-                        borderRight: col < 3 ? "1px solid #e0e0d8" : "none",
-                        borderBottom: row < 1 ? "1px solid #e0e0d8" : "none",
-                        background: "#ffffff",
+                        borderRight: col < 3 ? "1px solid #1a2535" : "none",
+                        borderBottom: row < 1 ? "1px solid #1a2535" : "none",
+                        background: "#111e2e",
                       }}>
                         <div style={{ fontSize: 9, color: "#888888", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Syne', sans-serif", marginBottom: 4 }}>{label}</div>
                         <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 18, fontWeight: 700, color: "#0a0a0a", lineHeight: 1 }}>
+                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 18, fontWeight: 700, color: "#e2e8f0", lineHeight: 1 }}>
                             {d.value != null ? fv(d.value, dec) + (unit ?? "") : <span style={{ color: "#d1d5db" }}>—</span>}
                           </span>
                           {!isN && (
@@ -4022,10 +4028,10 @@ export default function App() {
 
                     {/* ── Style Box ── */}
                     <div style={{
-                      background: "#ffffff", border: "1.5px solid #e0e0d8", borderRadius: 20,
+                      background: "#111e2e", border: "1.5px solid #1e2d3d", borderRadius: 20,
                       padding: "24px 28px", width: "100%", boxSizing: "border-box"
                     }}>
-                      <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 800, color: "#0a0a0a", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 20 }}>
+                      <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 800, color: "#e2e8f0", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 20 }}>
                         US Market Style Box
                       </div>
                       {/* Headers */}
@@ -4038,12 +4044,12 @@ export default function App() {
                       {/* Rows */}
                       {BOX.map(({ label, keys }) => (
                         <div key={label} style={{ display: "grid", gridTemplateColumns: "64px repeat(3,1fr)", gap: 8, marginBottom: 8 }}>
-                          <div style={{ display: "flex", alignItems: "center", fontFamily: "'Syne',sans-serif", fontSize: 11, fontWeight: 700, color: "#0a0a0a" }}>{label}</div>
+                          <div style={{ display: "flex", alignItems: "center", fontFamily: "'Syne',sans-serif", fontSize: 11, fontWeight: 700, color: "#8fa3b8" }}>{label}</div>
                           {keys.map((k) => {
                             const { p, bg: _bg, fg: _fg } = toCell(k);
                             const isUp = p != null && p >= 0;
                             const isDown = p != null && p < 0;
-                            const cellBg = isUp ? "#00ff8820" : isDown ? "#ff3b3b15" : "#f5f5f0";
+                            const cellBg = isUp ? "#00ff8820" : isDown ? "#ff3b3b15" : "#1a2535";
                             const cellFg = isUp ? "#00aa55" : isDown ? "#ff3b3b" : "#94a3b8";
                             return (
                               <div key={k} style={{ background: cellBg, borderRadius: 10, padding: "18px 10px", textAlign: "center" }}>
@@ -4148,8 +4154,8 @@ export default function App() {
                   {MX_REF.map((r) => (
                     <div key={r.label} style={{
                       display: "flex", alignItems: "center", gap: 10,
-                      padding: "8px 12px", borderBottom: "1px solid #e8e8e4",
-                      background: "#ffffff",
+                      padding: "8px 12px", borderBottom: "1px solid #1a2535",
+                      background: "#111e2e",
                     }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontSize: 9, color: "#888888", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Syne', sans-serif" }}>{r.label}</div>
@@ -4213,7 +4219,7 @@ export default function App() {
                   marketNews.length > 0 && (
                     <div style={{ display: "flex", gap: 6 }}>
                       {[
-                        { key: "all",      label: "Todas",    color: "#555555" },
+                        { key: "all",      label: "Todas",    color: "#6b8099" },
                         { key: "positive", label: " Buenas", color: "#16a34a" },
                         { key: "neutral",  label: " Neutras",color: "#ca8a04" },
                         { key: "negative", label: " Malas",  color: "#dc2626" },
@@ -4254,7 +4260,7 @@ export default function App() {
                 {!marketNewsLoading && marketNews.length === 0 && (
                   <div style={{
                     textAlign: "center", color: "#aaaaaa", padding: 48, fontSize: 13,
-                    background: "#f8f8f8", borderRadius: 24, border: "1px dashed #e5e5e5"
+                    background: "#141e2d", borderRadius: 24, border: "1px dashed #e5e5e5"
                   }}>
                     No se cargaron noticias — haz clic en <b>↻ Noticias</b> para reintentar
                   </div>
@@ -4264,15 +4270,15 @@ export default function App() {
               {/* ── BUSCAR POR TICKER ── */}
               <div>
                 <SectionLabel>Buscar Noticias por Ticker</SectionLabel>
-                <div style={{ background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8", padding: 20 }}>
+                <div style={{ background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: 20 }}>
                   <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
                     <input value={newsTicker}
                       onChange={(e) => setNewsTicker(e.target.value.toUpperCase())}
                       onKeyDown={(e) => e.key === "Enter" && loadNews(newsTicker)}
                       placeholder="AAPL / WALMEX.MX / AMZN.MX"
                       style={{
-                        background: "#f8f8f8", border: "1px solid #e5e5e5", borderRadius: 10,
-                        color: "#111111", padding: "9px 14px", fontSize: 13, width: 220,
+                        background: "#141e2d", border: "1px solid #e5e5e5", borderRadius: 10,
+                        color: "#e2e8f0", padding: "9px 14px", fontSize: 13, width: 220,
                         fontFamily: "'DM Mono', monospace",
                       }} />
                     <button onClick={() => loadNews(newsTicker)} disabled={newsLoading} style={{
@@ -4317,7 +4323,7 @@ export default function App() {
         {tab === "analytics" && (
           <div>
             <div style={{
-              background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8",
+              background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d",
               padding: 20, marginBottom: 28
             }}>
               {/* Selector de portafolio */}
@@ -4332,8 +4338,8 @@ export default function App() {
                   }}>{p.name} <span style={{ opacity: 0.7 }}>({p.positions.length})</span></button>
                 ))}
               </div>
-              <div style={{ fontSize: 14, color: "#555555", marginBottom: 16, lineHeight: 1.6 }}>
-                Backtesting de <b style={{ color: "#111111" }}>5 años</b> con datos semanales comparado contra{" "}
+              <div style={{ fontSize: 14, color: "#6b8099", marginBottom: 16, lineHeight: 1.6 }}>
+                Backtesting de <b style={{ color: "#e2e8f0" }}>5 años</b> con datos semanales comparado contra{" "}
                 <b style={{ color: "#888888" }}>SPY (S&P 500)</b>.{" "}
                 {isExperimental
                   ? <span style={{ color: "#8b5cf6" }}>Pesos: % objetivo del portafolio experimental.</span>
@@ -4379,7 +4385,7 @@ export default function App() {
 
               return (
                 <div style={{ animation: "fadeIn 0.5s ease" }}>
-                  <div style={{ background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8", padding: 20, marginBottom: 24 }}>
+                  <div style={{ background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: 20, marginBottom: 24 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
                       <div style={{ fontSize: 12, color: "#999999", letterSpacing: "0.07em", fontWeight: 500 }}>
                         RETORNOS ACUMULADOS — PORTAFOLIO vs SPY ({yearsBacktest ?? "5"} AÑOS SEMANAL)
@@ -4422,8 +4428,8 @@ export default function App() {
                         {outperforms ? "Superando al benchmark" : "Por debajo del benchmark"}
                       </div>
                       <div style={{ fontSize: 12, color: "#666666", marginTop: 2 }}>
-                        Portafolio: <b style={{ fontFamily: "'DM Mono', monospace", color: "#111111" }}>{(annPortReturn * 100).toFixed(2)}%</b> anual
-                        {" "}vs SPY: <b style={{ fontFamily: "'DM Mono', monospace", color: "#111111" }}>{(annSpyReturn * 100).toFixed(2)}%</b> anual
+                        Portafolio: <b style={{ fontFamily: "'DM Mono', monospace", color: "#e2e8f0" }}>{(annPortReturn * 100).toFixed(2)}%</b> anual
+                        {" "}vs SPY: <b style={{ fontFamily: "'DM Mono', monospace", color: "#e2e8f0" }}>{(annSpyReturn * 100).toFixed(2)}%</b> anual
                         {" — "}Alpha: <b style={{ fontFamily: "'DM Mono', monospace", color: alpha >= 0 ? "#16a34a" : "#dc2626" }}>
                           {alpha >= 0 ? "+" : ""}{(alpha * 100).toFixed(2)}%
                         </b>
@@ -4450,20 +4456,20 @@ export default function App() {
                   {backtestResult?.corrMatrix && (() => {
                     const { corrMatrix: cm, tickers: tks } = backtestResult;
                     return (
-                      <div style={{ background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8", padding: 20, marginBottom: 20 }}>
+                      <div style={{ background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: 20, marginBottom: 20 }}>
                         <div style={{ fontSize: 10, color: "#bbbbbb", letterSpacing: "0.14em", fontWeight: 600, marginBottom: 16 }}>MATRIZ DE CORRELACIÓN DE ACTIVOS</div>
                         <div style={{ overflowX: "auto" }}>
                           <table style={{ borderCollapse: "separate", borderSpacing: 3 }}>
                             <thead>
                               <tr>
                                 <th style={{ padding: "4px 8px", fontSize: 10, color: "#bbbbbb", textAlign: "right", border: "none", background: "none" }}></th>
-                                {tks.map(tk => <th key={tk} style={{ padding: "4px 8px", fontSize: 10, fontFamily: "'DM Mono', monospace", color: "#555555", border: "none", background: "none", textAlign: "center" }}>{tk.split(".")[0]}</th>)}
+                                {tks.map(tk => <th key={tk} style={{ padding: "4px 8px", fontSize: 10, fontFamily: "'DM Mono', monospace", color: "#6b8099", border: "none", background: "none", textAlign: "center" }}>{tk.split(".")[0]}</th>)}
                               </tr>
                             </thead>
                             <tbody>
                               {cm.map((row, i) => (
                                 <tr key={tks[i]}>
-                                  <td style={{ padding: "4px 8px", fontSize: 10, fontFamily: "'DM Mono', monospace", color: "#555555", fontWeight: 700, border: "none", textAlign: "right", whiteSpace: "nowrap" }}>{tks[i].split(".")[0]}</td>
+                                  <td style={{ padding: "4px 8px", fontSize: 10, fontFamily: "'DM Mono', monospace", color: "#6b8099", fontWeight: 700, border: "none", textAlign: "right", whiteSpace: "nowrap" }}>{tks[i].split(".")[0]}</td>
                                   {row.map((val, j) => {
                                     let bg, fg;
                                     if (i === j) { bg = "#111111"; fg = "#ffffff"; }
@@ -4492,7 +4498,7 @@ export default function App() {
                     );
                   })()}
 
-                  <div style={{ background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8", padding: "16px 20px" }}>
+                  <div style={{ background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: "16px 20px" }}>
                     <div style={{ fontSize: 12, color: "#999999", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 12 }}>GLOSARIO DE MÉTRICAS</div>
                     <div style={{ display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
                       {[
@@ -4519,15 +4525,15 @@ export default function App() {
 
             {/* ── MONTE CARLO ── */}
             <div style={{
-              background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8",
+              background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d",
               padding: 20, marginTop: 24
             }}>
               <div style={{ fontSize: 12, color: "#999999", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 8 }}>
                 PROYECCIÓN FUTURA — MONTE CARLO
               </div>
-              <div style={{ fontSize: 13, color: "#555555", marginBottom: 14, lineHeight: 1.6 }}>
-                Simulación de <b style={{ color: "#111111" }}>10,000 escenarios</b> a 52 semanas usando retornos históricos de{" "}
-                <b style={{ color: "#111111" }}>5 años</b>. Muestra el rango p5–p95 del portafolio vs SPY.
+              <div style={{ fontSize: 13, color: "#6b8099", marginBottom: 14, lineHeight: 1.6 }}>
+                Simulación de <b style={{ color: "#e2e8f0" }}>10,000 escenarios</b> a 52 semanas usando retornos históricos de{" "}
+                <b style={{ color: "#e2e8f0" }}>5 años</b>. Muestra el rango p5–p95 del portafolio vs SPY.
               </div>
               <button onClick={runMonteCarlo} disabled={monteCarloLoading || portfolio.length === 0} className="btn-exec" style={{
                 background: monteCarloLoading ? "#999999" : "#0a0a0a",
@@ -4555,7 +4561,7 @@ export default function App() {
               const portP95 = portStats[portStats.length - 1].p95;
 
               const mcCard = (label, value, color, sub) => (
-                <div style={{ background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8", padding: "16px 20px", flex: 1, minWidth: 140 }}>
+                <div style={{ background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: "16px 20px", flex: 1, minWidth: 140 }}>
                   <div style={{ fontSize: 10, color: "#999999", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>{label}</div>
                   <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 20, fontWeight: 700, color: color ?? "#111111" }}>{value}</div>
                   {sub && <div style={{ fontSize: 10, color: "#bbbbbb", marginTop: 4 }}>{sub}</div>}
@@ -4564,7 +4570,7 @@ export default function App() {
 
               return (
                 <div style={{ animation: "fadeIn 0.5s ease", marginTop: 20 }}>
-                  <div style={{ background: "#ffffff", borderRadius: 24, boxShadow: "none", border: "1.5px solid #e0e0d8", padding: 20, marginBottom: 20 }}>
+                  <div style={{ background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: 20, marginBottom: 20 }}>
                     <div style={{ fontSize: 12, color: "#999999", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 14 }}>
                       RETORNOS PROYECTADOS — {N.toLocaleString()} SIMULACIONES · {yearsData} AÑOS DE HISTORIAL
                     </div>
@@ -4582,7 +4588,7 @@ export default function App() {
                       "#00ff88", "p5 – p95 al final del período")}
                   </div>
 
-                  <div style={{ background: "#f5f5f0", borderRadius: 24, padding: "14px 20px", display: "flex", flexWrap: "wrap", gap: 24 }}>
+                  <div style={{ background: "#0d1825", borderRadius: 24, padding: "14px 20px", display: "flex", flexWrap: "wrap", gap: 24 }}>
                     {[
                       ["Retorno med. semanal (port.)", `${(muPort * 100).toFixed(3)}%`],
                       ["Vol. semanal (port.)",          `${(sigPort * 100).toFixed(3)}%`],
@@ -4593,7 +4599,7 @@ export default function App() {
                     ].map(([label, val]) => (
                       <div key={label}>
                         <div style={{ fontSize: 10, color: "#aaaaaa", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 3 }}>{label}</div>
-                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 600, color: "#333333" }}>{val}</div>
+                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 600, color: "#8fa3b8" }}>{val}</div>
                       </div>
                     ))}
                   </div>
@@ -4624,12 +4630,12 @@ export default function App() {
         {tab === "fibras" && (
           <div>
             {/* Header explicativo */}
-            <div style={{ background: "#ffffff", boxShadow: "none", border: "1.5px solid #e0e0d8", borderRadius: 24, padding: 20, marginBottom: 24 }}>
+            <div style={{ background: "#111e2e", boxShadow: "none", border: "1.5px solid #1e2d3d", borderRadius: 24, padding: 20, marginBottom: 24 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: "#111111", marginBottom: 6 }}>FIBRA Screener</div>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: "#e2e8f0", marginBottom: 6 }}>FIBRA Screener</div>
                   <div style={{ fontSize: 12, color: "#777777", lineHeight: 1.6, maxWidth: 680 }}>
-                    Fideicomisos de Infraestructura y Bienes Raíces (REITs mexicanos). Valuación por <b style={{ color: "#111111" }}>Cap Rate</b>, <b style={{ color: "#111111" }}>P/NAV</b> (precio vs valor activo neto) y <b style={{ color: "#111111" }}>FFO Yield</b>.
+                    Fideicomisos de Infraestructura y Bienes Raíces (REITs mexicanos). Valuación por <b style={{ color: "#e2e8f0" }}>Cap Rate</b>, <b style={{ color: "#e2e8f0" }}>P/NAV</b> (precio vs valor activo neto) y <b style={{ color: "#e2e8f0" }}>FFO Yield</b>.
                     Una FIBRA con P/NAV {"<"} 0.85 cotiza con <b style={{ color: "#16a34a" }}>descuento</b> al valor de sus activos — señal de oportunidad.
                     Cap Rate alto indica mayor rendimiento operativo sobre el valor del portafolio.
                   </div>
@@ -4642,8 +4648,8 @@ export default function App() {
                       onKeyDown={e => e.key === "Enter" && !fibrasLoading && runFibrasScreener()}
                       placeholder="Agregar tickers: FREAL.MX, VESTA.MX..."
                       style={{
-                        background: "#f8f8f8", border: "1.5px solid #e0e0d8", borderRadius: 10,
-                        padding: "10px 14px", fontSize: 12, color: "#111111",
+                        background: "#141e2d", border: "1.5px solid #1e2d3d", borderRadius: 10,
+                        padding: "10px 14px", fontSize: 12, color: "#e2e8f0",
                         fontFamily: "'DM Mono', monospace", width: 240, outline: "none"
                       }}
                     />
@@ -4673,8 +4679,8 @@ export default function App() {
                   { label: "Dist. Yield", desc: "Rendimiento por distribuciones" },
                   { label: "LTV", desc: "Deuda / (deuda + cap. bursátil)" },
                 ].map(m => (
-                  <div key={m.label} style={{ background: "#f8f8f8", borderRadius: 8, padding: "5px 10px" }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "#111111" }}>{m.label}</span>
+                  <div key={m.label} style={{ background: "#141e2d", borderRadius: 8, padding: "5px 10px" }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#e2e8f0" }}>{m.label}</span>
                     <span style={{ fontSize: 10, color: "#999999", marginLeft: 6 }}>{m.desc}</span>
                   </div>
                 ))}
@@ -4701,15 +4707,15 @@ export default function App() {
                   const navPct   = f.navDiscount;
                   return (
                     <div key={f.ticker} style={{
-                      background: "#ffffff", boxShadow: "none", border: "1.5px solid #e0e0d8",
+                      background: "#111e2e", boxShadow: "none", border: "1.5px solid #1e2d3d",
                       borderRadius: 24, padding: 20, borderTop: `3px solid ${sigColor}`
                     }}>
                       {/* Header */}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
                         <div>
-                          <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: "#111111" }}>{f.ticker}</div>
+                          <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: "#e2e8f0" }}>{f.ticker}</div>
                           <div style={{ fontSize: 11, color: "#666666", marginTop: 2 }}>{f.name}</div>
-                          <div style={{ fontSize: 13, fontFamily: "'DM Mono', monospace", color: "#555555", marginTop: 4 }}>
+                          <div style={{ fontSize: 13, fontFamily: "'DM Mono', monospace", color: "#6b8099", marginTop: 4 }}>
                             ${f.price?.toLocaleString("es-MX", { minimumFractionDigits: 2 })} <span style={{ fontSize: 10, color: "#bbbbbb" }}>{f.currency}</span>
                           </div>
                         </div>
@@ -4732,9 +4738,9 @@ export default function App() {
                           { label: "FFO Yield",   value: f.ffoYield != null ? `${f.ffoYield}%` : "—", color: f.ffoYield > 6 ? "#16a34a" : "#555555" },
                           { label: "Dist. Yield", value: f.divYield != null ? `${f.divYield}%` : "—", color: f.divYield > 6 ? "#16a34a" : "#555555" },
                           { label: "LTV",         value: f.ltv      != null ? `${f.ltv}%`      : "—", color: f.ltv < 40 ? "#16a34a" : f.ltv < 55 ? "#eab308" : "#dc2626" },
-                          { label: "NAV/acc",     value: f.navPS    != null ? `$${f.navPS.toLocaleString("es-MX", { minimumFractionDigits: 2 })}` : "—", color: "#111111" },
+                          { label: "NAV/acc",     value: f.navPS    != null ? `$${f.navPS.toLocaleString("es-MX", { minimumFractionDigits: 2 })}` : "—", color: "#e2e8f0" },
                         ].map(m => (
-                          <div key={m.label} style={{ background: "#f8f8f8", borderRadius: 8, padding: "8px 10px" }}>
+                          <div key={m.label} style={{ background: "#141e2d", borderRadius: 8, padding: "8px 10px" }}>
                             <div style={{ fontSize: 9, color: "#bbbbbb", letterSpacing: "0.08em", fontWeight: 600 }}>{m.label}</div>
                             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700, color: m.color, marginTop: 2 }}>{m.value}</div>
                           </div>
@@ -4751,7 +4757,7 @@ export default function App() {
                             <span style={{ color: "#dc2626" }}>1.15x</span>
                             <span>1.5x</span>
                           </div>
-                          <div style={{ background: "#f2f2f2", borderRadius: 4, height: 6, position: "relative" }}>
+                          <div style={{ background: "#1a2535", borderRadius: 4, height: 6, position: "relative" }}>
                             <div style={{ position: "absolute", left: "35%", width: "30%", height: "100%", background: "#dcfce7", borderRadius: 4 }} />
                             <div style={{
                               position: "absolute",
@@ -4768,9 +4774,9 @@ export default function App() {
 
                       {/* Badges */}
                       <div style={{ marginTop: 12, display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        <span style={{ background: "#f2f2f2", borderRadius: 6, padding: "2px 8px", fontSize: 10, color: "#666666" }}>{f.sector}</span>
+                        <span style={{ background: "#1a2535", borderRadius: 6, padding: "2px 8px", fontSize: 10, color: "#666666" }}>{f.sector}</span>
                         {f.marketCap && (
-                          <span style={{ background: "#f2f2f2", borderRadius: 6, padding: "2px 8px", fontSize: 10, color: "#666666" }}>
+                          <span style={{ background: "#1a2535", borderRadius: 6, padding: "2px 8px", fontSize: 10, color: "#666666" }}>
                             Cap ${(f.marketCap / 1e9).toFixed(1)}B {f.currency}
                           </span>
                         )}
@@ -4787,27 +4793,27 @@ export default function App() {
         {tab === "magic" && (
           <div>
             {/* Header */}
-            <div style={{ background: "#ffffff", boxShadow: "none", border: "1.5px solid #e0e0d8", borderRadius: 24, padding: 20, marginBottom: 24 }}>
+            <div style={{ background: "#111e2e", boxShadow: "none", border: "1.5px solid #1e2d3d", borderRadius: 24, padding: 20, marginBottom: 24 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
                 <div style={{ flex: 1, minWidth: 280 }}>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: "#111111", marginBottom: 4 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: "#e2e8f0", marginBottom: 4 }}>
                     Fórmula Mágica · Joel Greenblatt
                   </div>
                   <div style={{ fontSize: 11, color: "#777777", lineHeight: 1.7, maxWidth: 700 }}>
-                    Clasifica empresas del S&P 500 combinando <b style={{ color: "#111111" }}>calidad</b> y <b style={{ color: "#111111" }}>precio</b>.
+                    Clasifica empresas del S&P 500 combinando <b style={{ color: "#e2e8f0" }}>calidad</b> y <b style={{ color: "#e2e8f0" }}>precio</b>.
                     Ordena por rango combinado de dos métricas — el menor rango es la mejor oportunidad.
                     Excluye bancos, aseguradoras, utilities y REITs.
                   </div>
                   {/* Fórmulas */}
                   <div style={{ display: "flex", gap: 12, marginTop: 12, flexWrap: "wrap" }}>
-                    <div style={{ background: "#f8f8f8", borderRadius: 10, padding: "10px 14px", minWidth: 220 }}>
+                    <div style={{ background: "#141e2d", borderRadius: 10, padding: "10px 14px", minWidth: 220 }}>
                       <div style={{ fontSize: 9, color: "#bbbbbb", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 4 }}>EARNINGS YIELD (precio)</div>
-                      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#111111" }}>EY = EBIT / Enterprise Value</div>
+                      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#e2e8f0" }}>EY = EBIT / Enterprise Value</div>
                       <div style={{ fontSize: 10, color: "#999999", marginTop: 3 }}>Mayor % = más barata la acción</div>
                     </div>
-                    <div style={{ background: "#f8f8f8", borderRadius: 10, padding: "10px 14px", minWidth: 220 }}>
+                    <div style={{ background: "#141e2d", borderRadius: 10, padding: "10px 14px", minWidth: 220 }}>
                       <div style={{ fontSize: 9, color: "#bbbbbb", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 4 }}>RETURN ON CAPITAL (calidad)</div>
-                      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#111111" }}>ROC = EBIT / (NWC + PP&E neto)</div>
+                      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#e2e8f0" }}>ROC = EBIT / (NWC + PP&E neto)</div>
                       <div style={{ fontSize: 10, color: "#999999", marginTop: 3 }}>Mayor % = negocio más eficiente</div>
                     </div>
                   </div>
@@ -4825,17 +4831,17 @@ export default function App() {
               </div>
               {magicData && (
                 <div style={{ marginTop: 12, fontSize: 11, color: "#999999" }}>
-                  Universo analizado: <b style={{ color: "#555555" }}>{magicData.count}</b> empresas calificables
+                  Universo analizado: <b style={{ color: "#6b8099" }}>{magicData.count}</b> empresas calificables
                   de {magicData.universe} en lista · Mostrando top 30
                 </div>
               )}
             </div>
 
             {magicLoading && (
-              <div style={{ background: "#ffffff", boxShadow: "none", border: "1.5px solid #e0e0d8", borderRadius: 24, padding: 28 }}>
+              <div style={{ background: "#111e2e", boxShadow: "none", border: "1.5px solid #1e2d3d", borderRadius: 24, padding: 28 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#111111" }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0" }}>
                       Analizando universo S&P 500...
                     </div>
                     <div style={{ fontSize: 11, color: "#999999", marginTop: 3 }}>
@@ -4843,13 +4849,13 @@ export default function App() {
                     </div>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 22, fontWeight: 700, color: "#111111" }}>
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 22, fontWeight: 700, color: "#e2e8f0" }}>
                       {magicProgress.done}<span style={{ fontSize: 13, color: "#bbbbbb" }}>/{magicProgress.total}</span>
                     </div>
                     <div style={{ fontSize: 10, color: "#bbbbbb" }}>tickers analizados</div>
                   </div>
                 </div>
-                <div style={{ background: "#f2f2f2", borderRadius: 8, height: 8, overflow: "hidden" }}>
+                <div style={{ background: "#1a2535", borderRadius: 8, height: 8, overflow: "hidden" }}>
                   <div style={{
                     width: `${magicProgress.total > 0 ? (magicProgress.done / magicProgress.total) * 100 : 0}%`,
                     height: "100%", background: "#111111", borderRadius: 8,
@@ -4910,7 +4916,7 @@ export default function App() {
                 <div>
                   {/* ── Barra de filtros ── */}
                   <div style={{
-                    background: "#ffffff", boxShadow: "none", border: "1.5px solid #e0e0d8",
+                    background: "#111e2e", boxShadow: "none", border: "1.5px solid #1e2d3d",
                     borderRadius: 24, padding: "14px 20px", marginBottom: 12,
                     display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap"
                   }}>
@@ -4918,8 +4924,8 @@ export default function App() {
 
                     {/* Sector */}
                     <select value={magicSector} onChange={e => setMagicSector(e.target.value)} style={{
-                      background: "#f8f8f8", border: "1px solid #e5e5e5", borderRadius: 8,
-                      padding: "5px 10px", fontSize: 12, color: "#111111", cursor: "pointer"
+                      background: "#141e2d", border: "1px solid #2d3f55", borderRadius: 8,
+                      padding: "5px 10px", fontSize: 12, color: "#e2e8f0", cursor: "pointer"
                     }}>
                       {sectors.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
@@ -4929,7 +4935,7 @@ export default function App() {
                       <span style={{ fontSize: 11, color: "#777777" }}>EY mín</span>
                       <input type="number" placeholder="0%" value={magicMinEY}
                         onChange={e => setMagicMinEY(e.target.value)}
-                        style={{ width: 64, background: "#f8f8f8", border: "1px solid #e5e5e5", borderRadius: 8, padding: "5px 8px", fontSize: 12, color: "#111111" }} />
+                        style={{ width: 64, background: "#141e2d", border: "1px solid #2d3f55", borderRadius: 8, padding: "5px 8px", fontSize: 12, color: "#e2e8f0" }} />
                     </div>
 
                     {/* Min ROC */}
@@ -4937,13 +4943,13 @@ export default function App() {
                       <span style={{ fontSize: 11, color: "#777777" }}>ROC mín</span>
                       <input type="number" placeholder="0%" value={magicMinROC}
                         onChange={e => setMagicMinROC(e.target.value)}
-                        style={{ width: 64, background: "#f8f8f8", border: "1px solid #e5e5e5", borderRadius: 8, padding: "5px 8px", fontSize: 12, color: "#111111" }} />
+                        style={{ width: 64, background: "#141e2d", border: "1px solid #2d3f55", borderRadius: 8, padding: "5px 8px", fontSize: 12, color: "#e2e8f0" }} />
                     </div>
 
                     {/* Reset */}
                     {(magicSector !== "Todos" || magicMinEY || magicMinROC) && (
                       <button onClick={() => { setMagicSector("Todos"); setMagicMinEY(""); setMagicMinROC(""); }}
-                        style={{ background: "none", border: "1px solid #e5e5e5", borderRadius: 8, padding: "5px 12px", fontSize: 11, color: "#999999", cursor: "pointer" }}>
+                        style={{ background: "none", border: "1px solid #2d3f55", borderRadius: 8, padding: "5px 12px", fontSize: 11, color: "#999999", cursor: "pointer" }}>
                         Limpiar
                       </button>
                     )}
@@ -4954,9 +4960,9 @@ export default function App() {
                   </div>
 
                   {/* ── Tabla ── */}
-                  <div style={{ background: "#ffffff", boxShadow: "none", border: "1.5px solid #e0e0d8", borderRadius: 24, overflow: "hidden" }}>
+                  <div style={{ background: "#111e2e", boxShadow: "none", border: "1.5px solid #1e2d3d", borderRadius: 24, overflow: "hidden" }}>
                     {/* Header con click para ordenar */}
-                    <div style={{ display: "grid", gridTemplateColumns: gridCols, padding: "10px 20px", background: "#f8f8f8", borderBottom: "1px solid #eeeeee" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: gridCols, padding: "10px 20px", background: "#141e2d", borderBottom: "1px solid #eeeeee" }}>
                       {cols.map((c, i) => (
                         <div key={i}
                           onClick={() => c.key && toggleSort(c.key)}
@@ -4998,11 +5004,11 @@ export default function App() {
                           }}>{s.magic_rank}</div>
                           <div>
                             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                              <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 13, color: "#111111" }}>{s.ticker}</span>
-                              <span style={{ background: "#f2f2f2", borderRadius: 5, padding: "1px 6px", fontSize: 9, color: "#666666" }}>{s.sector?.split(" ")[0]}</span>
+                              <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 13, color: "#e2e8f0" }}>{s.ticker}</span>
+                              <span style={{ background: "#1a2535", borderRadius: 5, padding: "1px 6px", fontSize: 9, color: "#666666" }}>{s.sector?.split(" ")[0]}</span>
                             </div>
                             <div style={{ fontSize: 10, color: "#999999" }}>{s.name}</div>
-                            {s.price && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "#555555" }}>${s.price}</div>}
+                            {s.price && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "#6b8099" }}>${s.price}</div>}
                           </div>
                           <div style={{ textAlign: "right" }}>
                             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700, color: eyColor }}>{s.ey}%</div>
@@ -5010,8 +5016,8 @@ export default function App() {
                           <div style={{ textAlign: "right" }}>
                             <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700, color: rocColor }}>{s.roc}%</div>
                           </div>
-                          <div style={{ textAlign: "right", fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#555555" }}>{s.pe != null ? `${s.pe}x` : "—"}</div>
-                          <div style={{ textAlign: "right", fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#555555" }}>{s.pb != null ? `${s.pb}x` : "—"}</div>
+                          <div style={{ textAlign: "right", fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#6b8099" }}>{s.pe != null ? `${s.pe}x` : "—"}</div>
+                          <div style={{ textAlign: "right", fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#6b8099" }}>{s.pb != null ? `${s.pb}x` : "—"}</div>
                           <div style={{ textAlign: "right", fontSize: 11, color: "#bbbbbb" }}>#{s.rank_ey}</div>
                           <div style={{ textAlign: "right", fontSize: 11, color: "#bbbbbb" }}>#{s.rank_roc}</div>
                         </div>
