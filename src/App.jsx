@@ -2342,7 +2342,7 @@ export default function App() {
             {/* Add stock form — Modo Experimental */}
             {isExperimental ? (
               <div style={{
-                background: "linear-gradient(135deg, #faf5ff 0%, #f0ebff 100%)",
+                background: "linear-gradient(135deg, #140d2e 0%, #1a1040 100%)",
                 border: "1.5px solid #c4b5fd",
                 borderRadius: 24, boxShadow: "0 4px 24px rgba(139,92,246,0.13)",
                 padding: "20px 24px", marginBottom: 28
@@ -2375,16 +2375,16 @@ export default function App() {
                   <div style={{
                     fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700,
                     padding: "6px 14px", borderRadius: 999,
-                    background: liveRemaining > 0.01 ? "#ede9fe" : "#fef2f2",
+                    background: liveRemaining > 0.01 ? "#1a1040" : "#2a0a0a",
                     color: liveRemaining > 0.01 ? "#7c3aed" : "#dc2626",
-                    border: `1.5px solid ${liveRemaining > 0.01 ? "#c4b5fd" : "#fca5a5"}`,
+                    border: `1.5px solid ${liveRemaining > 0.01 ? "#6d28d9" : "#7f1d1d"}`,
                     transition: "all 0.2s"
                   }}>
                     {liveRemaining.toFixed(1)}% libre
                   </div>
                   {/* Barra de progreso */}
                   <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <div style={{ width: 140, height: 7, background: "#e9d5ff", borderRadius: 99, overflow: "hidden" }}>
+                    <div style={{ width: 140, height: 7, background: "#1a1040", borderRadius: 99, overflow: "hidden" }}>
                       <div style={{
                         width: `${Math.min(100, liveAllocated)}%`, height: "100%",
                         background: liveAllocated >= 99.5 ? "#16a34a" : liveAllocated > 90 ? "#00ff88" : "#8b5cf6",
@@ -2412,8 +2412,8 @@ export default function App() {
                         placeholder="AAPL / WALMEX.MX"
                         onKeyDown={e => e.key === "Enter" && addStock()}
                         style={{
-                          background: newTicker === '$MXN' ? "#fefce8" : "#ede9fe",
-                          border: `1.5px solid ${newTicker === '$MXN' ? "#d97706" : "#c4b5fd"}`,
+                          background: newTicker === '$MXN' ? "#1a1200" : "#1a1040",
+                          border: `1.5px solid ${newTicker === '$MXN' ? "#d97706" : "#6d28d9"}`,
                           borderRadius: 10,
                           color: newTicker === '$MXN' ? "#92400e" : "#6d28d9",
                           padding: "8px 14px", fontSize: 13, width: 160,
@@ -2423,7 +2423,7 @@ export default function App() {
                         onClick={() => setNewTicker('$MXN')}
                         title="Agregar efectivo en MXN"
                         style={{
-                          background: newTicker === '$MXN' ? "#d97706" : "#fef9c3",
+                          background: newTicker === '$MXN' ? "#d97706" : "#1a1200",
                           border: "1px solid #d97706", borderRadius: 8,
                           color: newTicker === '$MXN' ? "#fff" : "#92400e",
                           fontSize: 11, fontWeight: 700, padding: "6px 10px",
@@ -2440,7 +2440,7 @@ export default function App() {
                         type="number" step="any" min="0.01" max={liveRemainingForm}
                         onKeyDown={e => e.key === "Enter" && addStock()}
                         style={{
-                          background: "#ede9fe", border: "1.5px solid #c4b5fd", borderRadius: 10,
+                          background: "#1a1040", border: "1.5px solid #4c1d95", borderRadius: 10,
                           color: "#6d28d9", padding: "8px 34px 8px 14px", fontSize: 13, width: 150, outline: "none",
                           boxSizing: "border-box"
                         }} />
@@ -2464,7 +2464,7 @@ export default function App() {
                   <button onClick={addStock}
                     disabled={liveRemainingForm <= 0.01}
                     style={{
-                      background: liveRemainingForm > 0.01 ? "#8b5cf6" : "#ede9fe",
+                      background: liveRemainingForm > 0.01 ? "#8b5cf6" : "#1a1040",
                       border: "none", borderRadius: 999,
                       color: liveRemainingForm > 0.01 ? "#fff" : "#c4b5fd",
                       padding: "9px 26px", cursor: liveRemainingForm > 0.01 ? "pointer" : "not-allowed",
@@ -2484,7 +2484,7 @@ export default function App() {
                       }
                     }}
                     style={{
-                      background: "#ede9fe", border: "none", borderRadius: 999,
+                      background: "#1a1040", border: "1px solid #4c1d95", borderRadius: 999,
                       color: "#8b5cf6", padding: "9px 20px", cursor: "pointer", fontSize: 13, fontWeight: 600
                     }}>↻ Recalcular</button>
                 </div>
@@ -2510,7 +2510,7 @@ export default function App() {
                       onKeyDown={e => e.key === "Enter" && addStock()}
                       style={{
                         background: newTicker === '$MXN' ? "#fefce8" : "#f8f8f8",
-                        border: `1px solid ${newTicker === '$MXN' ? "#d97706" : "#e5e5e5"}`,
+                        border: `1px solid ${newTicker === '$MXN' ? "#d97706" : "#2d3f55"}`,
                         borderRadius: 10,
                         color: "#e2e8f0", padding: "8px 14px", fontSize: 13, width: 160,
                         fontFamily: "'DM Mono', monospace", outline: "none"
@@ -2519,7 +2519,7 @@ export default function App() {
                       onClick={() => { setNewTicker('$MXN'); setInputMode('shares'); }}
                       title="Agregar efectivo en MXN"
                       style={{
-                        background: newTicker === '$MXN' ? "#d97706" : "#fef9c3",
+                        background: newTicker === '$MXN' ? "#d97706" : "#1a1200",
                         border: "1px solid #d97706", borderRadius: 8,
                         color: newTicker === '$MXN' ? "#fff" : "#92400e",
                         fontSize: 11, fontWeight: 700, padding: "6px 10px",
@@ -2600,7 +2600,7 @@ export default function App() {
             {Object.keys(stockData).length > 0 && (() => {
               let totalValue = 0, totalCost = 0;
               const slices = [];
-              const COLORS = ["#111111","#555555","#888888","#aaaaaa","#cccccc","#333333","#777777","#bbbbbb","#444444","#999999","#666666","#dddddd"];
+              const COLORS = ["#1e4d6b","#2d6a8a","#1a5c4a","#2d4a7a","#4a2d6a","#1a3d5c","#2d5a3d","#3d2d5a","#1e3d6b","#2d5a6a","#1a4d3d","#3d4a2d"];
               portfolio.forEach((p, i) => {
                 const actualVal = posVal(p);
                 totalValue += actualVal;
@@ -2851,7 +2851,7 @@ export default function App() {
                           { label: "P&L ($)",      value: `${totalPnl >= 0 ? "+" : "−"}$${Math.abs(totalPnl).toLocaleString("en-US", { maximumFractionDigits: 0 })}`, color: totalPnl >= 0 ? "#4ade80" : "#f87171", sub: `≈ USD ${totalPnl >= 0 ? "+" : "−"}$${Math.abs(totalPnl / usdMxn).toLocaleString("en-US", { maximumFractionDigits: 0 })}` },
                           { label: "P&L (%)",      value: `${totalPnlPct >= 0 ? "+" : ""}${totalPnlPct.toFixed(2)}%`, color: totalPnl >= 0 ? "#4ade80" : "#f87171",
                             sub: totalPnl >= 0 ? "Rentabilidad positiva" : "Por debajo del costo" },
-                          { label: "Sharpe · 1y",  value: approxSharpe != null ? (approxSharpe >= 1 ? "⭐ " : "") + approxSharpe : "—",
+                          { label: "Sharpe · 1y",  value: approxSharpe != null ? approxSharpe : "—",
                             color: approxSharpe == null ? "#4a6080" : approxSharpe >= 1 ? "#4ade80" : approxSharpe >= 0.5 ? "#fbbf24" : "#f87171",
                             sub: approxSharpe == null ? "calculando…" : approxSharpe >= 1 ? "Excelente" : approxSharpe >= 0.5 ? "Aceptable" : "Bajo" },
                         ].map((m) => (
@@ -2929,9 +2929,9 @@ export default function App() {
                                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"
                                   }}>{p.ticker}</span>
                                   {(() => {
-                                    if (p.ticker === '$MXN') return <span style={{ fontSize: 9, color: '#d97706', background: '#fefce8', borderRadius: 999, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>EFECTIVO</span>;
+                                    if (p.ticker === '$MXN') return <span style={{ fontSize: 9, color: '#d97706', background: '#1a1200', borderRadius: 999, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>EFECTIVO</span>;
                                     const cur = p.ticker.endsWith('.MX') ? 'MXN' : 'USD';
-                                    return <span style={{ fontSize: 9, color: cur === 'USD' ? '#3b82f6' : '#16a34a', background: cur === 'USD' ? '#eff6ff' : '#f0fdf4', borderRadius: 999, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>{cur}</span>;
+                                    return <span style={{ fontSize: 9, color: cur === 'USD' ? '#60a5fa' : '#4ade80', background: cur === 'USD' ? '#0a1628' : '#0a2a1a', borderRadius: 999, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>{cur}</span>;
                                   })()}
                                 </div>
 
@@ -2951,9 +2951,9 @@ export default function App() {
                                       style={{
                                         width: "100%", padding: "5px 20px 5px 8px",
                                         fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700,
-                                        color: isTop ? accentColor : "#111111",
-                                        background: isTop ? (isExperimental ? "#ede9fe" : "#fff0e6") : "#f0f0f0",
-                                        border: `1.5px solid ${isTop ? accentColor : isHovered ? "#cccccc" : "#e8e8e8"}`,
+                                        color: isTop ? accentColor : "#e2e8f0",
+                                        background: isTop ? (isExperimental ? "#1a1040" : "#0a1f10") : "#141e2d",
+                                        border: `1.5px solid ${isTop ? accentColor : isHovered ? "#2d3f55" : "#1e2d3d"}`,
                                         borderRadius: 8, outline: "none", textAlign: "right",
                                         boxSizing: "border-box", transition: "border-color 0.15s"
                                       }}
@@ -2984,7 +2984,7 @@ export default function App() {
                                         height: 6,
                                         appearance: "none",
                                         WebkitAppearance: "none",
-                                        background: `linear-gradient(to right, ${isExperimental ? "#8b5cf6" : "#00ff88"} ${tPct}%, #e0e0d8 ${tPct}%)`,
+                                        background: `linear-gradient(to right, ${isExperimental ? "#8b5cf6" : "#00ff88"} ${tPct}%, #1e2d3d ${tPct}%)`,
                                         borderRadius: 999,
                                         outline: "none",
                                         border: "none",
@@ -2994,7 +2994,7 @@ export default function App() {
                                     <span style={{
                                       fontFamily: "'DM Mono', monospace",
                                       fontSize: 12, fontWeight: 700,
-                                      color: "#0a0a0a", minWidth: 45,
+                                      color: "#8fa3b8", minWidth: 45,
                                       textAlign: "right",
                                     }}>{tPct.toFixed(1)}%</span>
                                   </div>
@@ -3051,8 +3051,8 @@ export default function App() {
                             if (!isExperimental && parseFloat(customTotal) > 0) setCustomTotal("");
                           }}
                           style={{
-                            background: tSumOk ? "#111111" : "#e5e5e5",
-                            border: "none", borderRadius: 999, color: tSumOk ? "#fff" : "#aaa",
+                            background: tSumOk ? "#00ff88" : "#1a2535",
+                            border: `1px solid ${tSumOk ? "#00ff88" : "#2d3f55"}`, borderRadius: 999, color: tSumOk ? "#0a0a0a" : "#4a6080",
                             padding: "8px 20px", cursor: tSumOk ? "pointer" : "not-allowed",
                             fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", transition: "all 0.15s"
                           }}
@@ -3066,8 +3066,8 @@ export default function App() {
                           }}
                           title="Distribuir pesos iguales entre todos los activos"
                           style={{
-                            background: "none", border: "1px solid #e8e8e8", borderRadius: 999,
-                            color: "#888", padding: "7px 16px", cursor: "pointer", fontSize: 12
+                            background: "#141e2d", border: "1px solid #1e2d3d", borderRadius: 999,
+                            color: "#4a6080", padding: "7px 16px", cursor: "pointer", fontSize: 12
                           }}
                         >⊞ Igualar</button>
                         <button
@@ -3083,8 +3083,8 @@ export default function App() {
                             setCustomTotal("");
                           }}
                           style={{
-                            background: "none", border: "1px solid #e8e8e8", borderRadius: 999,
-                            color: "#888", padding: "7px 16px", cursor: "pointer", fontSize: 12
+                            background: "#141e2d", border: "1px solid #1e2d3d", borderRadius: 999,
+                            color: "#4a6080", padding: "7px 16px", cursor: "pointer", fontSize: 12
                           }}
                         >↺ Resetear</button>
                         {!tSumOk && (
@@ -3115,7 +3115,7 @@ export default function App() {
                 const pnlPct = pnl !== null ? (pnl / cost_total) * 100 : null;
 
                 const pnlColor = pnl === null ? "#666666" : pnl >= 0 ? "#00ff88" : "#ff3b3b";
-                const cardBorderTop = pnl === null ? "#e5e5e5" : pnl >= 0 ? "#22c55e55" : "#ef444455";
+                const cardBorderTop = pnl === null ? "#2d3f55" : pnl >= 0 ? "#22c55e55" : "#ef444455";
 
                 return (
                   <div key={pos.ticker} style={{
@@ -3321,9 +3321,9 @@ export default function App() {
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {["1y", "5y", "10y"].map((p) => (
                     <button key={p} onClick={() => setOptimPeriod(p)} style={{
-                      background: optimPeriod === p ? "#111111" : "#e5e5e5",
-                      border: "none",
-                      borderRadius: 999, color: optimPeriod === p ? "#fff" : "#666666",
+                      background: optimPeriod === p ? "#00ff88" : "#141e2d",
+                      border: `1px solid ${optimPeriod === p ? "#00ff88" : "#1e2d3d"}`,
+                      borderRadius: 999, color: optimPeriod === p ? "#0a0a0a" : "#4a6080",
                       padding: "5px 16px", cursor: "pointer", fontSize: 13, fontWeight: 600,
                       fontFamily: "'DM Mono', monospace",
                     }}>
@@ -3611,7 +3611,7 @@ export default function App() {
                 }} />
               <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 12 }}>
                 <button onClick={runScreener} disabled={screenerLoading} className="btn-exec" style={{
-                  background: screenerLoading ? "#e5e5e5" : "#0a0a0a",
+                  background: screenerLoading ? "#1a2535" : "#00ff88",
                   border: "none", borderRadius: 999, color: "#ffffff",
                   padding: "12px 28px", cursor: screenerLoading ? "not-allowed" : "pointer",
                   fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", gap: 10
@@ -3670,9 +3670,9 @@ export default function App() {
                       {stock.sharpe1y != null && (
                         <div style={{
                           display: "flex", alignItems: "center", gap: 10,
-                          background: stock.sharpe1y >= 1 ? "#f0fdf4" : stock.sharpe1y >= 0.5 ? "#fffbeb" : "#fff7f7",
+                          background: stock.sharpe1y >= 1 ? "#0a2a1a" : stock.sharpe1y >= 0.5 ? "#1a1200" : "#2a0a0a",
                           borderRadius: 10, padding: "8px 12px", marginBottom: 12,
-                          borderLeft: `3px solid ${stock.sharpe1y >= 1 ? "#16a34a" : stock.sharpe1y >= 0.5 ? "#d97706" : "#dc2626"}`
+                          borderLeft: `3px solid ${stock.sharpe1y >= 1 ? "#4ade80" : stock.sharpe1y >= 0.5 ? "#fbbf24" : "#f87171"}`
                         }}>
                           <div>
                             <div style={{ fontSize: 9, color: "#bbbbbb", letterSpacing: "0.1em", fontWeight: 600 }}>SHARPE 1A · {rfLabel}</div>
@@ -3847,15 +3847,15 @@ export default function App() {
           const DataRow = ({ label, icon, value, pct, sub, hero }) => {
             const isN = pct == null;
             const up  = !isN && pct >= 0;
-            const cc  = up ? "#15803d" : "#b91c1c";
-            const bg  = up ? "#f0fdf4" : "#fff5f5";
-            const bdr = up ? "#bbf7d0" : "#fecaca";
+            const cc  = up ? "#4ade80" : "#f87171";
+            const bg  = up ? "#0a2a1a" : "#2a0a0a";
+            const bdr = up ? "#166534" : "#7f1d1d";
             return (
               <div style={{
                 display: "flex", alignItems: "center", gap: 10,
                 padding: hero ? "10px 14px" : "8px 12px",
                 borderBottom: "1px solid #1a2535",
-                background: hero ? bg : "#ffffff",
+                background: hero ? bg : "#111e2e",
                 borderLeft: hero ? `3px solid ${cc}` : "none",
               }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -4245,7 +4245,7 @@ export default function App() {
                         return (
                           <button key={f.key} onClick={() => setNewsFilter(f.key)} style={{
                             background: newsFilter === f.key ? `${f.color}15` : "transparent",
-                            border: `1px solid ${newsFilter === f.key ? f.color : "#e5e5e5"}`,
+                            border: `1px solid ${newsFilter === f.key ? f.color : "#1e2d3d"}`,
                             borderRadius: 999, color: newsFilter === f.key ? f.color : "#aaaaaa",
                             padding: "3px 10px", cursor: "pointer", fontSize: 11, fontWeight: 600,
                           }}>{f.label} <span style={{ opacity: 0.6 }}>({cnt})</span></button>
@@ -4299,7 +4299,7 @@ export default function App() {
                         fontFamily: "'DM Mono', monospace",
                       }} />
                     <button onClick={() => loadNews(newsTicker)} disabled={newsLoading} style={{
-                      background: newsLoading ? "#e5e5e5" : "#111111", border: "none",
+                      background: newsLoading ? "#1a2535" : "#00ff88", border: "none",
                       borderRadius: 999, color: "#fff", padding: "9px 22px",
                       cursor: newsLoading ? "not-allowed" : "pointer",
                       fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8,
@@ -4310,9 +4310,9 @@ export default function App() {
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {portfolio.map((p) => (
                         <button key={p.ticker} onClick={() => { setNewsTicker(p.ticker); loadNews(p.ticker); }} style={{
-                          background: newsTicker === p.ticker ? "#fff7ed" : "#f2f2f2",
-                          border: `1px solid ${newsTicker === p.ticker ? "#00ff88" : "transparent"}`,
-                          borderRadius: 999, color: newsTicker === p.ticker ? "#c2410c" : "#666666",
+                          background: newsTicker === p.ticker ? "#0a1f10" : "#141e2d",
+                          border: `1px solid ${newsTicker === p.ticker ? "#00ff88" : "#1e2d3d"}`,
+                          borderRadius: 999, color: newsTicker === p.ticker ? "#00ff88" : "#4a6080",
                           padding: "5px 12px", cursor: "pointer", fontSize: 11,
                           fontFamily: "'DM Mono', monospace", fontWeight: 600,
                         }}>{p.ticker}</button>
@@ -4373,7 +4373,7 @@ export default function App() {
                 {backtestLoading ? "Calculando backtest... (puede tardar 1–2 min con 5 años)" : " Ejecutar Backtest vs SPY"}
               </button>
               {backtestError && (
-                <div style={{ marginTop: 12, padding: "10px 16px", background: "#fff0f0", border: "1px solid #ffcccc", borderRadius: 10, fontSize: 13, color: "#cc0000", lineHeight: 1.5 }}>
+                <div style={{ marginTop: 12, padding: "10px 16px", background: "#2a0a0a", border: "1px solid #7f1d1d", borderRadius: 10, fontSize: 13, color: "#f87171", lineHeight: 1.5 }}>
                   ⚠️ {backtestError}
                 </div>
               )}
@@ -4382,7 +4382,7 @@ export default function App() {
             {backtestResult && (() => {
               const { portCum, spyCum, dates, beta, trackingError, treynor, alpha, infoRatio, sharpe, annPortReturn, annSpyReturn, yearsBacktest, limitingTickerBack, tickerYearsBack } = backtestResult;
               if (!portCum?.length || portCum.length < 5) return (
-                <div style={{ padding: "20px", background: "#fff8e6", border: "1px solid #fcd34d", borderRadius: 12, margin: "12px 0", color: "#92400e", fontSize: 13 }}>
+                <div style={{ padding: "20px", background: "#1a1200", border: "1px solid #78611a", borderRadius: 12, margin: "12px 0", color: "#fbbf24", fontSize: 13 }}>
                   ⚠️ No hay suficientes datos para mostrar el backtest. Puede que algunos tickers del portafolio no tengan historial en yfinance. Revisa la consola del navegador para más detalles.
                 </div>
               );
@@ -4408,7 +4408,7 @@ export default function App() {
                         RETORNOS ACUMULADOS — PORTAFOLIO vs SPY ({yearsBacktest ?? "5"} AÑOS SEMANAL)
                       </div>
                       {yearsBacktest && parseFloat(yearsBacktest) < 4.5 && (
-                        <div style={{ fontSize: 11, color: "#92400e", background: "#fffbe6", border: "1px solid #fcd34d", borderRadius: 6, padding: "2px 8px" }}>
+                        <div style={{ fontSize: 11, color: "#92400e", background: "#1a1200", border: "1px solid #78611a", borderRadius: 6, padding: "2px 8px" }}>
                           ⚠️ Limitado a {yearsBacktest}a por {limitingTickerBack}
                         </div>
                       )}
@@ -4562,7 +4562,7 @@ export default function App() {
                 {monteCarloLoading ? "Simulando... (puede tardar 1–2 min)" : " Ejecutar Monte Carlo (5 años)"}
               </button>
               {monteCarloError && (
-                <div style={{ marginTop: 12, padding: "10px 16px", background: "#fff0f0", border: "1px solid #ffcccc", borderRadius: 10, fontSize: 13, color: "#cc0000", lineHeight: 1.5 }}>
+                <div style={{ marginTop: 12, padding: "10px 16px", background: "#2a0a0a", border: "1px solid #7f1d1d", borderRadius: 10, fontSize: 13, color: "#f87171", lineHeight: 1.5 }}>
                   ⚠️ {monteCarloError}
                 </div>
               )}
@@ -4621,7 +4621,7 @@ export default function App() {
                     ))}
                   </div>
                   {limitingTicker && parseFloat(yearsData) < 4.5 && (
-                    <div style={{ marginTop: 12, padding: "10px 14px", background: "#fffbe6", border: "1px solid #fcd34d", borderRadius: 10, fontSize: 12, color: "#92400e" }}>
+                    <div style={{ marginTop: 12, padding: "10px 14px", background: "#1a1200", border: "1px solid #78611a", borderRadius: 10, fontSize: 12, color: "#fbbf24" }}>
                       ⚠️ El historial está limitado a <b>{yearsData} años</b> por <b style={{ fontFamily: "'DM Mono',monospace" }}>{limitingTicker}</b> (el ticker con menos datos disponibles en yfinance).
                       Los demás activos sí tienen más historial pero se recortan al mínimo común para mantener consistencia estadística.
                       {tickerYears && (
@@ -4671,7 +4671,7 @@ export default function App() {
                       }}
                     />
                     <button onClick={runFibrasScreener} disabled={fibrasLoading} className="btn-exec" style={{
-                      background: fibrasLoading ? "#e5e5e5" : "#0a0a0a",
+                      background: fibrasLoading ? "#1a2535" : "#00ff88",
                       border: "none", borderRadius: 999, color: "#ffffff",
                       padding: "12px 28px", fontSize: 14, fontWeight: 700,
                       cursor: fibrasLoading ? "not-allowed" : "pointer",
@@ -4836,7 +4836,7 @@ export default function App() {
                   </div>
                 </div>
                 <button onClick={runMagicFormula} disabled={magicLoading} className="btn-exec" style={{
-                  background: magicLoading ? "#e5e5e5" : "#0a0a0a",
+                  background: magicLoading ? "#1a2535" : "#00ff88",
                   border: "none", borderRadius: 999, color: "#ffffff",
                   padding: "12px 28px", fontSize: 14, fontWeight: 700,
                   cursor: magicLoading ? "not-allowed" : "pointer",
@@ -4979,7 +4979,7 @@ export default function App() {
                   {/* ── Tabla ── */}
                   <div style={{ background: "#111e2e", boxShadow: "none", border: "1.5px solid #1e2d3d", borderRadius: 24, overflow: "hidden" }}>
                     {/* Header con click para ordenar */}
-                    <div style={{ display: "grid", gridTemplateColumns: gridCols, padding: "10px 20px", background: "#141e2d", borderBottom: "1px solid #eeeeee" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: gridCols, padding: "10px 20px", background: "#0d1825", borderBottom: "1px solid #1e2d3d" }}>
                       {cols.map((c, i) => (
                         <div key={i}
                           onClick={() => c.key && toggleSort(c.key)}
