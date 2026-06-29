@@ -2070,14 +2070,7 @@ export default function App() {
         {/* Logo */}
         <div style={{ padding: "20px 18px 16px", borderBottom: "1px solid #1a2535" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-              background: "linear-gradient(135deg, #00ff88 0%, #00cc6a 100%)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 0 16px rgba(0,255,136,0.3)",
-            }}>
-              <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 16, color: "#060d18" }}>K</span>
-            </div>
+            <img src={kaizenLogo} style={{ height: 36, width: 36, objectFit: "contain", borderRadius: 8 }} alt="KAIZEN" />
             <div>
               <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 15, color: "#ffffff", letterSpacing: "0.06em" }}>KAIZEN</div>
               <div style={{ fontSize: 9, color: "#4a6080", letterSpacing: "0.12em", textTransform: "uppercase" }}>Investment Group</div>
@@ -2089,18 +2082,18 @@ export default function App() {
         <div style={{ flex: 1, padding: "10px 10px", overflowY: "auto" }}>
           {[
             { section: "DASHBOARDS", items: [
-              { id: "portfolio",  label: "Portfolio",        icon: "▣" },
-              { id: "news",       label: "Noticias",         icon: "◎" },
-              { id: "analytics",  label: "Analytics vs SPY", icon: "▲" },
+              { id: "portfolio",  label: "Portfolio" },
+              { id: "news",       label: "Noticias" },
+              { id: "analytics",  label: "Analytics vs SPY" },
             ]},
             { section: "ANÁLISIS", items: [
-              { id: "optimize",   label: "Sharpe Optimizer", icon: "⚡" },
-              { id: "screener",   label: "ML Screener",      icon: "◈" },
-              { id: "analisis",   label: "Análisis",         icon: "◷" },
+              { id: "optimize",   label: "Sharpe Optimizer" },
+              { id: "screener",   label: "ML Screener" },
+              { id: "analisis",   label: "Análisis" },
             ]},
             { section: "ESTRATEGIAS", items: [
-              { id: "fibras",     label: "FIBRA Screener",   icon: "⬡" },
-              { id: "magic",      label: "Fórmula Mágica",   icon: "✦" },
+              { id: "fibras",     label: "FIBRA Screener" },
+              { id: "magic",      label: "Fórmula Mágica" },
             ]},
           ].map(({ section, items }) => (
             <div key={section}>
@@ -2111,12 +2104,8 @@ export default function App() {
                   color: tab === t.id ? "#00ff88" : "#4a6080",
                   fontWeight: tab === t.id ? 600 : 400,
                   borderLeft: tab === t.id ? "2px solid #00ff88" : "2px solid transparent",
+                  paddingLeft: 14,
                 }}>
-                  <span style={{
-                    width: 26, height: 26, borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center",
-                    background: tab === t.id ? "rgba(0,255,136,0.13)" : "rgba(255,255,255,0.04)",
-                    fontSize: 12, flexShrink: 0,
-                  }}>{t.icon}</span>
                   <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{t.label}</span>
                   {tab === t.id && <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#00ff88", flexShrink: 0 }} />}
                 </button>
