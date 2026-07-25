@@ -240,9 +240,12 @@ def get_stock(ticker: str) -> dict:
     # EPS y P/E desde net income y shares
     if eps_val is None and net_income is not None and shares_out and shares_out > 0:
         eps_val = round(net_income / shares_out, 4)
-    pe = r2(safe(info.get("trailingPE")))
-    if pe is None and eps_val is not None and eps_val > 0 and price is not None:
+    # Preferir precio/EPS (lo que muestra la página de Yahoo Finance) sobre el campo
+    # cacheado trailingPE, que puede quedar desfasado tras un reporte de resultados.
+    if eps_val is not None and eps_val > 0 and price is not None:
         pe = round(price / eps_val, 2)
+    else:
+        pe = r2(safe(info.get("trailingPE")))
 
     # EV/EBITDA desde estados financieros
     ev_ebitda = r2(safe(info.get("enterpriseToEbitda")))
