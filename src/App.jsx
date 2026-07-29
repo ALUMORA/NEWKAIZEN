@@ -2498,7 +2498,7 @@ export default function App() {
                       placeholder="AAPL / WALMEX.MX"
                       onKeyDown={e => e.key === "Enter" && addStock()}
                       style={{
-                        background: newTicker === '$MXN' ? "#fefce8" : "#f8f8f8",
+                        background: newTicker === '$MXN' ? "#2a1f00" : "#1a2535",
                         border: `1px solid ${newTicker === '$MXN' ? "#d97706" : "#2d3f55"}`,
                         borderRadius: 10,
                         color: "#e2e8f0", padding: "8px 14px", fontSize: 13, width: 160,
