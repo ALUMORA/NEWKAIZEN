@@ -2756,7 +2756,7 @@ export default function App() {
 
                       {/* Sharpe Individual dentro del panel izquierdo */}
                       {Object.keys(sharpeData).length > 0 && (
-                        <div style={{ marginTop: 20, borderTop: "1px solid #f0f0ea", paddingTop: 16 }}>
+                        <div style={{ marginTop: 20, borderTop: "1px solid #1e2d3d", paddingTop: 16 }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
                             <div style={{ fontSize: 10, color: "#bbbbbb", letterSpacing: "0.12em", fontWeight: 600 }}>SHARPE INDIVIDUAL · 1A</div>
                             <div style={{ fontSize: 9, color: "#cccccc" }}>≥1.0 exc · 0.5–1.0 bueno</div>
@@ -2774,7 +2774,7 @@ export default function App() {
                                   <div key={p.ticker}>
                                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
                                       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11.5, fontWeight: 700, color: "#111" }}>{p.ticker}</span>
+                                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11.5, fontWeight: 700, color: "#e2e8f0" }}>{p.ticker}</span>
                                         <span style={{ fontSize: 10, color: "#bbb", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>{sd?.name ?? ""}</span>
                                       </div>
                                       <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color }}>{s >= 0 ? "+" : ""}{s}</span>
@@ -2864,7 +2864,7 @@ export default function App() {
                       <div className="rebal-table-wrap">
                       <div style={{
                         display: "grid",
-                        gridTemplateColumns: "10px minmax(90px,1fr) 130px 110px 90px",
+                        gridTemplateColumns: "10px minmax(130px,1fr) 130px 95px 80px",
                         gap: "0 16px", alignItems: "center",
                         padding: "12px 20px",
                         borderBottom: "1px solid #1e2d3d", marginBottom: 4
@@ -2906,7 +2906,7 @@ export default function App() {
                             >
                               <div style={{
                                 display: "grid",
-                                gridTemplateColumns: "10px minmax(90px,1fr) 130px 110px 90px",
+                                gridTemplateColumns: "10px minmax(130px,1fr) 130px 95px 80px",
                                 gap: "0 16px", alignItems: "center",
                               }}>
                                 <div style={{ width: 10, height: 10, borderRadius: 2, background: p.color, flexShrink: 0 }} />
@@ -2992,7 +2992,7 @@ export default function App() {
                                 {/* Acciones objetivo */}
                                 <div style={{ textAlign: "right" }}>
                                   {tShares !== null ? (
-                                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#333" }}>
+                                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#8fa3b8" }}>
                                       {p.ticker === '$MXN' ? `$${tShares.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : fmt(tShares)}
                                     </span>
                                   ) : <span style={{ color: "#ccc", fontSize: 11 }}>—</span>}
@@ -3198,10 +3198,10 @@ export default function App() {
                       }
                       if (d.error) return null;
                       const mc = d.margin == null ? "#bbbbbb" : d.margin > 15 ? "#16a34a" : d.margin > 0 ? "#eab308" : "#dc2626";
-                      const signalBg = { "INFRAVALORADO": "#f0fdf4", "SOBREVALORADO": "#fff7f7", "PRECIO JUSTO": "#fffbeb" };
+                      const signalBg = { "INFRAVALORADO": "#0e2318", "SOBREVALORADO": "#2a1414", "PRECIO JUSTO": "#2a2110" };
                       const cur = d.priceCurrency || "USD";
                       return (
-                        <div style={{ marginTop: 12, background: signalBg[d.overall] || "#f8f8f8", borderRadius: 12, padding: "12px 14px", borderLeft: `3px solid ${mc}` }}>
+                        <div style={{ marginTop: 12, background: signalBg[d.overall] || "#141e2d", borderRadius: 12, padding: "12px 14px", borderLeft: `3px solid ${mc}` }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
                             <div style={{ fontSize: 9, color: "#bbbbbb", letterSpacing: "0.12em", fontWeight: 600 }}>
                               VALUACIÓN POR MÚLTIPLOS · {d.sector || "—"}
@@ -3421,7 +3421,7 @@ export default function App() {
                         const diff = optW - currW;
                         const action = Math.abs(diff) < 0.02 ? "MANTENER" : diff > 0 ? "AUMENTAR" : "REDUCIR";
                         const actionColor = action === "AUMENTAR" ? "#16a34a" : action === "REDUCIR" ? "#dc2626" : "#666666";
-                        const rowBg = i % 2 === 0 ? "#ffffff" : "#f5f5f0";
+                        const rowBg = i % 2 === 0 ? "#111e2e" : "#0d1825";
                         return (
                           <tr key={t} style={{ background: rowBg }}>
                             <td style={{ fontFamily: "'DM Mono', monospace", color: "#e2e8f0", fontWeight: 700 }}>{t}</td>
