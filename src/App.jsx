@@ -338,7 +338,7 @@ function MetricBadge({ label, value, good, neutral }) {
     else if (!isNaN(v)) color = "#dc2626";
   }
   return (
-    <div style={{
+    <div className="kpi-hover" style={{
       background: "#141e2d", borderRadius: 12,
       padding: "8px 12px", minWidth: 90, textAlign: "center"
     }}>
@@ -625,7 +625,7 @@ function ResumenManero({ md, macroData }) {
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
               <span style={{ fontSize: 18 }}></span>
               <span style={{ fontWeight: 700, fontSize: 17, letterSpacing: "-0.01em" }}>Resumen Mañanero</span>
-              <span style={{ background: "#00ff88", color: "#fff", fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.08em" }}>LIVE</span>
+              <span className="glow-pulse" style={{ background: "#00ff88", color: "#fff", fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.08em" }}>LIVE</span>
             </div>
             <div style={{ fontSize: 11, color: "#777777", textTransform: "capitalize" }}>{today}</div>
           </div>
@@ -1966,6 +1966,26 @@ export default function App() {
         .tab-pill { transition: all 0.15s ease; }
         .btn-exec { transition: background 0.15s ease, color 0.15s ease; }
         .btn-exec:hover:not(:disabled) { background: #00ff88 !important; color: #0a0a0a !important; }
+
+        /* ── Animaciones (portadas de EVIRIKAPP, paleta verde-neón KAIZEN) ── */
+        @keyframes float      { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        @keyframes fadeUp     { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
+        @keyframes glowPulse  { 0%,100% { box-shadow: 0 0 8px rgba(0,255,136,0.35), 0 0 16px rgba(0,255,136,0.15); } 50% { box-shadow: 0 0 14px rgba(0,255,136,0.55), 0 0 30px rgba(0,255,136,0.25); } }
+        @keyframes shimmerTxt { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        .float { animation: float 5s ease-in-out infinite; }
+        .fade-up { animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+        .glow-pulse { animation: glowPulse 2.4s ease-in-out infinite; }
+        .stat-shimmer {
+          background: linear-gradient(90deg, #00ff88 0%, #9dffce 40%, #00ff88 60%, #9dffce 100%);
+          background-size: 200% 100%;
+          -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+          animation: shimmerTxt 3s ease-in-out infinite;
+        }
+        .kpi-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .kpi-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,255,136,0.2); }
+        .stagger-1 { animation-delay: 0.05s; } .stagger-2 { animation-delay: 0.12s; }
+        .stagger-3 { animation-delay: 0.19s; } .stagger-4 { animation-delay: 0.26s; }
+        .stagger-5 { animation-delay: 0.33s; } .stagger-6 { animation-delay: 0.40s; }
         html, body { margin: 0; padding: 0; background: #0d1117; font-family: 'DM Sans', system-ui, sans-serif; min-height: 100vh; }
         h1, h2, h3 { font-family: 'Syne', sans-serif; }
         * { box-sizing: border-box; }
@@ -2117,10 +2137,10 @@ export default function App() {
         {/* Status at bottom */}
         <div style={{ padding: "16px 18px", borderTop: "1px solid #1a2535" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, marginBottom: rfRate !== null ? 10 : 0 }}>
-            <div style={{
+            <div className={backendOk ? "glow-pulse" : undefined} style={{
               width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
               background: backendOk === null ? "#4a6080" : backendOk ? "#16a34a" : "#dc2626",
-              boxShadow: backendOk ? "0 0 6px #22c55e" : backendOk === false ? "0 0 6px #ef4444" : "none",
+              boxShadow: backendOk === false ? "0 0 6px #ef4444" : "none",
             }} />
             <span style={{ color: backendOk === null ? "#4a6080" : backendOk ? "#16a34a" : "#dc2626" }}>
               {backendOk === null ? "Conectando..." : backendOk ? "Backend OK" : "Sin conexión"}
@@ -3094,7 +3114,7 @@ export default function App() {
 
             {/* Portfolio cards */}
             <div className="portfolio-grid" style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fill, minmax(460px, 1fr))" }}>
-              {portfolio.map((pos) => {
+              {portfolio.map((pos, posIdx) => {
                 const sd = stockData[pos.ticker];
                 const isLoading = loading[pos.ticker];
                 const price = sd?.price ?? null;
@@ -3107,9 +3127,9 @@ export default function App() {
                 const cardBorderTop = pnl === null ? "#2d3f55" : pnl >= 0 ? "#22c55e55" : "#ef444455";
 
                 return (
-                  <div key={pos.ticker} style={{
+                  <div key={pos.ticker} className={`fade-up stagger-${(posIdx % 6) + 1}`} style={{
                     background: "#111e2e",
-                    borderRadius: 24, animation: "fadeIn 0.4s ease",
+                    borderRadius: 24,
                     boxShadow: "none", border: "1.5px solid #1e2d3d",
                     overflow: "hidden",
                   }}>
@@ -3891,7 +3911,7 @@ export default function App() {
               {/* ── HERO ── */}
               <div style={{ background: "linear-gradient(135deg, #0a1628 0%, #111e2e 100%)", borderRadius: 20, padding: "32px 28px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 16, border: "1px solid #1e2d3d" }}>
                 <div>
-                  <div className="hero-title" style={{ fontSize: 48, fontWeight: 800, color: "#00ff88", letterSpacing: "-0.04em", fontFamily: "'Syne', sans-serif", lineHeight: 1.05 }}>
+                  <div className="hero-title stat-shimmer" style={{ fontSize: 48, fontWeight: 800, color: "#00ff88", letterSpacing: "-0.04em", fontFamily: "'Syne', sans-serif", lineHeight: 1.05 }}>
                     Panorama de<br />Mercados
                   </div>
                   <div style={{ fontSize: 13, color: "#4a6080", marginTop: 12 }}>
