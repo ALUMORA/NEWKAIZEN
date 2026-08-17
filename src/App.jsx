@@ -1,6 +1,12 @@
 ﻿
 import { useState, useEffect, useCallback, useRef } from "react";
-import kaizenLogo from './assets/kaizen-logo.jpg';
+import { useTheme } from './theme.js';
+import { Badge, Button, IconButton, Card, KpiTile, Mark, ThemeToggle, cn } from './ui.jsx';
+import {
+  ArrowRight, Eye, EyeOff, ShieldCheck, Menu, X,
+  Newspaper, Briefcase, Gauge, ListFilter, LineChart as LineChartIcon,
+  Landmark, Sparkles, ChartNoAxesCombined, Download, FileText,
+} from 'lucide-react';
 
 // ─── CURRENCY UTILS (fuera del componente — sin closure) ─────────────────────
 // .MX  → precio ya en MXN (BMV y SIC)
@@ -56,6 +62,27 @@ const CANDIDATE_TICKERS = [
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Exporta los financieros de SEC EDGAR (series por concepto/año) a un CSV descargable.
+function downloadEdgarCsv(edgar) {
+  if (!edgar?.series?.length) return;
+  const years = [...new Set(edgar.series.flatMap((s) => s.values.map((v) => v.fy)))].sort();
+  const rows = [["Concepto", "Unidad", ...years]];
+  for (const s of edgar.series) {
+    const byYear = Object.fromEntries(s.values.map((v) => [v.fy, v.val]));
+    rows.push([s.label, s.unit, ...years.map((y) => byYear[y] ?? "")]);
+  }
+  const csv = rows.map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${edgar.ticker}_SEC_EDGAR_financieros.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 async function fetchStock(ticker) {
   const res = await fetch(`${BACKEND}/stock/${encodeURIComponent(ticker)}`);
@@ -315,10 +342,10 @@ function mlScoreStock(_ticker, f) {
 // ─── SCORE BAR ────────────────────────────────────────────────────────────────
 function ScoreBar({ value, label }) {
   const pct = (value / 10) * 100;
-  const color = value >= 7 ? "#16a34a" : value >= 5 ? "#d97706" : "#dc2626";
+  const color = value >= 7 ? "var(--positive)" : value >= 5 ? "var(--warning)" : "var(--negative)";
   return (
     <div style={{ marginBottom: 6 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#4a6080", marginBottom: 3 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--muted-2)", marginBottom: 3 }}>
         <span>{label}</span><span style={{ color, fontWeight: 600 }}>{value}/10</span>
       </div>
       <div style={{ background: "#0d1825", borderRadius: 4, height: 4, overflow: "hidden" }}>
@@ -331,19 +358,19 @@ function ScoreBar({ value, label }) {
 // ─── METRIC BADGE ─────────────────────────────────────────────────────────────
 function MetricBadge({ label, value, good, neutral }) {
   const v = parseFloat(value);
-  let color = "#999999";
+  let color = "var(--muted)";
   if (!isNaN(v)) {
-    if (good !== undefined && v <= good) color = "#16a34a";
-    else if (neutral !== undefined && v <= neutral) color = "#d97706";
-    else if (!isNaN(v)) color = "#dc2626";
+    if (good !== undefined && v <= good) color = "var(--positive)";
+    else if (neutral !== undefined && v <= neutral) color = "var(--warning)";
+    else if (!isNaN(v)) color = "var(--negative)";
   }
   return (
     <div className="kpi-hover" style={{
-      background: "#141e2d", borderRadius: 12,
+      background: "var(--surface-2)", borderRadius: 12,
       padding: "8px 12px", minWidth: 90, textAlign: "center"
     }}>
-      <div style={{ fontSize: 10, color: "#999999", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 17, fontFamily: "'DM Mono', monospace", color, fontWeight: 700 }}>
+      <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 17, fontFamily: "var(--font-mono)", color, fontWeight: 700 }}>
         {value ?? "—"}
       </div>
     </div>
@@ -363,14 +390,14 @@ function LineChart({ series, dates }) {
   const toX = (i, len) => PAD.left + (i / Math.max(len - 1, 1)) * plotW;
   const toY = (v) => PAD.top + plotH - ((v - minY) / rangeY) * plotH;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", background: "#0a1220", borderRadius: 12 }}>
+    <svg className="dark-panel" viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", background: "var(--bg-deep)", borderRadius: 12 }}>
       {[0, 0.25, 0.5, 0.75, 1].map((frac, i) => {
         const val = maxY - frac * rangeY;
         const y = PAD.top + frac * plotH;
         return (
           <g key={i}>
-            <line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke="#1e2d3d" strokeWidth={1} />
-            <text x={PAD.left - 6} y={y + 4} textAnchor="end" fill="#4a6080" fontSize={9}>
+            <line x1={PAD.left} y1={y} x2={W - PAD.right} y2={y} stroke="var(--border)" strokeWidth={1} />
+            <text x={PAD.left - 6} y={y + 4} textAnchor="end" fill="var(--muted-2)" fontSize={9}>
               {(val * 100).toFixed(1)}%
             </text>
           </g>
@@ -378,16 +405,17 @@ function LineChart({ series, dates }) {
       })}
       {minY < 0 && (
         <line x1={PAD.left} y1={toY(0)} x2={W - PAD.right} y2={toY(0)}
-          stroke="#2d3f55" strokeWidth={1} strokeDasharray="4,3" />
+          stroke="var(--border-strong)" strokeWidth={1} strokeDasharray="4,3" />
       )}
-      {series.map((s) => {
+      {series.map((s, si) => {
         const pts = s.data.map((v, i) => `${toX(i, s.data.length)},${toY(v)}`);
         const lastX = toX(s.data.length - 1, s.data.length);
         const areaPath = `M${pts[0]} L${pts.join(" L")} L${lastX},${PAD.top + plotH} L${PAD.left},${PAD.top + plotH} Z`;
         return (
           <g key={s.name}>
-            <path d={areaPath} fill={s.color} fillOpacity={0.08} />
-            <polyline points={pts.join(" ")} fill="none" stroke={s.color} strokeWidth={2.5} strokeLinejoin="round" />
+            <path className="chart-fade-in" d={areaPath} fill={s.color} fillOpacity={0.08} />
+            <polyline className="chart-draw-line" pathLength={1} points={pts.join(" ")} fill="none" stroke={s.color} strokeWidth={2.5} strokeLinejoin="round"
+              style={{ animationDelay: `${si * 0.15}s` }} />
           </g>
         );
       })}
@@ -395,13 +423,13 @@ function LineChart({ series, dates }) {
         const step = Math.max(1, Math.floor(dates.length / 6));
         if (i % step !== 0 && i !== dates.length - 1) return null;
         return (
-          <text key={i} x={toX(i, dates.length)} y={H - 8} textAnchor="middle" fill="#4a6080" fontSize={9}>{d}</text>
+          <text key={i} x={toX(i, dates.length)} y={H - 8} textAnchor="middle" fill="var(--muted-2)" fontSize={9}>{d}</text>
         );
       })}
       {series.map((s, i) => (
         <g key={s.name} transform={`translate(${PAD.left + i * 160}, 6)`}>
           <line x1={0} y1={6} x2={22} y2={6} stroke={s.color} strokeWidth={2.5} />
-          <text x={28} y={10} fill="#8fa3b8" fontSize={10}>{s.name}</text>
+          <text x={28} y={10} fill="var(--muted)" fontSize={10}>{s.name}</text>
         </g>
       ))}
     </svg>
@@ -440,13 +468,13 @@ const COUNTRY_ROWS = [
 
 function GlobalMarketsTable({ data, loading }) {
   if (loading) return (
-    <div style={{ display:"flex", alignItems:"center", gap:8, justifyContent:"center", padding:"20px 0", color:"#94a3b8", fontSize:11 }}>
-      <div style={{ width:12, height:12, border:"2px solid #e2e8f0", borderTop:"2px solid #3b82f6", borderRadius:"50%", animation:"spin 0.8s linear infinite" }} />
+    <div style={{ display:"flex", alignItems:"center", gap:8, justifyContent:"center", padding:"20px 0", color:"var(--muted)", fontSize:11 }}>
+      <div style={{ width:12, height:12, border:"2px solid var(--ink)", borderTop:"2px solid #3b82f6", borderRadius:"50%", animation:"spin 0.8s linear infinite" }} />
       Cargando...
     </div>
   );
   if (!data) return (
-    <div style={{ textAlign:"center", padding:"16px 0", color:"#94a3b8", fontSize:11 }}>Cargando datos de mercados globales…</div>
+    <div style={{ textAlign:"center", padding:"16px 0", color:"var(--muted)", fontSize:11 }}>Cargando datos de mercados globales…</div>
   );
 
   const rows = COUNTRY_ROWS
@@ -458,25 +486,25 @@ function GlobalMarketsTable({ data, loading }) {
       {rows.map(({ id, flag, name, etf, d }) => {
         const p = d?.change_pct;
         const up = p != null && p >= 0;
-        const color = p == null ? "#4a6080" : up ? "#4ade80" : "#f87171";
-        const bgBadge = p == null ? "#1a2535" : up ? "#0a2a1a" : "#2a0a0a";
+        const color = p == null ? "var(--muted-2)" : up ? "var(--positive)" : "var(--negative)";
+        const bgBadge = p == null ? "var(--border)" : up ? "#0a2a1a" : "#2a0a0a";
         return (
           <div key={id} style={{
             display:"flex", alignItems:"center", gap:5,
             padding:"4px 10px", height:32, boxSizing:"border-box",
-            borderBottom:"1px solid #1a2535", transition:"background 0.1s",
+            borderBottom:"1px solid var(--border)", transition:"background 0.1s",
           }}
-            onMouseEnter={e => e.currentTarget.style.background="#141e2d"}
+            onMouseEnter={e => e.currentTarget.style.background="var(--surface-2)"}
             onMouseLeave={e => e.currentTarget.style.background=""}
           >
             <div style={{ flex:1, minWidth:0 }}>
-              <span style={{ fontFamily:"'Syne',sans-serif", fontSize:12, fontWeight:700, color:"#8fa3b8" }}>{name}</span>
-              <span style={{ fontSize:9, color:"#2d3f55", marginLeft:5 }}>{etf}</span>
+              <span style={{ fontFamily:"var(--font-sans)", fontSize:12, fontWeight:700, color:"var(--muted)" }}>{name}</span>
+              <span style={{ fontSize:9, color:"var(--border-strong)", marginLeft:5 }}>{etf}</span>
             </div>
             <div style={{
-              fontFamily:"'DM Mono',monospace", fontSize:10, fontWeight:700,
+              fontFamily:"var(--font-mono)", fontSize:10, fontWeight:700,
               color, background:bgBadge, padding:"2px 6px", borderRadius:4, flexShrink:0,
-              border: `1px solid ${color}25`,
+              border: `1px solid color-mix(in srgb, ${color} 40%, transparent)`,
             }}>
               {p != null ? `${up ? "+" : ""}${p.toFixed(2)}%` : "—"}
             </div>
@@ -489,8 +517,8 @@ function GlobalMarketsTable({ data, loading }) {
 
 function SectionLabel({ children, right }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid #1a2535", marginBottom: 8 }}>
-      <span style={{ fontSize: 9, color: "#888888", letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 700, fontFamily: "'Syne', sans-serif" }}>{children}</span>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--border)", marginBottom: 8 }}>
+      <span style={{ fontSize: 9, color: "var(--muted)", letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 700, fontFamily: "var(--font-sans)" }}>{children}</span>
       {right && <div>{right}</div>}
     </div>
   );
@@ -499,8 +527,8 @@ function SectionLabel({ children, right }) {
 function Spinner({ size = 20 }) {
   return (
     <div style={{
-      width: size, height: size, border: `2px solid #1e2d3d`,
-      borderTop: `2px solid #00ff88`, borderRadius: "50%",
+      width: size, height: size, border: `2px solid var(--border)`,
+      borderTop: `2px solid var(--accent)`, borderRadius: "50%",
       animation: "spin 0.8s linear infinite", display: "inline-block"
     }} />
   );
@@ -510,41 +538,41 @@ function Spinner({ size = 20 }) {
 function MktCard({ label, value, pct, absChange, sub, large, icon, showAbs }) {
   const isNeutral = pct === null || pct === undefined;
   const up = !isNeutral && pct >= 0;
-  const accentColor = isNeutral ? "#94a3b8" : up ? "#16a34a" : "#dc2626";
+  const accentColor = isNeutral ? "var(--muted)" : up ? "var(--positive)" : "var(--negative)";
   const hoverClass  = isNeutral ? "mkt-card" : up ? "mkt-card mkt-card-up" : "mkt-card mkt-card-down";
   const changeBg    = up ? "#0a2a1a" : "#2a0a0a";
-  const changeColor = up ? "#16a34a" : "#dc2626";
+  const changeColor = up ? "var(--positive)" : "var(--negative)";
   const changeLabel = showAbs && absChange !== undefined && absChange !== null
     ? (absChange >= 0 ? "+" : "") + absChange.toFixed(2)
     : Math.abs(pct ?? 0).toFixed(2) + "%";
 
   return (
     <div className={hoverClass} style={{
-      background: "linear-gradient(145deg,#111e2e,#0d1825)",
+      background: "linear-gradient(145deg,var(--surface),var(--surface-2))",
       borderRadius: 16,
       boxShadow: "0 2px 12px rgba(0,0,0,0.3)",
       padding: large ? "22px 24px" : "14px 16px",
       borderBottom: `2px solid ${accentColor}`,
-      border: `1px solid #1e2d3d`,
+      border: `1px solid var(--border)`,
       position: "relative", overflow: "hidden",
     }}>
       <div style={{
         position: "absolute", top: 0, right: 0, width: 60, height: 60, borderRadius: "0 16px 0 60px",
-        background: `${accentColor}09`, pointerEvents: "none",
+        background: `color-mix(in srgb, ${accentColor} 4%, transparent)`, pointerEvents: "none",
       }} />
-      <div style={{ fontSize: 10, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6, display: "flex", alignItems: "center", gap: 4, fontWeight: 600 }}>
+      <div style={{ fontSize: 10, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6, display: "flex", alignItems: "center", gap: 4, fontWeight: 600 }}>
         {icon && <span style={{ fontSize: 12 }}>{icon}</span>}
         {label}
       </div>
-      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: large ? 26 : 17, fontWeight: 700, color: "#e2e8f0", lineHeight: 1.1, marginBottom: 8 }}>
-        {value ?? <span style={{ color: "#2d3f55" }}>—</span>}
+      <div style={{ fontFamily: "var(--font-mono)", fontSize: large ? 26 : 17, fontWeight: 700, color: "var(--ink)", lineHeight: 1.1, marginBottom: 8 }}>
+        {value ?? <span style={{ color: "var(--border-strong)" }}>—</span>}
       </div>
       {!isNeutral && (
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "3px 9px", borderRadius: 8, background: `${accentColor}18`, color: accentColor, fontSize: 11, fontWeight: 700, border: `1px solid ${accentColor}30` }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "3px 9px", borderRadius: 8, background: `color-mix(in srgb, ${accentColor} 15%, transparent)`, color: accentColor, fontSize: 11, fontWeight: 700, border: `1px solid color-mix(in srgb, ${accentColor} 35%, transparent)` }}>
           {up ? "▲" : "▼"} {changeLabel}
         </span>
       )}
-      {sub && <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 5, fontWeight: 500 }}>{sub}</div>}
+      {sub && <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 5, fontWeight: 500 }}>{sub}</div>}
     </div>
   );
 }
@@ -562,61 +590,61 @@ function ResumenManero({ md, macroData }) {
   if (md?.ipc?.change_pct != null) {
     const up = md.ipc.change_pct >= 0;
     const pts = md.ipc.change != null ? ` (${md.ipc.change >= 0 ? "+" : ""}${md.ipc.change.toFixed(0)} pts)` : "";
-    insights.push({ icon: up ? "" : "", cat: "IPC MX", color: up ? "#4ade80" : "#f87171",
+    insights.push({ icon: up ? "" : "", cat: "IPC MX", color: up ? "var(--positive)" : "var(--negative)",
       text: `Bolsa mexicana ${up ? "avanza" : "retrocede"} ${Math.abs(md.ipc.change_pct).toFixed(2)}%${pts} a ${md.ipc.value.toLocaleString("en-US", { maximumFractionDigits: 2 })} pts` });
   }
   if (md?.sp500?.change_pct != null) {
     const up = md.sp500.change_pct >= 0;
-    insights.push({ icon: "", cat: "Wall Street", color: up ? "#4ade80" : "#f87171",
+    insights.push({ icon: "", cat: "Wall Street", color: up ? "var(--positive)" : "var(--negative)",
       text: `S&P 500 ${up ? "sube" : "baja"} ${Math.abs(md.sp500.change_pct).toFixed(2)}% a ${md.sp500.value.toLocaleString("en-US", { maximumFractionDigits: 2 })} — Wall Street ${up ? "en verde" : "en rojo"}` });
   }
   if (md?.usdmxn?.change_pct != null) {
     const up = md.usdmxn.change_pct >= 0;
-    insights.push({ icon: "", cat: "Peso MXN", color: up ? "#f87171" : "#4ade80",
+    insights.push({ icon: "", cat: "Peso MXN", color: up ? "var(--negative)" : "var(--positive)",
       text: `Peso ${up ? "se debilita" : "se fortalece"} ${Math.abs(md.usdmxn.change_pct).toFixed(2)}% — dólar en $${md.usdmxn.value.toFixed(4)} MXN` });
   }
   if (macroData?.vix?.value != null) {
     const v = macroData.vix.value;
-    const c = v > 30 ? "#f87171" : v > 20 ? "#fbbf24" : "#4ade80";
+    const c = v > 30 ? "var(--negative)" : v > 20 ? "#fbbf24" : "var(--positive)";
     insights.push({ icon: "", cat: "Volatilidad", color: c,
       text: `VIX ${v.toFixed(2)} — ${v > 30 ? "alta tensión en mercados, risk-off" : v > 20 ? "volatilidad elevada, cautela recomendada" : "ambiente de calma, risk-on"}` });
   }
   if (macroData?.t10y?.value != null) {
     const r = macroData.t10y.value;
     const sp = macroData?.spread;
-    insights.push({ icon: "", cat: "Tasas EUA", color: r > 5 ? "#f87171" : "#fbbf24",
+    insights.push({ icon: "", cat: "Tasas EUA", color: r > 5 ? "var(--negative)" : "#fbbf24",
       text: `Tasa 10Y Treasury ${r.toFixed(2)}%${sp?.value != null ? ` · Spread ${sp.value >= 0 ? "+" : ""}${sp.value.toFixed(2)} bps${sp.inverted ? " ⚠ curva invertida" : ""}` : ""}` });
   }
   if (md?.gold?.change_pct != null) {
     const up = md.gold.change_pct >= 0;
-    insights.push({ icon: "", cat: "Oro", color: up ? "#fbbf24" : "#94a3b8",
+    insights.push({ icon: "", cat: "Oro", color: up ? "#fbbf24" : "var(--muted)",
       text: `Oro ${up ? "avanza" : "retrocede"} ${Math.abs(md.gold.change_pct).toFixed(2)}% a $${md.gold.value.toLocaleString("en-US", { maximumFractionDigits: 2 })}/oz — ${up ? "demanda de refugio activa" : "menor apetito por safe-haven"}` });
   }
   if (md?.wti?.change_pct != null) {
     const up = md.wti.change_pct >= 0;
-    insights.push({ icon: "", cat: "Petróleo WTI", color: up ? "#fbbf24" : "#f87171",
+    insights.push({ icon: "", cat: "Petróleo WTI", color: up ? "#fbbf24" : "var(--negative)",
       text: `WTI ${up ? "+" : ""}${md.wti.change_pct.toFixed(2)}% a $${md.wti.value.toFixed(2)}/bbl — ${up ? "presión inflacionaria en energía" : "alivio en precios de energía"}` });
   }
   if (md?.btc?.change_pct != null) {
     const up = md.btc.change_pct >= 0;
-    insights.push({ icon: "BTC", cat: "Bitcoin", color: up ? "#fbbf24" : "#f87171",
+    insights.push({ icon: "BTC", cat: "Bitcoin", color: up ? "#fbbf24" : "var(--negative)",
       text: `Bitcoin ${up ? "+" : ""}${md.btc.change_pct.toFixed(2)}% a $${Math.round(md.btc.value).toLocaleString()} USD — cripto ${up ? "en verde" : "bajo presión"}` });
   }
 
   const hasData = insights.length > 0;
-  const positive = insights.filter(i => i.color === "#4ade80" || i.color === "#fbbf24").length;
-  const negative = insights.filter(i => i.color === "#f87171").length;
+  const positive = insights.filter(i => i.color === "var(--positive)" || i.color === "#fbbf24").length;
+  const negative = insights.filter(i => i.color === "var(--negative)").length;
   const mood = negative > positive ? "Cauteloso" : positive > negative ? "Positivo" : "Mixto";
-  const moodColor = mood === "Positivo" ? "#4ade80" : mood === "Cauteloso" ? "#f87171" : "#fbbf24";
+  const moodColor = mood === "Positivo" ? "var(--positive)" : mood === "Cauteloso" ? "var(--negative)" : "#fbbf24";
 
   return (
-    <div style={{
+    <div className="dark-panel" style={{
       background: "linear-gradient(135deg, #0f0f0f 0%, #1c1c1c 100%)",
       borderRadius: 24, padding: collapsed ? "18px 24px" : "24px 28px",
       color: "#fff", position: "relative", overflow: "hidden",
       boxShadow: "0 4px 24px rgba(0,0,0,0.15)",
     }}>
-      <div style={{ position: "absolute", top: -60, right: -60, width: 240, height: 240, borderRadius: "50%", background: "#00ff88", opacity: 0.04 }} />
+      <div style={{ position: "absolute", top: -60, right: -60, width: 240, height: 240, borderRadius: "50%", background: "var(--accent)", opacity: 0.04 }} />
       <div style={{ position: "absolute", bottom: -40, left: -40, width: 160, height: 160, borderRadius: "50%", background: "#6366f1", opacity: 0.05 }} />
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: collapsed ? 0 : 20, position: "relative" }}>
@@ -625,12 +653,12 @@ function ResumenManero({ md, macroData }) {
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
               <span style={{ fontSize: 18 }}></span>
               <span style={{ fontWeight: 700, fontSize: 17, letterSpacing: "-0.01em" }}>Resumen Mañanero</span>
-              <span className="glow-pulse" style={{ background: "#00ff88", color: "#fff", fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.08em" }}>LIVE</span>
+              <span className="glow-pulse" style={{ background: "var(--accent)", color: "#fff", fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.08em" }}>LIVE</span>
             </div>
-            <div style={{ fontSize: 11, color: "#777777", textTransform: "capitalize" }}>{today}</div>
+            <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "capitalize" }}>{today}</div>
           </div>
           {hasData && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, background: `${moodColor}15`, border: `1px solid ${moodColor}30`, borderRadius: 999, padding: "4px 12px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, background: `color-mix(in srgb, ${moodColor} 15%, transparent)`, border: `1px solid color-mix(in srgb, ${moodColor} 35%, transparent)`, borderRadius: 999, padding: "4px 12px" }}>
               <div style={{ width: 7, height: 7, borderRadius: "50%", background: moodColor, animation: "pulse 2s infinite" }} />
               <span style={{ fontSize: 11, fontWeight: 700, color: moodColor }}>Sentimiento: {mood}</span>
             </div>
@@ -638,7 +666,7 @@ function ResumenManero({ md, macroData }) {
         </div>
         <button onClick={() => setCollapsed(!collapsed)} style={{
           background: "#ffffff12", border: "1px solid #ffffff18", borderRadius: 8,
-          color: "#cccccc", padding: "6px 16px", cursor: "pointer", fontSize: 12, fontWeight: 600,
+          color: "var(--border-strong)", padding: "6px 16px", cursor: "pointer", fontSize: 12, fontWeight: 600,
           transition: "all 0.15s",
         }}>
           {collapsed ? "Ver resumen " : "Colapsar "}
@@ -650,23 +678,23 @@ function ResumenManero({ md, macroData }) {
           {!hasData ? (
             <div style={{ color: "#444444", fontSize: 13, gridColumn: "1 / -1", padding: "16px 0", display: "flex", alignItems: "center", gap: 10 }}>
               <Spinner size={16} />
-              <span>Cargando datos de mercado — haz clic en <b style={{ color: "#00cc6a" }}>↻ Mercados</b> para iniciar</span>
+              <span>Cargando datos de mercado — haz clic en <b style={{ color: "var(--positive)" }}>↻ Mercados</b> para iniciar</span>
             </div>
           ) : insights.map((ins, i) => (
             <div key={i} style={{
-              background: "#1a1a1a", borderRadius: 10, padding: "10px 14px",
-              borderLeft: "2px solid #00ff88",
+              background: "var(--bg-deep)", borderRadius: 10, padding: "10px 14px",
+              borderLeft: "2px solid var(--accent)",
               display: "flex", gap: 10, alignItems: "flex-start",
               animation: `slideIn 0.3s ease ${Math.min(i * 0.06, 0.5)}s both`,
               transition: "background 0.15s",
               cursor: "default",
             }}
               onMouseEnter={(e) => e.currentTarget.style.background = "#222222"}
-              onMouseLeave={(e) => e.currentTarget.style.background = "#1a1a1a"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "var(--bg-deep)"}
             >
               <div>
-                <div style={{ fontSize: 9, color: "#00ff88", fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 3 }}>{ins.cat}</div>
-                <div style={{ fontSize: 12, color: "#cccccc", lineHeight: 1.45 }}>{ins.text}</div>
+                <div style={{ fontSize: 9, color: "var(--accent)", fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 3 }}>{ins.cat}</div>
+                <div style={{ fontSize: 12, color: "var(--border-strong)", lineHeight: 1.45 }}>{ins.text}</div>
               </div>
             </div>
           ))}
@@ -678,7 +706,7 @@ function ResumenManero({ md, macroData }) {
 
 // ─── MARKET NEWS ITEM ─────────────────────────────────────────────────────────
 function MarketNewsItem({ item, index }) {
-  const sentColor = item.sentiment === "positive" ? "#16a34a" : item.sentiment === "negative" ? "#dc2626" : "#ca8a04";
+  const sentColor = item.sentiment === "positive" ? "var(--positive)" : item.sentiment === "negative" ? "var(--negative)" : "#ca8a04";
   const sentIcon  = item.sentiment === "positive" ? "" : item.sentiment === "negative" ? "" : "";
   const sentLabel = item.sentiment === "positive" ? "Positiva" : item.sentiment === "negative" ? "Negativa" : "Neutral";
   const timeAgo   = item.time ? (() => {
@@ -689,22 +717,22 @@ function MarketNewsItem({ item, index }) {
   })() : "";
   return (
     <div className="news-card" style={{
-      background: "#111e2e", borderRadius: 10, border: "1px solid #1e2d3d",
+      background: "var(--surface)", borderRadius: 10, border: "1px solid var(--border)",
       borderLeft: `3px solid ${sentColor}`, padding: "10px 14px",
       animation: `slideIn 0.3s ease ${Math.min(index * 0.05, 0.5)}s both`,
     }}>
       <a href={item.url} target="_blank" rel="noreferrer" style={{
-        color: "#e2e8f0", fontWeight: 600, fontSize: 13, lineHeight: 1.4,
+        color: "var(--ink)", fontWeight: 600, fontSize: 13, lineHeight: 1.4,
         textDecoration: "none", display: "block", marginBottom: 3,
         overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
       }}
-        onMouseEnter={(e) => e.currentTarget.style.color = "#00ff88"}
-        onMouseLeave={(e) => e.currentTarget.style.color = "#e2e8f0"}
+        onMouseEnter={(e) => e.currentTarget.style.color = "var(--accent)"}
+        onMouseLeave={(e) => e.currentTarget.style.color = "var(--ink)"}
       >{item.title}</a>
-      {item.summary && <div style={{ fontSize: 11, color: "#888888", lineHeight: 1.4, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.summary}</div>}
+      {item.summary && <div style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.4, marginBottom: 4, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.summary}</div>}
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        {item.publisher && <span style={{ fontSize: 10, color: "#6b8099", fontWeight: 600 }}>{item.publisher}</span>}
-        {timeAgo && <span style={{ fontSize: 10, color: "#aaaaaa" }}>· {timeAgo}</span>}
+        {item.publisher && <span style={{ fontSize: 10, color: "var(--muted)", fontWeight: 600 }}>{item.publisher}</span>}
+        {timeAgo && <span style={{ fontSize: 10, color: "var(--muted)" }}>· {timeAgo}</span>}
         <span style={{ fontSize: 10, fontWeight: 700, color: sentColor, marginLeft: "auto" }}>{sentLabel}</span>
       </div>
     </div>
@@ -764,11 +792,11 @@ function MonteCarloChart({ portStats, spyStats, weeks }) {
   const gridVals = [0, 0.25, 0.5, 0.75, 1].map(f => minY + f * rangeY);
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", background: "#0a1220", borderRadius: 12 }}>
+    <svg className="dark-panel" viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", height: "auto", display: "block", background: "var(--bg-deep)", borderRadius: 12 }}>
       <defs>
         <linearGradient id="portGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#00ff88" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#00ff88" stopOpacity="0.03" />
+          <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="var(--accent)" stopOpacity="0.03" />
         </linearGradient>
         <linearGradient id="spyGrad" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#6366f1" stopOpacity="0.20" />
@@ -779,8 +807,8 @@ function MonteCarloChart({ portStats, spyStats, weeks }) {
       {/* Grid */}
       {gridVals.map((v, i) => (
         <g key={i}>
-          <line x1={PAD.left} y1={toY(v)} x2={W - PAD.right} y2={toY(v)} stroke="#1e2d3d" strokeWidth={1} />
-          <text x={PAD.left - 6} y={toY(v) + 4} textAnchor="end" fill="#4a6080" fontSize={9}>
+          <line x1={PAD.left} y1={toY(v)} x2={W - PAD.right} y2={toY(v)} stroke="var(--border)" strokeWidth={1} />
+          <text x={PAD.left - 6} y={toY(v) + 4} textAnchor="end" fill="var(--muted-2)" fontSize={9}>
             {((v - 1) * 100).toFixed(1)}%
           </text>
         </g>
@@ -789,39 +817,39 @@ function MonteCarloChart({ portStats, spyStats, weeks }) {
       {/* Línea base 0% */}
       {minY < 1 && maxY > 1 && (
         <line x1={PAD.left} y1={toY(1)} x2={W - PAD.right} y2={toY(1)}
-          stroke="#2d3f55" strokeWidth={1} strokeDasharray="4,3" />
+          stroke="var(--border-strong)" strokeWidth={1} strokeDasharray="4,3" />
       )}
 
       {/* Banda SPY p5–p95 */}
-      <path d={areaPath(spyStats.map(s => s.p95), spyStats.map(s => s.p5))}
+      <path className="chart-fade-in" d={areaPath(spyStats.map(s => s.p95), spyStats.map(s => s.p5))}
         fill="url(#spyGrad)" />
       {/* Línea media SPY */}
-      <path d={linePath(spyStats.map(s => s.mean))}
+      <path className="chart-fade-in" d={linePath(spyStats.map(s => s.mean))}
         fill="none" stroke="#6366f1" strokeWidth={2} strokeDasharray="6,3" strokeLinejoin="round" />
 
       {/* Banda portafolio p5–p95 */}
-      <path d={areaPath(portStats.map(s => s.p95), portStats.map(s => s.p5))}
+      <path className="chart-fade-in" d={areaPath(portStats.map(s => s.p95), portStats.map(s => s.p5))}
         fill="url(#portGrad)" />
       {/* Línea media portafolio */}
-      <path d={linePath(portStats.map(s => s.mean))}
-        fill="none" stroke="#00ff88" strokeWidth={2.5} strokeLinejoin="round" />
+      <path className="chart-draw-line" pathLength={1} d={linePath(portStats.map(s => s.mean))}
+        fill="none" stroke="var(--accent)" strokeWidth={2.5} strokeLinejoin="round" />
 
       {/* Eje X — etiquetas cada ~10 semanas */}
       {weeks.map((w, i) => {
         if (i % 10 !== 0 && i !== weeks.length - 1) return null;
         return (
-          <text key={i} x={toX(i)} y={H - 8} textAnchor="middle" fill="#4a6080" fontSize={9}>{w}</text>
+          <text key={i} x={toX(i)} y={H - 8} textAnchor="middle" fill="var(--muted-2)" fontSize={9}>{w}</text>
         );
       })}
 
       {/* Leyenda */}
       {[
-        { color: "#00ff88", dash: false, label: "Portafolio (media ± rango 90%)" },
+        { color: "var(--accent)", dash: false, label: "Portafolio (media ± rango 90%)" },
         { color: "#6366f1", dash: true,  label: "SPY (media ± rango 90%)" },
       ].map((s, i) => (
         <g key={s.label} transform={`translate(${PAD.left + i * 240}, 8)`}>
           <line x1={0} y1={6} x2={22} y2={6} stroke={s.color} strokeWidth={2.5} strokeDasharray={s.dash ? "5,3" : "none"} />
-          <text x={28} y={10} fill="#8fa3b8" fontSize={10}>{s.label}</text>
+          <text x={28} y={10} fill="var(--muted)" fontSize={10}>{s.label}</text>
         </g>
       ))}
     </svg>
@@ -829,10 +857,25 @@ function MonteCarloChart({ portStats, spyStats, weeks }) {
 }
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
+const AUTH_QUOTES = [
+  "La disciplina de inversión mejora cuando sus supuestos permanecen visibles.",
+  "El riesgo no se elimina, se administra con datos y con proceso.",
+  "Diversificar no es diluir convicción — es controlar lo que no puedes predecir.",
+  "El mejor portafolio es el que puedes sostener cuando el mercado se pone difícil.",
+  "Cada decisión de inversión debería poder explicarse en una frase.",
+];
+
 function LoginScreen({ onAuth }) {
   const [pw, setPw]       = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState(false);
   const [shake, setShake] = useState(false);
+  const [quoteIdx, setQuoteIdx] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setQuoteIdx(i => (i + 1) % AUTH_QUOTES.length), 5000);
+    return () => clearInterval(id);
+  }, []);
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -846,55 +889,53 @@ function LoginScreen({ onAuth }) {
   }
 
   return (
-    <div style={{
-      minHeight: "100vh", background: "#000000",
-      display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-      fontFamily: "'Syne', sans-serif",
-    }}>
-
-      <img
-        src={kaizenLogo}
-        alt="KAIZEN"
-        style={{ width: 140, height: 140, borderRadius: 0, objectFit: "cover", marginBottom: 32, animation: "float 3s ease-in-out infinite" }}
-      />
-
-      <div style={{ fontSize: 28, fontWeight: 800, color: "#ffffff", letterSpacing: 4, marginBottom: 6 }}>KAIZEN</div>
-      <div style={{ fontSize: 12, color: "#4b5563", marginBottom: 40, letterSpacing: 2 }}>INVESTMENT GROUP</div>
-
-      <form onSubmit={handleSubmit} style={{
-        display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
-        animation: shake ? "shake 0.4s ease" : "none",
-      }}>
-        <input
-          type="password"
-          placeholder="Contraseña"
-          value={pw}
-          onChange={e => { setPw(e.target.value); setError(false); }}
-          autoFocus
-          style={{
-            background: "#111111", border: `1.5px solid ${error ? "#f87171" : "#1f2937"}`,
-            borderRadius: 12, padding: "14px 20px", color: "#ffffff",
-            fontFamily: "'DM Mono', monospace", fontSize: 16, width: 260,
-            outline: "none", textAlign: "center", letterSpacing: 6,
-            transition: "border-color 0.2s",
-          }}
-        />
-        {error && <div style={{ color: "#f87171", fontSize: 12, fontFamily: "'DM Mono', monospace" }}>Contraseña incorrecta</div>}
-        <button type="submit" style={{
-          background: "#00ff88", color: "#0a0a0a", border: "none", borderRadius: 12,
-          padding: "14px 0", width: 260, fontFamily: "'Syne', sans-serif",
-          fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: 2,
-        }}>
-          ENTRAR →
-        </button>
-      </form>
-
+    <main className="auth-shell">
+      <section className="auth-panel">
+        <div className="auth-content" style={{ animation: shake ? "kz-shake 0.4s ease" : "none" }}>
+          <div className="brand" style={{ marginBottom: 28 }}>
+            <Mark size={76} />
+            <span className="brand-wordmark">KAIZEN<small>Investment Group</small></span>
+          </div>
+          <Badge>Acceso privado</Badge>
+          <h1 className="stat-shimmer" style={{ marginTop: 14 }}>Bienvenido de vuelta.</h1>
+          <p>Ingresa la contraseña del equipo para entrar al workspace.</p>
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <label>
+              Contraseña
+              <div className="password-field">
+                <input
+                  autoFocus
+                  onChange={e => { setPw(e.target.value); setError(false); }}
+                  placeholder="Tu contraseña"
+                  type={showPw ? "text" : "password"}
+                  value={pw}
+                />
+                <button aria-label={showPw ? "Ocultar contraseña" : "Mostrar contraseña"} onClick={() => setShowPw(v => !v)} type="button">
+                  {showPw ? <EyeOff aria-hidden="true" size={17} /> : <Eye aria-hidden="true" size={17} />}
+                </button>
+              </div>
+            </label>
+            {error && <p className="form-error">Contraseña incorrecta.</p>}
+            <Button size="lg" type="submit">Entrar <ArrowRight aria-hidden="true" size={16} /></Button>
+          </form>
+        </div>
+      </section>
+      <aside className="auth-aside">
+        <div aria-hidden="true" className="auth-aside-orbit" />
+        <span className="glow-pulse" style={{ background: "var(--accent)", color: "#07120b", fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.08em", width: "fit-content" }}>LIVE</span>
+        <blockquote className="quote-cycle" key={quoteIdx} style={{ marginTop: 14 }}>"{AUTH_QUOTES[quoteIdx]}"</blockquote>
+        <div className="quote-dots">
+          {AUTH_QUOTES.map((_, i) => <i className={i === quoteIdx ? "is-active" : ""} key={i} />)}
+        </div>
+        <div className="auth-aside-proof">
+          <span>
+            <ShieldCheck aria-hidden="true" size={18} />
+            <span><strong>Datos en vivo</strong>Portafolio, screener y noticias conectados al backend real de KAIZEN.</span>
+          </span>
+        </div>
+      </aside>
       <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50%       { transform: translateY(-10px); }
-        }
-        @keyframes shake {
+        @keyframes kz-shake {
           0%,100% { transform: translateX(0); }
           20%      { transform: translateX(-10px); }
           40%      { transform: translateX(10px); }
@@ -902,7 +943,7 @@ function LoginScreen({ onAuth }) {
           80%      { transform: translateX(6px); }
         }
       `}</style>
-    </div>
+    </main>
   );
 }
 
@@ -919,6 +960,7 @@ export default function App() {
     });
   }, []);
 
+  const { dark, toggle: toggleTheme } = useTheme();
   const [tab, setTab] = useState("news");
   const [rfRate, setRfRate] = useState(null);
   const [rfLabel, setRfLabel] = useState("MX 5Y");
@@ -1015,9 +1057,13 @@ export default function App() {
   const [dcfData, setDcfData] = useState({});       // { ticker: {...} }
   const [momentumData, setMomentumData] = useState({}); // { ticker: {...} }
   const [corrMatrix, setCorrMatrix] = useState(null);
-  const [fibrasData, setFibrasData] = useState(null);
+  const [fibrasData, setFibrasData] = useState(() => {
+    try { const saved = localStorage.getItem("kaizen_fibras_data"); return saved ? JSON.parse(saved) : null; } catch { return null; }
+  });
   const [fibrasLoading, setFibrasLoading] = useState(false);
-  const [fibrasExtra, setFibrasExtra] = useState("");
+  const [fibrasExtra, setFibrasExtra] = useState(() => {
+    try { return localStorage.getItem("kaizen_fibras_extra") ?? ""; } catch { return ""; }
+  });
   const [magicData, setMagicData] = useState(null);
   const [magicLoading, setMagicLoading] = useState(false);
   const [magicProgress, setMagicProgress] = useState({ done: 0, total: 0, current: "" });
@@ -1047,6 +1093,8 @@ export default function App() {
   const [analisisHoverIdx, setAnalisisHoverIdx] = useState(null);
   const [analisisReturns, setAnalisisReturns] = useState(null);
   const [analisisDescExpanded, setAnalisisDescExpanded] = useState(false);
+  const [analisisEdgar, setAnalisisEdgar] = useState(null);
+  const [analisisEdgarLoading, setAnalisisEdgarLoading] = useState(false);
 
   // Persistir screener en localStorage
   useEffect(() => {
@@ -1655,6 +1703,10 @@ export default function App() {
       const url = extra ? `${BACKEND}/fibras/${encodeURIComponent(extra)}` : `${BACKEND}/fibras`;
       const data = await fetch(url).then(r => r.json());
       setFibrasData(data);
+      try {
+        localStorage.setItem("kaizen_fibras_data", JSON.stringify(data));
+        localStorage.setItem("kaizen_fibras_extra", extra);
+      } catch {}
     } catch {}
     setFibrasLoading(false);
   };
@@ -1736,6 +1788,7 @@ export default function App() {
     setAnalisisHoverIdx(null);
     setAnalisisReturns(null);
     setAnalisisDescExpanded(false);
+    setAnalisisEdgar(null);
     try {
       const [stockRes, chartRes] = await Promise.all([
         fetch(`${BACKEND}/stock/${t}`),
@@ -1752,6 +1805,8 @@ export default function App() {
       setAnalisisLoading(false);
     }
     fetch(`${BACKEND}/returns/${t}`).then(r => r.ok ? r.json() : null).then(rd => setAnalisisReturns(rd)).catch(() => {});
+    setAnalisisEdgarLoading(true);
+    fetch(`${BACKEND}/edgar/${t}`).then(r => r.ok ? r.json() : null).then(ed => setAnalisisEdgar(ed)).catch(() => setAnalisisEdgar(null)).finally(() => setAnalisisEdgarLoading(false));
     setAnalisisNewsLoading(true);
     try {
       const nr = await fetch(`${BACKEND}/news/${encodeURIComponent(t)}`);
@@ -1916,129 +1971,93 @@ export default function App() {
 
   // ── RENDER ──────────────────────────────────────────────────────────────────
   if (backendSearching) return (
-    <div style={{ minHeight:"100vh", background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Syne',sans-serif" }}>
-      <div style={{ fontSize:13, color:"#4b5563", letterSpacing:3 }}>CONECTANDO AL SERVIDOR…</div>
-      <div style={{ marginTop:16, width:180, height:3, background:"#1f2937", borderRadius:4, overflow:"hidden" }}>
-        <div style={{ height:"100%", background:"#00ff88", borderRadius:4, animation:"loadbar 1.5s ease-in-out infinite" }} />
+    <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
+      <div style={{ fontSize:13, color:"var(--muted)", letterSpacing:3 }}>CONECTANDO AL SERVIDOR…</div>
+      <div style={{ marginTop:16, width:180, height:3, background:"var(--surface-3)", borderRadius:4, overflow:"hidden" }}>
+        <div style={{ height:"100%", background:"var(--accent)", borderRadius:4, animation:"loadbar 1.5s ease-in-out infinite" }} />
       </div>
       <style>{`@keyframes loadbar { 0%{width:0%} 60%{width:100%} 100%{width:100%} }`}</style>
     </div>
   );
 
   if (!backendUrl) return (
-    <div style={{ minHeight:"100vh", background:"#0a0a0a", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", fontFamily:"'Syne',sans-serif", gap:12 }}>
-      <div style={{ fontSize:20, color:"#f87171", fontWeight:800 }}>SIN CONEXIÓN AL SERVIDOR</div>
-      <div style={{ fontSize:12, color:"#4b5563", letterSpacing:1, textAlign:"center", maxWidth:340 }}>
-        Ningún backend respondió. Asegúrate de que Railway o Render estén activos, o corre <span style={{color:"#00ff88",fontFamily:"'DM Mono',monospace"}}>python backend.py</span> localmente.
+    <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:12 }}>
+      <div style={{ fontSize:20, color:"var(--negative)", fontWeight:800 }}>SIN CONEXIÓN AL SERVIDOR</div>
+      <div style={{ fontSize:12, color:"var(--muted)", letterSpacing:1, textAlign:"center", maxWidth:340 }}>
+        Ningún backend respondió. Asegúrate de que Railway o Render estén activos, o corre <span style={{color:"var(--accent)",fontFamily:"var(--font-mono)"}}>python backend.py</span> localmente.
       </div>
-      <button onClick={() => { setBackendSearching(true); detectBackend().then(url => { BACKEND=url; setBackendUrl(url); setBackendSearching(false); }); }}
-        style={{ marginTop:12, background:"#00ff88", color:"#0a0a0a", border:"none", borderRadius:10, padding:"12px 28px", fontFamily:"'Syne',sans-serif", fontWeight:800, fontSize:13, cursor:"pointer" }}>
+      <Button onClick={() => { setBackendSearching(true); detectBackend().then(url => { BACKEND=url; setBackendUrl(url); setBackendSearching(false); }); }} size="lg">
         REINTENTAR
-      </button>
+      </Button>
     </div>
   );
 
   if (!authed) return <LoginScreen onAuth={() => setAuthed(true)} />;
 
   return (
-    <div style={{
-      fontFamily: "'Inter', sans-serif",
-      background: "#0d1117",
-      minHeight: "100vh",
-      width: "100%",
-      color: "#e2e8f0",
-      display: "flex",
-    }}>
+    <div className="app-shell">
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500&family=DM+Sans:wght@300;400;500;600&display=swap');
         @keyframes spin      { to { transform: rotate(360deg); } }
         @keyframes fadeIn    { from { opacity:0; transform:translateY(6px); }  to { opacity:1; transform:translateY(0); } }
         @keyframes slideIn   { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
         @keyframes pulse     { 0%,100% { opacity:1; } 50% { opacity:0.35; } }
         @keyframes ticker    { from { transform:translateX(0); } to { transform:translateX(-50%); } }
         @keyframes countRing { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
-        .mkt-card { transition: box-shadow 0.15s ease, border-color 0.15s ease; border: 1.5px solid #1e2d3d; }
-        .mkt-card:hover { box-shadow: 0 0 0 1px #00ff88, 0 4px 20px rgba(0,255,136,0.15) !important; border-color: #00ff88 !important; }
-        .mkt-card-up:hover   { background: linear-gradient(145deg,#0a1f15,#111e2e) !important; }
-        .mkt-card-down:hover { background: linear-gradient(145deg,#1f0a0a,#111e2e) !important; }
-        .news-card { transition: box-shadow 0.15s ease, border-color 0.15s ease; }
-        .news-card:hover { box-shadow: 0 0 0 1px #00ff88, 0 4px 20px rgba(0,255,136,0.12) !important; border-color: #00ff88 !important; transform: none; }
+        .mkt-card { transition: box-shadow 0.15s ease, border-color 0.15s ease; border: 1.5px solid var(--border); }
+        .mkt-card:hover { box-shadow: 0 0 0 1px var(--accent), 0 4px 20px color-mix(in srgb, var(--accent) 15%, transparent) !important; border-color: var(--accent) !important; }
+        .mkt-card-up:hover   { background: color-mix(in srgb, var(--positive-soft) 55%, var(--surface)) !important; }
+        .mkt-card-down:hover { background: color-mix(in srgb, var(--negative-soft) 55%, var(--surface)) !important; }
         .tab-pill { transition: all 0.15s ease; }
         .btn-exec { transition: background 0.15s ease, color 0.15s ease; }
-        .btn-exec:hover:not(:disabled) { background: #00ff88 !important; color: #0a0a0a !important; }
+        .btn-exec:hover:not(:disabled) { background: var(--accent) !important; color: var(--on-accent) !important; }
 
-        /* ── Animaciones (portadas de EVIRIKAPP, paleta verde-neón KAIZEN) ── */
+        /* ── Animaciones ── */
         @keyframes float      { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
         @keyframes fadeUp     { from { opacity:0; transform: translateY(16px); } to { opacity:1; transform: translateY(0); } }
-        @keyframes glowPulse  { 0%,100% { box-shadow: 0 0 8px rgba(0,255,136,0.35), 0 0 16px rgba(0,255,136,0.15); } 50% { box-shadow: 0 0 14px rgba(0,255,136,0.55), 0 0 30px rgba(0,255,136,0.25); } }
+        @keyframes glowPulse  { 0%,100% { box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 35%, transparent), 0 0 16px color-mix(in srgb, var(--accent) 15%, transparent); } 50% { box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 30px color-mix(in srgb, var(--accent) 25%, transparent); } }
         @keyframes shimmerTxt { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         .float { animation: float 5s ease-in-out infinite; }
         .fade-up { animation: fadeUp 0.5s cubic-bezier(0.22,1,0.36,1) both; }
         .glow-pulse { animation: glowPulse 2.4s ease-in-out infinite; }
         .stat-shimmer {
-          background: linear-gradient(90deg, #00ff88 0%, #9dffce 40%, #00ff88 60%, #9dffce 100%);
+          background: linear-gradient(90deg, var(--accent) 0%, var(--accent-strong) 40%, var(--accent) 60%, var(--accent-strong) 100%);
           background-size: 200% 100%;
           -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
           animation: shimmerTxt 3s ease-in-out infinite;
         }
         .kpi-hover { transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .kpi-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,255,136,0.2); }
+        .kpi-hover:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
         .stagger-1 { animation-delay: 0.05s; } .stagger-2 { animation-delay: 0.12s; }
         .stagger-3 { animation-delay: 0.19s; } .stagger-4 { animation-delay: 0.26s; }
         .stagger-5 { animation-delay: 0.33s; } .stagger-6 { animation-delay: 0.40s; }
-        html, body { margin: 0; padding: 0; background: #0d1117; font-family: 'DM Sans', system-ui, sans-serif; min-height: 100vh; }
-        h1, h2, h3 { font-family: 'Syne', sans-serif; }
-        * { box-sizing: border-box; }
         ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: #141c28; }
-        ::-webkit-scrollbar-thumb { background: #2d3f55; border-radius: 3px; }
-        input { outline: none; }
-        input::placeholder { color: #4a5568; }
+        ::-webkit-scrollbar-track { background: var(--surface-2); }
+        ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+        input::placeholder { color: var(--muted-2); }
         table { border-collapse: collapse; width: 100%; }
-        th { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #4a6080; padding: 10px 14px; text-align: left; border-bottom: 1px solid #1e2d3d; font-weight: 700; font-family: 'Syne', sans-serif; }
-        td { padding: 11px 14px; font-size: 14px; border-bottom: 1px solid #1a2535; color: #8fa3b8; }
-        tr:hover td { background: #141e2d; }
-        .rebal-slider { -webkit-appearance: none; appearance: none; height: 3px; background: #1e2d3d; border-radius: 99px; outline: none; cursor: pointer; }
-        .rebal-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; background: #00ff88; border-radius: 50%; cursor: pointer; margin-top: -4.5px; }
-        .rebal-slider::-webkit-slider-runnable-track { height: 3px; background: #1e2d3d; border-radius: 99px; }
-        .rebal-slider::-moz-range-thumb { width: 12px; height: 12px; background: #00ff88; border-radius: 50%; cursor: pointer; border: none; }
-        .rebal-slider::-moz-range-track { height: 3px; background: #1e2d3d; border-radius: 99px; }
+        th { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-weight: 700; }
+        td { padding: 11px 14px; font-size: 14px; border-bottom: 1px solid var(--border); color: var(--ink-soft); }
+        tr:hover td { background: var(--surface-2); }
+        .rebal-slider { -webkit-appearance: none; appearance: none; height: 3px; background: var(--border); border-radius: 99px; outline: none; cursor: pointer; }
+        .rebal-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; background: var(--accent); border-radius: 50%; cursor: pointer; margin-top: -4.5px; }
+        .rebal-slider::-webkit-slider-runnable-track { height: 3px; background: var(--border); border-radius: 99px; }
+        .rebal-slider::-moz-range-thumb { width: 12px; height: 12px; background: var(--accent); border-radius: 50%; cursor: pointer; border: none; }
+        .rebal-slider::-moz-range-track { height: 3px; background: var(--border); border-radius: 99px; }
+        .mobile-tab-label { display: none; }
 
         /* ── RESPONSIVE ── */
-        .nav-tabs-scroll { display:none; }
-        .nav-status { display:none; }
-        .sidebar { display:flex; flex-direction:column; width:240px; flex-shrink:0; background:#060d18; border-right:1px solid #1a2535; position:fixed; top:0; left:0; bottom:0; z-index:200; overflow-y:auto; }
-        .sidebar-nav-btn { display:flex; align-items:center; gap:10px; width:100%; border:none; border-radius:10px; padding:9px 10px; cursor:pointer; font-size:13px; text-align:left; transition:all 0.15s; margin-bottom:2px; font-family:inherit; }
-        .sidebar-nav-btn:hover { background:rgba(255,255,255,0.05) !important; color:#8fa3b8 !important; }
-        .main-area { margin-left:240px; flex:1; display:flex; flex-direction:column; min-height:100vh; min-width:0; }
-        .main-pad { padding: 20px 24px; animation: fadeIn 0.3s ease; }
         .resp-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
         .resp-grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
         .table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-        .bottom-nav { display:none; }
-        .nav-active-label { display:none; }
 
         @media (max-width: 768px) {
-          .sidebar { display:none !important; }
-          .main-area { margin-left:0 !important; }
-          .nav-active-label {
+          .mobile-tab-label {
             display:flex; align-items:center;
-            background:#00ff88; color:#0a0a0a;
+            background:var(--accent-strong); color:var(--on-accent);
             border-radius:999px; padding:7px 16px;
-            font-family:'Syne',sans-serif; font-weight:800; font-size:13px;
+            font-weight:800; font-size:13px;
             white-space:nowrap; max-width:160px; overflow:hidden; text-overflow:ellipsis;
           }
-          .bottom-nav {
-            display:flex; position:fixed; bottom:0; left:0; right:0; z-index:200;
-            background:#060d18; border-top:1px solid #1a2535;
-            overflow-x:auto; overflow-y:hidden;
-            -webkit-overflow-scrolling:touch;
-            scrollbar-width:none; padding:8px 6px;
-            padding-bottom: max(8px, env(safe-area-inset-bottom));
-          }
-          .bottom-nav::-webkit-scrollbar { display:none; }
-          .bottom-nav button { flex-shrink:0; }
-          .main-pad { padding: 12px 12px; padding-bottom: 80px; }
           .resp-grid-2 { grid-template-columns: 1fr !important; }
           .resp-grid-3 { grid-template-columns: 1fr !important; }
           .resp-hide-mobile { display:none !important; }
@@ -2086,92 +2105,73 @@ export default function App() {
       `}</style>
 
       {/* ══ SIDEBAR ══ */}
-      <aside className="sidebar">
+      <aside className="app-sidebar">
         {/* Logo */}
-        <div style={{ padding: "20px 18px 16px", borderBottom: "1px solid #1a2535" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <img src={kaizenLogo} style={{ height: 36, width: 36, objectFit: "contain", borderRadius: 8 }} alt="KAIZEN" />
-            <div>
-              <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 15, color: "#ffffff", letterSpacing: "0.06em" }}>KAIZEN</div>
-              <div style={{ fontSize: 9, color: "#4a6080", letterSpacing: "0.12em", textTransform: "uppercase" }}>Investment Group</div>
-            </div>
+        <div className="sidebar-head" style={{ padding: "3px 8px 16px" }}>
+          <div className="brand">
+            <Mark onDark size={44} />
+            <span className="brand-wordmark">KAIZEN<small>Investment Group</small></span>
           </div>
         </div>
 
         {/* Navigation */}
-        <div style={{ flex: 1, padding: "10px 10px", overflowY: "auto" }}>
+        <nav className="app-nav">
           {[
             { section: "DASHBOARDS", items: [
-              { id: "portfolio",  label: "Portfolio" },
-              { id: "news",       label: "Noticias" },
-              { id: "analytics",  label: "Analytics vs SPY" },
+              { id: "portfolio",  label: "Portfolio", icon: Briefcase },
+              { id: "news",       label: "Noticias", icon: Newspaper },
+              { id: "analytics",  label: "Analytics vs SPY", icon: ChartNoAxesCombined },
             ]},
             { section: "ANÁLISIS", items: [
-              { id: "optimize",   label: "Sharpe Optimizer" },
-              { id: "screener",   label: "ML Screener" },
-              { id: "analisis",   label: "Análisis" },
+              { id: "optimize",   label: "Sharpe Optimizer", icon: Gauge },
+              { id: "screener",   label: "ML Screener", icon: ListFilter },
+              { id: "analisis",   label: "Análisis", icon: LineChartIcon },
             ]},
             { section: "ESTRATEGIAS", items: [
-              { id: "fibras",     label: "FIBRA Screener" },
-              { id: "magic",      label: "Fórmula Mágica" },
+              { id: "fibras",     label: "FIBRA Screener", icon: Landmark },
+              { id: "magic",      label: "Fórmula Mágica", icon: Sparkles },
             ]},
           ].map(({ section, items }) => (
             <div key={section}>
-              <div style={{ fontSize: 9, color: "#2d3f55", letterSpacing: "0.14em", fontWeight: 700, padding: "14px 10px 6px", textTransform: "uppercase" }}>{section}</div>
+              <span className="app-nav-label">{section}</span>
               {items.map(t => (
-                <button key={t.id} onClick={() => setTab(t.id)} className="sidebar-nav-btn" style={{
-                  background: tab === t.id ? "rgba(0,255,136,0.09)" : "transparent",
-                  color: tab === t.id ? "#00ff88" : "#4a6080",
-                  fontWeight: tab === t.id ? 600 : 400,
-                  borderLeft: tab === t.id ? "2px solid #00ff88" : "2px solid transparent",
-                  paddingLeft: 14,
-                }}>
+                <button key={t.id} onClick={() => setTab(t.id)} className={cn("app-nav-link", tab === t.id && "is-active")}>
+                  <t.icon aria-hidden="true" size={16} />
                   <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{t.label}</span>
-                  {tab === t.id && <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#00ff88", flexShrink: 0 }} />}
                 </button>
               ))}
             </div>
           ))}
-        </div>
+        </nav>
 
         {/* Status at bottom */}
-        <div style={{ padding: "16px 18px", borderTop: "1px solid #1a2535" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, marginBottom: rfRate !== null ? 10 : 0 }}>
-            <div className={backendOk ? "glow-pulse" : undefined} style={{
-              width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
-              background: backendOk === null ? "#4a6080" : backendOk ? "#16a34a" : "#dc2626",
-              boxShadow: backendOk === false ? "0 0 6px #ef4444" : "none",
+        <div className="sidebar-foot">
+          <div className="data-status" data-mode={backendOk ? "live" : "offline"}>
+            <span className={backendOk ? "glow-pulse" : undefined} style={{
+              width: 7, height: 7, borderRadius: "50%", flexShrink: 0, display: "inline-block",
+              background: backendOk === null ? "var(--muted-2)" : backendOk ? "var(--positive)" : "var(--negative)",
             }} />
-            <span style={{ color: backendOk === null ? "#4a6080" : backendOk ? "#16a34a" : "#dc2626" }}>
-              {backendOk === null ? "Conectando..." : backendOk ? "Backend OK" : "Sin conexión"}
-            </span>
+            <strong>{backendOk === null ? "Conectando..." : backendOk ? "Backend OK" : "Sin conexión"}</strong>
           </div>
           {rfRate !== null && (
-            <div>
-              <div style={{ fontSize: 9, color: "#4a6080", letterSpacing: "0.1em" }}>{rfLabel}</div>
-              <div style={{ fontFamily: "'DM Mono', monospace", color: "#00cc6a", fontSize: 14, fontWeight: 700 }}>
-                {(rfRate * 100).toFixed(2)}%
-              </div>
+            <div className="data-status">
+              <span>{rfLabel}</span>
+              <strong style={{ marginLeft: "auto", fontFamily: "var(--font-mono)" }}>{(rfRate * 100).toFixed(2)}%</strong>
             </div>
           )}
         </div>
       </aside>
 
       {/* ══ MAIN AREA ══ */}
-      <div className="main-area">
+      <div className="app-frame">
 
         {/* ── Top bar ── */}
-        <div style={{
-          background: "#060d18", borderBottom: "1px solid #1a2535",
-          padding: "0 24px", height: 54,
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          position: "sticky", top: 0, zIndex: 100, gap: 16, flexShrink: 0,
-        }}>
+        <header className="app-topbar">
           {/* Breadcrumb + tab móvil */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "#4a6080", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--muted)", flexShrink: 0 }}>
             <span style={{ fontSize: 11 }}>Dashboard</span>
-            <span style={{ color: "#2d3f55" }}>/</span>
-            <span style={{ color: "#e2e8f0", fontWeight: 600, fontSize: 13 }}>
+            <span style={{ color: "var(--border-strong)" }}>/</span>
+            <span style={{ color: "var(--ink)", fontWeight: 600, fontSize: 13 }}>
               {[
                 {id:"portfolio",label:"Portfolio"},{id:"news",label:"Noticias"},
                 {id:"optimize",label:"Sharpe Optimizer"},{id:"screener",label:"ML Screener"},
@@ -2182,27 +2182,27 @@ export default function App() {
           </div>
           {/* Macro strip inline */}
           {macroData && (
-            <div style={{ display: "flex", gap: 0, alignItems: "center", fontFamily: "'DM Mono', monospace", fontSize: 10.5, overflow: "hidden", flex: 1, justifyContent: "center" }}>
+            <div style={{ display: "flex", gap: 0, alignItems: "center", fontFamily: "var(--font-mono)", fontSize: 10.5, overflow: "hidden", flex: 1, justifyContent: "center" }}>
               {[
                 { label: "VIX",        val: macroData.vix?.value != null ? macroData.vix.value.toFixed(2) : null, chg: macroData.vix?.change },
-                { label: "SPREAD 10Y", val: macroData.spread?.value != null ? `${macroData.spread.value > 0 ? "+" : ""}${macroData.spread.value}` : null, chg: null, chgOverride: macroData.spread?.inverted ? "#f87171" : "#4ade80" },
+                { label: "SPREAD 10Y", val: macroData.spread?.value != null ? `${macroData.spread.value > 0 ? "+" : ""}${macroData.spread.value}` : null, chg: null, chgOverride: macroData.spread?.inverted ? "var(--negative)" : "var(--positive)" },
                 { label: "DXY",        val: macroData.dxy?.value != null ? macroData.dxy.value.toFixed(2) : null, chg: macroData.dxy?.change },
                 { label: "10Y YIELD",  val: macroData.t10y?.value != null ? `${macroData.t10y.value.toFixed(2)}%` : null, chg: macroData.t10y?.change },
               ].filter(m => m.val != null).map((m, i, arr) => (
                 <div key={m.label} style={{ display: "flex", alignItems: "center", gap: 4, whiteSpace: "nowrap" }}>
-                  <span style={{ color: "#2d3f55", fontWeight: 500 }}>{m.label}</span>
-                  <span style={{ color: "#8fa3b8", fontWeight: 700 }}>{m.val}</span>
-                  {m.chg != null && <span style={{ color: m.chg >= 0 ? "#4ade80" : "#f87171", fontWeight: 600 }}>{m.chg >= 0 ? "+" : ""}{m.chg.toFixed(2)}</span>}
+                  <span style={{ color: "var(--muted-2)", fontWeight: 500 }}>{m.label}</span>
+                  <span style={{ color: "var(--ink-soft)", fontWeight: 700 }}>{m.val}</span>
+                  {m.chg != null && <span style={{ color: m.chg >= 0 ? "var(--positive)" : "var(--negative)", fontWeight: 600 }}>{m.chg >= 0 ? "+" : ""}{m.chg.toFixed(2)}</span>}
                   {m.chgOverride && <span style={{ color: m.chgOverride, fontSize: 9 }}>●</span>}
-                  {i < arr.length - 1 && <span style={{ color: "#1e2d3d", margin: "0 8px" }}>·</span>}
+                  {i < arr.length - 1 && <span style={{ color: "var(--border)", margin: "0 8px" }}>·</span>}
                 </div>
               ))}
-              {macroData.spread?.inverted && <span style={{ marginLeft: 8, color: "#f87171", fontWeight: 700, fontSize: 9 }}>⚠ CURVA INVERTIDA</span>}
+              {macroData.spread?.inverted && <span style={{ marginLeft: 8, color: "var(--negative)", fontWeight: 700, fontSize: 9 }}>⚠ CURVA INVERTIDA</span>}
             </div>
           )}
-          {/* RF label — tab label mobile */}
-          <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
-            <div className="nav-active-label">
+          {/* RF label — tab label mobile + theme toggle */}
+          <div className="topbar-actions">
+            <div className="mobile-tab-label">
               {[
                 {id:"portfolio",label:"Portfolio"},{id:"news",label:"Noticias"},
                 {id:"optimize",label:"Sharpe"},{id:"screener",label:"ML Screener"},
@@ -2210,8 +2210,9 @@ export default function App() {
                 {id:"magic",label:"Fórmula Mágica"},{id:"analisis",label:"Análisis"},
               ].find(t=>t.id===tab)?.label}
             </div>
+            <ThemeToggle dark={dark} onToggle={toggleTheme} />
           </div>
-        </div>
+        </header>
 
         {/* Bottom nav — solo móvil */}
         {(() => {
@@ -2223,14 +2224,14 @@ export default function App() {
             { id:"analisis",label:"Análisis" },
           ];
           return (
-            <div className="bottom-nav">
+            <div className="bottom-nav-mobile">
               {TABS.map(t => (
                 <button key={t.id} onClick={() => setTab(t.id)} style={{
-                  background: tab===t.id ? "#00ff88" : "transparent",
+                  background: tab===t.id ? "var(--accent)" : "transparent",
                   border:"none", cursor:"pointer", borderRadius:999,
                   padding:"8px 16px", fontSize:12,
                   fontWeight: tab===t.id ? 800 : 500,
-                  color: tab===t.id ? "#0a0a0a" : "#4a6080",
+                  color: tab===t.id ? "var(--on-accent)" : "#9aada3",
                   whiteSpace:"nowrap",
                 }}>{t.label}</button>
               ))}
@@ -2239,18 +2240,18 @@ export default function App() {
         })()}
 
         {/* Content */}
-        <div className="main-pad">
+        <div className="workspace-page">
 
         {/* ─── TAB: PORTFOLIO ─── */}
         {tab === "portfolio" && (
           <div>
             {/* ── Selector de portafolios ── */}
             <div style={{
-              background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d",
+              background: "var(--surface)", borderRadius: 24, boxShadow: "none", border: "1.5px solid var(--border)",
               padding: "14px 20px", marginBottom: 16,
               display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap"
             }}>
-              <span style={{ fontSize: 10, color: "#bbbbbb", letterSpacing: "0.1em", fontWeight: 600, marginRight: 4 }}>PORTAFOLIO</span>
+              <span style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.1em", fontWeight: 600, marginRight: 4 }}>PORTAFOLIO</span>
 
               {portfolios.map(p => (
                 <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 0 }}>
@@ -2271,9 +2272,9 @@ export default function App() {
                       }}
                       onKeyDown={e => { if (e.key === "Enter") e.target.blur(); if (e.key === "Escape") setRenamingId(null); }}
                       style={{
-                        border: "1px solid #00ff88", borderRadius: 999, padding: "4px 12px",
-                        fontSize: 13, fontWeight: 600, color: "#e2e8f0",
-                        background: "#1a2535", outline: "none", width: 120
+                        border: "1px solid var(--accent)", borderRadius: 999, padding: "4px 12px",
+                        fontSize: 13, fontWeight: 600, color: "var(--ink)",
+                        background: "var(--border)", outline: "none", width: 120
                       }}
                     />
                   ) : (
@@ -2283,7 +2284,7 @@ export default function App() {
                       title="Doble clic para renombrar"
                       style={{
                         background: activePortfolioId === p.id
-                          ? (p.experimental ? "#8b5cf6" : "#111111")
+                          ? (p.experimental ? "#8b5cf6" : "var(--bg-deep)")
                           : "#f2f2f2",
                         color: activePortfolioId === p.id ? "#ffffff" : (p.experimental ? "#8b5cf6" : "#555555"),
                         border: p.experimental && activePortfolioId !== p.id ? "1.5px solid #c4b5fd" : "none",
@@ -2302,7 +2303,7 @@ export default function App() {
                       setActivePortfolioId(id);
                     }}
                     title="Duplicar portafolio"
-                    style={{ background: "none", border: "none", color: "#bbbbbb", cursor: "pointer", fontSize: 12, padding: "0 2px", lineHeight: 1 }}
+                    style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 12, padding: "0 2px", lineHeight: 1 }}
                   >⧉</button>
                   {portfolios.length > 1 && (
                     <button
@@ -2312,7 +2313,7 @@ export default function App() {
                         if (activePortfolioId === p.id) setActivePortfolioId(next[0].id);
                       }}
                       title="Eliminar portafolio"
-                      style={{ background: "none", border: "none", color: "#bbbbbb", cursor: "pointer", fontSize: 14, padding: "0 2px", lineHeight: 1 }}
+                      style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 14, padding: "0 2px", lineHeight: 1 }}
                     >×</button>
                   )}
                 </div>
@@ -2327,8 +2328,8 @@ export default function App() {
                   setActivePortfolioId(id);
                 }}
                 style={{
-                  background: "none", border: "1px dashed #e5e5e5", borderRadius: 999,
-                  color: "#bbbbbb", cursor: "pointer", padding: "4px 12px", fontSize: 13
+                  background: "none", border: "1px dashed var(--border)", borderRadius: 999,
+                  color: "var(--muted)", cursor: "pointer", padding: "4px 12px", fontSize: 13
                 }}
               >+ Nuevo</button>
 
@@ -2344,13 +2345,13 @@ export default function App() {
                     transition: "all 0.2s", letterSpacing: "0.02em"
                   }}
                 >⚗ Experimental</button>
-                <span style={{ fontSize: 10, color: "#cccccc", fontStyle: "italic" }}>doble clic para renombrar</span>
+                <span style={{ fontSize: 10, color: "var(--border-strong)", fontStyle: "italic" }}>doble clic para renombrar</span>
               </div>
             </div>
 
             {/* Add stock form — Modo Experimental */}
             {isExperimental ? (
-              <div style={{
+              <div className="dark-panel" style={{
                 background: "linear-gradient(135deg, #140d2e 0%, #1a1040 100%)",
                 border: "1.5px solid #c4b5fd",
                 borderRadius: 24, boxShadow: "0 4px 24px rgba(139,92,246,0.13)",
@@ -2375,17 +2376,17 @@ export default function App() {
                       type="number"
                       style={{
                         width: 150, padding: "7px 10px 7px 24px",
-                        fontFamily: "'DM Mono', monospace", fontSize: 15, fontWeight: 700,
+                        fontFamily: "var(--font-mono)", fontSize: 15, fontWeight: 700,
                         color: "#6d28d9", background: "#ede9fe",
                         border: "1.5px solid #c4b5fd", borderRadius: 10, outline: "none", boxSizing: "border-box"
                       }}
                     />
                   </div>
                   <div style={{
-                    fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700,
+                    fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700,
                     padding: "6px 14px", borderRadius: 999,
                     background: liveRemaining > 0.01 ? "#1a1040" : "#2a0a0a",
-                    color: liveRemaining > 0.01 ? "#7c3aed" : "#dc2626",
+                    color: liveRemaining > 0.01 ? "#7c3aed" : "var(--negative)",
                     border: `1.5px solid ${liveRemaining > 0.01 ? "#6d28d9" : "#7f1d1d"}`,
                     transition: "all 0.2s"
                   }}>
@@ -2396,11 +2397,11 @@ export default function App() {
                     <div style={{ width: 140, height: 7, background: "#1a1040", borderRadius: 99, overflow: "hidden" }}>
                       <div style={{
                         width: `${Math.min(100, liveAllocated)}%`, height: "100%",
-                        background: liveAllocated >= 99.5 ? "#16a34a" : liveAllocated > 90 ? "#00ff88" : "#8b5cf6",
+                        background: liveAllocated >= 99.5 ? "var(--positive)" : liveAllocated > 90 ? "var(--accent)" : "#8b5cf6",
                         borderRadius: 99, transition: "width 0.35s ease"
                       }} />
                     </div>
-                    <div style={{ fontSize: 9, color: "#a78bfa", textAlign: "right", fontFamily: "'DM Mono', monospace" }}>
+                    <div style={{ fontSize: 9, color: "#a78bfa", textAlign: "right", fontFamily: "var(--font-mono)" }}>
                       {liveAllocated.toFixed(1)}% asignado
                     </div>
                   </div>
@@ -2422,18 +2423,18 @@ export default function App() {
                         onKeyDown={e => e.key === "Enter" && addStock()}
                         style={{
                           background: newTicker === '$MXN' ? "#1a1200" : "#1a1040",
-                          border: `1.5px solid ${newTicker === '$MXN' ? "#d97706" : "#6d28d9"}`,
+                          border: `1.5px solid ${newTicker === '$MXN' ? "var(--warning)" : "#6d28d9"}`,
                           borderRadius: 10,
                           color: newTicker === '$MXN' ? "#92400e" : "#6d28d9",
                           padding: "8px 14px", fontSize: 13, width: 160,
-                          fontFamily: "'DM Mono', monospace", outline: "none"
+                          fontFamily: "var(--font-mono)", outline: "none"
                         }} />
                       <button
                         onClick={() => setNewTicker('$MXN')}
                         title="Agregar efectivo en MXN"
                         style={{
-                          background: newTicker === '$MXN' ? "#d97706" : "#1a1200",
-                          border: "1px solid #d97706", borderRadius: 8,
+                          background: newTicker === '$MXN' ? "var(--warning)" : "#1a1200",
+                          border: "1px solid var(--warning)", borderRadius: 8,
                           color: newTicker === '$MXN' ? "#fff" : "#92400e",
                           fontSize: 11, fontWeight: 700, padding: "6px 10px",
                           cursor: "pointer", whiteSpace: "nowrap"
@@ -2464,9 +2465,9 @@ export default function App() {
                         const sharesCalc = (pct / 100 * expTotal) / priceMXN_;
                         const val = pct / 100 * expTotal;
                         const cur = ticker.endsWith('.MX') ? 'MXN' : 'USD';
-                        return <div style={{ fontSize: 10, color: "#8b5cf6", marginTop: 4, fontFamily: "'DM Mono', monospace" }}>≈ {sharesCalc.toFixed(4)} acc · ${val.toLocaleString("en-US", { maximumFractionDigits: 0 })} MXN · precio ${cur === 'USD' ? price.toFixed(2) + ' USD' : price.toFixed(2) + ' MXN'}</div>;
+                        return <div style={{ fontSize: 10, color: "#8b5cf6", marginTop: 4, fontFamily: "var(--font-mono)" }}>≈ {sharesCalc.toFixed(4)} acc · ${val.toLocaleString("en-US", { maximumFractionDigits: 0 })} MXN · precio ${cur === 'USD' ? price.toFixed(2) + ' USD' : price.toFixed(2) + ' MXN'}</div>;
                       }
-                      if (pct > 0 && !expTotal) return <div style={{ fontSize: 10, color: "#dc2626", marginTop: 4 }}>Define el monto total primero</div>;
+                      if (pct > 0 && !expTotal) return <div style={{ fontSize: 10, color: "var(--negative)", marginTop: 4 }}>Define el monto total primero</div>;
                       return null;
                     })()}
                   </div>
@@ -2500,7 +2501,7 @@ export default function App() {
                   );
                 })()}
                 {addError && (
-                  <div style={{ marginTop: 12, fontSize: 12, color: "#dc2626", display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{ marginTop: 12, fontSize: 12, color: "var(--negative)", display: "flex", alignItems: "center", gap: 6 }}>
                     ⚠ {addError}
                   </div>
                 )}
@@ -2508,28 +2509,28 @@ export default function App() {
             ) : (
               /* Add stock form — Modo Normal */
               <div style={{
-                background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d",
+                background: "var(--surface)", borderRadius: 24, boxShadow: "none", border: "1.5px solid var(--border)",
                 padding: 20, marginBottom: 28, display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap"
               }}>
                 <div>
-                  <div style={{ fontSize: 10, color: "#999999", letterSpacing: "0.08em", marginBottom: 6 }}>TICKER</div>
+                  <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.08em", marginBottom: 6 }}>TICKER</div>
                   <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                     <input value={newTicker} onChange={(e) => setNewTicker(e.target.value.toUpperCase())}
                       placeholder="AAPL / WALMEX.MX"
                       onKeyDown={e => e.key === "Enter" && addStock()}
                       style={{
-                        background: newTicker === '$MXN' ? "#2a1f00" : "#1a2535",
-                        border: `1px solid ${newTicker === '$MXN' ? "#d97706" : "#2d3f55"}`,
+                        background: newTicker === '$MXN' ? "#2a1f00" : "var(--border)",
+                        border: `1px solid ${newTicker === '$MXN' ? "var(--warning)" : "var(--border-strong)"}`,
                         borderRadius: 10,
-                        color: "#e2e8f0", padding: "8px 14px", fontSize: 13, width: 160,
-                        fontFamily: "'DM Mono', monospace", outline: "none"
+                        color: "var(--ink)", padding: "8px 14px", fontSize: 13, width: 160,
+                        fontFamily: "var(--font-mono)", outline: "none"
                       }} />
                     <button
                       onClick={() => { setNewTicker('$MXN'); setInputMode('shares'); }}
                       title="Agregar efectivo en MXN"
                       style={{
-                        background: newTicker === '$MXN' ? "#d97706" : "#1a1200",
-                        border: "1px solid #d97706", borderRadius: 8,
+                        background: newTicker === '$MXN' ? "var(--warning)" : "#1a1200",
+                        border: "1px solid var(--warning)", borderRadius: 8,
                         color: newTicker === '$MXN' ? "#fff" : "#92400e",
                         fontSize: 11, fontWeight: 700, padding: "6px 10px",
                         cursor: "pointer", whiteSpace: "nowrap", letterSpacing: "0.02em"
@@ -2540,14 +2541,14 @@ export default function App() {
                 {/* Toggle modo + input acciones / % */}
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                    <div style={{ fontSize: 10, color: "#999999", letterSpacing: "0.08em", fontWeight: 600 }}>
+                    <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.08em", fontWeight: 600 }}>
                       {newTicker === '$MXN' ? "MONTO EN MXN" : inputMode === "shares" ? "ACCIONES" : "% DEL PORTAFOLIO"}
                     </div>
-                    <div style={{ display: "flex", background: "#1a2535", borderRadius: 999, padding: 2, gap: 0 }}>
+                    <div style={{ display: "flex", background: "var(--border)", borderRadius: 999, padding: 2, gap: 0 }}>
                       {[["shares","#"], ["pct","%"]].map(([m, lbl]) => (
                         <button key={m} onClick={() => setInputMode(m)} style={{
-                          background: inputMode === m ? "#111111" : "transparent",
-                          color: inputMode === m ? "#ffffff" : "#999999",
+                          background: inputMode === m ? "var(--bg-deep)" : "transparent",
+                          color: inputMode === m ? "#ffffff" : "var(--muted)",
                           border: "none", borderRadius: 999, padding: "2px 9px",
                           fontSize: 11, fontWeight: 700, cursor: "pointer", transition: "all 0.15s"
                         }}>{lbl}</button>
@@ -2558,14 +2559,14 @@ export default function App() {
                     <input value={newShares} onChange={(e) => setNewShares(e.target.value)}
                       placeholder="0 (decimal OK)" type="number" step="any"
                       onKeyDown={e => e.key === "Enter" && addStock()}
-                      style={{ background: "#141e2d", border: "1px solid #2d3f55", borderRadius: 10, color: "#e2e8f0", padding: "8px 14px", fontSize: 13, width: 130, outline: "none" }} />
+                      style={{ background: "var(--surface-2)", border: "1px solid var(--border-strong)", borderRadius: 10, color: "var(--ink)", padding: "8px 14px", fontSize: 13, width: 130, outline: "none" }} />
                   ) : (
                     <div style={{ position: "relative" }}>
                       <input value={newPct} onChange={(e) => setNewPct(e.target.value)}
                         placeholder="20.5" type="number" step="any" min="0.01" max="100"
                         onKeyDown={e => e.key === "Enter" && addStock()}
-                        style={{ background: "#0a1f10", border: "1px solid #00ff88", borderRadius: 10, color: "#00ff88", padding: "8px 32px 8px 14px", fontSize: 13, width: 130, outline: "none" }} />
-                      <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "#00cc6a", fontWeight: 700, fontSize: 14 }}>%</span>
+                        style={{ background: "#0a1f10", border: "1px solid #7fe3a0", borderRadius: 10, color: "#7fe3a0", padding: "8px 32px 8px 14px", fontSize: 13, width: 130, outline: "none" }} />
+                      <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "var(--positive)", fontWeight: 700, fontSize: 14 }}>%</span>
                       {(() => {
                         const pct = parseFloat(newPct);
                         const ticker = newTicker.toUpperCase().trim();
@@ -2573,32 +2574,32 @@ export default function App() {
                         const totalValue = portfolio.reduce((s, p) => s + posVal(p), 0);
                         if (pct > 0 && price && totalValue > 0) {
                           const sharesCalc = (pct / 100 * totalValue) / toMXN(ticker, price);
-                          return <div style={{ fontSize: 10, color: "#00cc6a", marginTop: 4 }}>≈ {sharesCalc.toFixed(4)} acciones</div>;
+                          return <div style={{ fontSize: 10, color: "var(--positive)", marginTop: 4 }}>≈ {sharesCalc.toFixed(4)} acciones</div>;
                         }
-                        return <div style={{ fontSize: 10, color: "#bbbbbb", marginTop: 4 }}>Carga el ticker primero</div>;
+                        return <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 4 }}>Carga el ticker primero</div>;
                       })()}
                     </div>
                   )}
                 </div>
                 <div>
-                  <div style={{ fontSize: 10, color: "#999999", letterSpacing: "0.08em", marginBottom: 6 }}>COSTO PROMEDIO</div>
+                  <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.08em", marginBottom: 6 }}>COSTO PROMEDIO</div>
                   <input value={newCost} onChange={(e) => setNewCost(e.target.value)}
                     placeholder="0.00" type="number"
-                    style={{ background: "#141e2d", border: "1px solid #2d3f55", borderRadius: 10, color: "#e2e8f0", padding: "8px 14px", fontSize: 13, width: 120, outline: "none" }} />
+                    style={{ background: "var(--surface-2)", border: "1px solid var(--border-strong)", borderRadius: 10, color: "var(--ink)", padding: "8px 14px", fontSize: 13, width: 120, outline: "none" }} />
                 </div>
                 <button onClick={addStock} style={{
-                  background: "#111111", border: "none",
+                  background: "var(--bg-deep)", border: "none",
                   borderRadius: 999, color: "#fff", padding: "9px 24px", cursor: "pointer",
                   fontSize: 13, fontWeight: 600, letterSpacing: "0.04em"
                 }}>+ Agregar</button>
                 <button onClick={async () => {
                   for (const p of portfolio) { await loadStockData(p.ticker); await sleep(400); }
                 }} style={{
-                  background: "#1a2535", border: "none", borderRadius: 999,
-                  color: "#666666", padding: "9px 20px", cursor: "pointer", fontSize: 13
+                  background: "var(--border)", border: "none", borderRadius: 999,
+                  color: "var(--muted)", padding: "9px 20px", cursor: "pointer", fontSize: 13
                 }}>↻ Actualizar</button>
                 {addError && (
-                  <div style={{ marginTop: 8, fontSize: 12, color: "#dc2626", display: "flex", alignItems: "center", gap: 6, width: "100%" }}>
+                  <div style={{ marginTop: 8, fontSize: 12, color: "var(--negative)", display: "flex", alignItems: "center", gap: 6, width: "100%" }}>
                     ⚠ {addError}
                   </div>
                 )}
@@ -2622,7 +2623,7 @@ export default function App() {
               });
               // Sort descending so the biggest slice gets the accent color
               slices.sort((a, b) => b.value - a.value);
-              const accentColor = isExperimental ? "#8b5cf6" : "#00ff88";
+              const accentColor = isExperimental ? "#8b5cf6" : "var(--accent)";
               slices.forEach((s, i) => { s.color = i === 0 ? accentColor : COLORS[(i - 1) % COLORS.length]; });
               const totalPnl = totalValue - totalCost;
               const totalPnlPct = totalCost ? (totalPnl / totalCost) * 100 : 0;
@@ -2650,16 +2651,16 @@ export default function App() {
               const wRevG = wMetric("revenueGrowth");
 
               const approxSharpe = portfolioSharpeExact;
-              const sharpeColor = approxSharpe === null ? "#666666"
-                : approxSharpe >= 1 ? "#16a34a" : approxSharpe >= 0.5 ? "#eab308" : "#dc2626";
+              const sharpeColor = approxSharpe === null ? "var(--muted)"
+                : approxSharpe >= 1 ? "var(--positive)" : approxSharpe >= 0.5 ? "var(--warning)" : "var(--negative)";
 
               const StatRow = ({ label, value, color, sub }) => (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid #f2f2f2" }}>
                   <div>
-                    <div style={{ fontSize: 11, color: "#bbbbbb", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500 }}>{label}</div>
-                    {sub && <div style={{ fontSize: 10, color: "#cccccc", marginTop: 2 }}>{sub}</div>}
+                    <div style={{ fontSize: 11, color: "var(--muted)", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500 }}>{label}</div>
+                    {sub && <div style={{ fontSize: 10, color: "var(--border-strong)", marginTop: 2 }}>{sub}</div>}
                   </div>
-                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 18, fontWeight: 700, color: color || "#111111" }}>{value ?? "—"}</div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700, color: color || "var(--bg-deep)" }}>{value ?? "—"}</div>
                 </div>
               );
 
@@ -2697,8 +2698,8 @@ export default function App() {
                   <div className="resp-grid-2" style={{ alignItems: "start" }}>
 
                     {/* ── Donut — siempre usa pesos reales ── */}
-                    <div style={{ background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: "24px 20px 20px" }}>
-                      <div style={{ fontSize: 10, color: "#bbbbbb", letterSpacing: "0.14em", fontWeight: 600, marginBottom: 16 }}>COMPOSICIÓN DEL PORTAFOLIO</div>
+                    <div style={{ background: "var(--surface)", borderRadius: 24, boxShadow: "none", border: "1.5px solid var(--border)", padding: "24px 20px 20px" }}>
+                      <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.14em", fontWeight: 600, marginBottom: 16 }}>COMPOSICIÓN DEL PORTAFOLIO</div>
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
                         {/* Tooltip hover */}
                         {hoveredTicker && (() => {
@@ -2710,14 +2711,14 @@ export default function App() {
                           return (
                             <div style={{
                               position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)",
-                              background: "#111111", color: "#ffffff", borderRadius: 8, padding: "6px 14px",
-                              fontSize: 11, fontFamily: "'DM Mono', monospace", pointerEvents: "none",
+                              background: "var(--bg-deep)", color: "#ffffff", borderRadius: 8, padding: "6px 14px",
+                              fontSize: 11, fontFamily: "var(--font-mono)", pointerEvents: "none",
                               zIndex: 10, whiteSpace: "nowrap", boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
                               letterSpacing: "0.04em"
                             }}>
-                              <span style={{ color: hp.color === accentColor ? accentColor : "#aaaaaa" }}>●</span>{" "}
+                              <span style={{ color: hp.color === accentColor ? accentColor : "var(--muted)" }}>●</span>{" "}
                               <b>{hoveredTicker}</b>{" · "}{(hp.pct * 100).toFixed(1)}%
-                              {val != null && <span style={{ color: "#aaaaaa" }}>{" · "}${val.toLocaleString("en-US", { maximumFractionDigits: 0 })}</span>}
+                              {val != null && <span style={{ color: "var(--muted)" }}>{" · "}${val.toLocaleString("en-US", { maximumFractionDigits: 0 })}</span>}
                             </div>
                           );
                         })()}
@@ -2727,7 +2728,7 @@ export default function App() {
                               key={i}
                               d={p.path}
                               fill={p.color}
-                              stroke="#111e2e"
+                              stroke="var(--surface)"
                               strokeWidth="3"
                               style={{
                                 transform: hoveredTicker === p.ticker ? `translate(${p.tx}px, ${p.ty}px)` : "translate(0,0)",
@@ -2739,16 +2740,16 @@ export default function App() {
                               onMouseLeave={() => setHoveredTicker(null)}
                             />
                           ))}
-                          <circle cx={CX} cy={CY} r={R * 0.48} fill="#111e2e" style={{ pointerEvents: "none" }} />
+                          <circle cx={CX} cy={CY} r={R * 0.48} fill="var(--surface)" style={{ pointerEvents: "none" }} />
                           {hoveredTicker ? (() => {
                             const hp = paths.find(x => x.ticker === hoveredTicker);
                             return hp ? <>
                               <text x={CX} y={CY - 10} textAnchor="middle" fill={hp.color === accentColor ? accentColor : "#555555"} fontSize="13" fontFamily="monospace" fontWeight="bold">{hoveredTicker}</text>
-                              <text x={CX} y={CY + 12} textAnchor="middle" fill="#111111" fontSize="22" fontWeight="bold" fontFamily="monospace">{(hp.pct * 100).toFixed(1)}%</text>
+                              <text x={CX} y={CY + 12} textAnchor="middle" fill="var(--bg-deep)" fontSize="22" fontWeight="bold" fontFamily="monospace">{(hp.pct * 100).toFixed(1)}%</text>
                             </> : null;
                           })() : <>
-                            <text x={CX} y={CY - 10} textAnchor="middle" fill="#4a6080" fontSize="10" fontFamily="monospace" letterSpacing="1">{isExperimental ? "PRESUPUESTO" : "TOTAL"}</text>
-                            <text x={CX} y={CY + 12} textAnchor="middle" fill={isExperimental ? "#a78bfa" : "#00ff88"} fontSize="20" fontWeight="bold" fontFamily="monospace">${((isExperimental && expTotal > 0 ? expTotal : totalValue) / 1000).toFixed(1)}k</text>
+                            <text x={CX} y={CY - 10} textAnchor="middle" fill="var(--muted-2)" fontSize="10" fontFamily="monospace" letterSpacing="1">{isExperimental ? "PRESUPUESTO" : "TOTAL"}</text>
+                            <text x={CX} y={CY + 12} textAnchor="middle" fill={isExperimental ? "#a78bfa" : "var(--accent)"} fontSize="20" fontWeight="bold" fontFamily="monospace">${((isExperimental && expTotal > 0 ? expTotal : totalValue) / 1000).toFixed(1)}k</text>
                           </>}
                         </svg>
                       </div>
@@ -2760,7 +2761,7 @@ export default function App() {
                               style={{
                                 display: "flex", alignItems: "center", gap: 7,
                                 padding: "6px 10px", borderRadius: 8, cursor: "pointer",
-                                background: hoveredTicker === p.ticker ? (p.color === accentColor ? (isExperimental ? "#2d1f5e" : "#0a2a1a") : "#1a2535") : "transparent",
+                                background: hoveredTicker === p.ticker ? (p.color === accentColor ? (isExperimental ? "#2d1f5e" : "#0a2a1a") : "var(--border)") : "transparent",
                                 opacity: hoveredTicker && hoveredTicker !== p.ticker ? 0.35 : 1,
                                 transition: "all 0.15s"
                               }}
@@ -2768,18 +2769,18 @@ export default function App() {
                               onMouseLeave={() => setHoveredTicker(null)}
                             >
                               <div style={{ width: 10, height: 10, borderRadius: 3, background: p.color, flexShrink: 0 }} />
-                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11.5, color: p.color === accentColor ? accentColor : "#8fa3b8", fontWeight: p.color === accentColor ? 700 : 500, flex: 1 }}>{p.ticker}</span>
-                              <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11.5, color: "#4a6080", fontWeight: 600 }}>{(p.pct * 100).toFixed(1)}%</span>
+                              <span style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, color: p.color === accentColor ? accentColor : "var(--muted)", fontWeight: p.color === accentColor ? 700 : 500, flex: 1 }}>{p.ticker}</span>
+                              <span style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--muted-2)", fontWeight: 600 }}>{(p.pct * 100).toFixed(1)}%</span>
                             </div>
                           ))}
                         </div>
 
                       {/* Sharpe Individual dentro del panel izquierdo */}
                       {Object.keys(sharpeData).length > 0 && (
-                        <div style={{ marginTop: 20, borderTop: "1px solid #1e2d3d", paddingTop: 16 }}>
+                        <div style={{ marginTop: 20, borderTop: "1px solid var(--border)", paddingTop: 16 }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-                            <div style={{ fontSize: 10, color: "#bbbbbb", letterSpacing: "0.12em", fontWeight: 600 }}>SHARPE INDIVIDUAL · 1A</div>
-                            <div style={{ fontSize: 9, color: "#cccccc" }}>≥1.0 exc · 0.5–1.0 bueno</div>
+                            <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.12em", fontWeight: 600 }}>SHARPE INDIVIDUAL · 1A</div>
+                            <div style={{ fontSize: 9, color: "var(--border-strong)" }}>≥1.0 exc · 0.5–1.0 bueno</div>
                           </div>
                           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                             {portfolio
@@ -2787,19 +2788,19 @@ export default function App() {
                               .sort((a, b) => (sharpeData[b.ticker] ?? -99) - (sharpeData[a.ticker] ?? -99))
                               .map(p => {
                                 const s = sharpeData[p.ticker];
-                                const color = s >= 1 ? "#16a34a" : s >= 0.5 ? "#eab308" : s >= 0 ? "#00ff88" : "#dc2626";
+                                const color = s >= 1 ? "var(--positive)" : s >= 0.5 ? "var(--warning)" : s >= 0 ? "var(--accent)" : "var(--negative)";
                                 const barW = Math.min(Math.max((s / 2) * 100, 0), 100);
                                 const sd = stockData[p.ticker];
                                 return (
                                   <div key={p.ticker}>
                                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
                                       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 11.5, fontWeight: 700, color: "#e2e8f0" }}>{p.ticker}</span>
+                                        <span style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, fontWeight: 700, color: "var(--ink)" }}>{p.ticker}</span>
                                         <span style={{ fontSize: 10, color: "#bbb", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>{sd?.name ?? ""}</span>
                                       </div>
-                                      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color }}>{s >= 0 ? "+" : ""}{s}</span>
+                                      <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, color }}>{s >= 0 ? "+" : ""}{s}</span>
                                     </div>
-                                    <div style={{ background: "#1a2535", borderRadius: 99, height: 6, overflow: "hidden" }}>
+                                    <div style={{ background: "var(--border)", borderRadius: 99, height: 6, overflow: "hidden" }}>
                                       <div style={{ width: `${barW}%`, height: "100%", background: color, borderRadius: 99, transition: "width 0.6s ease" }} />
                                     </div>
                                   </div>
@@ -2811,11 +2812,11 @@ export default function App() {
                     </div>
 
                     {/* ── Tabla de rebalanceo ── */}
-                    <div style={{ background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: "28px 24px 24px", minWidth: 0 }}>
+                    <div style={{ background: "var(--surface)", borderRadius: 24, boxShadow: "none", border: "1.5px solid var(--border)", padding: "28px 24px 24px", minWidth: 0 }}>
                       {/* Header */}
                       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 10, color: "#bbbbbb", letterSpacing: "0.14em", fontWeight: 600 }}>REBALANCEO</span>
-                        <span style={{ fontSize: 10, color: "#4a6080", background: "#1a2535", borderRadius: 999, padding: "2px 8px" }}>
+                        <span style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.14em", fontWeight: 600 }}>REBALANCEO</span>
+                        <span style={{ fontSize: 10, color: "var(--muted-2)", background: "var(--border)", borderRadius: 999, padding: "2px 8px" }}>
                           USD/MXN {usdMxn.toFixed(2)}
                         </span>
                         <div style={{ flex: 1 }} />
@@ -2828,10 +2829,10 @@ export default function App() {
                               placeholder={totalValue.toFixed(0)} type="number" step="1000" min="0"
                               style={{
                                 width: 120, padding: "6px 8px 6px 20px",
-                                fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700,
-                                color: parseFloat(customTotal) > 0 ? "#00ff88" : "#8fa3b8",
-                                background: parseFloat(customTotal) > 0 ? "#0a1f10" : "#1a2535",
-                                border: `1.5px solid ${parseFloat(customTotal) > 0 ? "#00ff88" : "#2d3f55"}`,
+                                fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700,
+                                color: parseFloat(customTotal) > 0 ? "var(--accent)" : "var(--muted)",
+                                background: parseFloat(customTotal) > 0 ? "#0a1f10" : "var(--border)",
+                                border: `1.5px solid ${parseFloat(customTotal) > 0 ? "var(--accent)" : "var(--border-strong)"}`,
                                 borderRadius: 8, outline: "none", boxSizing: "border-box"
                               }} />
                           </div>
@@ -2841,8 +2842,8 @@ export default function App() {
                         </div>
                         {/* Σ badge */}
                         <div style={{
-                          fontFamily: "'DM Mono', monospace", fontSize: 11, fontWeight: 700,
-                          color: tSumOk ? "#4ade80" : "#f87171",
+                          fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700,
+                          color: tSumOk ? "var(--positive)" : "var(--negative)",
                           background: tSumOk ? "#0a2a1a" : "#2a0a0a",
                           padding: "4px 10px", borderRadius: 999, whiteSpace: "nowrap"
                         }}>Σ {tSum.toFixed(1)}% {tSumOk ? "✓" : "✗"}</div>
@@ -2853,27 +2854,27 @@ export default function App() {
                         {[
                           { label: isExperimental ? "Presupuesto exp." : "Valor total · MXN",
                             value: `$${(isExperimental && expTotal > 0 ? expTotal : totalValue).toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
-                            color: isExperimental ? "#a78bfa" : "#00ff88",
+                            color: isExperimental ? "#a78bfa" : "var(--accent)",
                             sub: isExperimental && expTotal > 0 ? `≈ USD $${(expTotal / usdMxn).toLocaleString("en-US", { maximumFractionDigits: 0 })}` : `≈ USD $${(totalValue / usdMxn).toLocaleString("en-US", { maximumFractionDigits: 0 })}`,
-                            trend: totalPnl >= 0 ? "▲" : "▼", trendColor: totalPnl >= 0 ? "#4ade80" : "#f87171" },
-                          { label: "Costo total · MXN",  value: `$${totalCost.toLocaleString("en-US",  { maximumFractionDigits: 0 })}`, color: "#e2e8f0", sub: `≈ USD $${(totalCost / usdMxn).toLocaleString("en-US", { maximumFractionDigits: 0 })}` },
-                          { label: "P&L ($)",      value: `${totalPnl >= 0 ? "+" : "−"}$${Math.abs(totalPnl).toLocaleString("en-US", { maximumFractionDigits: 0 })}`, color: totalPnl >= 0 ? "#4ade80" : "#f87171", sub: `≈ USD ${totalPnl >= 0 ? "+" : "−"}$${Math.abs(totalPnl / usdMxn).toLocaleString("en-US", { maximumFractionDigits: 0 })}` },
-                          { label: "P&L (%)",      value: `${totalPnlPct >= 0 ? "+" : ""}${totalPnlPct.toFixed(2)}%`, color: totalPnl >= 0 ? "#4ade80" : "#f87171",
+                            trend: totalPnl >= 0 ? "▲" : "▼", trendColor: totalPnl >= 0 ? "var(--positive)" : "var(--negative)" },
+                          { label: "Costo total · MXN",  value: `$${totalCost.toLocaleString("en-US",  { maximumFractionDigits: 0 })}`, color: "var(--ink)", sub: `≈ USD $${(totalCost / usdMxn).toLocaleString("en-US", { maximumFractionDigits: 0 })}` },
+                          { label: "P&L ($)",      value: `${totalPnl >= 0 ? "+" : "−"}$${Math.abs(totalPnl).toLocaleString("en-US", { maximumFractionDigits: 0 })}`, color: totalPnl >= 0 ? "var(--positive)" : "var(--negative)", sub: `≈ USD ${totalPnl >= 0 ? "+" : "−"}$${Math.abs(totalPnl / usdMxn).toLocaleString("en-US", { maximumFractionDigits: 0 })}` },
+                          { label: "P&L (%)",      value: `${totalPnlPct >= 0 ? "+" : ""}${totalPnlPct.toFixed(2)}%`, color: totalPnl >= 0 ? "var(--positive)" : "var(--negative)",
                             sub: totalPnl >= 0 ? "Rentabilidad positiva" : "Por debajo del costo" },
                           { label: "Sharpe · 1y",  value: approxSharpe != null ? approxSharpe : "—",
-                            color: approxSharpe == null ? "#4a6080" : approxSharpe >= 1 ? "#4ade80" : approxSharpe >= 0.5 ? "#fbbf24" : "#f87171",
+                            color: approxSharpe == null ? "var(--muted-2)" : approxSharpe >= 1 ? "var(--positive)" : approxSharpe >= 0.5 ? "#fbbf24" : "var(--negative)",
                             sub: approxSharpe == null ? "calculando…" : approxSharpe >= 1 ? "Excelente" : approxSharpe >= 0.5 ? "Aceptable" : "Bajo" },
                         ].map((m) => (
                           <div key={m.label} style={{
                             flex: 1, padding: "18px 20px",
-                            background: "linear-gradient(145deg,#111e2e,#0d1825)", borderRadius: 16,
-                            minWidth: 130, border: "1px solid #1e2d3d",
+                            background: "linear-gradient(145deg,var(--surface),var(--surface-2))", borderRadius: 16,
+                            minWidth: 130, border: "1px solid var(--border)",
                             position: "relative", overflow: "hidden",
                           }}>
-                            <div style={{ position: "absolute", top: 0, right: 0, width: 50, height: 50, borderRadius: "0 16px 0 50px", background: `${m.color}08` }} />
-                            <div style={{ fontSize: 9, color: "#4a6080", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8, fontWeight: 600 }}>{m.label}</div>
-                            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 22, fontWeight: 700, color: m.color, lineHeight: 1, marginBottom: 6 }}>{m.value}</div>
-                            {m.sub && <div style={{ fontSize: 10, color: "#4a6080", display: "flex", alignItems: "center", gap: 4 }}>
+                            <div style={{ position: "absolute", top: 0, right: 0, width: 50, height: 50, borderRadius: "0 16px 0 50px", background: `color-mix(in srgb, ${m.color} 4%, transparent)` }} />
+                            <div style={{ fontSize: 9, color: "var(--muted-2)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 8, fontWeight: 600 }}>{m.label}</div>
+                            <div style={{ fontFamily: "var(--font-mono)", fontSize: 22, fontWeight: 700, color: m.color, lineHeight: 1, marginBottom: 6 }}>{m.value}</div>
+                            {m.sub && <div style={{ fontSize: 10, color: "var(--muted-2)", display: "flex", alignItems: "center", gap: 4 }}>
                               {m.trend && <span style={{ color: m.trendColor, fontSize: 9 }}>{m.trend}</span>}{m.sub}
                             </div>}
                           </div>
@@ -2887,13 +2888,13 @@ export default function App() {
                         gridTemplateColumns: "10px minmax(130px,1fr) 130px 95px 80px",
                         gap: "0 16px", alignItems: "center",
                         padding: "12px 20px",
-                        borderBottom: "1px solid #1e2d3d", marginBottom: 4
+                        borderBottom: "1px solid var(--border)", marginBottom: 4
                       }}>
                         <div />
-                        <div style={{ fontSize: 9, color: "#888888", letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "'Syne', sans-serif", fontWeight: 700 }}>Activo</div>
-                        <div style={{ fontSize: 9, color: "#888888", letterSpacing: "0.15em", textTransform: "uppercase", textAlign: "center", fontFamily: "'Syne', sans-serif", fontWeight: 700 }}>% objetivo</div>
-                        <div style={{ fontSize: 9, color: "#888888", letterSpacing: "0.15em", textTransform: "uppercase", textAlign: "right", fontFamily: "'Syne', sans-serif", fontWeight: 700 }}>Acciones</div>
-                        <div style={{ fontSize: 9, color: "#888888", letterSpacing: "0.15em", textTransform: "uppercase", textAlign: "right", fontFamily: "'Syne', sans-serif", fontWeight: 700 }}>Δ acciones</div>
+                        <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: "0.15em", textTransform: "uppercase", fontFamily: "var(--font-sans)", fontWeight: 700 }}>Activo</div>
+                        <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: "0.15em", textTransform: "uppercase", textAlign: "center", fontFamily: "var(--font-sans)", fontWeight: 700 }}>% objetivo</div>
+                        <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: "0.15em", textTransform: "uppercase", textAlign: "right", fontFamily: "var(--font-sans)", fontWeight: 700 }}>Acciones</div>
+                        <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: "0.15em", textTransform: "uppercase", textAlign: "right", fontFamily: "var(--font-sans)", fontWeight: 700 }}>Δ acciones</div>
                       </div>
 
                       {/* Filas */}
@@ -2918,8 +2919,8 @@ export default function App() {
                               onMouseLeave={() => setHoveredTicker(null)}
                               style={{
                                 padding: "14px 20px",
-                                background: isTop ? topBg : (isHovered ? "#141e2d" : pi % 2 === 0 ? "#111e2e" : "#0d1825"),
-                                borderBottom: "1px solid #1a2535",
+                                background: isTop ? topBg : (isHovered ? "var(--surface-2)" : pi % 2 === 0 ? "var(--surface)" : "#0d1825"),
+                                borderBottom: "1px solid var(--border)",
                                 transition: "background 0.15s",
                                 opacity: hoveredTicker && !isHovered ? 0.55 : 1,
                               }}
@@ -2932,15 +2933,15 @@ export default function App() {
                                 <div style={{ width: 10, height: 10, borderRadius: 2, background: p.color, flexShrink: 0 }} />
                                 <div style={{ display: "flex", alignItems: "center", gap: 5, overflow: "hidden" }}>
                                   <span style={{
-                                    fontFamily: "'Syne', sans-serif",
-                                    color: "#e2e8f0",
+                                    fontFamily: "var(--font-sans)",
+                                    color: "var(--ink)",
                                     fontSize: 13, fontWeight: 700,
                                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"
                                   }}>{p.ticker}</span>
                                   {(() => {
-                                    if (p.ticker === '$MXN') return <span style={{ fontSize: 9, color: '#d97706', background: '#1a1200', borderRadius: 999, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>EFECTIVO</span>;
+                                    if (p.ticker === '$MXN') return <span style={{ fontSize: 9, color: 'var(--warning)', background: '#1a1200', borderRadius: 999, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>EFECTIVO</span>;
                                     const cur = p.ticker.endsWith('.MX') ? 'MXN' : 'USD';
-                                    return <span style={{ fontSize: 9, color: cur === 'USD' ? '#60a5fa' : '#4ade80', background: cur === 'USD' ? '#0a1628' : '#0a2a1a', borderRadius: 999, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>{cur}</span>;
+                                    return <span style={{ fontSize: 9, color: cur === 'USD' ? '#60a5fa' : 'var(--positive)', background: cur === 'USD' ? '#0a1628' : '#0a2a1a', borderRadius: 999, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>{cur}</span>;
                                   })()}
                                 </div>
 
@@ -2959,10 +2960,10 @@ export default function App() {
                                       type="number" step="0.1" min="0" max="100"
                                       style={{
                                         width: "100%", padding: "5px 20px 5px 8px",
-                                        fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700,
-                                        color: isTop ? accentColor : "#e2e8f0",
-                                        background: isTop ? (isExperimental ? "#1a1040" : "#0a1f10") : "#141e2d",
-                                        border: `1.5px solid ${isTop ? accentColor : isHovered ? "#2d3f55" : "#1e2d3d"}`,
+                                        fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700,
+                                        color: isTop ? accentColor : "var(--ink)",
+                                        background: isTop ? (isExperimental ? "#1a1040" : "#0a1f10") : "var(--surface-2)",
+                                        border: `1.5px solid ${isTop ? accentColor : isHovered ? "var(--border-strong)" : "var(--border)"}`,
                                         borderRadius: 8, outline: "none", textAlign: "right",
                                         boxSizing: "border-box", transition: "border-color 0.15s"
                                       }}
@@ -2993,7 +2994,7 @@ export default function App() {
                                         height: 6,
                                         appearance: "none",
                                         WebkitAppearance: "none",
-                                        background: `linear-gradient(to right, ${isExperimental ? "#8b5cf6" : "#00ff88"} ${tPct}%, #1e2d3d ${tPct}%)`,
+                                        background: `linear-gradient(to right, ${isExperimental ? "#8b5cf6" : "var(--accent)"} ${tPct}%, var(--border) ${tPct}%)`,
                                         borderRadius: 999,
                                         outline: "none",
                                         border: "none",
@@ -3001,9 +3002,9 @@ export default function App() {
                                       }}
                                     />
                                     <span style={{
-                                      fontFamily: "'DM Mono', monospace",
+                                      fontFamily: "var(--font-mono)",
                                       fontSize: 12, fontWeight: 700,
-                                      color: "#8fa3b8", minWidth: 45,
+                                      color: "var(--muted)", minWidth: 45,
                                       textAlign: "right",
                                     }}>{tPct.toFixed(1)}%</span>
                                   </div>
@@ -3012,7 +3013,7 @@ export default function App() {
                                 {/* Acciones objetivo */}
                                 <div style={{ textAlign: "right" }}>
                                   {tShares !== null ? (
-                                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#8fa3b8" }}>
+                                    <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--muted)" }}>
                                       {p.ticker === '$MXN' ? `$${tShares.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : fmt(tShares)}
                                     </span>
                                   ) : <span style={{ color: "#ccc", fontSize: 11 }}>—</span>}
@@ -3022,8 +3023,8 @@ export default function App() {
                                 <div style={{ textAlign: "right" }}>
                                   {delta !== null && Math.abs(delta) >= 0.0001 ? (
                                     <span style={{
-                                      fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700,
-                                      color: delta > 0 ? "#00cc6a" : "#ff3b3b"
+                                      fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700,
+                                      color: delta > 0 ? "var(--positive)" : "var(--negative)"
                                     }}>
                                       {p.ticker === '$MXN'
                                         ? `${delta > 0 ? "+" : "−"}$${Math.abs(delta).toLocaleString("en-US", { maximumFractionDigits: 0 })}`
@@ -3060,8 +3061,8 @@ export default function App() {
                             if (!isExperimental && parseFloat(customTotal) > 0) setCustomTotal("");
                           }}
                           style={{
-                            background: tSumOk ? "#00ff88" : "#1a2535",
-                            border: `1px solid ${tSumOk ? "#00ff88" : "#2d3f55"}`, borderRadius: 999, color: tSumOk ? "#0a0a0a" : "#4a6080",
+                            background: tSumOk ? "var(--accent-strong)" : "var(--border)",
+                            border: `1px solid ${tSumOk ? "var(--accent-strong)" : "var(--border-strong)"}`, borderRadius: 999, color: tSumOk ? "var(--on-accent)" : "var(--muted)",
                             padding: "8px 20px", cursor: tSumOk ? "pointer" : "not-allowed",
                             fontSize: 12, fontWeight: 600, letterSpacing: "0.04em", transition: "all 0.15s"
                           }}
@@ -3075,8 +3076,8 @@ export default function App() {
                           }}
                           title="Distribuir pesos iguales entre todos los activos"
                           style={{
-                            background: "#141e2d", border: "1px solid #1e2d3d", borderRadius: 999,
-                            color: "#4a6080", padding: "7px 16px", cursor: "pointer", fontSize: 12
+                            background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 999,
+                            color: "var(--muted-2)", padding: "7px 16px", cursor: "pointer", fontSize: 12
                           }}
                         >⊞ Igualar</button>
                         <button
@@ -3092,12 +3093,12 @@ export default function App() {
                             setCustomTotal("");
                           }}
                           style={{
-                            background: "#141e2d", border: "1px solid #1e2d3d", borderRadius: 999,
-                            color: "#4a6080", padding: "7px 16px", cursor: "pointer", fontSize: 12
+                            background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 999,
+                            color: "var(--muted-2)", padding: "7px 16px", cursor: "pointer", fontSize: 12
                           }}
                         >↺ Resetear</button>
                         {!tSumOk && (
-                          <span style={{ fontSize: 10, color: "#dc2626", marginLeft: 4 }}>
+                          <span style={{ fontSize: 10, color: "var(--negative)", marginLeft: 4 }}>
                             Falta {(100 - tSum).toFixed(1)}% por asignar
                           </span>
                         )}
@@ -3123,38 +3124,38 @@ export default function App() {
                 const pnl = value ? value - cost_total : null;
                 const pnlPct = pnl !== null ? (pnl / cost_total) * 100 : null;
 
-                const pnlColor = pnl === null ? "#666666" : pnl >= 0 ? "#00ff88" : "#ff3b3b";
-                const cardBorderTop = pnl === null ? "#2d3f55" : pnl >= 0 ? "#22c55e55" : "#ef444455";
+                const pnlColor = pnl === null ? "var(--muted)" : pnl >= 0 ? "var(--accent)" : "var(--negative)";
+                const cardBorderTop = pnl === null ? "var(--border-strong)" : pnl >= 0 ? "#22c55e55" : "#ef444455";
 
                 return (
-                  <div key={pos.ticker} className={`fade-up stagger-${(posIdx % 6) + 1}`} style={{
-                    background: "#111e2e",
+                  <div key={pos.ticker} className={`fade-up kpi-hover stagger-${(posIdx % 6) + 1}`} style={{
+                    background: "var(--surface)",
                     borderRadius: 24,
-                    boxShadow: "none", border: "1.5px solid #1e2d3d",
+                    boxShadow: "none", border: "1.5px solid var(--border)",
                     overflow: "hidden",
                   }}>
                     {/* Header: ticker + precio + P&L */}
-                    <div style={{
-                      background: "#0a0a0a", padding: "20px 24px",
+                    <div className="dark-panel" style={{
+                      background: "var(--bg-deep)", padding: "20px 24px",
                       borderRadius: "24px 24px 0 0",
                       display: "flex", justifyContent: "space-between", alignItems: "flex-start",
                     }}>
                       <div>
                         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                          <span style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 18, color: "#ffffff" }}>
+                          <span style={{ fontFamily: "var(--font-sans)", fontWeight: 800, fontSize: 18, color: "#ffffff" }}>
                             {pos.ticker}
                           </span>
                           {isLoading && <Spinner size={14} />}
                         </div>
-                        <div style={{ fontSize: 13, color: "#888888", marginTop: 3 }}>{sd?.name ?? "—"}</div>
+                        <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 3 }}>{sd?.name ?? "—"}</div>
                       </div>
                       <div style={{ textAlign: "right" }}>
                         {price != null
-                          ? <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 28, fontWeight: 500, color: "#ffffff", lineHeight: 1 }}>${price.toFixed(2)}</div>
-                          : <div style={{ fontSize: 13, color: "#666666" }}>Cargando...</div>
+                          ? <div style={{ fontFamily: "var(--font-mono)", fontSize: 28, fontWeight: 500, color: "#ffffff", lineHeight: 1 }}>${price.toFixed(2)}</div>
+                          : <div style={{ fontSize: 13, color: "var(--muted)" }}>Cargando...</div>
                         }
                         {pnl !== null && (
-                          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, color: pnlColor, fontWeight: 700, marginTop: 6 }}>
+                          <div style={{ fontFamily: "var(--font-mono)", fontSize: 13, color: pnlColor, fontWeight: 700, marginTop: 6 }}>
                             {pnl >= 0 ? "+" : "−"}${Math.abs(pnl).toFixed(2)}{" "}
                             <span style={{ fontSize: 11 }}>({Math.abs(pnlPct).toFixed(2)}%)</span>
                           </div>
@@ -3168,16 +3169,16 @@ export default function App() {
                       display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 14
                     }}>
                       {[
-                        { l: pos.ticker === '$MXN' ? "Monto MXN" : "Acciones", v: pos.ticker === '$MXN' ? `$${pos.shares.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : pos.shares % 1 === 0 ? pos.shares : pos.shares.toFixed(4), mono: true, color: pos.ticker === '$MXN' ? "#d97706" : pos.shares % 1 !== 0 ? "#00ff88" : "#666666" },
-                        { l: "Costo/acc", v: pos.ticker === '$MXN' ? "—" : `$${pos.cost.toFixed(2)}`, mono: true, color: "#666666" },
-                        { l: "Invertido", v: `$${cost_total.toFixed(2)}`, mono: true, color: "#666666" },
-                        { l: "Valor actual", v: value != null ? `$${value.toFixed(2)}` : "—", mono: true, color: "#e2e8f0" },
+                        { l: pos.ticker === '$MXN' ? "Monto MXN" : "Acciones", v: pos.ticker === '$MXN' ? `$${pos.shares.toLocaleString("en-US", { maximumFractionDigits: 0 })}` : pos.shares % 1 === 0 ? pos.shares : pos.shares.toFixed(4), mono: true, color: pos.ticker === '$MXN' ? "var(--warning)" : pos.shares % 1 !== 0 ? "var(--accent)" : "var(--muted)" },
+                        { l: "Costo/acc", v: pos.ticker === '$MXN' ? "—" : `$${pos.cost.toFixed(2)}`, mono: true, color: "var(--muted)" },
+                        { l: "Invertido", v: `$${cost_total.toFixed(2)}`, mono: true, color: "var(--muted)" },
+                        { l: "Valor actual", v: value != null ? `$${value.toFixed(2)}` : "—", mono: true, color: "var(--ink)" },
                         { l: "P&L ($)", v: pnl != null ? `${pnl >= 0 ? "+" : ""}$${pnl.toFixed(2)}` : "—", mono: true, color: pnlColor },
                         { l: "P&L (%)", v: pnlPct != null ? `${pnlPct >= 0 ? "+" : ""}${pnlPct.toFixed(2)}%` : "—", mono: true, color: pnlColor },
                       ].map((item) => (
                         <div key={item.l} style={{ background: "#0d1825", borderRadius: 12, padding: "9px 12px" }}>
-                          <div style={{ fontSize: 10, color: "#999999", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4, fontWeight: 500 }}>{item.l}</div>
-                          <div style={{ fontSize: 14, fontFamily: item.mono ? "'DM Mono', monospace" : undefined, color: item.color, fontWeight: 700 }}>{item.v}</div>
+                          <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4, fontWeight: 500 }}>{item.l}</div>
+                          <div style={{ fontSize: 14, fontFamily: item.mono ? "var(--font-mono)" : undefined, color: item.color, fontWeight: 700 }}>{item.v}</div>
                         </div>
                       ))}
                     </div>
@@ -3185,7 +3186,7 @@ export default function App() {
                     {/* Métricas de valuación */}
                     {sd && (
                       <>
-                        <div style={{ fontSize: 9, color: "#999999", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>Valuación</div>
+                        <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>Valuación</div>
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
                           <MetricBadge label="P/E" value={sd.pe} good={20} neutral={35} />
                           <MetricBadge label="PEG" value={sd.peg} good={1} neutral={2} />
@@ -3193,7 +3194,7 @@ export default function App() {
                           <MetricBadge label="EV/EBITDA" value={sd.evEbitda} good={12} neutral={20} />
                           <MetricBadge label="P/B" value={sd.pb} good={3} neutral={5} />
                         </div>
-                        <div style={{ fontSize: 9, color: "#999999", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>Fundamentales</div>
+                        <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 8 }}>Fundamentales</div>
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 4 }}>
                           <MetricBadge label="ROE%" value={sd.roe} />
                           <MetricBadge label="Margen%" value={sd.profitMargin} />
@@ -3210,61 +3211,69 @@ export default function App() {
                       // ETF: mostrar nota informativa pequeña
                       if (d.isETF) {
                         return (
-                          <div style={{ marginTop: 10, background: "#141e2d", borderRadius: 10, padding: "8px 12px", borderLeft: "3px solid #bbbbbb" }}>
-                            <div style={{ fontSize: 9, color: "#bbbbbb", letterSpacing: "0.1em", fontWeight: 600 }}>VALUACIÓN</div>
-                            <div style={{ fontSize: 11, color: "#999999", marginTop: 3 }}>ETF / Fondo — valuación por múltiplos no aplica para este instrumento.</div>
+                          <div style={{ marginTop: 10, background: "var(--surface-2)", borderRadius: 10, padding: "8px 12px", borderLeft: "3px solid var(--muted)" }}>
+                            <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: "0.1em", fontWeight: 600 }}>VALUACIÓN</div>
+                            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 3 }}>ETF / Fondo — valuación por múltiplos no aplica para este instrumento.</div>
                           </div>
                         );
                       }
                       if (d.error) return null;
-                      const mc = d.margin == null ? "#bbbbbb" : d.margin > 15 ? "#16a34a" : d.margin > 0 ? "#eab308" : "#dc2626";
-                      const signalBg = { "INFRAVALORADO": "#0e2318", "SOBREVALORADO": "#2a1414", "PRECIO JUSTO": "#2a2110" };
+                      const mc = d.margin == null ? "var(--muted)" : d.margin > 15 ? "var(--positive)" : d.margin > 0 ? "var(--warning)" : "var(--negative)";
+                      const signalBg = { "INFRAVALORADO": "var(--positive-soft)", "SOBREVALORADO": "var(--negative-soft)", "PRECIO JUSTO": "var(--warning-soft)" };
                       const cur = d.priceCurrency || "USD";
                       return (
-                        <div style={{ marginTop: 12, background: signalBg[d.overall] || "#141e2d", borderRadius: 12, padding: "12px 14px", borderLeft: `3px solid ${mc}` }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
-                            <div style={{ fontSize: 9, color: "#bbbbbb", letterSpacing: "0.12em", fontWeight: 600 }}>
+                        <div style={{ marginTop: 12, background: signalBg[d.overall] || "var(--surface-2)", borderRadius: 12, padding: "12px 14px", borderLeft: `3px solid ${mc}` }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10, flexWrap: "wrap", gap: 4 }}>
+                            <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: "0.12em", fontWeight: 600 }}>
                               VALUACIÓN POR MÚLTIPLOS · {d.sector || "—"}
                             </div>
                             <div style={{ fontSize: 10, fontWeight: 700, color: mc }}>{d.overall}</div>
                           </div>
 
                           {/* Precio justo compuesto */}
-                          <div style={{ display: "flex", gap: 16, marginBottom: 12 }}>
-                            <div>
-                              <div style={{ fontSize: 9, color: "#bbbbbb" }}>PRECIO JUSTO ({d.nMethods} métodos)</div>
-                              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 18, fontWeight: 700, color: "#e2e8f0" }}>
-                                ${d.fairPrice?.toFixed(2) ?? "—"} <span style={{ fontSize: 10, color: "#bbbbbb" }}>{cur}</span>
+                          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 12, marginBottom: 12 }}>
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: 9, color: "var(--muted)" }}>PRECIO JUSTO ({d.nMethods} métodos)</div>
+                              <div style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700, color: "var(--ink)", whiteSpace: "nowrap" }}>
+                                ${d.fairPrice?.toFixed(2) ?? "—"} <span style={{ fontSize: 10, color: "var(--muted)" }}>{cur}</span>
                               </div>
                             </div>
-                            <div>
-                              <div style={{ fontSize: 9, color: "#bbbbbb" }}>PRECIO ACTUAL</div>
-                              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 18, fontWeight: 700, color: "#6b8099" }}>
-                                ${d.price?.toFixed(2)} <span style={{ fontSize: 10, color: "#bbbbbb" }}>{cur}</span>
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: 9, color: "var(--muted)" }}>PRECIO ACTUAL</div>
+                              <div style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700, color: "var(--muted)", whiteSpace: "nowrap" }}>
+                                ${d.price?.toFixed(2)} <span style={{ fontSize: 10, color: "var(--muted)" }}>{cur}</span>
                               </div>
                             </div>
-                            <div>
-                              <div style={{ fontSize: 9, color: "#bbbbbb" }}>DESCUENTO / PRIMA</div>
-                              <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 18, fontWeight: 700, color: mc }}>
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: 9, color: "var(--muted)" }}>DESCUENTO / PRIMA</div>
+                              <div style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700, color: mc, whiteSpace: "nowrap" }}>
                                 {d.margin > 0 ? "+" : ""}{d.margin}%
                               </div>
                             </div>
                           </div>
 
                           {/* Detalle por método */}
-                          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                             {d.methods?.map((m) => {
-                              const sc = m.signal === "barato" ? "#16a34a" : m.signal === "caro" ? "#dc2626" : "#eab308";
+                              const sc = m.signal === "barato" ? "var(--positive)" : m.signal === "caro" ? "var(--negative)" : "var(--warning)";
                               return (
-                                <div key={m.name} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11 }}>
-                                  <span style={{ fontFamily: "'DM Mono', monospace", color: "#bbbbbb", minWidth: 60 }}>{m.name}</span>
-                                  <span style={{ color: "#6b8099" }}>actual <b style={{ color: sc }}>{m.actual ?? "—"}x</b></span>
-                                  <span style={{ color: "#bbbbbb" }}>vs sector <b style={{ color: "#e2e8f0" }}>{m.fair}x</b></span>
-                                  <span style={{ marginLeft: "auto", fontFamily: "'DM Mono', monospace", fontWeight: 700, color: "#e2e8f0" }}>
-                                    obj. ${m.target?.toFixed(2)} {cur}
+                                <div key={m.name} style={{
+                                  display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+                                  fontSize: 11, flexWrap: "wrap", padding: "6px 0",
+                                  borderTop: "1px solid color-mix(in srgb, var(--border) 60%, transparent)",
+                                }}>
+                                  <span style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                                    <span style={{ fontFamily: "var(--font-mono)", color: "var(--ink-soft)", fontWeight: 700 }}>{m.name}</span>
+                                    <span style={{ color: "var(--muted)" }}>actual <b style={{ color: sc }}>{m.actual ?? "—"}x</b></span>
+                                    <span style={{ color: "var(--muted)" }}>vs sector <b style={{ color: "var(--ink)" }}>{m.fair}x</b></span>
                                   </span>
-                                  <span style={{ fontSize: 9, fontWeight: 700, color: sc, minWidth: 52, textAlign: "right" }}>
-                                    {m.signal.toUpperCase()}
+                                  <span style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                    <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, color: "var(--ink)", whiteSpace: "nowrap" }}>
+                                      obj. ${m.target?.toFixed(2)} {cur}
+                                    </span>
+                                    <Badge tone={m.signal === "barato" ? "positive" : m.signal === "caro" ? "danger" : "warning"}>
+                                      {m.signal}
+                                    </Badge>
                                   </span>
                                 </div>
                               );
@@ -3277,7 +3286,7 @@ export default function App() {
                             </div>
                           )}
                           {d.fxNote && (
-                            <div style={{ fontSize: 9, color: "#00cc6a", marginTop: 4 }}>
+                            <div style={{ fontSize: 9, color: "var(--positive)", marginTop: 4 }}>
                                {d.fxNote}
                             </div>
                           )}
@@ -3286,8 +3295,8 @@ export default function App() {
                     })()}
 
                     <button onClick={() => removeStock(pos.ticker)} style={{
-                      marginTop: 12, background: "none", border: "1px solid #e5e5e5",
-                      color: "#999999", borderRadius: 999, padding: "4px 12px", cursor: "pointer", fontSize: 11
+                      marginTop: 12, background: "none", border: "1px solid var(--border)",
+                      color: "var(--muted)", borderRadius: 999, padding: "4px 12px", cursor: "pointer", fontSize: 11
                     }}>Eliminar</button>
                     </div>
                   </div>
@@ -3302,51 +3311,51 @@ export default function App() {
         {tab === "optimize" && (
           <div>
             <div style={{
-              background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d",
+              background: "var(--surface)", borderRadius: 24, boxShadow: "none", border: "1.5px solid var(--border)",
               padding: 20, marginBottom: 28
             }}>
               {/* Selector de portafolio */}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                <span style={{ fontSize: 10, color: "#bbbbbb", letterSpacing: "0.1em", fontWeight: 600 }}>PORTAFOLIO A OPTIMIZAR</span>
+                <span style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.1em", fontWeight: 600 }}>PORTAFOLIO A OPTIMIZAR</span>
                 {portfolios.map(p => (
                   <button key={p.id} onClick={() => setActivePortfolioId(p.id)} style={{
-                    background: activePortfolioId === p.id ? "#00ff88" : "#f2f2f2",
-                    color: activePortfolioId === p.id ? "#ffffff" : "#555555",
+                    background: activePortfolioId === p.id ? "#135936" : "var(--surface-2)",
+                    color: activePortfolioId === p.id ? "#ffffff" : "var(--muted)",
                     border: "none", borderRadius: 999, padding: "4px 14px",
                     fontSize: 12, fontWeight: activePortfolioId === p.id ? 700 : 500, cursor: "pointer"
                   }}>{p.name} <span style={{ opacity: 0.7 }}>({p.positions.length})</span></button>
                 ))}
               </div>
-              <div style={{ fontSize: 14, color: "#6b8099", marginBottom: 16, lineHeight: 1.6 }}>
-                Optimización de pesos por <b style={{ color: "#e2e8f0" }}>Máximo Sharpe Ratio</b> usando simulación Monte Carlo (100,000 portafolios). Restricciones: mín <b style={{ color: "#6b8099" }}>2%</b> — máx <b style={{ color: "#6b8099" }}>35%</b> por activo.
-                Tasa libre de riesgo: <b style={{ fontFamily: "'DM Mono', monospace", color: "#6b8099" }}>
+              <div style={{ fontSize: 14, color: "var(--muted)", marginBottom: 16, lineHeight: 1.6 }}>
+                Optimización de pesos por <b style={{ color: "var(--ink)" }}>Máximo Sharpe Ratio</b> usando simulación Monte Carlo (100,000 portafolios). Restricciones: mín <b style={{ color: "var(--muted)" }}>2%</b> — máx <b style={{ color: "var(--muted)" }}>35%</b> por activo.
+                Tasa libre de riesgo: <b style={{ fontFamily: "var(--font-mono)", color: "var(--muted)" }}>
                   {rfRate ? `${(rfRate * 100).toFixed(2)}% (${rfLabel})` : "cargando..."}
                 </b>
               </div>
 
               {/* Period selector */}
               <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, marginBottom: 16 }}>
-                <span style={{ fontSize: 12, color: "#999999", letterSpacing: "0.07em", fontWeight: 500 }}>DATOS HISTÓRICOS:</span>
+                <span style={{ fontSize: 12, color: "var(--muted)", letterSpacing: "0.07em", fontWeight: 500 }}>DATOS HISTÓRICOS:</span>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {["1y", "5y", "10y"].map((p) => (
                     <button key={p} onClick={() => setOptimPeriod(p)} style={{
-                      background: optimPeriod === p ? "#00ff88" : "#141e2d",
-                      border: `1px solid ${optimPeriod === p ? "#00ff88" : "#1e2d3d"}`,
-                      borderRadius: 999, color: optimPeriod === p ? "#0a0a0a" : "#4a6080",
+                      background: optimPeriod === p ? "var(--accent-strong)" : "var(--surface-2)",
+                      border: `1px solid ${optimPeriod === p ? "var(--accent-strong)" : "var(--border)"}`,
+                      borderRadius: 999, color: optimPeriod === p ? "var(--on-accent)" : "var(--muted-2)",
                       padding: "5px 16px", cursor: "pointer", fontSize: 13, fontWeight: 600,
-                      fontFamily: "'DM Mono', monospace",
+                      fontFamily: "var(--font-mono)",
                     }}>
                       {p === "1y" ? "1A" : p === "5y" ? "5A" : "10A"}
                     </button>
                   ))}
-                  <span style={{ fontSize: 11, color: "#999999", alignSelf: "center" }}>
+                  <span style={{ fontSize: 11, color: "var(--muted)", alignSelf: "center" }}>
                     (~{optimPeriod === "1y" ? "52" : optimPeriod === "5y" ? "260" : "520"} sem.)
                   </span>
                 </div>
               </div>
 
               <button onClick={runOptimization} disabled={optimLoading} className="btn-exec" style={{
-                background: optimLoading ? "#999999" : "#0a0a0a",
+                background: optimLoading ? "var(--muted)" : "var(--bg-deep)",
                 border: "none", borderRadius: 999, color: "#ffffff",
                 padding: "12px 28px", cursor: optimLoading ? "not-allowed" : "pointer",
                 fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", gap: 10
@@ -3363,61 +3372,61 @@ export default function App() {
                 <div className="resp-grid-2" style={{ marginBottom: 24 }}>
                   {/* Portafolio Actual */}
                   <div style={{
-                    background: "#111e2e", boxShadow: "none", border: "1.5px solid #1e2d3d",
-                    borderTop: "3px solid #888888", borderRadius: 24, padding: 24
+                    background: "var(--surface)", boxShadow: "none", border: "1.5px solid var(--border)",
+                    borderTop: "3px solid var(--muted)", borderRadius: 24, padding: 24
                   }}>
-                    <div style={{ fontSize: 10, color: "#666666", letterSpacing: "0.1em", marginBottom: 12 }}>PORTAFOLIO ACTUAL</div>
-                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 36, color: "#666666", fontWeight: 700, marginBottom: 16 }}>
+                    <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.1em", marginBottom: 12 }}>PORTAFOLIO ACTUAL</div>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 36, color: "var(--muted)", fontWeight: 700, marginBottom: 16 }}>
                       {optimResult.actualSharpe?.toFixed(4) ?? "—"}
                     </div>
                     <div style={{ display: "flex", gap: 16 }}>
                       <div>
-                        <div style={{ fontSize: 9, color: "#999999", marginBottom: 3 }}>RETORNO ANUAL</div>
-                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 15, color: optimResult.actualStats?.annReturn >= 0 ? "#16a34a" : "#dc2626", fontWeight: 700 }}>
+                        <div style={{ fontSize: 9, color: "var(--muted)", marginBottom: 3 }}>RETORNO ANUAL</div>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 15, color: optimResult.actualStats?.annReturn >= 0 ? "var(--positive)" : "var(--negative)", fontWeight: 700 }}>
                           {optimResult.actualStats?.annReturn >= 0 ? "+" : ""}{optimResult.actualStats?.annReturn}%
                         </div>
                       </div>
                       <div>
-                        <div style={{ fontSize: 9, color: "#999999", marginBottom: 3 }}>VOLATILIDAD ANUAL</div>
-                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 15, color: "#e2e8f0", fontWeight: 700 }}>
+                        <div style={{ fontSize: 9, color: "var(--muted)", marginBottom: 3 }}>VOLATILIDAD ANUAL</div>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 15, color: "var(--ink)", fontWeight: 700 }}>
                           {optimResult.actualStats?.annVol}%
                         </div>
                       </div>
                     </div>
-                    <div style={{ marginTop: 12, fontSize: 10, color: "#999999" }}>Pesos reales por valor de mercado · {optimPeriod}</div>
+                    <div style={{ marginTop: 12, fontSize: 10, color: "var(--muted)" }}>Pesos reales por valor de mercado · {optimPeriod}</div>
                   </div>
 
                   {/* Portafolio Óptimo */}
                   <div style={{
-                    background: "#141e2d",
-                    boxShadow: "none", border: "1.5px solid #1e2d3d",
-                    borderTop: "3px solid #00ff88", borderRadius: 24, padding: 24
+                    background: "var(--surface-2)",
+                    boxShadow: "none", border: "1.5px solid var(--border)",
+                    borderTop: "3px solid var(--accent)", borderRadius: 24, padding: 24
                   }}>
-                    <div style={{ fontSize: 10, color: "#00cc6a", letterSpacing: "0.1em", marginBottom: 12 }}>PORTAFOLIO ÓPTIMO (MONTE CARLO)</div>
-                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 36, color: "#00cc6a", fontWeight: 700, marginBottom: 16 }}>
+                    <div style={{ fontSize: 10, color: "var(--positive)", letterSpacing: "0.1em", marginBottom: 12 }}>PORTAFOLIO ÓPTIMO (MONTE CARLO)</div>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 36, color: "var(--positive)", fontWeight: 700, marginBottom: 16 }}>
                       {optimResult.optimalSharpe?.toFixed(4) ?? optimResult.sharpe.toFixed(4)}
                     </div>
                     <div style={{ display: "flex", gap: 16 }}>
                       <div>
-                        <div style={{ fontSize: 9, color: "#999999", marginBottom: 3 }}>RETORNO ANUAL</div>
-                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 15, color: "#16a34a", fontWeight: 700 }}>
+                        <div style={{ fontSize: 9, color: "var(--muted)", marginBottom: 3 }}>RETORNO ANUAL</div>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 15, color: "var(--positive)", fontWeight: 700 }}>
                           {optimResult.optimalStats?.annReturn >= 0 ? "+" : ""}{optimResult.optimalStats?.annReturn}%
                         </div>
                       </div>
                       <div>
-                        <div style={{ fontSize: 9, color: "#999999", marginBottom: 3 }}>VOLATILIDAD ANUAL</div>
-                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 15, color: "#e2e8f0", fontWeight: 700 }}>
+                        <div style={{ fontSize: 9, color: "var(--muted)", marginBottom: 3 }}>VOLATILIDAD ANUAL</div>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 15, color: "var(--ink)", fontWeight: 700 }}>
                           {optimResult.optimalStats?.annVol}%
                         </div>
                       </div>
                       <div>
-                        <div style={{ fontSize: 9, color: "#999999", marginBottom: 3 }}>MEJORA SHARPE</div>
-                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 15, color: "#16a34a", fontWeight: 700 }}>
+                        <div style={{ fontSize: 9, color: "var(--muted)", marginBottom: 3 }}>MEJORA SHARPE</div>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 15, color: "var(--positive)", fontWeight: 700 }}>
                           +{((optimResult.optimalSharpe ?? optimResult.sharpe) - (optimResult.actualSharpe ?? 0)).toFixed(4)}
                         </div>
                       </div>
                     </div>
-                    <div style={{ marginTop: 12, fontSize: 10, color: "#999999" }}>100,000 simulaciones · mín 2% · máx 35% · {optimPeriod} · rf {rfLabel} {rfRate ? `${(rfRate*100).toFixed(2)}%` : ""}</div>
+                    <div style={{ marginTop: 12, fontSize: 10, color: "var(--muted)" }}>100,000 simulaciones · mín 2% · máx 35% · {optimPeriod} · rf {rfLabel} {rfRate ? `${(rfRate*100).toFixed(2)}%` : ""}</div>
                   </div>
                 </div>
 
@@ -3425,11 +3434,11 @@ export default function App() {
                   <table>
                     <thead>
                       <tr>
-                        <th style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "#888888", padding: "10px 14px", borderBottom: "1px solid #1a2535" }}>TICKER</th>
-                        <th style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "#888888", padding: "10px 14px", borderBottom: "1px solid #1a2535" }}>PESO ÓPTIMO</th>
-                        <th style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "#888888", padding: "10px 14px", borderBottom: "1px solid #1a2535" }}>PESO ACTUAL</th>
-                        <th style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "#888888", padding: "10px 14px", borderBottom: "1px solid #1a2535" }}>DIFERENCIA</th>
-                        <th style={{ fontFamily: "'Syne', sans-serif", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "#888888", padding: "10px 14px", borderBottom: "1px solid #1a2535" }}>ACCIÓN</th>
+                        <th style={{ fontFamily: "var(--font-sans)", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "var(--muted)", padding: "10px 14px", borderBottom: "1px solid var(--border)" }}>TICKER</th>
+                        <th style={{ fontFamily: "var(--font-sans)", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "var(--muted)", padding: "10px 14px", borderBottom: "1px solid var(--border)" }}>PESO ÓPTIMO</th>
+                        <th style={{ fontFamily: "var(--font-sans)", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "var(--muted)", padding: "10px 14px", borderBottom: "1px solid var(--border)" }}>PESO ACTUAL</th>
+                        <th style={{ fontFamily: "var(--font-sans)", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "var(--muted)", padding: "10px 14px", borderBottom: "1px solid var(--border)" }}>DIFERENCIA</th>
+                        <th style={{ fontFamily: "var(--font-sans)", fontWeight: 700, fontSize: 10, textTransform: "uppercase", color: "var(--muted)", padding: "10px 14px", borderBottom: "1px solid var(--border)" }}>ACCIÓN</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -3440,30 +3449,30 @@ export default function App() {
                         const currW = optimResult.actualWeights?.[i] ?? 0;
                         const diff = optW - currW;
                         const action = Math.abs(diff) < 0.02 ? "MANTENER" : diff > 0 ? "AUMENTAR" : "REDUCIR";
-                        const actionColor = action === "AUMENTAR" ? "#16a34a" : action === "REDUCIR" ? "#dc2626" : "#666666";
-                        const rowBg = i % 2 === 0 ? "#111e2e" : "#0d1825";
+                        const actionColor = action === "AUMENTAR" ? "var(--positive)" : action === "REDUCIR" ? "var(--negative)" : "var(--muted)";
+                        const rowBg = i % 2 === 0 ? "var(--surface)" : "#0d1825";
                         return (
                           <tr key={t} style={{ background: rowBg }}>
-                            <td style={{ fontFamily: "'DM Mono', monospace", color: "#e2e8f0", fontWeight: 700 }}>{t}</td>
-                            <td style={{ fontFamily: "'DM Mono', monospace" }}>
+                            <td style={{ fontFamily: "var(--font-mono)", color: "var(--ink)", fontWeight: 700 }}>{t}</td>
+                            <td style={{ fontFamily: "var(--font-mono)" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                 <div style={{
                                   height: 8, width: `${optW * 200}px`, maxWidth: 120,
-                                  background: "#111111", borderRadius: 4
+                                  background: "var(--bg-deep)", borderRadius: 4
                                 }} />
                                 {(optW * 100).toFixed(1)}%
                               </div>
                             </td>
-                            <td style={{ fontFamily: "'DM Mono', monospace", color: "#666666" }}>{(currW * 100).toFixed(1)}%</td>
-                            <td style={{ fontFamily: "'DM Mono', monospace", color: diff > 0 ? "#16a34a" : "#dc2626" }}>
+                            <td style={{ fontFamily: "var(--font-mono)", color: "var(--muted)" }}>{(currW * 100).toFixed(1)}%</td>
+                            <td style={{ fontFamily: "var(--font-mono)", color: diff > 0 ? "var(--positive)" : "var(--negative)" }}>
                               {diff > 0 ? "+" : ""}{(diff * 100).toFixed(1)}%
                             </td>
                             <td>
                               <span style={{
-                                background: action === "AUMENTAR" ? "#00ff88" : action === "REDUCIR" ? "#0a0a0a" : "#e0e0d8",
-                                color: action === "AUMENTAR" ? "#0a0a0a" : action === "REDUCIR" ? "#ffffff" : "#0a0a0a",
+                                background: action === "AUMENTAR" ? "var(--accent-strong)" : action === "REDUCIR" ? "var(--bg-deep)" : "var(--surface-3)",
+                                color: action === "AUMENTAR" ? "var(--on-accent)" : action === "REDUCIR" ? "#ffffff" : "var(--ink)",
                                 borderRadius: 999, padding: "2px 12px", fontSize: 11,
-                                fontFamily: "'Syne', sans-serif", fontWeight: 700,
+                                fontFamily: "var(--font-sans)", fontWeight: 700,
                               }}>{action}</span>
                             </td>
                           </tr>
@@ -3475,41 +3484,41 @@ export default function App() {
 
                 {/* Matriz de correlación */}
                 {optimResult.corrMatrix && (
-                  <div style={{ marginTop: 28, background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: 24 }}>
-                    <div style={{ fontSize: 12, color: "#999999", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 6 }}>MATRIZ DE CORRELACIÓN</div>
-                    <div style={{ fontSize: 11, color: "#999999", marginBottom: 18 }}>
+                  <div style={{ marginTop: 28, background: "var(--surface)", borderRadius: 24, boxShadow: "none", border: "1.5px solid var(--border)", padding: 24 }}>
+                    <div style={{ fontSize: 12, color: "var(--muted)", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 6 }}>MATRIZ DE CORRELACIÓN</div>
+                    <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 18 }}>
                       Rojo = alta correlación (mueven igual) · Azul = baja/negativa (diversifican) · 1.00 = idénticos
                     </div>
                     <div style={{ overflowX: "auto" }}>
                       <table style={{ borderCollapse: "separate", borderSpacing: 3 }}>
                         <thead>
                           <tr>
-                            <th style={{ padding: "4px 8px", fontSize: 10, color: "#999999", textAlign: "left", minWidth: 90 }}></th>
+                            <th style={{ padding: "4px 8px", fontSize: 10, color: "var(--muted)", textAlign: "left", minWidth: 90 }}></th>
                             {optimResult.tickers.map((t) => (
-                              <th key={t} style={{ padding: "4px 8px", fontSize: 10, color: "#8fa3b8", textAlign: "center", minWidth: 80, fontFamily: "'Syne', sans-serif", fontWeight: 700, textTransform: "uppercase" }}>{t}</th>
+                              <th key={t} style={{ padding: "4px 8px", fontSize: 10, color: "var(--muted)", textAlign: "center", minWidth: 80, fontFamily: "var(--font-sans)", fontWeight: 700, textTransform: "uppercase" }}>{t}</th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
                           {optimResult.tickers.map((rowT, i) => (
                             <tr key={rowT}>
-                              <td style={{ padding: "4px 8px", fontSize: 10, color: "#8fa3b8", fontFamily: "'Syne', sans-serif", fontWeight: 700, textTransform: "uppercase", whiteSpace: "nowrap" }}>{rowT}</td>
+                              <td style={{ padding: "4px 8px", fontSize: 10, color: "var(--muted)", fontFamily: "var(--font-sans)", fontWeight: 700, textTransform: "uppercase", whiteSpace: "nowrap" }}>{rowT}</td>
                               {optimResult.corrMatrix[i].map((val, j) => {
                                 let bg, textColor;
                                 if (i === j) {
-                                  bg = "#0a0a0a"; textColor = "#ffffff";
+                                  bg = "var(--bg-deep)"; textColor = "#ffffff";
                                 } else if (val > 0.5) {
-                                  bg = "#0a0a0a"; textColor = "#00ff88";
+                                  bg = "var(--bg-deep)"; textColor = "#7fe3a0";
                                 } else if (val < -0.1) {
-                                  bg = "#ff3b3b20"; textColor = "#ff3b3b";
+                                  bg = "var(--negative-soft)"; textColor = "var(--negative)";
                                 } else {
-                                  bg = "#f5f5f0"; textColor = "#0a0a0a";
+                                  bg = "var(--surface-2)"; textColor = "var(--ink)";
                                 }
                                 return (
                                   <td key={j} style={{
                                     background: bg, borderRadius: 6,
                                     padding: "8px 6px", textAlign: "center",
-                                    fontFamily: "'DM Mono', monospace",
+                                    fontFamily: "var(--font-mono)",
                                     fontSize: 12, fontWeight: 700, color: textColor,
                                     minWidth: 80
                                   }}>{val.toFixed(2)}</td>
@@ -3529,7 +3538,7 @@ export default function App() {
                         { color: "rgba(100,116,139,0.3)", text: "Baja (0–0.4) — buena diversificación" },
                         { color: "rgba(56,189,248,0.5)",  text: "Negativa — diversificación óptima" },
                       ].map((l) => (
-                        <div key={l.text} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#666666" }}>
+                        <div key={l.text} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--muted)" }}>
                           <div style={{ width: 14, height: 14, borderRadius: 3, background: l.color }} />
                           {l.text}
                         </div>
@@ -3540,9 +3549,9 @@ export default function App() {
 
                 {/* ── Recomendaciones ── */}
                 {optimResult.recommendations?.length > 0 && (
-                  <div style={{ marginTop: 28, background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: 24 }}>
-                    <div style={{ fontSize: 12, color: "#999999", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 4 }}>RECOMENDACIONES PARA TU PORTAFOLIO</div>
-                    <div style={{ fontSize: 11, color: "#999999", marginBottom: 18 }}>
+                  <div style={{ marginTop: 28, background: "var(--surface)", borderRadius: 24, boxShadow: "none", border: "1.5px solid var(--border)", padding: 24 }}>
+                    <div style={{ fontSize: 12, color: "var(--muted)", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 4 }}>RECOMENDACIONES PARA TU PORTAFOLIO</div>
+                    <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 18 }}>
                       Top activos que mejorarían tu portafolio — score compuesto: Mejora Sharpe 40% · Baja correlación 35% · Sharpe individual 25%
                     </div>
                     <div style={{ overflowX: "auto" }}>
@@ -3560,31 +3569,31 @@ export default function App() {
                         </thead>
                         <tbody>
                           {optimResult.recommendations.map((r, idx) => {
-                            const scoreColor = r.score >= 65 ? "#16a34a" : r.score >= 45 ? "#eab308" : "#dc2626";
-                            const corrColor  = r.avgCorr < 0.3 ? "#16a34a" : r.avgCorr < 0.6 ? "#eab308" : "#dc2626";
-                            const deltaColor = r.sharpeDelta > 0.05 ? "#16a34a" : r.sharpeDelta > 0 ? "#eab308" : "#dc2626";
+                            const scoreColor = r.score >= 65 ? "var(--positive)" : r.score >= 45 ? "var(--warning)" : "var(--negative)";
+                            const corrColor  = r.avgCorr < 0.3 ? "var(--positive)" : r.avgCorr < 0.6 ? "var(--warning)" : "var(--negative)";
+                            const deltaColor = r.sharpeDelta > 0.05 ? "var(--positive)" : r.sharpeDelta > 0 ? "var(--warning)" : "var(--negative)";
                             const verdict    = r.score >= 65 ? "AGREGAR" : r.score >= 45 ? "CONSIDERAR" : "OMITIR";
-                            const verdictColor = verdict === "AGREGAR" ? "#16a34a" : verdict === "CONSIDERAR" ? "#eab308" : "#999999";
+                            const verdictColor = verdict === "AGREGAR" ? "var(--positive)" : verdict === "CONSIDERAR" ? "var(--warning)" : "var(--muted)";
                             return (
                               <tr key={r.ticker}>
-                                <td style={{ color: "#999999", fontSize: 12 }}>{idx + 1}</td>
-                                <td style={{ fontFamily: "'DM Mono', monospace", color: "#e2e8f0", fontWeight: 700 }}>{r.ticker}</td>
+                                <td style={{ color: "var(--muted)", fontSize: 12 }}>{idx + 1}</td>
+                                <td style={{ fontFamily: "var(--font-mono)", color: "var(--ink)", fontWeight: 700 }}>{r.ticker}</td>
                                 <td>
                                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                    <div style={{ background: "#1a2535", borderRadius: 4, height: 6, width: 80, overflow: "hidden" }}>
+                                    <div style={{ background: "var(--border)", borderRadius: 4, height: 6, width: 80, overflow: "hidden" }}>
                                       <div style={{ width: `${r.score}%`, height: "100%", background: scoreColor, borderRadius: 4 }} />
                                     </div>
-                                    <span style={{ fontFamily: "'DM Mono', monospace", color: scoreColor, fontWeight: 700, fontSize: 13 }}>{r.score}</span>
+                                    <span style={{ fontFamily: "var(--font-mono)", color: scoreColor, fontWeight: 700, fontSize: 13 }}>{r.score}</span>
                                   </div>
                                 </td>
-                                <td style={{ fontFamily: "'DM Mono', monospace", color: corrColor, fontSize: 13 }}>{r.avgCorr.toFixed(2)}</td>
-                                <td style={{ fontFamily: "'DM Mono', monospace", color: r.candSharpe > 0 ? "#16a34a" : "#dc2626", fontSize: 13 }}>{r.candSharpe.toFixed(2)}</td>
-                                <td style={{ fontFamily: "'DM Mono', monospace", color: deltaColor, fontSize: 13 }}>
+                                <td style={{ fontFamily: "var(--font-mono)", color: corrColor, fontSize: 13 }}>{r.avgCorr.toFixed(2)}</td>
+                                <td style={{ fontFamily: "var(--font-mono)", color: r.candSharpe > 0 ? "var(--positive)" : "var(--negative)", fontSize: 13 }}>{r.candSharpe.toFixed(2)}</td>
+                                <td style={{ fontFamily: "var(--font-mono)", color: deltaColor, fontSize: 13 }}>
                                   {r.sharpeDelta > 0 ? "+" : ""}{r.sharpeDelta.toFixed(3)}
                                 </td>
                                 <td>
                                   <span style={{
-                                    background: `${verdictColor}22`, border: `1px solid ${verdictColor}44`,
+                                    background: `color-mix(in srgb, ${verdictColor} 13%, transparent)`, border: `1px solid color-mix(in srgb, ${verdictColor} 27%, transparent)`,
                                     color: verdictColor, borderRadius: 6, padding: "2px 10px", fontSize: 11, fontWeight: 700
                                   }}>{verdict}</span>
                                 </td>
@@ -3594,7 +3603,7 @@ export default function App() {
                         </tbody>
                       </table>
                     </div>
-                    <div style={{ marginTop: 14, fontSize: 11, color: "#999999" }}>
+                    <div style={{ marginTop: 14, fontSize: 11, color: "var(--muted)" }}>
                       Candidatos evaluados: {CANDIDATE_TICKERS.filter(t => !optimResult.tickers.includes(t)).length} tickers · Período: {optimPeriod}
                     </div>
                   </div>
@@ -3608,19 +3617,19 @@ export default function App() {
         {tab === "screener" && (
           <div>
             <div style={{
-              background: "#111e2e", boxShadow: "none", border: "1.5px solid #1e2d3d",
+              background: "var(--surface)", boxShadow: "none", border: "1.5px solid var(--border)",
               borderRadius: 24, padding: 20, marginBottom: 28
             }}>
-              <div style={{ fontSize: 12, color: "#999999", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 8 }}>TICKERS A ANALIZAR (separados por coma, incluye .MX para México)</div>
+              <div style={{ fontSize: 12, color: "var(--muted)", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 8 }}>TICKERS A ANALIZAR (separados por coma, incluye .MX para México)</div>
               <textarea value={screenerTickers} onChange={(e) => setScreenerTickers(e.target.value)}
                 style={{
-                  width: "100%", background: "#141e2d", border: "1px solid #e5e5e5",
-                  borderRadius: 8, color: "#e2e8f0", padding: "10px 14px", fontSize: 13,
-                  fontFamily: "'DM Mono', monospace", minHeight: 60, resize: "vertical"
+                  width: "100%", background: "var(--surface-2)", border: "1px solid var(--border)",
+                  borderRadius: 8, color: "var(--ink)", padding: "10px 14px", fontSize: 13,
+                  fontFamily: "var(--font-mono)", minHeight: 60, resize: "vertical"
                 }} />
               <div style={{ display: "flex", alignItems: "center", gap: 16, marginTop: 12 }}>
                 <button onClick={runScreener} disabled={screenerLoading} className="btn-exec" style={{
-                  background: screenerLoading ? "#1a2535" : "#00ff88",
+                  background: screenerLoading ? "#3a4b42" : "#135936",
                   border: "none", borderRadius: 999, color: "#ffffff",
                   padding: "12px 28px", cursor: screenerLoading ? "not-allowed" : "pointer",
                   fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", gap: 10
@@ -3629,17 +3638,17 @@ export default function App() {
                   {screenerLoading ? `Analizando... ${screenerProgress}%` : " Ejecutar ML Screener"}
                 </button>
                 {screenerLoading && (
-                  <div style={{ flex: 1, background: "#1a2535", borderRadius: 4, height: 6, overflow: "hidden" }}>
+                  <div style={{ flex: 1, background: "var(--border)", borderRadius: 4, height: 6, overflow: "hidden" }}>
                     <div style={{
                       width: `${screenerProgress}%`, height: "100%",
-                      background: "#111111", transition: "width 0.3s ease"
+                      background: "var(--bg-deep)", transition: "width 0.3s ease"
                     }} />
                   </div>
                 )}
               </div>
-              <div style={{ marginTop: 8, fontSize: 11, color: "#999999" }}>
+              <div style={{ marginTop: 8, fontSize: 11, color: "var(--muted)" }}>
                 Motor cuantitativo de scoring: puntúa cada acción del 1 al 10 en 6 dimensiones —
-                <b style={{ color: "#666666" }}> Fundamental, Valuación, Momentum, Calidad, Técnico y Overall</b> —
+                <b style={{ color: "var(--muted)" }}> Fundamental, Valuación, Momentum, Calidad, Técnico y Overall</b> —
                 usando PE, PEG, PEGY, EV/EBITDA, ROE, Márgenes, Deuda/Capital, Crecimiento y variación 52 semanas (Yahoo Finance).
               </div>
             </div>
@@ -3648,24 +3657,24 @@ export default function App() {
               <div className="screener-cards" style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))" }}>
                 {[...screenerData].sort((a, b) => (b.scores?.overall_score ?? 0) - (a.scores?.overall_score ?? 0)).map((stock) => {
                   const s = stock.scores;
-                  const recColor = s?.recommendation === "BUY" ? "#16a34a" : s?.recommendation === "SELL" ? "#dc2626" : "#eab308";
+                  const recColor = s?.recommendation === "BUY" ? "var(--positive)" : s?.recommendation === "SELL" ? "var(--negative)" : "var(--warning)";
                   return (
-                    <div key={stock.ticker} style={{
-                      background: "#111e2e", boxShadow: "none", border: "1.5px solid #1e2d3d",
+                    <div className="kpi-hover" key={stock.ticker} style={{
+                      background: "var(--surface)", boxShadow: "none", border: "1.5px solid var(--border)",
                       borderRadius: 24, padding: 20, animation: "fadeIn 0.4s ease",
                       borderTop: `3px solid ${recColor}`
                     }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
                         <div>
-                          <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: "#e2e8f0" }}>{stock.ticker}</div>
-                          <div style={{ fontSize: 11, color: "#666666", marginTop: 2 }}>{stock.name ?? "—"}</div>
-                          {stock.price && <div style={{ fontSize: 13, color: "#666666", marginTop: 4 }}>
+                          <div style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 15, color: "var(--ink)" }}>{stock.ticker}</div>
+                          <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{stock.name ?? "—"}</div>
+                          {stock.price && <div style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
                             ${stock.price.toFixed(2)}
                           </div>}
                         </div>
                         {s && (
                           <div style={{ textAlign: "right" }}>
-                            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 28, fontWeight: 700, color: recColor }}>
+                            <div style={{ fontFamily: "var(--font-mono)", fontSize: 28, fontWeight: 700, color: recColor }}>
                               {s.overall_score}
                             </div>
                             <div style={{ fontSize: 10, color: recColor, fontWeight: 700, letterSpacing: "0.1em" }}>
@@ -3681,24 +3690,24 @@ export default function App() {
                           display: "flex", alignItems: "center", gap: 10,
                           background: stock.sharpe1y >= 1 ? "#0a2a1a" : stock.sharpe1y >= 0.5 ? "#1a1200" : "#2a0a0a",
                           borderRadius: 10, padding: "8px 12px", marginBottom: 12,
-                          borderLeft: `3px solid ${stock.sharpe1y >= 1 ? "#4ade80" : stock.sharpe1y >= 0.5 ? "#fbbf24" : "#f87171"}`
+                          borderLeft: `3px solid ${stock.sharpe1y >= 1 ? "var(--positive)" : stock.sharpe1y >= 0.5 ? "#fbbf24" : "var(--negative)"}`
                         }}>
                           <div>
-                            <div style={{ fontSize: 9, color: "#bbbbbb", letterSpacing: "0.1em", fontWeight: 600 }}>SHARPE 1A · {rfLabel}</div>
-                            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 20, fontWeight: 700,
-                              color: stock.sharpe1y >= 1 ? "#16a34a" : stock.sharpe1y >= 0.5 ? "#d97706" : "#dc2626"
+                            <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: "0.1em", fontWeight: 600 }}>SHARPE 1A · {rfLabel}</div>
+                            <div style={{ fontFamily: "var(--font-mono)", fontSize: 20, fontWeight: 700,
+                              color: stock.sharpe1y >= 1 ? "var(--positive)" : stock.sharpe1y >= 0.5 ? "var(--warning)" : "var(--negative)"
                             }}>{stock.sharpe1y > 0 ? "+" : ""}{stock.sharpe1y}</div>
                           </div>
                           <div style={{ flex: 1 }}>
-                            <div style={{ background: "#1a2535", borderRadius: 4, height: 5, overflow: "hidden" }}>
+                            <div style={{ background: "var(--border)", borderRadius: 4, height: 5, overflow: "hidden" }}>
                               <div style={{
                                 width: `${Math.min(Math.max((stock.sharpe1y / 3) * 100, 0), 100)}%`,
                                 height: "100%", borderRadius: 4,
-                                background: stock.sharpe1y >= 1 ? "#16a34a" : stock.sharpe1y >= 0.5 ? "#d97706" : "#dc2626",
+                                background: stock.sharpe1y >= 1 ? "var(--positive)" : stock.sharpe1y >= 0.5 ? "var(--warning)" : "var(--negative)",
                                 transition: "width 0.6s ease"
                               }} />
                             </div>
-                            <div style={{ fontSize: 9, color: "#bbbbbb", marginTop: 3 }}>
+                            <div style={{ fontSize: 9, color: "var(--muted)", marginTop: 3 }}>
                               ≥1.0 excelente · 0.5-1.0 bueno · &lt;0.5 bajo
                             </div>
                           </div>
@@ -3718,10 +3727,10 @@ export default function App() {
                           { l: "Lev", v: stock.leverageRatio },
                         ].map((m) => m.v != null && (
                           <span key={m.l} style={{
-                            background: "#1a2535", border: "none",
+                            background: "var(--border)", border: "none",
                             borderRadius: 8, padding: "3px 8px", fontSize: 11,
-                            fontFamily: "'DM Mono', monospace", color: "#666666"
-                          }}>{m.l}: <b style={{ color: "#e2e8f0" }}>{m.v}</b></span>
+                            fontFamily: "var(--font-mono)", color: "var(--muted)"
+                          }}>{m.l}: <b style={{ color: "var(--ink)" }}>{m.v}</b></span>
                         ))}
                       </div>
 
@@ -3735,8 +3744,8 @@ export default function App() {
                           <ScoreBar value={s.overall_score} label="Overall" />
                           {s.rationale && (
                             <div style={{
-                              marginTop: 12, background: "#141e2d", borderRadius: 8,
-                              padding: "8px 12px", fontSize: 11, color: "#666666", lineHeight: 1.5
+                              marginTop: 12, background: "var(--surface-2)", borderRadius: 8,
+                              padding: "8px 12px", fontSize: 11, color: "var(--muted)", lineHeight: 1.5
                             }}>
                                {s.rationale}
                             </div>
@@ -3744,30 +3753,30 @@ export default function App() {
                         </>
                       )}
                       {!s && (
-                        <div style={{ color: "#999999", fontSize: 12 }}>Procesando...</div>
+                        <div style={{ color: "var(--muted)", fontSize: 12 }}>Procesando...</div>
                       )}
 
                       {/* Valuación por múltiplos */}
                       {stock.dcf && !stock.dcf.error && (() => {
                         const d = stock.dcf;
-                        const mc = d.margin == null ? "#bbbbbb" : d.margin > 15 ? "#16a34a" : d.margin > 0 ? "#eab308" : "#dc2626";
+                        const mc = d.margin == null ? "var(--muted)" : d.margin > 15 ? "var(--positive)" : d.margin > 0 ? "var(--warning)" : "var(--negative)";
                         return (
-                          <div style={{ marginTop: 10, padding: "10px 12px", background: "#141e2d", borderRadius: 10, borderLeft: `3px solid ${mc}` }}>
+                          <div style={{ marginTop: 10, padding: "10px 12px", background: "var(--surface-2)", borderRadius: 10, borderLeft: `3px solid ${mc}` }}>
                             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
-                              <div style={{ fontSize: 9, color: "#bbbbbb", letterSpacing: "0.1em", fontWeight: 600 }}>MÚLTIPLOS · {d.sector || "—"}</div>
+                              <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: "0.1em", fontWeight: 600 }}>MÚLTIPLOS · {d.sector || "—"}</div>
                               <div style={{ fontSize: 10, fontWeight: 700, color: mc }}>{d.overall}</div>
                             </div>
                             <div style={{ display: "flex", gap: 10, alignItems: "baseline", marginBottom: 8 }}>
-                              {d.fairPrice != null && <span style={{ fontSize: 12 }}>Justo <b style={{ fontFamily: "'DM Mono', monospace", color: "#e2e8f0" }}>${d.fairPrice.toFixed(2)}</b></span>}
-                              {d.margin != null && <span style={{ fontSize: 12 }}>Descuento <b style={{ fontFamily: "'DM Mono', monospace", color: mc }}>{d.margin > 0 ? "+" : ""}{d.margin}%</b></span>}
+                              {d.fairPrice != null && <span style={{ fontSize: 12 }}>Justo <b style={{ fontFamily: "var(--font-mono)", color: "var(--ink)" }}>${d.fairPrice.toFixed(2)}</b></span>}
+                              {d.margin != null && <span style={{ fontSize: 12 }}>Descuento <b style={{ fontFamily: "var(--font-mono)", color: mc }}>{d.margin > 0 ? "+" : ""}{d.margin}%</b></span>}
                             </div>
                             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                               {d.methods?.map((m) => {
-                                const sc = m.signal === "barato" ? "#16a34a" : m.signal === "caro" ? "#dc2626" : "#eab308";
+                                const sc = m.signal === "barato" ? "var(--positive)" : m.signal === "caro" ? "var(--negative)" : "var(--warning)";
                                 return (
-                                  <span key={m.name} style={{ fontSize: 10, background: "#1a2535", borderRadius: 6, padding: "2px 7px", color: "#8fa3b8" }}>
-                                    {m.name} <b style={{ fontFamily: "'DM Mono', monospace", color: sc }}>{m.actual ?? "—"}x</b>
-                                    <span style={{ color: "#bbbbbb" }}>/{m.fair}x</span>
+                                  <span key={m.name} style={{ fontSize: 10, background: "var(--border)", borderRadius: 6, padding: "2px 7px", color: "var(--muted)" }}>
+                                    {m.name} <b style={{ fontFamily: "var(--font-mono)", color: sc }}>{m.actual ?? "—"}x</b>
+                                    <span style={{ color: "var(--muted)" }}>/{m.fair}x</span>
                                   </span>
                                 );
                               })}
@@ -3779,15 +3788,15 @@ export default function App() {
                       {/* Momentum relativo */}
                       {stock.momentum && !stock.momentum.error && (() => {
                         const m = stock.momentum;
-                        const scoreColor = m.score === 3 ? "#16a34a" : m.score >= 2 ? "#eab308" : "#dc2626";
+                        const scoreColor = m.score === 3 ? "var(--positive)" : m.score >= 2 ? "var(--warning)" : "var(--negative)";
                         return (
-                          <div style={{ marginTop: 8, padding: "8px 10px", background: "#141e2d", borderRadius: 8 }}>
-                            <div style={{ fontSize: 9, color: "#bbbbbb", letterSpacing: "0.1em", marginBottom: 6 }}>MOMENTUM vs {m.benchmark} ({m.sector})</div>
+                          <div style={{ marginTop: 8, padding: "8px 10px", background: "var(--surface-2)", borderRadius: 8 }}>
+                            <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: "0.1em", marginBottom: 6 }}>MOMENTUM vs {m.benchmark} ({m.sector})</div>
                             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
                               {[["3M", m.alpha?.m3], ["6M", m.alpha?.m6], ["12M", m.alpha?.m12]].map(([label, alpha]) => alpha != null && (
                                 <div key={label} style={{ fontSize: 11 }}>
-                                  <span style={{ color: "#bbbbbb" }}>{label}: </span>
-                                  <b style={{ fontFamily: "'DM Mono', monospace", color: alpha > 0 ? "#16a34a" : "#dc2626" }}>
+                                  <span style={{ color: "var(--muted)" }}>{label}: </span>
+                                  <b style={{ fontFamily: "var(--font-mono)", color: alpha > 0 ? "var(--positive)" : "var(--negative)" }}>
                                     {alpha > 0 ? "+" : ""}{alpha}%
                                   </b>
                                 </div>
@@ -3805,14 +3814,14 @@ export default function App() {
                         onClick={() => runAnalisis(stock.ticker)}
                         style={{
                           marginTop: 14, width: "100%",
-                          background: "#0a0a0a", color: "#00ff88",
+                          background: "var(--bg-deep)", color: "#7fe3a0",
                           border: "none", borderRadius: 10,
                           padding: "10px 0", cursor: "pointer",
-                          fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 12,
+                          fontWeight: 800, fontSize: 12,
                           letterSpacing: "0.06em", transition: "all 0.15s",
                         }}
-                        onMouseEnter={e => { e.currentTarget.style.background = "#00ff88"; e.currentTarget.style.color = "#0a0a0a"; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = "#0a0a0a"; e.currentTarget.style.color = "#00ff88"; }}
+                        onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-strong)"; e.currentTarget.style.color = "var(--on-accent)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "var(--bg-deep)"; e.currentTarget.style.color = "#7fe3a0"; }}
                       >
                         VER ANÁLISIS COMPLETO →
                       </button>
@@ -3835,10 +3844,10 @@ export default function App() {
 
           const MX_REF = [
             { label: "Inflación INPC",  value: "4.53%",   period: "1a Q Abr 2026",   color: "#ea580c", icon: "" },
-            { label: "PIB Q1 2026",     value: "+0.2%",   period: "Trim. INEGI",     color: "#16a34a", icon: "" },
+            { label: "PIB Q1 2026",     value: "+0.2%",   period: "Trim. INEGI",     color: "var(--positive)", icon: "" },
             { label: "TIIE Fondeo 1D",  value: "6.76%",   period: "Banxico May 2026", color: "#7c3aed", icon: "" },
             { label: "TIIE 28D",        value: "7.02%",   period: "Banxico May 2026", color: "#6d28d9", icon: "" },
-            { label: "Desempleo",       value: "2.4%",    period: "Mar 2026",        color: "#16a34a", icon: "" },
+            { label: "Desempleo",       value: "2.4%",    period: "Mar 2026",        color: "var(--positive)", icon: "" },
             { label: "Deuda / PIB",     value: "50.4%",   period: "Q1 2026",         color: "#ea580c", icon: "" },
             { label: "Reservas Intl.",  value: "$256.5B", period: "24 Abr 2026",     color: "#0284c7", icon: "" },
           ];
@@ -3850,35 +3859,35 @@ export default function App() {
 
           // VIX color
           const vixVal = macroData?.vix?.value;
-          const vixColor = vixVal > 30 ? "#dc2626" : vixVal > 20 ? "#ca8a04" : "#16a34a";
+          const vixColor = vixVal > 30 ? "var(--negative)" : vixVal > 20 ? "#ca8a04" : "var(--positive)";
 
           // ── Componentes de panel tipo terminal financiero ──
           const DataRow = ({ label, icon, value, pct, sub, hero }) => {
             const isN = pct == null;
             const up  = !isN && pct >= 0;
-            const cc  = up ? "#4ade80" : "#f87171";
+            const cc  = up ? "var(--positive)" : "var(--negative)";
             const bg  = up ? "#0a2a1a" : "#2a0a0a";
             const bdr = up ? "#166534" : "#7f1d1d";
             return (
               <div style={{
                 display: "flex", alignItems: "center", gap: 10,
                 padding: hero ? "10px 14px" : "8px 12px",
-                borderBottom: "1px solid #1a2535",
-                background: hero ? bg : "#111e2e",
+                borderBottom: "1px solid var(--border)",
+                background: hero ? bg : "var(--surface)",
                 borderLeft: hero ? `3px solid ${cc}` : "none",
               }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 9, color: "#888888", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Syne', sans-serif" }}>{label}</div>
-                  {sub && <div style={{ fontSize: 9, color: "#aaaaaa", marginTop: 1 }}>{sub}</div>}
+                  <div style={{ fontSize: 9, color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "var(--font-sans)" }}>{label}</div>
+                  {sub && <div style={{ fontSize: 9, color: "var(--muted)", marginTop: 1 }}>{sub}</div>}
                 </div>
-                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: hero ? 18 : 13, fontWeight: 700, color: "#e2e8f0", marginRight: isN ? 0 : 8, flexShrink: 0 }}>
+                <div style={{ fontFamily: "var(--font-mono)", fontSize: hero ? 18 : 13, fontWeight: 700, color: "var(--ink)", marginRight: isN ? 0 : 8, flexShrink: 0 }}>
                   {value ?? <span style={{ color: "#d1d5db" }}>—</span>}
                 </div>
                 {!isN
                   ? <span style={{
                       flexShrink: 0, fontSize: 10, fontWeight: 700,
                       color: cc, minWidth: 60, textAlign: "right",
-                      fontFamily: "'DM Mono', monospace",
+                      fontFamily: "var(--font-mono)",
                     }}>
                       {up ? "+" : ""}{Math.abs(pct).toFixed(2)}%
                     </span>
@@ -3890,16 +3899,16 @@ export default function App() {
 
           const Panel = ({ title, color = "#3b82f6", children, style = {} }) => (
             <div style={{
-              background: "#111e2e", borderRadius: 16, overflow: "hidden",
-              border: "1px solid #1e2d3d",
+              background: "var(--surface)", borderRadius: 16, overflow: "hidden",
+              border: "1px solid var(--border)",
               ...style
             }}>
               <div style={{
                 padding: "8px 16px",
-                borderBottom: "1px solid #1a2535",
-                background: "#0d1825",
+                borderBottom: "1px solid var(--border)",
+                background: "var(--bg-deep)",
               }}>
-                <span style={{ fontSize: 9, fontWeight: 700, color: "#888888", textTransform: "uppercase", letterSpacing: "0.2em", fontFamily: "'Syne', sans-serif" }}>{title}</span>
+                <span style={{ fontSize: 9, fontWeight: 700, color: "#8fa3b8", textTransform: "uppercase", letterSpacing: "0.2em", fontFamily: "var(--font-sans)" }}>{title}</span>
               </div>
               {children}
             </div>
@@ -3909,19 +3918,19 @@ export default function App() {
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
               {/* ── HERO ── */}
-              <div style={{ background: "linear-gradient(135deg, #0a1628 0%, #111e2e 100%)", borderRadius: 20, padding: "32px 28px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 16, border: "1px solid #1e2d3d" }}>
+              <div style={{ background: "linear-gradient(135deg, #0a1628 0%, var(--bg-deep) 100%)", borderRadius: 20, padding: "32px 28px", display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: 16, border: "1px solid var(--border)" }}>
                 <div>
-                  <div className="hero-title stat-shimmer" style={{ fontSize: 48, fontWeight: 800, color: "#00ff88", letterSpacing: "-0.04em", fontFamily: "'Syne', sans-serif", lineHeight: 1.05 }}>
+                  <div className="hero-title stat-shimmer-dark" style={{ fontSize: 48, fontWeight: 800, color: "#79df9b", letterSpacing: "-0.04em", fontFamily: "var(--font-sans)", lineHeight: 1.05 }}>
                     Panorama de<br />Mercados
                   </div>
-                  <div style={{ fontSize: 13, color: "#4a6080", marginTop: 12 }}>
+                  <div style={{ fontSize: 13, color: "#8fa3b8", marginTop: 12 }}>
                     Indicadores globales · México · Noticias
                     {lastUpdStr && <span style={{ marginLeft: 10 }}>· Act. {lastUpdStr}</span>}
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   <button onClick={() => { loadMarketData(); setCountdown(60); }} disabled={marketDataLoading} style={{
-                    background: "#0a0a0a", border: "none", borderRadius: 8, color: "#ffffff",
+                    background: "#135936", border: "none", borderRadius: 8, color: "#ffffff",
                     padding: "8px 16px", cursor: marketDataLoading ? "not-allowed" : "pointer",
                     fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
                     transition: "all 0.15s", opacity: marketDataLoading ? 0.5 : 1,
@@ -3929,7 +3938,7 @@ export default function App() {
                     {marketDataLoading ? <Spinner size={11} /> : "↻"} Mercados
                   </button>
                   <button onClick={loadMarketNews} disabled={marketNewsLoading} style={{
-                    background: "transparent", border: "1px solid #2d3f55", borderRadius: 8, color: "#8fa3b8",
+                    background: "transparent", border: "1px solid rgba(255,255,255,.2)", borderRadius: 8, color: "#8fa3b8",
                     padding: "8px 16px", cursor: marketNewsLoading ? "not-allowed" : "pointer",
                     fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
                     transition: "all 0.15s", opacity: marketNewsLoading ? 0.5 : 1,
@@ -3943,27 +3952,27 @@ export default function App() {
               {md && (
                 <div className="bento-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16 }}>
                   {[
-                    { key: "sp500",  label: "S&P 500",  dec: 2,              bg: "#0a0a0a", fg: "#ffffff" },
-                    { key: "nasdaq", label: "NASDAQ",    dec: 2,              bg: "#00ff88", fg: "#0a0a0a" },
-                    { key: "dow",    label: "DJIA",      dec: 2,              bg: "#f0f0eb", fg: "#0a0a0a" },
-                    { key: "ipc",    label: "IPC MX",    dec: 2,              bg: "#0a0a0a", fg: "#ffffff" },
-                    { key: "usdmxn",label: "USD · MXN", dec: 4,              bg: "#00ff88", fg: "#0a0a0a" },
-                    { key: "gold",   label: "Oro",       dec: 2, unit: "/oz", bg: "#0a0a0a", fg: "#ffffff" },
-                    { key: "wti",    label: "WTI Crude", dec: 2, unit: "/bbl",bg: "#00ff88", fg: "#0a0a0a" },
-                    { key: "btc",    label: "Bitcoin",   dec: 0,              bg: "#0a0a0a", fg: "#ffffff" },
+                    { key: "sp500",  label: "S&P 500",  dec: 2,              bg: "#11251c", fg: "#ffffff" },
+                    { key: "nasdaq", label: "NASDAQ",    dec: 2,              bg: "#79df9b", fg: "#11251c" },
+                    { key: "dow",    label: "DJIA",      dec: 2,              bg: "#eceee8", fg: "#11251c" },
+                    { key: "ipc",    label: "IPC MX",    dec: 2,              bg: "#11251c", fg: "#ffffff" },
+                    { key: "usdmxn",label: "USD · MXN", dec: 4,              bg: "#79df9b", fg: "#11251c" },
+                    { key: "gold",   label: "Oro",       dec: 2, unit: "/oz", bg: "#11251c", fg: "#ffffff" },
+                    { key: "wti",    label: "WTI Crude", dec: 2, unit: "/bbl",bg: "#79df9b", fg: "#11251c" },
+                    { key: "btc",    label: "Bitcoin",   dec: 0,              bg: "#11251c", fg: "#ffffff" },
                   ].map(({ key, label, dec, unit, bg, fg }) => {
                     const d = md[key];
                     const up = d?.change_pct >= 0;
                     const isDark = fg === "#ffffff";
-                    const badgeBg = isDark ? (up ? "#00ff88" : "#ff4444") : (up ? "#0a0a0a" : "#cc3300");
-                    const badgeFg = isDark ? "#0a0a0a" : "#ffffff";
+                    const badgeBg = isDark ? (up ? "#79df9b" : "var(--negative)") : (up ? "#11251c" : "var(--negative)");
+                    const badgeFg = isDark ? "#11251c" : "#ffffff";
                     return (
                       <div key={key} style={{
                         background: bg, borderRadius: 16, padding: 16,
                         display: "flex", flexDirection: "column", gap: 8,
                       }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: isDark ? "#888888" : "#666666", textTransform: "uppercase", letterSpacing: "0.1em" }}>{label}</div>
-                        <div className="bento-val" style={{ fontFamily: "'DM Mono', monospace", fontSize: 32, fontWeight: 500, color: fg, lineHeight: 1, letterSpacing: "-0.02em" }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: isDark ? "var(--muted)" : "var(--muted)", textTransform: "uppercase", letterSpacing: "0.1em" }}>{label}</div>
+                        <div className="bento-val" style={{ fontFamily: "var(--font-mono)", fontSize: 32, fontWeight: 500, color: fg, lineHeight: 1, letterSpacing: "-0.02em" }}>
                           {d ? fv(d.value, dec) + (unit ? " " + unit : "") : "—"}
                         </div>
                         {d?.change_pct != null && (
@@ -3971,7 +3980,7 @@ export default function App() {
                             display: "inline-flex", alignSelf: "flex-start",
                             background: badgeBg, color: badgeFg,
                             fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 6,
-                            fontFamily: "'DM Mono', monospace",
+                            fontFamily: "var(--font-mono)",
                           }}>
                             {up ? "+" : ""}{d.change_pct.toFixed(2)}%
                           </span>
@@ -3986,9 +3995,9 @@ export default function App() {
               <ResumenManero md={marketData} macroData={macroData} />
 
               {/* ── INDICADORES PRINCIPALES ── */}
-              <div style={{ border: "1.5px solid #1e2d3d", borderRadius: 16, overflow: "hidden" }}>
-                <div style={{ padding: "8px 16px", borderBottom: "1px solid #1a2535", background: "#0d1825" }}>
-                  <span style={{ fontSize: 9, fontWeight: 700, color: "#4a6080", textTransform: "uppercase", letterSpacing: "0.2em", fontFamily: "'Syne', sans-serif" }}>Indicadores Principales</span>
+              <div style={{ border: "1.5px solid var(--border)", borderRadius: 16, overflow: "hidden" }}>
+                <div style={{ padding: "8px 16px", borderBottom: "1px solid var(--border)", background: "#0d1825" }}>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: "var(--muted-2)", textTransform: "uppercase", letterSpacing: "0.2em", fontFamily: "var(--font-sans)" }}>Indicadores Principales</span>
                 </div>
                 <div className="ind-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)" }}>
                   {[
@@ -4010,17 +4019,17 @@ export default function App() {
                     return (
                       <div key={key} style={{
                         padding: "12px 16px",
-                        borderRight: col < 3 ? "1px solid #1a2535" : "none",
-                        borderBottom: row < 1 ? "1px solid #1a2535" : "none",
-                        background: "#111e2e",
+                        borderRight: col < 3 ? "1px solid var(--border)" : "none",
+                        borderBottom: row < 1 ? "1px solid var(--border)" : "none",
+                        background: "var(--surface)",
                       }}>
-                        <div style={{ fontSize: 9, color: "#888888", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Syne', sans-serif", marginBottom: 4 }}>{label}</div>
+                        <div style={{ fontSize: 9, color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "var(--font-sans)", marginBottom: 4 }}>{label}</div>
                         <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-                          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: 18, fontWeight: 700, color: "#e2e8f0", lineHeight: 1 }}>
+                          <span style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700, color: "var(--ink)", lineHeight: 1 }}>
                             {d.value != null ? fv(d.value, dec) + (unit ?? "") : <span style={{ color: "#d1d5db" }}>—</span>}
                           </span>
                           {!isN && (
-                            <span style={{ fontSize: 10, fontWeight: 700, color: cc, fontFamily: "'DM Mono', monospace" }}>
+                            <span style={{ fontSize: 10, fontWeight: 700, color: cc, fontFamily: "var(--font-mono)" }}>
                               {up ? "+" : ""}{Math.abs(d.pct).toFixed(2)}%
                             </span>
                           )}
@@ -4046,7 +4055,7 @@ export default function App() {
                   const bg = p == null ? "#f5f5f0"
                     : p >= 0 ? `rgba(21,128,61,${0.14 + intensity * 0.60})`
                              : `rgba(185,28,28,${0.14 + intensity * 0.60})`;
-                  const fg = p == null ? "#94a3b8" : p >= 0 ? "#14532d" : "#7f1d1d";
+                  const fg = p == null ? "var(--muted)" : p >= 0 ? "#14532d" : "#7f1d1d";
                   return { p, bg, fg };
                 };
                 return (
@@ -4054,32 +4063,32 @@ export default function App() {
 
                     {/* ── Style Box ── */}
                     <div style={{
-                      background: "#111e2e", border: "1.5px solid #1e2d3d", borderRadius: 20,
+                      background: "var(--surface)", border: "1.5px solid var(--border)", borderRadius: 20,
                       padding: "24px 28px", width: "100%", boxSizing: "border-box"
                     }}>
-                      <div style={{ fontFamily: "'Syne', sans-serif", fontSize: 14, fontWeight: 800, color: "#e2e8f0", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 20 }}>
+                      <div style={{ fontFamily: "var(--font-sans)", fontSize: 14, fontWeight: 800, color: "var(--ink)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 20 }}>
                         US Market Style Box
                       </div>
                       {/* Headers */}
                       <div style={{ display: "grid", gridTemplateColumns: "64px repeat(3,1fr)", gap: 8, marginBottom: 8 }}>
                         <div />
                         {COLS.map(c => (
-                          <div key={c} style={{ textAlign: "center", fontFamily: "'Syne',sans-serif", fontSize: 11, fontWeight: 700, color: "#888888", textTransform: "uppercase", letterSpacing: "0.06em" }}>{c}</div>
+                          <div key={c} style={{ textAlign: "center", fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{c}</div>
                         ))}
                       </div>
                       {/* Rows */}
                       {BOX.map(({ label, keys }) => (
                         <div key={label} style={{ display: "grid", gridTemplateColumns: "64px repeat(3,1fr)", gap: 8, marginBottom: 8 }}>
-                          <div style={{ display: "flex", alignItems: "center", fontFamily: "'Syne',sans-serif", fontSize: 11, fontWeight: 700, color: "#8fa3b8" }}>{label}</div>
+                          <div style={{ display: "flex", alignItems: "center", fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 700, color: "var(--muted)" }}>{label}</div>
                           {keys.map((k) => {
                             const { p, bg: _bg, fg: _fg } = toCell(k);
                             const isUp = p != null && p >= 0;
                             const isDown = p != null && p < 0;
-                            const cellBg = isUp ? "#00ff8820" : isDown ? "#ff3b3b15" : "#1a2535";
-                            const cellFg = isUp ? "#00aa55" : isDown ? "#ff3b3b" : "#94a3b8";
+                            const cellBg = isUp ? "var(--positive-soft)" : isDown ? "var(--negative-soft)" : "var(--border)";
+                            const cellFg = isUp ? "var(--positive)" : isDown ? "var(--negative)" : "var(--muted)";
                             return (
                               <div key={k} style={{ background: cellBg, borderRadius: 10, padding: "18px 10px", textAlign: "center" }}>
-                                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 16, fontWeight: 700, color: cellFg }}>
+                                <div style={{ fontFamily: "var(--font-mono)", fontSize: 16, fontWeight: 700, color: cellFg }}>
                                   {p != null ? `${p >= 0 ? "+" : ""}${p.toFixed(2)}%` : "—"}
                                 </div>
                               </div>
@@ -4087,44 +4096,44 @@ export default function App() {
                           })}
                         </div>
                       ))}
-                      <div style={{ fontSize: 8.5, color: "#94a3b8", marginTop: 4, letterSpacing: "0.04em" }}>Retorno diario · iShares ETFs</div>
+                      <div style={{ fontSize: 8.5, color: "var(--muted)", marginTop: 4, letterSpacing: "0.04em" }}>Retorno diario · iShares ETFs</div>
 
                       {/* Fear & Greed prominente */}
                       {vixVal && (() => {
                         const score = Math.max(0, Math.min(100, Math.round(100 - ((vixVal - 10) / 30) * 100)));
-                        const zone = score >= 75 ? { label: "Codicia Extrema", color: "#16a34a" }
-                          : score >= 55 ? { label: "Codicia",       color: "#4ade80" }
+                        const zone = score >= 75 ? { label: "Codicia Extrema", color: "var(--positive)" }
+                          : score >= 55 ? { label: "Codicia",       color: "var(--positive)" }
                           : score >= 45 ? { label: "Neutral",        color: "#ca8a04" }
                           : score >= 25 ? { label: "Miedo",          color: "#f97316" }
-                          :               { label: "Miedo Extremo",  color: "#dc2626" };
+                          :               { label: "Miedo Extremo",  color: "var(--negative)" };
                         const BAR_W = 240;
                         const markerX = (score / 100) * BAR_W;
                         return (
                           <div style={{ marginTop: 16, borderTop: "1.5px solid #f0f0ea", paddingTop: 16 }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 8 }}>
                               <div>
-                                <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 10, fontWeight: 700, color: "#888888", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 2 }}>Fear &amp; Greed</div>
-                                <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 11, fontWeight: 700, color: zone.color }}>{zone.label}</div>
+                                <div style={{ fontFamily: "var(--font-sans)", fontSize: 10, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 2 }}>Fear &amp; Greed</div>
+                                <div style={{ fontFamily: "var(--font-sans)", fontSize: 11, fontWeight: 700, color: zone.color }}>{zone.label}</div>
                               </div>
-                              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 32, fontWeight: 800, color: zone.color, lineHeight: 1 }}>{score}</div>
+                              <div style={{ fontFamily: "var(--font-mono)", fontSize: 32, fontWeight: 800, color: zone.color, lineHeight: 1 }}>{score}</div>
                             </div>
                             <svg width={BAR_W} height="18" style={{ display: "block", width: "100%" }} viewBox={`0 0 ${BAR_W} 18`}>
                               <defs>
                                 <linearGradient id="fg-grad" x1="0" x2="1" y1="0" y2="0">
-                                  <stop offset="0%"   stopColor="#dc2626" />
+                                  <stop offset="0%"   stopColor="var(--negative)" />
                                   <stop offset="25%"  stopColor="#f97316" />
                                   <stop offset="50%"  stopColor="#ca8a04" />
-                                  <stop offset="75%"  stopColor="#4ade80" />
-                                  <stop offset="100%" stopColor="#16a34a" />
+                                  <stop offset="75%"  stopColor="var(--positive)" />
+                                  <stop offset="100%" stopColor="var(--positive)" />
                                 </linearGradient>
                               </defs>
                               <rect x="0" y="5" width={BAR_W} height="6" rx="3" fill="url(#fg-grad)" />
                               <circle cx={markerX} cy="8" r="5" fill={zone.color} stroke="#fff" strokeWidth="2" />
                             </svg>
-                            <div style={{ fontSize: 8.5, color: "#94a3b8", marginTop: 6 }}>
-                              VIX <b style={{ fontFamily: "'DM Mono',monospace", color: vixColor }}>{vixVal.toFixed(2)}</b>
+                            <div style={{ fontSize: 8.5, color: "var(--muted)", marginTop: 6 }}>
+                              VIX <b style={{ fontFamily: "var(--font-mono)", color: vixColor }}>{vixVal.toFixed(2)}</b>
                               {macroData?.spread?.value != null && (
-                                <span> · <b style={{ color: macroData.spread.inverted ? "#dc2626" : "#16a34a" }}>
+                                <span> · <b style={{ color: macroData.spread.inverted ? "var(--negative)" : "var(--positive)" }}>
                                   {macroData.spread.inverted ? "⚠ Inv." : `Spread +${macroData.spread.value.toFixed(2)}`}
                                 </b></span>
                               )}
@@ -4138,7 +4147,7 @@ export default function App() {
                     <Panel title="Desempeño Global de Mercados" color="#0ea5e9">
                       <div style={{ padding: "6px 10px 8px" }}>
                         <GlobalMarketsTable data={worldMapData} loading={worldMapLoading} />
-                        <div style={{ fontSize: 8.5, color: "#94a3b8", marginTop: 6, letterSpacing: "0.04em", textAlign: "right" }}>
+                        <div style={{ fontSize: 8.5, color: "var(--muted)", marginTop: 6, letterSpacing: "0.04em", textAlign: "right" }}>
                           Retorno diario · iShares ETFs · desc. por rendimiento
                         </div>
                       </div>
@@ -4151,7 +4160,7 @@ export default function App() {
               <div className="resp-grid-2" style={{ gap: 16 }}>
 
                 {/* Panel izquierdo: Mercado en vivo */}
-                <Panel title="México · Mercado" color="#16a34a">
+                <Panel title="México · Mercado" color="var(--positive)">
                   {/* IPC hero row */}
                   {(() => {
                     const d = md?.ipc;
@@ -4176,21 +4185,21 @@ export default function App() {
                 </Panel>
 
                 {/* Panel derecho: Macro México */}
-                <Panel title="México · Macro" color="#16a34a">
+                <Panel title="México · Macro" color="var(--positive)">
                   {MX_REF.map((r) => (
                     <div key={r.label} style={{
                       display: "flex", alignItems: "center", gap: 10,
-                      padding: "8px 12px", borderBottom: "1px solid #1a2535",
-                      background: "#111e2e",
+                      padding: "8px 12px", borderBottom: "1px solid var(--border)",
+                      background: "var(--surface)",
                     }}>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: 9, color: "#888888", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Syne', sans-serif" }}>{r.label}</div>
-                        <div style={{ fontSize: 8, color: "#aaaaaa", marginTop: 1 }}>{r.period}</div>
+                        <div style={{ fontSize: 9, color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "var(--font-sans)" }}>{r.label}</div>
+                        <div style={{ fontSize: 8, color: "var(--muted)", marginTop: 1 }}>{r.period}</div>
                       </div>
                       <div style={{
-                        fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 700,
+                        fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700,
                         color: r.color, flexShrink: 0,
-                        background: `${r.color}12`, border: `1px solid ${r.color}30`,
+                        background: `color-mix(in srgb, ${r.color} 7%, transparent)`, border: `1px solid color-mix(in srgb, ${r.color} 19%, transparent)`,
                         padding: "2px 8px", borderRadius: 5,
                         letterSpacing: "-0.01em",
                       }}>
@@ -4204,7 +4213,7 @@ export default function App() {
               {/* ── MATERIAS PRIMAS & CRYPTO + ÍNDICES GLOBALES ── */}
               <div className="resp-grid-2" style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16 }}>
 
-                <Panel title="Materias Primas y Criptoactivos" color="#d97706">
+                <Panel title="Materias Primas y Criptoactivos" color="var(--warning)">
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>
                     {[
                       { key: "wti",    label: "WTI Crude",   dec: 2, icon: "",  unit: " /bbl" },
@@ -4245,17 +4254,17 @@ export default function App() {
                   marketNews.length > 0 && (
                     <div style={{ display: "flex", gap: 6 }}>
                       {[
-                        { key: "all",      label: "Todas",    color: "#6b8099" },
-                        { key: "positive", label: " Buenas", color: "#16a34a" },
+                        { key: "all",      label: "Todas",    color: "var(--muted)" },
+                        { key: "positive", label: " Buenas", color: "var(--positive)" },
                         { key: "neutral",  label: " Neutras",color: "#ca8a04" },
-                        { key: "negative", label: " Malas",  color: "#dc2626" },
+                        { key: "negative", label: " Malas",  color: "var(--negative)" },
                       ].map((f) => {
                         const cnt = f.key === "all" ? marketNews.length : marketNews.filter(n => n.sentiment === f.key).length;
                         return (
                           <button key={f.key} onClick={() => setNewsFilter(f.key)} style={{
-                            background: newsFilter === f.key ? `${f.color}15` : "transparent",
-                            border: `1px solid ${newsFilter === f.key ? f.color : "#1e2d3d"}`,
-                            borderRadius: 999, color: newsFilter === f.key ? f.color : "#aaaaaa",
+                            background: newsFilter === f.key ? `color-mix(in srgb, ${f.color} 15%, transparent)` : "transparent",
+                            border: `1px solid ${newsFilter === f.key ? f.color : "var(--border)"}`,
+                            borderRadius: 999, color: newsFilter === f.key ? f.color : "var(--muted)",
                             padding: "3px 10px", cursor: "pointer", fontSize: 11, fontWeight: 600,
                           }}>{f.label} <span style={{ opacity: 0.6 }}>({cnt})</span></button>
                         );
@@ -4267,7 +4276,7 @@ export default function App() {
                 {marketNewsLoading && marketNews.length === 0 && (
                   <div style={{ display: "flex", justifyContent: "center", padding: "56px 0", gap: 14, alignItems: "center" }}>
                     <Spinner size={22} />
-                    <span style={{ color: "#aaaaaa", fontSize: 13 }}>Cargando noticias de mercado...</span>
+                    <span style={{ color: "var(--muted)", fontSize: 13 }}>Cargando noticias de mercado...</span>
                   </div>
                 )}
 
@@ -4278,15 +4287,15 @@ export default function App() {
                 )}
 
                 {!marketNewsLoading && marketNews.length > 0 && filteredNews.length === 0 && (
-                  <div style={{ textAlign: "center", color: "#aaaaaa", padding: 32, fontSize: 13 }}>
+                  <div style={{ textAlign: "center", color: "var(--muted)", padding: 32, fontSize: 13 }}>
                     No hay noticias {newsFilter === "positive" ? "positivas" : newsFilter === "negative" ? "negativas" : "neutras"} ahora.
                   </div>
                 )}
 
                 {!marketNewsLoading && marketNews.length === 0 && (
                   <div style={{
-                    textAlign: "center", color: "#aaaaaa", padding: 48, fontSize: 13,
-                    background: "#141e2d", borderRadius: 24, border: "1px dashed #e5e5e5"
+                    textAlign: "center", color: "var(--muted)", padding: 48, fontSize: 13,
+                    background: "var(--surface-2)", borderRadius: 24, border: "1px dashed var(--border)"
                   }}>
                     No se cargaron noticias — haz clic en <b>↻ Noticias</b> para reintentar
                   </div>
@@ -4296,19 +4305,19 @@ export default function App() {
               {/* ── BUSCAR POR TICKER ── */}
               <div>
                 <SectionLabel>Buscar Noticias por Ticker</SectionLabel>
-                <div style={{ background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: 20 }}>
+                <div style={{ background: "var(--surface)", borderRadius: 24, boxShadow: "none", border: "1.5px solid var(--border)", padding: 20 }}>
                   <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
                     <input value={newsTicker}
                       onChange={(e) => setNewsTicker(e.target.value.toUpperCase())}
                       onKeyDown={(e) => e.key === "Enter" && loadNews(newsTicker)}
                       placeholder="AAPL / WALMEX.MX / AMZN.MX"
                       style={{
-                        background: "#141e2d", border: "1px solid #e5e5e5", borderRadius: 10,
-                        color: "#e2e8f0", padding: "9px 14px", fontSize: 13, width: 220,
-                        fontFamily: "'DM Mono', monospace",
+                        background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 10,
+                        color: "var(--ink)", padding: "9px 14px", fontSize: 13, width: 220,
+                        fontFamily: "var(--font-mono)",
                       }} />
                     <button onClick={() => loadNews(newsTicker)} disabled={newsLoading} style={{
-                      background: newsLoading ? "#1a2535" : "#00ff88", border: "none",
+                      background: newsLoading ? "#3a4b42" : "#135936", border: "none",
                       borderRadius: 999, color: "#fff", padding: "9px 22px",
                       cursor: newsLoading ? "not-allowed" : "pointer",
                       fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 8,
@@ -4319,11 +4328,11 @@ export default function App() {
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {portfolio.map((p) => (
                         <button key={p.ticker} onClick={() => { setNewsTicker(p.ticker); loadNews(p.ticker); }} style={{
-                          background: newsTicker === p.ticker ? "#0a1f10" : "#141e2d",
-                          border: `1px solid ${newsTicker === p.ticker ? "#00ff88" : "#1e2d3d"}`,
-                          borderRadius: 999, color: newsTicker === p.ticker ? "#00ff88" : "#4a6080",
+                          background: newsTicker === p.ticker ? "#0a1f10" : "var(--surface-2)",
+                          border: `1px solid ${newsTicker === p.ticker ? "var(--accent)" : "var(--border)"}`,
+                          borderRadius: 999, color: newsTicker === p.ticker ? "var(--accent)" : "var(--muted-2)",
                           padding: "5px 12px", cursor: "pointer", fontSize: 11,
-                          fontFamily: "'DM Mono', monospace", fontWeight: 600,
+                          fontFamily: "var(--font-mono)", fontWeight: 600,
                         }}>{p.ticker}</button>
                       ))}
                     </div>
@@ -4334,7 +4343,7 @@ export default function App() {
                     </div>
                   )}
                   {!newsLoading && newsData.length === 0 && newsTicker && (
-                    <div style={{ color: "#aaaaaa", fontSize: 13, textAlign: "center", padding: "20px 0" }}>
+                    <div style={{ color: "var(--muted)", fontSize: 13, textAlign: "center", padding: "20px 0" }}>
                       No se encontraron noticias para <b style={{ color: "#555" }}>{newsTicker}</b>
                     </div>
                   )}
@@ -4349,31 +4358,31 @@ export default function App() {
         {tab === "analytics" && (
           <div>
             <div style={{
-              background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d",
+              background: "var(--surface)", borderRadius: 24, boxShadow: "none", border: "1.5px solid var(--border)",
               padding: 20, marginBottom: 28
             }}>
               {/* Selector de portafolio */}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                <span style={{ fontSize: 10, color: "#bbbbbb", letterSpacing: "0.1em", fontWeight: 600 }}>PORTAFOLIO A ANALIZAR</span>
+                <span style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.1em", fontWeight: 600 }}>PORTAFOLIO A ANALIZAR</span>
                 {portfolios.map(p => (
                   <button key={p.id} onClick={() => setActivePortfolioId(p.id)} style={{
-                    background: activePortfolioId === p.id ? "#00ff88" : "#f2f2f2",
-                    color: activePortfolioId === p.id ? "#ffffff" : "#555555",
+                    background: activePortfolioId === p.id ? "#135936" : "var(--surface-2)",
+                    color: activePortfolioId === p.id ? "#ffffff" : "var(--muted)",
                     border: "none", borderRadius: 999, padding: "4px 14px",
                     fontSize: 12, fontWeight: activePortfolioId === p.id ? 700 : 500, cursor: "pointer"
                   }}>{p.name} <span style={{ opacity: 0.7 }}>({p.positions.length})</span></button>
                 ))}
               </div>
-              <div style={{ fontSize: 14, color: "#6b8099", marginBottom: 16, lineHeight: 1.6 }}>
-                Backtesting de <b style={{ color: "#e2e8f0" }}>5 años</b> con datos semanales comparado contra{" "}
-                <b style={{ color: "#888888" }}>SPY (S&P 500)</b>.{" "}
+              <div style={{ fontSize: 14, color: "var(--muted)", marginBottom: 16, lineHeight: 1.6 }}>
+                Backtesting de <b style={{ color: "var(--ink)" }}>5 años</b> con datos semanales comparado contra{" "}
+                <b style={{ color: "var(--muted)" }}>SPY (S&P 500)</b>.{" "}
                 {isExperimental
                   ? <span style={{ color: "#8b5cf6" }}>Pesos: % objetivo del portafolio experimental.</span>
                   : "Los pesos se calculan con los valores de mercado actuales."
                 }
               </div>
               <button onClick={runBacktest} disabled={backtestLoading} className="btn-exec" style={{
-                background: backtestLoading ? "#999999" : "#0a0a0a",
+                background: backtestLoading ? "var(--muted)" : "var(--bg-deep)",
                 border: "none", borderRadius: 999, color: "#ffffff",
                 padding: "12px 28px", cursor: backtestLoading ? "not-allowed" : "pointer",
                 fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", gap: 10
@@ -4382,7 +4391,7 @@ export default function App() {
                 {backtestLoading ? "Calculando backtest... (puede tardar 1–2 min con 5 años)" : " Ejecutar Backtest vs SPY"}
               </button>
               {backtestError && (
-                <div style={{ marginTop: 12, padding: "10px 16px", background: "#2a0a0a", border: "1px solid #7f1d1d", borderRadius: 10, fontSize: 13, color: "#f87171", lineHeight: 1.5 }}>
+                <div style={{ marginTop: 12, padding: "10px 16px", background: "#2a0a0a", border: "1px solid #7f1d1d", borderRadius: 10, fontSize: 13, color: "var(--negative)", lineHeight: 1.5 }}>
                   ⚠️ {backtestError}
                 </div>
               )}
@@ -4398,12 +4407,12 @@ export default function App() {
               const outperforms = annPortReturn > annSpyReturn;
 
               const statCard = (label, value, unit, _hint) => (
-                <div style={{
-                  background: "#0a0a0a", borderRadius: 20, boxShadow: "none", border: "none",
+                <div className="dark-panel" style={{
+                  background: "var(--bg-deep)", borderRadius: 20, boxShadow: "none", border: "none",
                   padding: "16px 20px", minWidth: 140, flex: 1
                 }}>
-                  <div style={{ fontSize: 10, color: "#888888", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6, fontFamily: "'DM Sans', sans-serif" }}>{label}</div>
-                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 28, fontWeight: 500, color: "#00ff88" }}>
+                  <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6, fontFamily: "var(--font-sans)" }}>{label}</div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 28, fontWeight: 500, color: "var(--accent)" }}>
                     {value}{unit ?? ""}
                   </div>
                 </div>
@@ -4411,9 +4420,9 @@ export default function App() {
 
               return (
                 <div style={{ animation: "fadeIn 0.5s ease" }}>
-                  <div style={{ background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: 20, marginBottom: 24 }}>
+                  <div style={{ background: "var(--surface)", borderRadius: 24, boxShadow: "none", border: "1.5px solid var(--border)", padding: 20, marginBottom: 24 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
-                      <div style={{ fontSize: 12, color: "#999999", letterSpacing: "0.07em", fontWeight: 500 }}>
+                      <div style={{ fontSize: 12, color: "var(--muted)", letterSpacing: "0.07em", fontWeight: 500 }}>
                         RETORNOS ACUMULADOS — PORTAFOLIO vs SPY ({yearsBacktest ?? "5"} AÑOS SEMANAL)
                       </div>
                       {yearsBacktest && parseFloat(yearsBacktest) < 4.5 && (
@@ -4425,7 +4434,7 @@ export default function App() {
                     {yearsBacktest && parseFloat(yearsBacktest) < 4.5 && tickerYearsBack && (
                       <div style={{ marginBottom: 12, display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
                         {tickerYearsBack.map(({ t, y }) => (
-                          <span key={t} style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: parseFloat(y) < 3 ? "#dc2626" : "#888888" }}>
+                          <span key={t} style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: parseFloat(y) < 3 ? "var(--negative)" : "var(--muted)" }}>
                             {t.split(".")[0]}: {y}a
                           </span>
                         ))}
@@ -4433,30 +4442,30 @@ export default function App() {
                     )}
                     <LineChart
                       series={[
-                        { name: "Mi Portafolio", color: "#00cc6a", data: portCum },
-                        { name: "SPY (S&P 500)", color: "#888888", data: spyCum },
+                        { name: "Mi Portafolio", color: "var(--positive)", data: portCum },
+                        { name: "SPY (S&P 500)", color: "var(--muted)", data: spyCum },
                       ]}
                       dates={dates}
                     />
                   </div>
 
                   <div style={{
-                    background: outperforms ? "#22c55e10" : "#ff3b3b15",
-                    border: outperforms ? "1px solid #22c55e33" : "none",
-                    borderLeft: outperforms ? "none" : "3px solid #ff3b3b",
+                    background: outperforms ? "var(--positive-soft)" : "var(--negative-soft)",
+                    border: outperforms ? "1px solid var(--positive)" : "none",
+                    borderLeft: outperforms ? "none" : "3px solid var(--negative)",
                     borderRadius: outperforms ? 24 : 16, padding: "14px 20px", marginBottom: 24,
                     display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap",
-                    fontFamily: "'DM Sans', sans-serif",
+                    fontFamily: "var(--font-sans)",
                   }}>
                     <div style={{ fontSize: 22 }}>{outperforms ? "" : ""}</div>
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: outperforms ? "#16a34a" : "#dc2626" }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: outperforms ? "var(--positive)" : "var(--negative)" }}>
                         {outperforms ? "Superando al benchmark" : "Por debajo del benchmark"}
                       </div>
-                      <div style={{ fontSize: 12, color: "#666666", marginTop: 2 }}>
-                        Portafolio: <b style={{ fontFamily: "'DM Mono', monospace", color: "#e2e8f0" }}>{(annPortReturn * 100).toFixed(2)}%</b> anual
-                        {" "}vs SPY: <b style={{ fontFamily: "'DM Mono', monospace", color: "#e2e8f0" }}>{(annSpyReturn * 100).toFixed(2)}%</b> anual
-                        {" — "}Alpha: <b style={{ fontFamily: "'DM Mono', monospace", color: alpha >= 0 ? "#16a34a" : "#dc2626" }}>
+                      <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 2 }}>
+                        Portafolio: <b style={{ fontFamily: "var(--font-mono)", color: "var(--ink)" }}>{(annPortReturn * 100).toFixed(2)}%</b> anual
+                        {" "}vs SPY: <b style={{ fontFamily: "var(--font-mono)", color: "var(--ink)" }}>{(annSpyReturn * 100).toFixed(2)}%</b> anual
+                        {" — "}Alpha: <b style={{ fontFamily: "var(--font-mono)", color: alpha >= 0 ? "var(--positive)" : "var(--negative)" }}>
                           {alpha >= 0 ? "+" : ""}{(alpha * 100).toFixed(2)}%
                         </b>
                       </div>
@@ -4465,46 +4474,46 @@ export default function App() {
 
                   <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 20 }}>
                     {statCard("Tracking Error", (trackingError * 100).toFixed(2), "%",
-                      trackingError < 0.05 ? "#16a34a" : trackingError < 0.10 ? "#eab308" : "#dc2626")}
+                      trackingError < 0.05 ? "var(--positive)" : trackingError < 0.10 ? "var(--warning)" : "var(--negative)")}
                     {statCard("Índice de Treynor", treynor.toFixed(4), "",
-                      treynor > 0.1 ? "#16a34a" : treynor > 0 ? "#eab308" : "#dc2626")}
+                      treynor > 0.1 ? "var(--positive)" : treynor > 0 ? "var(--warning)" : "var(--negative)")}
                     {statCard("Beta (vs SPY)", beta.toFixed(4), "",
-                      beta < 1 ? "#16a34a" : beta < 1.2 ? "#eab308" : "#dc2626")}
+                      beta < 1 ? "var(--positive)" : beta < 1.2 ? "var(--warning)" : "var(--negative)")}
                     {statCard("Alpha de Jensen", `${alpha >= 0 ? "+" : ""}${(alpha * 100).toFixed(2)}`, "%",
-                      alpha >= 0 ? "#16a34a" : "#dc2626")}
+                      alpha >= 0 ? "var(--positive)" : "var(--negative)")}
                     {statCard("Sharpe Ratio", sharpe.toFixed(4), "",
-                      sharpe > 1 ? "#16a34a" : sharpe > 0.5 ? "#eab308" : "#dc2626")}
+                      sharpe > 1 ? "var(--positive)" : sharpe > 0.5 ? "var(--warning)" : "var(--negative)")}
                     {statCard("Information Ratio", infoRatio.toFixed(4), "",
-                      infoRatio > 0.5 ? "#16a34a" : infoRatio > 0 ? "#eab308" : "#dc2626")}
+                      infoRatio > 0.5 ? "var(--positive)" : infoRatio > 0 ? "var(--warning)" : "var(--negative)")}
                   </div>
 
                   {/* Heatmap de correlación */}
                   {backtestResult?.corrMatrix && (() => {
                     const { corrMatrix: cm, tickers: tks } = backtestResult;
                     return (
-                      <div style={{ background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: 20, marginBottom: 20 }}>
-                        <div style={{ fontSize: 10, color: "#bbbbbb", letterSpacing: "0.14em", fontWeight: 600, marginBottom: 16 }}>MATRIZ DE CORRELACIÓN DE ACTIVOS</div>
+                      <div style={{ background: "var(--surface)", borderRadius: 24, boxShadow: "none", border: "1.5px solid var(--border)", padding: 20, marginBottom: 20 }}>
+                        <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.14em", fontWeight: 600, marginBottom: 16 }}>MATRIZ DE CORRELACIÓN DE ACTIVOS</div>
                         <div style={{ overflowX: "auto" }}>
                           <table style={{ borderCollapse: "separate", borderSpacing: 3 }}>
                             <thead>
                               <tr>
-                                <th style={{ padding: "4px 8px", fontSize: 10, color: "#bbbbbb", textAlign: "right", border: "none", background: "none" }}></th>
-                                {tks.map(tk => <th key={tk} style={{ padding: "4px 8px", fontSize: 10, fontFamily: "'DM Mono', monospace", color: "#6b8099", border: "none", background: "none", textAlign: "center" }}>{tk.split(".")[0]}</th>)}
+                                <th style={{ padding: "4px 8px", fontSize: 10, color: "var(--muted)", textAlign: "right", border: "none", background: "none" }}></th>
+                                {tks.map(tk => <th key={tk} style={{ padding: "4px 8px", fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--muted)", border: "none", background: "none", textAlign: "center" }}>{tk.split(".")[0]}</th>)}
                               </tr>
                             </thead>
                             <tbody>
                               {cm.map((row, i) => (
                                 <tr key={tks[i]}>
-                                  <td style={{ padding: "4px 8px", fontSize: 10, fontFamily: "'DM Mono', monospace", color: "#6b8099", fontWeight: 700, border: "none", textAlign: "right", whiteSpace: "nowrap" }}>{tks[i].split(".")[0]}</td>
+                                  <td style={{ padding: "4px 8px", fontSize: 10, fontFamily: "var(--font-mono)", color: "var(--muted)", fontWeight: 700, border: "none", textAlign: "right", whiteSpace: "nowrap" }}>{tks[i].split(".")[0]}</td>
                                   {row.map((val, j) => {
                                     let bg, fg;
-                                    if (i === j) { bg = "#111111"; fg = "#ffffff"; }
+                                    if (i === j) { bg = "var(--bg-deep)"; fg = "#ffffff"; }
                                     else if (val >= 0.7)  { bg = `rgba(220,38,38,${0.15 + val * 0.4})`; fg = "#991b1b"; }
                                     else if (val >= 0.4)  { bg = `rgba(234,179,8,${0.15 + val * 0.3})`; fg = "#92400e"; }
                                     else if (val >= 0)    { bg = `rgba(22,163,74,${0.1 + val * 0.3})`; fg = "#14532d"; }
                                     else                  { bg = `rgba(249,115,22,${0.1 + Math.abs(val) * 0.4})`; fg = "#9a3412"; }
                                     return (
-                                      <td key={j} style={{ padding: "6px 10px", background: bg, borderRadius: 6, textAlign: "center", fontSize: 11, fontFamily: "'DM Mono', monospace", fontWeight: 700, color: fg, cursor: "default", minWidth: 52 }}>
+                                      <td key={j} style={{ padding: "6px 10px", background: bg, borderRadius: 6, textAlign: "center", fontSize: 11, fontFamily: "var(--font-mono)", fontWeight: 700, color: fg, cursor: "default", minWidth: 52 }}>
                                         {val.toFixed(2)}
                                       </td>
                                     );
@@ -4514,18 +4523,18 @@ export default function App() {
                             </tbody>
                           </table>
                         </div>
-                        <div style={{ marginTop: 10, display: "flex", gap: 16, fontSize: 10, color: "#bbbbbb" }}>
-                          <span style={{ color: "#16a34a" }}>■ Baja correlación (buena diversificación)</span>
-                          <span style={{ color: "#eab308" }}>■ Correlación media</span>
-                          <span style={{ color: "#dc2626" }}>■ Alta correlación (&gt;0.7 = riesgo de concentración)</span>
-                          <span style={{ color: "#00cc6a" }}>■ Correlación negativa (cobertura natural)</span>
+                        <div style={{ marginTop: 10, display: "flex", gap: 16, fontSize: 10, color: "var(--muted)" }}>
+                          <span style={{ color: "var(--positive)" }}>■ Baja correlación (buena diversificación)</span>
+                          <span style={{ color: "var(--warning)" }}>■ Correlación media</span>
+                          <span style={{ color: "var(--negative)" }}>■ Alta correlación (&gt;0.7 = riesgo de concentración)</span>
+                          <span style={{ color: "var(--positive)" }}>■ Correlación negativa (cobertura natural)</span>
                         </div>
                       </div>
                     );
                   })()}
 
-                  <div style={{ background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: "16px 20px" }}>
-                    <div style={{ fontSize: 12, color: "#999999", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 12 }}>GLOSARIO DE MÉTRICAS</div>
+                  <div style={{ background: "var(--surface)", borderRadius: 24, boxShadow: "none", border: "1.5px solid var(--border)", padding: "16px 20px" }}>
+                    <div style={{ fontSize: 12, color: "var(--muted)", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 12 }}>GLOSARIO DE MÉTRICAS</div>
                     <div style={{ display: "grid", gap: 8, gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
                       {[
                         ["Tracking Error", "Desv. estándar anualizada de la diferencia de retornos vs SPY. Menor = más parecido al índice."],
@@ -4536,10 +4545,10 @@ export default function App() {
                         ["Information Ratio", "(Retorno portafolio − Retorno SPY) / Tracking Error. Mide consistencia del alpha."],
                       ].map(([name, desc]) => (
                         <div key={name} style={{ display: "flex", gap: 10 }}>
-                          <div style={{ minWidth: 4, borderRadius: 2, background: "#111111", alignSelf: "stretch" }} />
+                          <div style={{ minWidth: 4, borderRadius: 2, background: "var(--bg-deep)", alignSelf: "stretch" }} />
                           <div>
-                            <div style={{ fontSize: 11, fontWeight: 600, color: "#666666", marginBottom: 2 }}>{name}</div>
-                            <div style={{ fontSize: 11, color: "#999999", lineHeight: 1.5 }}>{desc}</div>
+                            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted)", marginBottom: 2 }}>{name}</div>
+                            <div style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.5 }}>{desc}</div>
                           </div>
                         </div>
                       ))}
@@ -4551,18 +4560,18 @@ export default function App() {
 
             {/* ── MONTE CARLO ── */}
             <div style={{
-              background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d",
+              background: "var(--surface)", borderRadius: 24, boxShadow: "none", border: "1.5px solid var(--border)",
               padding: 20, marginTop: 24
             }}>
-              <div style={{ fontSize: 12, color: "#999999", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 8 }}>
+              <div style={{ fontSize: 12, color: "var(--muted)", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 8 }}>
                 PROYECCIÓN FUTURA — MONTE CARLO
               </div>
-              <div style={{ fontSize: 13, color: "#6b8099", marginBottom: 14, lineHeight: 1.6 }}>
-                Simulación de <b style={{ color: "#e2e8f0" }}>10,000 escenarios</b> a 52 semanas usando retornos históricos de{" "}
-                <b style={{ color: "#e2e8f0" }}>5 años</b>. Muestra el rango p5–p95 del portafolio vs SPY.
+              <div style={{ fontSize: 13, color: "var(--muted)", marginBottom: 14, lineHeight: 1.6 }}>
+                Simulación de <b style={{ color: "var(--ink)" }}>10,000 escenarios</b> a 52 semanas usando retornos históricos de{" "}
+                <b style={{ color: "var(--ink)" }}>5 años</b>. Muestra el rango p5–p95 del portafolio vs SPY.
               </div>
               <button onClick={runMonteCarlo} disabled={monteCarloLoading || portfolio.length === 0} className="btn-exec" style={{
-                background: monteCarloLoading ? "#999999" : "#0a0a0a",
+                background: monteCarloLoading ? "var(--muted)" : "var(--bg-deep)",
                 border: "none", borderRadius: 999, color: "#ffffff",
                 padding: "12px 28px", cursor: monteCarloLoading ? "not-allowed" : "pointer",
                 fontSize: 14, fontWeight: 700, display: "flex", alignItems: "center", gap: 10
@@ -4571,7 +4580,7 @@ export default function App() {
                 {monteCarloLoading ? "Simulando... (puede tardar 1–2 min)" : " Ejecutar Monte Carlo (5 años)"}
               </button>
               {monteCarloError && (
-                <div style={{ marginTop: 12, padding: "10px 16px", background: "#2a0a0a", border: "1px solid #7f1d1d", borderRadius: 10, fontSize: 13, color: "#f87171", lineHeight: 1.5 }}>
+                <div style={{ marginTop: 12, padding: "10px 16px", background: "#2a0a0a", border: "1px solid #7f1d1d", borderRadius: 10, fontSize: 13, color: "var(--negative)", lineHeight: 1.5 }}>
                   ⚠️ {monteCarloError}
                 </div>
               )}
@@ -4587,17 +4596,17 @@ export default function App() {
               const portP95 = portStats[portStats.length - 1].p95;
 
               const mcCard = (label, value, color, sub) => (
-                <div style={{ background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: "16px 20px", flex: 1, minWidth: 140 }}>
-                  <div style={{ fontSize: 10, color: "#999999", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>{label}</div>
-                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 20, fontWeight: 700, color: color ?? "#111111" }}>{value}</div>
-                  {sub && <div style={{ fontSize: 10, color: "#bbbbbb", marginTop: 4 }}>{sub}</div>}
+                <div style={{ background: "var(--surface)", borderRadius: 24, boxShadow: "none", border: "1.5px solid var(--border)", padding: "16px 20px", flex: 1, minWidth: 140 }}>
+                  <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 6 }}>{label}</div>
+                  <div style={{ fontFamily: "var(--font-mono)", fontSize: 20, fontWeight: 700, color: color ?? "var(--bg-deep)" }}>{value}</div>
+                  {sub && <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 4 }}>{sub}</div>}
                 </div>
               );
 
               return (
                 <div style={{ animation: "fadeIn 0.5s ease", marginTop: 20 }}>
-                  <div style={{ background: "#111e2e", borderRadius: 24, boxShadow: "none", border: "1.5px solid #1e2d3d", padding: 20, marginBottom: 20 }}>
-                    <div style={{ fontSize: 12, color: "#999999", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 14 }}>
+                  <div style={{ background: "var(--surface)", borderRadius: 24, boxShadow: "none", border: "1.5px solid var(--border)", padding: 20, marginBottom: 20 }}>
+                    <div style={{ fontSize: 12, color: "var(--muted)", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 14 }}>
                       RETORNOS PROYECTADOS — {N.toLocaleString()} SIMULACIONES · {yearsData} AÑOS DE HISTORIAL
                     </div>
                     <MonteCarloChart portStats={portStats} spyStats={spyStats} weeks={weeks} />
@@ -4605,16 +4614,16 @@ export default function App() {
 
                   <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 20 }}>
                     {mcCard("Retorno esperado (port.)", `${portAnnReturn >= 0 ? "+" : ""}${portAnnReturn.toFixed(1)}%`,
-                      portAnnReturn >= 0 ? "#16a34a" : "#dc2626", "anualizado · media de simulaciones")}
+                      portAnnReturn >= 0 ? "var(--positive)" : "var(--negative)", "anualizado · media de simulaciones")}
                     {mcCard("Retorno esperado (SPY)", `${spyAnnReturn >= 0 ? "+" : ""}${spyAnnReturn.toFixed(1)}%`,
-                      spyAnnReturn >= 0 ? "#16a34a" : "#dc2626", "anualizado · media de simulaciones")}
+                      spyAnnReturn >= 0 ? "var(--positive)" : "var(--negative)", "anualizado · media de simulaciones")}
                     {mcCard("Prob. superar SPY", `${(probBeat * 100).toFixed(1)}%`,
-                      probBeat > 0.55 ? "#16a34a" : probBeat > 0.45 ? "#eab308" : "#dc2626", "en el horizonte de 1 año")}
+                      probBeat > 0.55 ? "var(--positive)" : probBeat > 0.45 ? "var(--warning)" : "var(--negative)", "en el horizonte de 1 año")}
                     {mcCard("Rango portafolio (90%)", `${((portP5-1)*100).toFixed(1)}% a ${((portP95-1)*100).toFixed(1)}%`,
-                      "#00ff88", "p5 – p95 al final del período")}
+                      "var(--accent)", "p5 – p95 al final del período")}
                   </div>
 
-                  <div style={{ background: "#0d1825", borderRadius: 24, padding: "14px 20px", display: "flex", flexWrap: "wrap", gap: 24 }}>
+                  <div className="dark-panel" style={{ background: "#0d1825", borderRadius: 24, padding: "14px 20px", display: "flex", flexWrap: "wrap", gap: 24 }}>
                     {[
                       ["Retorno med. semanal (port.)", `${(muPort * 100).toFixed(3)}%`],
                       ["Vol. semanal (port.)",          `${(sigPort * 100).toFixed(3)}%`],
@@ -4624,19 +4633,19 @@ export default function App() {
                       ["Años de historial",             yearsData],
                     ].map(([label, val]) => (
                       <div key={label}>
-                        <div style={{ fontSize: 10, color: "#aaaaaa", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 3 }}>{label}</div>
-                        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 13, fontWeight: 600, color: "#8fa3b8" }}>{val}</div>
+                        <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 3 }}>{label}</div>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 600, color: "var(--muted)" }}>{val}</div>
                       </div>
                     ))}
                   </div>
                   {limitingTicker && parseFloat(yearsData) < 4.5 && (
                     <div style={{ marginTop: 12, padding: "10px 14px", background: "#1a1200", border: "1px solid #78611a", borderRadius: 10, fontSize: 12, color: "#fbbf24" }}>
-                      ⚠️ El historial está limitado a <b>{yearsData} años</b> por <b style={{ fontFamily: "'DM Mono',monospace" }}>{limitingTicker}</b> (el ticker con menos datos disponibles en yfinance).
+                      ⚠️ El historial está limitado a <b>{yearsData} años</b> por <b style={{ fontFamily: "var(--font-mono)" }}>{limitingTicker}</b> (el ticker con menos datos disponibles en yfinance).
                       Los demás activos sí tienen más historial pero se recortan al mínimo común para mantener consistencia estadística.
                       {tickerYears && (
                         <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: "6px 16px" }}>
                           {tickerYears.map(({ t, y }) => (
-                            <span key={t} style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: parseFloat(y) < 3 ? "#dc2626" : "#555555" }}>
+                            <span key={t} style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: parseFloat(y) < 3 ? "var(--negative)" : "#555555" }}>
                               {t.split(".")[0]}: {y}a
                             </span>
                           ))}
@@ -4656,13 +4665,13 @@ export default function App() {
         {tab === "fibras" && (
           <div>
             {/* Header explicativo */}
-            <div style={{ background: "#111e2e", boxShadow: "none", border: "1.5px solid #1e2d3d", borderRadius: 24, padding: 20, marginBottom: 24 }}>
+            <div style={{ background: "var(--surface)", boxShadow: "none", border: "1.5px solid var(--border)", borderRadius: 24, padding: 20, marginBottom: 24 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
                 <div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: "#e2e8f0", marginBottom: 6 }}>FIBRA Screener</div>
-                  <div style={{ fontSize: 12, color: "#777777", lineHeight: 1.6, maxWidth: 680 }}>
-                    Fideicomisos de Infraestructura y Bienes Raíces (REITs mexicanos). Valuación por <b style={{ color: "#e2e8f0" }}>Cap Rate</b>, <b style={{ color: "#e2e8f0" }}>P/NAV</b> (precio vs valor activo neto) y <b style={{ color: "#e2e8f0" }}>FFO Yield</b>.
-                    Una FIBRA con P/NAV {"<"} 0.85 cotiza con <b style={{ color: "#16a34a" }}>descuento</b> al valor de sus activos — señal de oportunidad.
+                  <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", marginBottom: 6 }}>FIBRA Screener</div>
+                  <div style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.6, maxWidth: 680 }}>
+                    Fideicomisos de Infraestructura y Bienes Raíces (REITs mexicanos). Valuación por <b style={{ color: "var(--ink)" }}>Cap Rate</b>, <b style={{ color: "var(--ink)" }}>P/NAV</b> (precio vs valor activo neto) y <b style={{ color: "var(--ink)" }}>FFO Yield</b>.
+                    Una FIBRA con P/NAV {"<"} 0.85 cotiza con <b style={{ color: "var(--positive)" }}>descuento</b> al valor de sus activos — señal de oportunidad.
                     Cap Rate alto indica mayor rendimiento operativo sobre el valor del portafolio.
                   </div>
                 </div>
@@ -4674,13 +4683,13 @@ export default function App() {
                       onKeyDown={e => e.key === "Enter" && !fibrasLoading && runFibrasScreener()}
                       placeholder="Agregar tickers: FREAL.MX, VESTA.MX..."
                       style={{
-                        background: "#141e2d", border: "1.5px solid #1e2d3d", borderRadius: 10,
-                        padding: "10px 14px", fontSize: 12, color: "#e2e8f0",
-                        fontFamily: "'DM Mono', monospace", width: 240, outline: "none"
+                        background: "var(--surface-2)", border: "1.5px solid var(--border)", borderRadius: 10,
+                        padding: "10px 14px", fontSize: 12, color: "var(--ink)",
+                        fontFamily: "var(--font-mono)", width: 240, outline: "none"
                       }}
                     />
                     <button onClick={runFibrasScreener} disabled={fibrasLoading} className="btn-exec" style={{
-                      background: fibrasLoading ? "#1a2535" : "#00ff88",
+                      background: fibrasLoading ? "#3a4b42" : "#135936",
                       border: "none", borderRadius: 999, color: "#ffffff",
                       padding: "12px 28px", fontSize: 14, fontWeight: 700,
                       cursor: fibrasLoading ? "not-allowed" : "pointer",
@@ -4690,7 +4699,7 @@ export default function App() {
                       {fibrasLoading ? "Cargando..." : "Analizar FIBRAs"}
                     </button>
                   </div>
-                  <div style={{ fontSize: 10, color: "#bbbbbb", textAlign: "right" }}>
+                  <div style={{ fontSize: 10, color: "var(--muted)", textAlign: "right" }}>
                     Las FIBRAs básicas siempre se incluyen · Agrega tickers extra separados por coma
                   </div>
                 </div>
@@ -4705,22 +4714,22 @@ export default function App() {
                   { label: "Dist. Yield", desc: "Rendimiento por distribuciones" },
                   { label: "LTV", desc: "Deuda / (deuda + cap. bursátil)" },
                 ].map(m => (
-                  <div key={m.label} style={{ background: "#141e2d", borderRadius: 8, padding: "5px 10px" }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: "#e2e8f0" }}>{m.label}</span>
-                    <span style={{ fontSize: 10, color: "#999999", marginLeft: 6 }}>{m.desc}</span>
+                  <div key={m.label} style={{ background: "var(--surface-2)", borderRadius: 8, padding: "5px 10px" }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "var(--ink)" }}>{m.label}</span>
+                    <span style={{ fontSize: 10, color: "var(--muted)", marginLeft: 6 }}>{m.desc}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {!fibrasData && !fibrasLoading && (
-              <div style={{ textAlign: "center", color: "#bbbbbb", fontSize: 13, marginTop: 60 }}>
+              <div style={{ textAlign: "center", color: "var(--muted)", fontSize: 13, marginTop: 60 }}>
                 Presiona "Analizar FIBRAs" para cargar las principales FIBRAs mexicanas
               </div>
             )}
 
             {fibrasData?.fibras?.length === 0 && (
-              <div style={{ textAlign: "center", color: "#dc2626", fontSize: 13, marginTop: 40 }}>
+              <div style={{ textAlign: "center", color: "var(--negative)", fontSize: 13, marginTop: 40 }}>
                 No se pudieron obtener datos. Verifica que el backend esté corriendo.
               </div>
             )}
@@ -4728,47 +4737,47 @@ export default function App() {
             {fibrasData?.fibras?.length > 0 && (
               <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))" }}>
                 {fibrasData.fibras.map((f) => {
-                  const sigColor = f.signal === "OPORTUNIDAD" ? "#16a34a" : f.signal === "CARA" ? "#dc2626" : "#eab308";
-                  const sigBg    = f.signal === "OPORTUNIDAD" ? "#f0fdf4"  : f.signal === "CARA" ? "#fff7f7"  : "#fffbeb";
+                  const sigColor = f.signal === "OPORTUNIDAD" ? "var(--positive)" : f.signal === "CARA" ? "var(--negative)" : "var(--warning)";
+                  const sigBg    = f.signal === "OPORTUNIDAD" ? "var(--positive-soft)"  : f.signal === "CARA" ? "var(--negative-soft)"  : "var(--warning-soft)";
                   const navPct   = f.navDiscount;
                   return (
-                    <div key={f.ticker} style={{
-                      background: "#111e2e", boxShadow: "none", border: "1.5px solid #1e2d3d",
+                    <div className="kpi-hover" key={f.ticker} style={{
+                      background: "var(--surface)", boxShadow: "none", border: "1.5px solid var(--border)",
                       borderRadius: 24, padding: 20, borderTop: `3px solid ${sigColor}`
                     }}>
                       {/* Header */}
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
                         <div>
-                          <div style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 15, color: "#e2e8f0" }}>{f.ticker}</div>
-                          <div style={{ fontSize: 11, color: "#666666", marginTop: 2 }}>{f.name}</div>
-                          <div style={{ fontSize: 13, fontFamily: "'DM Mono', monospace", color: "#6b8099", marginTop: 4 }}>
-                            ${f.price?.toLocaleString("es-MX", { minimumFractionDigits: 2 })} <span style={{ fontSize: 10, color: "#bbbbbb" }}>{f.currency}</span>
+                          <div style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 15, color: "var(--ink)" }}>{f.ticker}</div>
+                          <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 2 }}>{f.name}</div>
+                          <div style={{ fontSize: 13, fontFamily: "var(--font-mono)", color: "var(--muted)", marginTop: 4 }}>
+                            ${f.price?.toLocaleString("es-MX", { minimumFractionDigits: 2 })} <span style={{ fontSize: 10, color: "var(--muted)" }}>{f.currency}</span>
                           </div>
                         </div>
                         <div style={{ background: sigBg, borderRadius: 10, padding: "6px 12px", textAlign: "center" }}>
                           <div style={{ fontSize: 10, fontWeight: 700, color: sigColor, letterSpacing: "0.1em" }}>{f.signal}</div>
                           {f.pNAV != null && (
-                            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 20, fontWeight: 700, color: sigColor, marginTop: 2 }}>
+                            <div style={{ fontFamily: "var(--font-mono)", fontSize: 20, fontWeight: 700, color: sigColor, marginTop: 2 }}>
                               {f.pNAV}x
                             </div>
                           )}
-                          <div style={{ fontSize: 9, color: "#bbbbbb" }}>P/NAV</div>
+                          <div style={{ fontSize: 9, color: "var(--muted)" }}>P/NAV</div>
                         </div>
                       </div>
 
                       {/* Métricas en grid 2×3 */}
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
                         {[
-                          { label: "Cap Rate",    value: f.capRate  != null ? `${f.capRate}%`  : "—", color: f.capRate  > 8 ? "#16a34a" : f.capRate  > 5 ? "#eab308" : "#dc2626" },
-                          { label: "Desc/Prima",  value: navPct     != null ? `${navPct > 0 ? "+" : ""}${navPct}%` : "—", color: navPct < -5 ? "#16a34a" : navPct > 5 ? "#dc2626" : "#eab308" },
-                          { label: "FFO Yield",   value: f.ffoYield != null ? `${f.ffoYield}%` : "—", color: f.ffoYield > 6 ? "#16a34a" : "#555555" },
-                          { label: "Dist. Yield", value: f.divYield != null ? `${f.divYield}%` : "—", color: f.divYield > 6 ? "#16a34a" : "#555555" },
-                          { label: "LTV",         value: f.ltv      != null ? `${f.ltv}%`      : "—", color: f.ltv < 40 ? "#16a34a" : f.ltv < 55 ? "#eab308" : "#dc2626" },
-                          { label: "NAV/acc",     value: f.navPS    != null ? `$${f.navPS.toLocaleString("es-MX", { minimumFractionDigits: 2 })}` : "—", color: "#e2e8f0" },
+                          { label: "Cap Rate",    value: f.capRate  != null ? `${f.capRate}%`  : "—", color: f.capRate  > 8 ? "var(--positive)" : f.capRate  > 5 ? "var(--warning)" : "var(--negative)" },
+                          { label: "Desc/Prima",  value: navPct     != null ? `${navPct > 0 ? "+" : ""}${navPct}%` : "—", color: navPct < -5 ? "var(--positive)" : navPct > 5 ? "var(--negative)" : "var(--warning)" },
+                          { label: "FFO Yield",   value: f.ffoYield != null ? `${f.ffoYield}%` : "—", color: f.ffoYield > 6 ? "var(--positive)" : "var(--muted)" },
+                          { label: "Dist. Yield", value: f.divYield != null ? `${f.divYield}%` : "—", color: f.divYield > 6 ? "var(--positive)" : "var(--muted)" },
+                          { label: "LTV",         value: f.ltv      != null ? `${f.ltv}%`      : "—", color: f.ltv < 40 ? "var(--positive)" : f.ltv < 55 ? "var(--warning)" : "var(--negative)" },
+                          { label: "NAV/acc",     value: f.navPS    != null ? `$${f.navPS.toLocaleString("es-MX", { minimumFractionDigits: 2 })}` : "—", color: "var(--ink)" },
                         ].map(m => (
-                          <div key={m.label} style={{ background: "#141e2d", borderRadius: 8, padding: "8px 10px" }}>
-                            <div style={{ fontSize: 9, color: "#bbbbbb", letterSpacing: "0.08em", fontWeight: 600 }}>{m.label}</div>
-                            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700, color: m.color, marginTop: 2 }}>{m.value}</div>
+                          <div key={m.label} style={{ background: "var(--surface-2)", borderRadius: 8, padding: "8px 10px" }}>
+                            <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: "0.08em", fontWeight: 600 }}>{m.label}</div>
+                            <div style={{ fontFamily: "var(--font-mono)", fontSize: 14, fontWeight: 700, color: m.color, marginTop: 2 }}>{m.value}</div>
                           </div>
                         ))}
                       </div>
@@ -4776,14 +4785,14 @@ export default function App() {
                       {/* Barra P/NAV visual (rango 0.5x → 1.5x) */}
                       {f.pNAV != null && (
                         <div style={{ marginTop: 4 }}>
-                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "#bbbbbb", marginBottom: 3 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: "var(--muted)", marginBottom: 3 }}>
                             <span>0.5x</span>
-                            <span style={{ color: "#16a34a" }}>0.85x</span>
-                            <span style={{ color: "#eab308" }}>1.0x</span>
-                            <span style={{ color: "#dc2626" }}>1.15x</span>
+                            <span style={{ color: "var(--positive)" }}>0.85x</span>
+                            <span style={{ color: "var(--warning)" }}>1.0x</span>
+                            <span style={{ color: "var(--negative)" }}>1.15x</span>
                             <span>1.5x</span>
                           </div>
-                          <div style={{ background: "#1a2535", borderRadius: 4, height: 6, position: "relative" }}>
+                          <div style={{ background: "var(--border)", borderRadius: 4, height: 6, position: "relative" }}>
                             <div style={{ position: "absolute", left: "35%", width: "30%", height: "100%", background: "#0a2a1a", borderRadius: 4 }} />
                             <div style={{
                               position: "absolute",
@@ -4800,9 +4809,9 @@ export default function App() {
 
                       {/* Badges */}
                       <div style={{ marginTop: 12, display: "flex", gap: 6, flexWrap: "wrap" }}>
-                        <span style={{ background: "#1a2535", borderRadius: 6, padding: "2px 8px", fontSize: 10, color: "#666666" }}>{f.sector}</span>
+                        <span style={{ background: "var(--border)", borderRadius: 6, padding: "2px 8px", fontSize: 10, color: "var(--muted)" }}>{f.sector}</span>
                         {f.marketCap && (
-                          <span style={{ background: "#1a2535", borderRadius: 6, padding: "2px 8px", fontSize: 10, color: "#666666" }}>
+                          <span style={{ background: "var(--border)", borderRadius: 6, padding: "2px 8px", fontSize: 10, color: "var(--muted)" }}>
                             Cap ${(f.marketCap / 1e9).toFixed(1)}B {f.currency}
                           </span>
                         )}
@@ -4819,33 +4828,33 @@ export default function App() {
         {tab === "magic" && (
           <div>
             {/* Header */}
-            <div style={{ background: "#111e2e", boxShadow: "none", border: "1.5px solid #1e2d3d", borderRadius: 24, padding: 20, marginBottom: 24 }}>
+            <div style={{ background: "var(--surface)", boxShadow: "none", border: "1.5px solid var(--border)", borderRadius: 24, padding: 20, marginBottom: 24 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
                 <div style={{ flex: 1, minWidth: 280 }}>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: "#e2e8f0", marginBottom: 4 }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: "var(--ink)", marginBottom: 4 }}>
                     Fórmula Mágica · Joel Greenblatt
                   </div>
-                  <div style={{ fontSize: 11, color: "#777777", lineHeight: 1.7, maxWidth: 700 }}>
-                    Clasifica empresas del S&P 500 combinando <b style={{ color: "#e2e8f0" }}>calidad</b> y <b style={{ color: "#e2e8f0" }}>precio</b>.
+                  <div style={{ fontSize: 11, color: "var(--muted)", lineHeight: 1.7, maxWidth: 700 }}>
+                    Clasifica empresas del S&P 500 combinando <b style={{ color: "var(--ink)" }}>calidad</b> y <b style={{ color: "var(--ink)" }}>precio</b>.
                     Ordena por rango combinado de dos métricas — el menor rango es la mejor oportunidad.
                     Excluye bancos, aseguradoras, utilities y REITs.
                   </div>
                   {/* Fórmulas */}
                   <div style={{ display: "flex", gap: 12, marginTop: 12, flexWrap: "wrap" }}>
-                    <div style={{ background: "#141e2d", borderRadius: 10, padding: "10px 14px", minWidth: 220 }}>
-                      <div style={{ fontSize: 9, color: "#bbbbbb", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 4 }}>EARNINGS YIELD (precio)</div>
-                      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#e2e8f0" }}>EY = EBIT / Enterprise Value</div>
-                      <div style={{ fontSize: 10, color: "#999999", marginTop: 3 }}>Mayor % = más barata la acción</div>
+                    <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: "10px 14px", minWidth: 220 }}>
+                      <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 4 }}>EARNINGS YIELD (precio)</div>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--ink)" }}>EY = EBIT / Enterprise Value</div>
+                      <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 3 }}>Mayor % = más barata la acción</div>
                     </div>
-                    <div style={{ background: "#141e2d", borderRadius: 10, padding: "10px 14px", minWidth: 220 }}>
-                      <div style={{ fontSize: 9, color: "#bbbbbb", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 4 }}>RETURN ON CAPITAL (calidad)</div>
-                      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#e2e8f0" }}>ROC = EBIT / (NWC + PP&E neto)</div>
-                      <div style={{ fontSize: 10, color: "#999999", marginTop: 3 }}>Mayor % = negocio más eficiente</div>
+                    <div style={{ background: "var(--surface-2)", borderRadius: 10, padding: "10px 14px", minWidth: 220 }}>
+                      <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 4 }}>RETURN ON CAPITAL (calidad)</div>
+                      <div style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--ink)" }}>ROC = EBIT / (NWC + PP&E neto)</div>
+                      <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 3 }}>Mayor % = negocio más eficiente</div>
                     </div>
                   </div>
                 </div>
                 <button onClick={runMagicFormula} disabled={magicLoading} className="btn-exec" style={{
-                  background: magicLoading ? "#1a2535" : "#00ff88",
+                  background: magicLoading ? "#3a4b42" : "#135936",
                   border: "none", borderRadius: 999, color: "#ffffff",
                   padding: "12px 28px", fontSize: 14, fontWeight: 700,
                   cursor: magicLoading ? "not-allowed" : "pointer",
@@ -4856,46 +4865,46 @@ export default function App() {
                 </button>
               </div>
               {magicData && (
-                <div style={{ marginTop: 12, fontSize: 11, color: "#999999" }}>
-                  Universo analizado: <b style={{ color: "#6b8099" }}>{magicData.count}</b> empresas calificables
+                <div style={{ marginTop: 12, fontSize: 11, color: "var(--muted)" }}>
+                  Universo analizado: <b style={{ color: "var(--muted)" }}>{magicData.count}</b> empresas calificables
                   de {magicData.universe} en lista · Mostrando top 30
                 </div>
               )}
             </div>
 
             {magicLoading && (
-              <div style={{ background: "#111e2e", boxShadow: "none", border: "1.5px solid #1e2d3d", borderRadius: 24, padding: 28 }}>
+              <div style={{ background: "var(--surface)", boxShadow: "none", border: "1.5px solid var(--border)", borderRadius: 24, padding: 28 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0" }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "var(--ink)" }}>
                       Analizando universo S&P 500...
                     </div>
-                    <div style={{ fontSize: 11, color: "#999999", marginTop: 3 }}>
-                      Procesando <b style={{ fontFamily: "'DM Mono', monospace", color: "#00cc6a" }}>{magicProgress.current}</b>
+                    <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 3 }}>
+                      Procesando <b style={{ fontFamily: "var(--font-mono)", color: "var(--positive)" }}>{magicProgress.current}</b>
                     </div>
                   </div>
                   <div style={{ textAlign: "right" }}>
-                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 22, fontWeight: 700, color: "#e2e8f0" }}>
-                      {magicProgress.done}<span style={{ fontSize: 13, color: "#bbbbbb" }}>/{magicProgress.total}</span>
+                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 22, fontWeight: 700, color: "var(--ink)" }}>
+                      {magicProgress.done}<span style={{ fontSize: 13, color: "var(--muted)" }}>/{magicProgress.total}</span>
                     </div>
-                    <div style={{ fontSize: 10, color: "#bbbbbb" }}>tickers analizados</div>
+                    <div style={{ fontSize: 10, color: "var(--muted)" }}>tickers analizados</div>
                   </div>
                 </div>
-                <div style={{ background: "#1a2535", borderRadius: 8, height: 8, overflow: "hidden" }}>
+                <div style={{ background: "var(--border)", borderRadius: 8, height: 8, overflow: "hidden" }}>
                   <div style={{
                     width: `${magicProgress.total > 0 ? (magicProgress.done / magicProgress.total) * 100 : 0}%`,
-                    height: "100%", background: "#111111", borderRadius: 8,
+                    height: "100%", background: "var(--bg-deep)", borderRadius: 8,
                     transition: "width 0.3s ease"
                   }} />
                 </div>
-                <div style={{ fontSize: 10, color: "#bbbbbb", marginTop: 8 }}>
+                <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 8 }}>
                   Estimado: ~{Math.max(1, Math.round((magicProgress.total - magicProgress.done) * 0.2 / 60))} min restantes
                 </div>
               </div>
             )}
 
             {!magicData && !magicLoading && (
-              <div style={{ textAlign: "center", color: "#bbbbbb", fontSize: 13, marginTop: 60 }}>
+              <div style={{ textAlign: "center", color: "var(--muted)", fontSize: 13, marginTop: 60 }}>
                 Presiona "Ejecutar Fórmula Mágica" para analizar el universo del S&P 500
               </div>
             )}
@@ -4942,60 +4951,60 @@ export default function App() {
                 <div>
                   {/* ── Barra de filtros ── */}
                   <div style={{
-                    background: "#111e2e", boxShadow: "none", border: "1.5px solid #1e2d3d",
+                    background: "var(--surface)", boxShadow: "none", border: "1.5px solid var(--border)",
                     borderRadius: 24, padding: "14px 20px", marginBottom: 12,
                     display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap"
                   }}>
-                    <span style={{ fontSize: 10, color: "#bbbbbb", fontWeight: 600, letterSpacing: "0.1em" }}>FILTROS</span>
+                    <span style={{ fontSize: 10, color: "var(--muted)", fontWeight: 600, letterSpacing: "0.1em" }}>FILTROS</span>
 
                     {/* Sector */}
                     <select value={magicSector} onChange={e => setMagicSector(e.target.value)} style={{
-                      background: "#141e2d", border: "1px solid #2d3f55", borderRadius: 8,
-                      padding: "5px 10px", fontSize: 12, color: "#e2e8f0", cursor: "pointer"
+                      background: "var(--surface-2)", border: "1px solid var(--border-strong)", borderRadius: 8,
+                      padding: "5px 10px", fontSize: 12, color: "var(--ink)", cursor: "pointer"
                     }}>
                       {sectors.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
 
                     {/* Min EY */}
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ fontSize: 11, color: "#777777" }}>EY mín</span>
+                      <span style={{ fontSize: 11, color: "var(--muted)" }}>EY mín</span>
                       <input type="number" placeholder="0%" value={magicMinEY}
                         onChange={e => setMagicMinEY(e.target.value)}
-                        style={{ width: 64, background: "#141e2d", border: "1px solid #2d3f55", borderRadius: 8, padding: "5px 8px", fontSize: 12, color: "#e2e8f0" }} />
+                        style={{ width: 64, background: "var(--surface-2)", border: "1px solid var(--border-strong)", borderRadius: 8, padding: "5px 8px", fontSize: 12, color: "var(--ink)" }} />
                     </div>
 
                     {/* Min ROC */}
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <span style={{ fontSize: 11, color: "#777777" }}>ROC mín</span>
+                      <span style={{ fontSize: 11, color: "var(--muted)" }}>ROC mín</span>
                       <input type="number" placeholder="0%" value={magicMinROC}
                         onChange={e => setMagicMinROC(e.target.value)}
-                        style={{ width: 64, background: "#141e2d", border: "1px solid #2d3f55", borderRadius: 8, padding: "5px 8px", fontSize: 12, color: "#e2e8f0" }} />
+                        style={{ width: 64, background: "var(--surface-2)", border: "1px solid var(--border-strong)", borderRadius: 8, padding: "5px 8px", fontSize: 12, color: "var(--ink)" }} />
                     </div>
 
                     {/* Reset */}
                     {(magicSector !== "Todos" || magicMinEY || magicMinROC) && (
                       <button onClick={() => { setMagicSector("Todos"); setMagicMinEY(""); setMagicMinROC(""); }}
-                        style={{ background: "none", border: "1px solid #2d3f55", borderRadius: 8, padding: "5px 12px", fontSize: 11, color: "#999999", cursor: "pointer" }}>
+                        style={{ background: "none", border: "1px solid var(--border-strong)", borderRadius: 8, padding: "5px 12px", fontSize: 11, color: "var(--muted)", cursor: "pointer" }}>
                         Limpiar
                       </button>
                     )}
 
-                    <span style={{ marginLeft: "auto", fontSize: 11, color: "#bbbbbb" }}>
+                    <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--muted)" }}>
                       {filtered.length} resultado{filtered.length !== 1 ? "s" : ""}
                     </span>
                   </div>
 
                   {/* ── Tabla ── */}
-                  <div style={{ background: "#111e2e", boxShadow: "none", border: "1.5px solid #1e2d3d", borderRadius: 24, overflow: "hidden" }}>
+                  <div style={{ background: "var(--surface)", boxShadow: "none", border: "1.5px solid var(--border)", borderRadius: 24, overflow: "hidden" }}>
                     {/* Header con click para ordenar */}
-                    <div style={{ display: "grid", gridTemplateColumns: gridCols, padding: "10px 20px", background: "#0d1825", borderBottom: "1px solid #1e2d3d" }}>
+                    <div className="dark-panel" style={{ display: "grid", gridTemplateColumns: gridCols, padding: "10px 20px", background: "#0d1825", borderBottom: "1px solid var(--border)" }}>
                       {cols.map((c, i) => (
                         <div key={i}
                           onClick={() => c.key && toggleSort(c.key)}
                           style={{
                             fontSize: 9, fontWeight: 600, letterSpacing: "0.1em",
                             textAlign: c.right ? "right" : "left",
-                            color: magicSort.col === c.key ? "#111111" : "#bbbbbb",
+                            color: magicSort.col === c.key ? "var(--bg-deep)" : "var(--muted)",
                             cursor: c.key ? "pointer" : "default",
                             userSelect: "none",
                             transition: "color 0.15s"
@@ -5004,48 +5013,48 @@ export default function App() {
                     </div>
 
                     {filtered.length === 0 && (
-                      <div style={{ padding: 32, textAlign: "center", color: "#bbbbbb", fontSize: 13 }}>
+                      <div style={{ padding: 32, textAlign: "center", color: "var(--muted)", fontSize: 13 }}>
                         Ninguna empresa cumple los filtros aplicados
                       </div>
                     )}
 
                     {filtered.map((s, idx) => {
-                      const eyColor  = s.ey  > 10 ? "#16a34a" : s.ey  > 5 ? "#d97706" : "#dc2626";
-                      const rocColor = s.roc > 25 ? "#16a34a" : s.roc > 12 ? "#d97706" : "#dc2626";
+                      const eyColor  = s.ey  > 10 ? "var(--positive)" : s.ey  > 5 ? "var(--warning)" : "var(--negative)";
+                      const rocColor = s.roc > 25 ? "var(--positive)" : s.roc > 12 ? "var(--warning)" : "var(--negative)";
                       const isTop = magicSort.col === "magic_rank" && magicSector === "Todos" && !magicMinEY && !magicMinROC;
                       const medalBg    = isTop && idx === 0 ? "#1a1600" : isTop && idx === 1 ? "#181c20" : isTop && idx === 2 ? "#1a0e00" : "transparent";
-                      const medalColor = isTop && idx === 0 ? "#fbbf24" : isTop && idx === 1 ? "#94a3b8" : isTop && idx === 2 ? "#fb923c" : "#4a6080";
+                      const medalColor = isTop && idx === 0 ? "#fbbf24" : isTop && idx === 1 ? "var(--muted)" : isTop && idx === 2 ? "#fb923c" : "var(--muted-2)";
                       return (
                         <div key={s.ticker} style={{
                           display: "grid", gridTemplateColumns: gridCols,
                           padding: "11px 20px", background: medalBg,
-                          borderBottom: "1px solid #1a2535", alignItems: "center",
+                          borderBottom: "1px solid var(--border)", alignItems: "center",
                         }}>
-                          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 12, fontWeight: 700, color: medalColor }}>{idx + 1}</div>
+                          <div style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, color: medalColor }}>{idx + 1}</div>
                           <div style={{
-                            background: idx < 5 && isTop ? "#00ff8820" : "#1a2535",
-                            color: idx < 5 && isTop ? "#00ff88" : "#6b8099",
+                            background: idx < 5 && isTop ? "var(--positive-soft)" : "var(--border)",
+                            color: idx < 5 && isTop ? "var(--positive)" : "var(--muted)",
                             borderRadius: 6, padding: "2px 6px", fontSize: 11, fontWeight: 700,
                             textAlign: "center", width: "fit-content"
                           }}>{s.magic_rank}</div>
                           <div>
                             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                              <span style={{ fontFamily: "'DM Mono', monospace", fontWeight: 700, fontSize: 13, color: "#e2e8f0" }}>{s.ticker}</span>
-                              <span style={{ background: "#1a2535", borderRadius: 5, padding: "1px 6px", fontSize: 9, color: "#666666" }}>{s.sector?.split(" ")[0]}</span>
+                              <span style={{ fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 13, color: "var(--ink)" }}>{s.ticker}</span>
+                              <span style={{ background: "var(--border)", borderRadius: 5, padding: "1px 6px", fontSize: 9, color: "var(--muted)" }}>{s.sector?.split(" ")[0]}</span>
                             </div>
-                            <div style={{ fontSize: 10, color: "#999999" }}>{s.name}</div>
-                            {s.price && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 10, color: "#6b8099" }}>${s.price}</div>}
+                            <div style={{ fontSize: 10, color: "var(--muted)" }}>{s.name}</div>
+                            {s.price && <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--muted)" }}>${s.price}</div>}
                           </div>
                           <div style={{ textAlign: "right" }}>
-                            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700, color: eyColor }}>{s.ey}%</div>
+                            <div style={{ fontFamily: "var(--font-mono)", fontSize: 14, fontWeight: 700, color: eyColor }}>{s.ey}%</div>
                           </div>
                           <div style={{ textAlign: "right" }}>
-                            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: 14, fontWeight: 700, color: rocColor }}>{s.roc}%</div>
+                            <div style={{ fontFamily: "var(--font-mono)", fontSize: 14, fontWeight: 700, color: rocColor }}>{s.roc}%</div>
                           </div>
-                          <div style={{ textAlign: "right", fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#6b8099" }}>{s.pe != null ? `${s.pe}x` : "—"}</div>
-                          <div style={{ textAlign: "right", fontFamily: "'DM Mono', monospace", fontSize: 12, color: "#6b8099" }}>{s.pb != null ? `${s.pb}x` : "—"}</div>
-                          <div style={{ textAlign: "right", fontSize: 11, color: "#bbbbbb" }}>#{s.rank_ey}</div>
-                          <div style={{ textAlign: "right", fontSize: 11, color: "#bbbbbb" }}>#{s.rank_roc}</div>
+                          <div style={{ textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--muted)" }}>{s.pe != null ? `${s.pe}x` : "—"}</div>
+                          <div style={{ textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--muted)" }}>{s.pb != null ? `${s.pb}x` : "—"}</div>
+                          <div style={{ textAlign: "right", fontSize: 11, color: "var(--muted)" }}>#{s.rank_ey}</div>
+                          <div style={{ textAlign: "right", fontSize: 11, color: "var(--muted)" }}>#{s.rank_roc}</div>
                         </div>
                       );
                     })}
@@ -5055,7 +5064,7 @@ export default function App() {
             })()}
 
             {magicData?.stocks?.length === 0 && (
-              <div style={{ textAlign: "center", color: "#dc2626", fontSize: 13, marginTop: 40 }}>
+              <div style={{ textAlign: "center", color: "var(--negative)", fontSize: 13, marginTop: 40 }}>
                 No se obtuvieron resultados. Verifica que el backend esté corriendo.
               </div>
             )}
@@ -5070,7 +5079,7 @@ export default function App() {
           // ── Chart computations ──
           const closes = analisisChart?.closes ?? analisisChart?.chart ?? [];
           const isUp = closes.length > 1 ? closes[closes.length - 1] >= closes[0] : true;
-          const lineColor = isUp ? "#00ff88" : "#f87171";
+          const lineColor = isUp ? "var(--accent)" : "var(--negative)";
           const W = 900, H = 200;
           let svgPath = "", svgArea = "", chartPts = [];
           if (closes.length > 1) {
@@ -5095,7 +5104,7 @@ export default function App() {
             { label: "Calidad",     val: score.quality_score },
             { label: "Técnico",     val: score.technical_score },
           ] : [];
-          const recColor = score?.overall_score >= 7 ? "#00ff88" : score?.overall_score >= 5 ? "#ffb800" : "#ff3b3b";
+          const recColor = score?.overall_score >= 7 ? "var(--accent)" : score?.overall_score >= 5 ? "var(--warning)" : "var(--negative)";
 
           // ── Metrics ──
           const fmtV = (v, dec = 2) => v == null ? "—" : typeof v === "number" ? v.toFixed(dec) : String(v);
@@ -5178,13 +5187,13 @@ export default function App() {
               <svg viewBox={`0 0 ${BW} ${BH + 40 + TP}`} style={{ width: "100%", display: "block" }}>
                 {[0.25, 0.5, 0.75, 1].map(pct => {
                   const y = TP + BH - pct * BH;
-                  return <line key={pct} x1="0" y1={y} x2={BW} y2={y} stroke="#1a1a1a" strokeWidth="1" />;
+                  return <line key={pct} x1="0" y1={y} x2={BW} y2={y} stroke="var(--border)" strokeWidth="1" />;
                 })}
                 {QLABELS.map((ql, qi) => {
                   const gx = qi * groupW;
                   return (
                     <g key={qi}>
-                      <text x={gx + groupW / 2} y={TP + BH + 28} textAnchor="middle" fill="#6b7280" fontSize="11" fontFamily="monospace">{ql}</text>
+                      <text x={gx + groupW / 2} y={TP + BH + 28} textAnchor="middle" fill="var(--muted)" fontSize="11" fontFamily="monospace">{ql}</text>
                       {bars.map((bar, bi) => {
                         const v = bar.vals[qi];
                         if (v == null) return null;
@@ -5220,7 +5229,7 @@ export default function App() {
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
               {/* ── BUSCADOR ── */}
-              <div style={{ background: "#0a0a0a", borderRadius: 16, padding: "20px 24px", position: "relative" }}>
+              <div className="dark-panel" style={{ background: "var(--bg-deep)", borderRadius: 16, padding: "20px 24px", position: "relative" }}>
                 <input
                   value={analisisTicker}
                   onChange={e => setAnalisisTicker(e.target.value)}
@@ -5229,9 +5238,9 @@ export default function App() {
                   style={{
                     width: "100%", boxSizing: "border-box",
                     background: "transparent", color: "#ffffff", border: "none",
-                    borderBottom: "2px solid #00ff88", outline: "none",
+                    borderBottom: "2px solid var(--accent)", outline: "none",
                     padding: "10px 160px 10px 0",
-                    fontFamily: "'Syne', sans-serif", fontSize: 20, fontWeight: 700,
+                    fontFamily: "var(--font-sans)", fontSize: 20, fontWeight: 700,
                   }}
                 />
                 <button
@@ -5239,65 +5248,65 @@ export default function App() {
                   disabled={analisisLoading}
                   style={{
                     position: "absolute", right: 24, top: "50%", transform: "translateY(-50%)",
-                    background: "#111111", color: "#00ff88",
-                    border: "1.5px solid #00ff88", borderRadius: 10,
+                    background: "var(--bg-deep)", color: "#7fe3a0",
+                    border: "1.5px solid #7fe3a0", borderRadius: 10,
                     padding: "10px 24px", cursor: "pointer",
-                    fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 13,
+                    fontWeight: 800, fontSize: 13,
                     transition: "all 0.15s", letterSpacing: "0.05em",
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.background = "#00ff88"; e.currentTarget.style.color = "#0a0a0a"; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = "#111111"; e.currentTarget.style.color = "#00ff88"; }}
+                  onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-strong)"; e.currentTarget.style.color = "var(--on-accent)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = "var(--bg-deep)"; e.currentTarget.style.color = "#7fe3a0"; }}
                 >
                   {analisisLoading ? "CARGANDO..." : "ANALIZAR →"}
                 </button>
               </div>
 
               {analisisLoading && (
-                <div style={{ display: "flex", alignItems: "center", gap: 12, color: "#6b7280", fontSize: 13, padding: "8px 0" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, color: "var(--muted)", fontSize: 13, padding: "8px 0" }}>
                   <Spinner size={16} /> Analizando {analisisTicker.toUpperCase()}...
                 </div>
               )}
               {analisisError && (
-                <div style={{ color: "#f87171", fontFamily: "'DM Mono',monospace", fontSize: 13, padding: "8px 0" }}>{analisisError}</div>
+                <div style={{ color: "var(--negative)", fontFamily: "var(--font-mono)", fontSize: 13, padding: "8px 0" }}>{analisisError}</div>
               )}
 
               {analisisData && !analisisLoading && (
                 <>
                   {/* ── HEADER ── */}
-                  <div style={{ background: "#0d0d0d", borderRadius: 20, padding: "28px 32px" }}>
+                  <div className="dark-panel" style={{ background: "var(--bg-deep)", borderRadius: 20, padding: "28px 32px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                       <div>
                         <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-                          <span style={{ fontFamily: "'Syne',sans-serif", fontSize: 48, fontWeight: 800, color: "#ffffff", lineHeight: 1 }}>{ticker}</span>
-                          <span style={{ color: "#4b5563", fontSize: 16 }}>{f.name ?? f.longName ?? ""}</span>
+                          <span style={{ fontFamily: "var(--font-sans)", fontSize: 48, fontWeight: 800, color: "#ffffff", lineHeight: 1 }}>{ticker}</span>
+                          <span style={{ color: "var(--muted-2)", fontSize: 16 }}>{f.name ?? f.longName ?? ""}</span>
                         </div>
                         <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                          {f.sector && <span style={{ background: "#1a1a1a", color: "#6b7280", padding: "3px 12px", borderRadius: 999, fontSize: 11, fontWeight: 600 }}>{f.sector}</span>}
-                          {f.industry && <span style={{ background: "#1a1a1a", color: "#6b7280", padding: "3px 12px", borderRadius: 999, fontSize: 11 }}>{f.industry}</span>}
-                          {f.exchange && <span style={{ background: "#1a1a1a", color: "#6b7280", padding: "3px 12px", borderRadius: 999, fontSize: 11 }}>{f.exchange}</span>}
-                          {f.country && <span style={{ background: "#1a1a1a", color: "#6b7280", padding: "3px 12px", borderRadius: 999, fontSize: 11 }}>{f.country}</span>}
-                          {f.employees != null && <span style={{ background: "#1a1a1a", color: "#6b7280", padding: "3px 12px", borderRadius: 999, fontSize: 11 }}>{Number(f.employees).toLocaleString()} empleados</span>}
+                          {f.sector && <span style={{ background: "var(--bg-deep)", color: "#8fa3b8", padding: "3px 12px", borderRadius: 999, fontSize: 11, fontWeight: 600 }}>{f.sector}</span>}
+                          {f.industry && <span style={{ background: "var(--bg-deep)", color: "#8fa3b8", padding: "3px 12px", borderRadius: 999, fontSize: 11 }}>{f.industry}</span>}
+                          {f.exchange && <span style={{ background: "var(--bg-deep)", color: "#8fa3b8", padding: "3px 12px", borderRadius: 999, fontSize: 11 }}>{f.exchange}</span>}
+                          {f.country && <span style={{ background: "var(--bg-deep)", color: "#8fa3b8", padding: "3px 12px", borderRadius: 999, fontSize: 11 }}>{f.country}</span>}
+                          {f.employees != null && <span style={{ background: "var(--bg-deep)", color: "#8fa3b8", padding: "3px 12px", borderRadius: 999, fontSize: 11 }}>{Number(f.employees).toLocaleString()} empleados</span>}
                         </div>
                       </div>
                       <div style={{ textAlign: "right" }}>
-                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 36, color: "#ffffff", fontWeight: 700, lineHeight: 1 }}>
+                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 36, color: "#ffffff", fontWeight: 700, lineHeight: 1 }}>
                           ${f.price != null ? Number(f.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
                         </div>
                         <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 8 }}>
                           {f.change_pct != null && (
-                            <span style={{ color: f.change_pct >= 0 ? "#4ade80" : "#f87171", fontSize: 18, fontWeight: 700 }}>
+                            <span style={{ color: f.change_pct >= 0 ? "var(--positive)" : "var(--negative)", fontSize: 18, fontWeight: 700 }}>
                               {f.change_pct >= 0 ? "+" : ""}{Number(f.change_pct).toFixed(2)}%
                             </span>
                           )}
                           {f.marketCap != null && (
-                            <span style={{ color: "#4b5563", fontSize: 13, alignSelf: "center" }}>
+                            <span style={{ color: "var(--muted-2)", fontSize: 13, alignSelf: "center" }}>
                               Cap ${(f.marketCap / 1e9).toFixed(1)}B
                             </span>
                           )}
                         </div>
                         {f.website && (
                           <a href={f.website} target="_blank" rel="noopener noreferrer"
-                            style={{ color: "#4b5563", fontSize: 11, textDecoration: "none", marginTop: 6, display: "block" }}>
+                            style={{ color: "var(--muted-2)", fontSize: 11, textDecoration: "none", marginTop: 6, display: "block" }}>
                             {f.website.replace(/^https?:\/\//, "").replace(/\/$/, "")}
                           </a>
                         )}
@@ -5305,7 +5314,7 @@ export default function App() {
                     </div>
                     {/* Descripción del negocio */}
                     {f.description && (
-                      <div style={{ marginTop: 20, borderTop: "1px solid #1a1a1a", paddingTop: 16 }}>
+                      <div style={{ marginTop: 20, borderTop: "1px solid var(--border)", paddingTop: 16 }}>
                         <p style={{
                           color: "#9ca3af", fontSize: 13, lineHeight: 1.7, margin: 0,
                           display: "-webkit-box", WebkitLineClamp: analisisDescExpanded ? "unset" : 3,
@@ -5314,7 +5323,7 @@ export default function App() {
                           {f.description}
                         </p>
                         <button onClick={() => setAnalisisDescExpanded(v => !v)}
-                          style={{ background: "none", border: "none", color: "#00ff88", fontSize: 12, cursor: "pointer", marginTop: 8, padding: 0, fontFamily: "'DM Mono',monospace" }}>
+                          style={{ background: "none", border: "none", color: "var(--accent)", fontSize: 12, cursor: "pointer", marginTop: 8, padding: 0, fontFamily: "var(--font-mono)" }}>
                           {analisisDescExpanded ? "Ver menos ▲" : "Ver más ▼"}
                         </button>
                       </div>
@@ -5322,20 +5331,20 @@ export default function App() {
                   </div>
 
                   {/* ── GRÁFICA ── */}
-                  <div style={{ background: "#0d0d0d", borderRadius: 16, padding: "20px 24px" }}>
+                  <div className="dark-panel" style={{ background: "var(--bg-deep)", borderRadius: 16, padding: "20px 24px" }}>
                     {/* Tabs de período */}
                     <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
                       {PERIODS.map(p => {
                         const ret = analisisReturns?.[p.id];
-                        const retColor = ret == null ? "#6b7280" : ret >= 0 ? "#4ade80" : "#f87171";
+                        const retColor = ret == null ? "var(--muted)" : ret >= 0 ? "var(--positive)" : "var(--negative)";
                         const isActive = analisisPeriod === p.id;
                         return (
                           <button key={p.id} onClick={() => fetchAnalisisChart(p.id)}
                             style={{
-                              background: isActive ? "#00ff88" : "#1a1a1a",
-                              color: isActive ? "#0a0a0a" : "#6b7280",
+                              background: isActive ? "#135936" : "var(--bg-deep)",
+                              color: isActive ? "#ffffff" : "var(--muted)",
                               border: "none", borderRadius: 8, padding: "5px 14px 6px",
-                              cursor: "pointer", fontFamily: "'DM Mono',monospace", fontWeight: 700, fontSize: 12,
+                              cursor: "pointer", fontFamily: "var(--font-mono)", fontWeight: 700, fontSize: 12,
                               transition: "all 0.12s", display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
                             }}
                           >
@@ -5349,7 +5358,7 @@ export default function App() {
                         );
                       })}
                       {hPt && (
-                        <div style={{ marginLeft: "auto", fontFamily: "'DM Mono',monospace", fontSize: 13, color: lineColor, alignSelf: "center" }}>
+                        <div style={{ marginLeft: "auto", fontFamily: "var(--font-mono)", fontSize: 13, color: lineColor, alignSelf: "center" }}>
                           ${hPt.v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                       )}
@@ -5374,13 +5383,13 @@ export default function App() {
                               <stop offset="100%" stopColor={lineColor} stopOpacity="0" />
                             </linearGradient>
                           </defs>
-                          <rect width={W} height={H} fill="#111111" rx="10" />
-                          <path d={svgArea} fill="url(#ag-grad)" />
-                          <path d={svgPath} fill="none" stroke={lineColor} strokeWidth="2.5" strokeLinejoin="round" />
+                          <rect width={W} height={H} fill="var(--bg-deep)" rx="10" />
+                          <path className="chart-fade-in" d={svgArea} fill="url(#ag-grad)" />
+                          <path className="chart-draw-line" pathLength={1} d={svgPath} fill="none" stroke={lineColor} strokeWidth="2.5" strokeLinejoin="round" />
                           {hPt && (
                             <g>
                               <line x1={hPt.x} y1="0" x2={hPt.x} y2={H} stroke="#ffffff" strokeWidth="1" strokeOpacity="0.2" strokeDasharray="4,4" />
-                              <circle cx={hPt.x} cy={hPt.y} r="5" fill={lineColor} stroke="#0d0d0d" strokeWidth="2" />
+                              <circle cx={hPt.x} cy={hPt.y} r="5" fill={lineColor} stroke="var(--bg-deep)" strokeWidth="2" />
                             </g>
                           )}
                         </svg>
@@ -5396,17 +5405,17 @@ export default function App() {
                   <div className="analisis-metrics-wrap" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 16 }}>
 
                     {/* Métricas 4x2 */}
-                    <div style={{ background: "#0d0d0d", borderRadius: 16, padding: "20px 24px" }}>
-                      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 10, fontWeight: 700, color: "#4b5563", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 14 }}>Métricas Clave</div>
+                    <div className="dark-panel" style={{ background: "var(--bg-deep)", borderRadius: 16, padding: "20px 24px" }}>
+                      <div style={{ fontFamily: "var(--font-sans)", fontSize: 10, fontWeight: 700, color: "var(--muted-2)", letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 14 }}>Métricas Clave</div>
                       <div className="analisis-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
                         {metrics.map(({ label, val, lo, hi }) => {
                           const cheap  = lo && val != null && lo(val);
                           const pricey = hi && val != null && hi(val);
-                          const valColor = cheap ? "#00ff88" : pricey ? "#f87171" : "#ffffff";
+                          const valColor = cheap ? "var(--accent)" : pricey ? "var(--negative)" : "#ffffff";
                           return (
-                            <div key={label} style={{ background: "#1a1a1a", borderRadius: 12, padding: "12px 14px" }}>
-                              <div style={{ color: "#6b7280", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{label}</div>
-                              <div style={{ color: valColor, fontFamily: "'DM Mono',monospace", fontSize: 20, fontWeight: 700 }}>{fmtV(val)}</div>
+                            <div key={label} style={{ background: "var(--bg-deep)", borderRadius: 12, padding: "12px 14px" }}>
+                              <div style={{ color: "var(--muted)", fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{label}</div>
+                              <div style={{ color: valColor, fontFamily: "var(--font-mono)", fontSize: 20, fontWeight: 700 }}>{fmtV(val)}</div>
                             </div>
                           );
                         })}
@@ -5415,12 +5424,12 @@ export default function App() {
 
                     {/* ML Score */}
                     {score && (
-                      <div style={{ background: "#0d0d0d", borderRadius: 16, padding: "20px 24px" }}>
+                      <div className="dark-panel" style={{ background: "var(--bg-deep)", borderRadius: 16, padding: "20px 24px" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                          <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 10, fontWeight: 700, color: "#4b5563", letterSpacing: "0.12em", textTransform: "uppercase" }}>ML Score</div>
+                          <div style={{ fontFamily: "var(--font-sans)", fontSize: 10, fontWeight: 700, color: "var(--muted-2)", letterSpacing: "0.12em", textTransform: "uppercase" }}>ML Score</div>
                           <div style={{
-                            background: recColor, color: "#0a0a0a",
-                            fontFamily: "'Syne',sans-serif", fontWeight: 800, fontSize: 13,
+                            background: recColor, color: "var(--bg-deep)",
+                            fontFamily: "var(--font-sans)", fontWeight: 800, fontSize: 13,
                             padding: "5px 16px", borderRadius: 999,
                           }}>
                             {score.recommendation} · {score.overall_score}/10
@@ -5428,21 +5437,21 @@ export default function App() {
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                           {scoreDims.map(({ label, val }) => {
-                            const c = val >= 7 ? "#00ff88" : val >= 5 ? "#ffb800" : "#f87171";
+                            const c = val >= 7 ? "var(--accent)" : val >= 5 ? "var(--warning)" : "var(--negative)";
                             return (
                               <div key={label}>
                                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
-                                  <span style={{ color: "#6b7280", fontSize: 12 }}>{label}</span>
-                                  <span style={{ color: c, fontFamily: "'DM Mono',monospace", fontSize: 12, fontWeight: 700 }}>{val}/10</span>
+                                  <span style={{ color: "var(--muted)", fontSize: 12 }}>{label}</span>
+                                  <span style={{ color: c, fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700 }}>{val}/10</span>
                                 </div>
-                                <div style={{ background: "#1a1a1a", borderRadius: 4, height: 6, overflow: "hidden" }}>
+                                <div style={{ background: "var(--bg-deep)", borderRadius: 4, height: 6, overflow: "hidden" }}>
                                   <div style={{ width: `${val * 10}%`, height: "100%", background: c, borderRadius: 4, transition: "width 0.6s ease" }} />
                                 </div>
                               </div>
                             );
                           })}
                         </div>
-                        <div style={{ color: "#4b5563", fontSize: 11, fontFamily: "'DM Mono',monospace", marginTop: 14, lineHeight: 1.6 }}>
+                        <div style={{ color: "var(--muted-2)", fontSize: 11, fontFamily: "var(--font-mono)", marginTop: 14, lineHeight: 1.6 }}>
                           {score.rationale}
                         </div>
                       </div>
@@ -5450,16 +5459,16 @@ export default function App() {
                   </div>
 
                   {/* ── FINANCIEROS ── */}
-                  <div style={{ background: "#0d0d0d", borderRadius: 16, padding: "20px 24px" }}>
+                  <div className="dark-panel" style={{ background: "var(--bg-deep)", borderRadius: 16, padding: "20px 24px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 20 }}>
-                      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 10, fontWeight: 700, color: "#4b5563", letterSpacing: "0.12em", textTransform: "uppercase", marginRight: 12 }}>Financieros</div>
+                      <div style={{ fontFamily: "var(--font-sans)", fontSize: 10, fontWeight: 700, color: "var(--muted-2)", letterSpacing: "0.12em", textTransform: "uppercase", marginRight: 12 }}>Financieros</div>
                       {[["income","Income"],["balance","Balance"],["cashflow","Cash Flow"]].map(([id, label]) => (
                         <button key={id} onClick={() => setAnalisisFinTab(id)}
                           style={{
-                            background: analisisFinTab === id ? "#3b82f6" : "#1a1a1a",
-                            color: analisisFinTab === id ? "#ffffff" : "#6b7280",
+                            background: analisisFinTab === id ? "#3b82f6" : "var(--bg-deep)",
+                            color: analisisFinTab === id ? "#ffffff" : "var(--muted)",
                             border: "none", borderRadius: 8, padding: "5px 16px",
-                            cursor: "pointer", fontFamily: "'DM Mono',monospace", fontWeight: 600, fontSize: 12,
+                            cursor: "pointer", fontFamily: "var(--font-mono)", fontWeight: 600, fontSize: 12,
                             transition: "all 0.12s",
                           }}
                         >{label}</button>
@@ -5470,8 +5479,8 @@ export default function App() {
                     <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 16 }}>
                       <thead>
                         <tr>
-                          <th style={{ textAlign: "left", color: "#4b5563", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", padding: "6px 0", borderBottom: "1px solid #1a1a1a" }}>Métrica</th>
-                          {QLABELS.map(q => <th key={q} style={{ textAlign: "right", color: "#4b5563", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", padding: "6px 0", borderBottom: "1px solid #1a1a1a" }}>{q}</th>)}
+                          <th style={{ textAlign: "left", color: "var(--muted-2)", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", padding: "6px 0", borderBottom: "1px solid var(--border)" }}>Métrica</th>
+                          {QLABELS.map(q => <th key={q} style={{ textAlign: "right", color: "var(--muted-2)", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", padding: "6px 0", borderBottom: "1px solid var(--border)" }}>{q}</th>)}
                         </tr>
                       </thead>
                       <tbody>
@@ -5481,9 +5490,9 @@ export default function App() {
                           const qFmt = qBar?.fmt ?? (v => v?.toFixed(1));
                           return (
                             <tr key={label}>
-                              <td style={{ color: "#6b7280", fontSize: 12, padding: "8px 0", borderBottom: "1px solid #1a1a1a" }}>{label}</td>
+                              <td style={{ color: "var(--muted)", fontSize: 12, padding: "8px 0", borderBottom: "1px solid var(--border)" }}>{label}</td>
                               {QLABELS.map((_, qi) => (
-                                <td key={qi} style={{ textAlign: "right", fontFamily: "'DM Mono',monospace", fontSize: 12, color: "#ffffff", padding: "8px 0", borderBottom: "1px solid #1a1a1a" }}>
+                                <td key={qi} style={{ textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 12, color: "#ffffff", padding: "8px 0", borderBottom: "1px solid var(--border)" }}>
                                   {qVals?.[qi] != null ? `${qFmt(qVals[qi])}${unit ?? ""}` : val ?? "—"}
                                 </td>
                               ))}
@@ -5494,10 +5503,77 @@ export default function App() {
                     </table>
                   </div>
 
+                  {/* ── SEC EDGAR: financieros oficiales, descargables ── */}
+                  <div className="dark-panel" style={{ background: "var(--bg-deep)", borderRadius: 16, padding: "20px 24px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
+                      <FileText aria-hidden="true" color="#7fe3a0" size={15} />
+                      <div style={{ fontFamily: "var(--font-sans)", fontSize: 10, fontWeight: 700, color: "var(--muted-2)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                        Financieros oficiales · SEC EDGAR
+                      </div>
+                      {analisisEdgarLoading && <Spinner size={13} />}
+                      {analisisEdgar?.available && (
+                        <Button
+                          className="button-sm"
+                          icon={<Download aria-hidden="true" size={13} />}
+                          onClick={() => downloadEdgarCsv(analisisEdgar)}
+                          size="sm"
+                          style={{ marginLeft: "auto" }}
+                          variant="secondary"
+                        >Descargar CSV</Button>
+                      )}
+                    </div>
+
+                    {!analisisEdgarLoading && analisisEdgar?.available === false && (
+                      <div style={{ fontSize: 12, color: "#8fa3b8", lineHeight: 1.6 }}>
+                        {analisisEdgar.error ?? "No disponible para este ticker."}
+                      </div>
+                    )}
+                    {!analisisEdgarLoading && !analisisEdgar && (
+                      <div style={{ fontSize: 12, color: "#8fa3b8" }}>Consultando el expediente de la SEC…</div>
+                    )}
+                    {analisisEdgar?.available && (
+                      <>
+                        <div style={{ fontSize: 11, color: "#8fa3b8", marginBottom: 14 }}>
+                          {analisisEdgar.name} · CIK {analisisEdgar.cik} · reportes 10-K anuales, directo de{" "}
+                          <a href={analisisEdgar.source} rel="noreferrer" style={{ color: "#7fe3a0", fontWeight: 600 }} target="_blank">data.sec.gov</a>
+                        </div>
+                        <div className="table-scroll">
+                          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                            <thead>
+                              <tr>
+                                <th style={{ textAlign: "left", color: "var(--muted-2)", fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", padding: "6px 10px 6px 0", borderBottom: "1px solid var(--border)" }}>Concepto</th>
+                                {[...new Set(analisisEdgar.series.flatMap(s => s.values.map(v => v.fy)))].sort().map(fy => (
+                                  <th key={fy} style={{ textAlign: "right", color: "var(--muted-2)", fontSize: 10, fontWeight: 600, padding: "6px 10px", borderBottom: "1px solid var(--border)" }}>FY{fy}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {analisisEdgar.series.map((s) => {
+                                const years = [...new Set(analisisEdgar.series.flatMap(x => x.values.map(v => v.fy)))].sort();
+                                const byYear = Object.fromEntries(s.values.map(v => [v.fy, v.val]));
+                                const isPerShare = s.unit === "USD/shares";
+                                return (
+                                  <tr key={s.concept}>
+                                    <td style={{ color: "var(--muted)", fontSize: 12, padding: "8px 10px 8px 0", borderBottom: "1px solid var(--border)", whiteSpace: "nowrap" }}>{s.label}</td>
+                                    {years.map((y) => (
+                                      <td key={y} style={{ textAlign: "right", fontFamily: "var(--font-mono)", fontSize: 12, color: "#ffffff", padding: "8px 10px", borderBottom: "1px solid var(--border)" }}>
+                                        {byYear[y] != null ? (isPerShare ? `$${byYear[y].toFixed(2)}` : `$${(byYear[y] / 1e6).toLocaleString("en-US", { maximumFractionDigits: 1 })}M`) : "—"}
+                                      </td>
+                                    ))}
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
                   {/* ── NOTICIAS ── */}
-                  <div style={{ background: "#0d0d0d", borderRadius: 16, padding: "20px 24px" }}>
+                  <div className="dark-panel" style={{ background: "var(--bg-deep)", borderRadius: 16, padding: "20px 24px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                      <div style={{ fontFamily: "'Syne',sans-serif", fontSize: 10, fontWeight: 700, color: "#4b5563", letterSpacing: "0.12em", textTransform: "uppercase" }}>
+                      <div style={{ fontFamily: "var(--font-sans)", fontSize: 10, fontWeight: 700, color: "var(--muted-2)", letterSpacing: "0.12em", textTransform: "uppercase" }}>
                         Noticias · {ticker}
                       </div>
                       {analisisNewsLoading && <Spinner size={14} />}
@@ -5505,10 +5581,10 @@ export default function App() {
                     {analisisNews.length > 0 ? (
                       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                         {analisisNews.slice(0, 5).map((item, i) => {
-                          const sentColor = item.sentiment === "positive" ? "#4ade80" : item.sentiment === "negative" ? "#f87171" : "#fbbf24";
+                          const sentColor = item.sentiment === "positive" ? "var(--positive)" : item.sentiment === "negative" ? "var(--negative)" : "#fbbf24";
                           return (
                             <div key={i} style={{
-                              background: "#1a1a1a", borderRadius: 12, padding: "14px 16px",
+                              background: "var(--bg-deep)", borderRadius: 12, padding: "14px 16px",
                               borderLeft: `3px solid ${sentColor}`,
                               cursor: item.url ? "pointer" : "default",
                             }}
@@ -5516,7 +5592,7 @@ export default function App() {
                             >
                               <div style={{ fontWeight: 700, fontSize: 13, color: "#ffffff", marginBottom: 5, lineHeight: 1.4 }}>{item.title}</div>
                               <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                                <span style={{ fontSize: 11, color: "#4b5563" }}>{item.publisher ?? item.source ?? ""}</span>
+                                <span style={{ fontSize: 11, color: "var(--muted-2)" }}>{item.publisher ?? item.source ?? ""}</span>
                                 {item.sentiment && (
                                   <span style={{ fontSize: 10, color: sentColor, fontWeight: 700, textTransform: "uppercase" }}>{item.sentiment}</span>
                                 )}

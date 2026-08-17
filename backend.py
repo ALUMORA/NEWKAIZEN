@@ -912,6 +912,99 @@ EXCLUDED_SECTORS = {
 }
 
 
+# ─── SEC EDGAR — financieros directos de la fuente oficial (solo emisores EE. UU.) ──
+# La API de EDGAR exige un User-Agent descriptivo con contacto (política de acceso justo de la SEC).
+_edgar_session = requests.Session()
+_edgar_session.headers.update({
+    "User-Agent": "KAIZEN Investment Group research@kaizeninvestments.app",
+    "Accept-Encoding": "gzip, deflate",
+})
+_edgar_ticker_cache = {"data": None, "ts": 0}
+
+def _edgar_ticker_map() -> dict:
+    """Mapa TICKER -> CIK (10 dígitos), desde el índice oficial de la SEC. Cache 24h."""
+    now = time.time()
+    if _edgar_ticker_cache["data"] and now - _edgar_ticker_cache["ts"] < 86400:
+        return _edgar_ticker_cache["data"]
+    try:
+        resp = _edgar_session.get("https://www.sec.gov/files/company_tickers.json", timeout=10)
+        raw = resp.json()
+        mapping = {row["ticker"].upper(): str(row["cik_str"]).zfill(10) for row in raw.values()}
+        _edgar_ticker_cache["data"] = mapping
+        _edgar_ticker_cache["ts"] = now
+        return mapping
+    except Exception:
+        return _edgar_ticker_cache["data"] or {}
+
+# Conceptos US-GAAP clave, en el orden en que se muestran/descargan.
+EDGAR_CONCEPTS = [
+    ("Revenues", "Ingresos totales"),
+    ("RevenueFromContractWithCustomerExcludingAssessedTax", "Ingresos totales"),
+    ("CostOfGoodsAndServicesSold", "Costo de ventas"),
+    ("GrossProfit", "Utilidad bruta"),
+    ("OperatingIncomeLoss", "Utilidad operativa"),
+    ("NetIncomeLoss", "Utilidad neta"),
+    ("EarningsPerShareDiluted", "UPA diluida (USD)"),
+    ("Assets", "Activos totales"),
+    ("Liabilities", "Pasivos totales"),
+    ("StockholdersEquity", "Capital contable"),
+    ("CashAndCashEquivalentsAtCarryingValue", "Efectivo y equivalentes"),
+    ("LongTermDebtNoncurrent", "Deuda de largo plazo"),
+    ("NetCashProvidedByUsedInOperatingActivities", "Flujo de efectivo operativo"),
+]
+
+def get_edgar_financials(ticker: str) -> dict:
+    def _fetch():
+        base = ticker.split(".")[0].upper()  # tickers .MX (BMV) no aplican, EDGAR es solo EE. UU.
+        mapping = _edgar_ticker_map()
+        cik = mapping.get(base)
+        if not cik:
+            return {"available": False, "error": f'"{ticker}" no está registrado ante la SEC — EDGAR solo cubre emisores que reportan en EE. UU.'}
+        try:
+            resp = _edgar_session.get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json", timeout=15)
+        except Exception:
+            return {"available": False, "error": "No se pudo conectar con SEC EDGAR."}
+        if resp.status_code != 200:
+            return {"available": False, "error": "SEC EDGAR no tiene expediente XBRL para este emisor."}
+        try:
+            data = resp.json()
+        except Exception:
+            return {"available": False, "error": "Respuesta inválida de SEC EDGAR."}
+        gaap = data.get("facts", {}).get("us-gaap", {})
+        series, seen_labels = [], set()
+        for concept, label in EDGAR_CONCEPTS:
+            if label in seen_labels:
+                continue
+            node = gaap.get(concept)
+            if not node:
+                continue
+            units = node.get("units", {})
+            unit_key = "USD/shares" if "USD/shares" in units else ("USD" if "USD" in units else next(iter(units), None))
+            if not unit_key:
+                continue
+            annual = [v for v in units[unit_key] if v.get("form") == "10-K" and v.get("fp") == "FY" and v.get("end")]
+            by_year = {}
+            for v in annual:
+                fy = v.get("fy") or int(v["end"][:4])
+                if fy not in by_year or v.get("filed", "") > by_year[fy].get("filed", ""):
+                    by_year[fy] = v
+            values = sorted(({"fy": fy, "end": v["end"], "val": v["val"]} for fy, v in by_year.items()), key=lambda x: x["fy"])[-6:]
+            if values:
+                series.append({"concept": concept, "label": label, "unit": unit_key, "values": values})
+                seen_labels.add(label)
+        if not series:
+            return {"available": False, "error": "La SEC no reporta series anuales (10-K) para este emisor."}
+        return {
+            "available": True,
+            "ticker": ticker.upper(),
+            "cik": cik,
+            "name": data.get("entityName"),
+            "series": series,
+            "source": f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={cik}&type=10-K",
+        }
+    return _cached(f"edgar:{ticker.upper()}", _fetch, ttl=6 * 3600)
+
+
 def _fetch_magic_ticker(ticker: str):
     """Datos Magic Formula para un ticker — .info primero, luego income_stmt/balance_sheet."""
     try:
@@ -1585,6 +1678,7 @@ class Handler(BaseHTTPRequestHandler):
             elif parts[0] == "market":                       result = get_market()
             elif parts[0] == "worldmap":                     result = get_worldmap()
             elif parts[0] == "dcf"      and len(parts) > 1: result = get_dcf(parts[1])
+            elif parts[0] == "edgar"    and len(parts) > 1: result = get_edgar_financials(parts[1])
             elif parts[0] == "fibras" and len(parts) > 1:   result = get_fibras(parts[1])
             elif parts[0] == "fibras":                       result = get_fibras()
             elif parts[0] == "magic":                        result = get_magic_formula()
