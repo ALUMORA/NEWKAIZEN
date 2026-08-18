@@ -384,6 +384,10 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance
 .kaizen-mark img { height: 100%; object-fit: cover; transform: scale(1.75); transition: transform 300ms ease; width: 100%; }
 .kaizen-mark-animated img { animation: kaizen-mark-float 5s ease-in-out infinite; }
 .kaizen-mark-animated:hover img { animation-play-state: paused; transform: scale(1.9) rotate(4deg); }
+/* El JPG trae su propio fondo (blanco u negro) horneado. mix-blend-mode lo funde
+   con el fondo real del contenedor en vez de mostrarse como una caja pegada. */
+.kaizen-mark-on-light img { mix-blend-mode: multiply; }
+.kaizen-mark-on-dark img { mix-blend-mode: screen; }
 
 /* ─── KAIZEN-specific: KPI tiles, news, screener cards, chart frame ──────── */
 .kpi-tile { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; box-shadow: var(--shadow-sm); }

@@ -11,8 +11,8 @@ export function cn(...classes) {
 export function Mark({ onDark = false, size = 40, animated = true, className }) {
   return (
     <span
-      className={cn("kaizen-mark", animated && "kaizen-mark-animated", className)}
-      style={{ width: size, height: size }}
+      className={cn("kaizen-mark", onDark ? "kaizen-mark-on-dark" : "kaizen-mark-on-light", animated && "kaizen-mark-animated", className)}
+      style={{ width: size, height: size, background: onDark ? "var(--bg-deep)" : "var(--surface)" }}
     >
       <img alt="" aria-hidden="true" src={onDark ? markWhite : markBlack} />
     </span>
