@@ -1,7 +1,13 @@
 """Screeners: factores, Fórmula Mágica y FIBRAs (stream B3c).
 
-Mientras B3c no las implemente responden 501 NOT_IMPLEMENTED. Al implementar una, agrega su
-capacidad a ``CAPABILITIES``. ``/v2/insiders/{symbol}`` es de B3a y vive en ``insiders.py``.
+Las tres rutas leen los mismos proveedores (``info`` de Yahoo y, según el caso, estados
+financieros o una descarga en lote de cierres), por eso comparten la clase de caché
+``screeners`` (12 h): son datos que no cambian intradía y cada consulta cuesta decenas de llamadas.
+
+Ninguna de las tres emite lenguaje de compra o venta. El screener de factores publica pruebas
+"cumple / no cumple" contra umbrales escritos, la fórmula mágica publica lugares y las FIBRAs una
+señal descriptiva de precio contra valor en libros. ``/v2/insiders/{symbol}`` es de B3a y vive en
+``insiders.py``.
 """
 
 from __future__ import annotations
@@ -10,15 +16,31 @@ from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query
 
-from kaizen_api.errors import invalid_param, not_implemented
-from kaizen_api.routers import ERROR_RESPONSES, cache_control, parse_symbols, stub
+from kaizen_api.domain.screeners import factors as factors_domain
+from kaizen_api.domain.screeners import fibras as fibras_domain
+from kaizen_api.domain.screeners import magic as magic_domain
+from kaizen_api.domain.universe import custom_universe, get_universe
+from kaizen_api.errors import ApiError, invalid_param
+from kaizen_api.provenance import meta
+from kaizen_api.routers import ERROR_RESPONSES, cache_control, parse_symbols
 from kaizen_api.schemas import FactorsResponse, FibrasResponse, MagicResponse
 
 router = APIRouter(prefix="/v2", tags=["screeners"], responses=ERROR_RESPONSES)
-CAPABILITIES: list[str] = []
+CAPABILITIES: list[str] = ["screeners.factors", "screeners.magic", "screeners.fibras"]
 
 MAX_CUSTOM_UNIVERSE = 50
 MAX_FIBRAS_EXTRA = 20
+
+DELAY_MINUTES = 15
+"""Yahoo publica los precios con unos 15 minutos de retraso en las dos plazas."""
+
+
+def _upstream_down(what: str) -> ApiError:
+    return ApiError(
+        503,
+        "UPSTREAM_UNAVAILABLE",
+        f"No pudimos leer los datos de {what}. Vuelve a intentar en unos minutos.",
+    )
 
 
 @router.get(
@@ -27,7 +49,6 @@ MAX_FIBRAS_EXTRA = 20
     dependencies=[cache_control("screeners")],
     summary="Puntajes por factor (valor, calidad, momentum, baja volatilidad, crecimiento)",
 )
-@stub
 def factors(
     universe: Annotated[Literal["mx", "us", "custom"], Query(description="custom exige symbols")] = "mx",
     symbols: Annotated[str | None, Query(max_length=MAX_CUSTOM_UNIVERSE * 21, description="Solo con universe=custom")] = None,
@@ -35,10 +56,26 @@ def factors(
     if universe == "custom":
         if not symbols:
             raise invalid_param("query.symbols", "missing", "Con universe=custom indica los símbolos.")
-        parse_symbols(symbols, limit=MAX_CUSTOM_UNIVERSE)
+        chosen = custom_universe(parse_symbols(symbols, limit=MAX_CUSTOM_UNIVERSE))
     elif symbols:
         raise invalid_param("query.symbols", "extra_forbidden", "symbols solo aplica con universe=custom.")
-    raise not_implemented("GET /v2/screeners/factors")
+    else:
+        chosen = get_universe(universe)
+
+    board = factors_domain.get_factors(chosen)
+    if not any(row["coverage"] > 0 for row in board["rows"]):
+        raise _upstream_down("las emisoras del universo")
+    return {
+        "universe": board["universe"],
+        "method": board["method"],
+        "rows": board["rows"],
+        "meta": meta(
+            "yahoo,computed",
+            as_of=board["asOf"],
+            delay_minutes=DELAY_MINUTES,
+            notes=board["notes"],
+        ),
+    }
 
 
 @router.get(
@@ -47,9 +84,22 @@ def factors(
     dependencies=[cache_control("screeners")],
     summary="Fórmula Mágica de Greenblatt con EBIT reportado",
 )
-@stub
 def magic(universe: Annotated[Literal["us", "mx"], Query(description="Universo")] = "us") -> MagicResponse:
-    raise not_implemented("GET /v2/screeners/magic")
+    table = magic_domain.get_magic(universe)
+    if not table["rows"] and table["partial"]:
+        raise _upstream_down("las emisoras del universo")
+    return {
+        "universe": table["universe"],
+        "rows": table["rows"],
+        "excluded": table["excluded"],
+        "partial": table["partial"],
+        "meta": meta(
+            "yahoo,computed",
+            as_of=table["asOf"],
+            delay_minutes=DELAY_MINUTES,
+            notes=table["notes"],
+        ),
+    }
 
 
 @router.get(
@@ -58,10 +108,24 @@ def magic(universe: Annotated[Literal["us", "mx"], Query(description="Universo")
     dependencies=[cache_control("screeners")],
     summary="FIBRAs: rendimiento de distribución, P/NAV, LTV y diferencial contra CETES",
 )
-@stub
 def fibras(
     extra: Annotated[str | None, Query(max_length=MAX_FIBRAS_EXTRA * 21, description="FIBRAs extra separadas por coma")] = None,
 ) -> FibrasResponse:
-    if extra:
-        parse_symbols(extra, limit=MAX_FIBRAS_EXTRA, param="extra")
-    raise not_implemented("GET /v2/screeners/fibras")
+    more = parse_symbols(extra, limit=MAX_FIBRAS_EXTRA, param="extra") if extra else []
+    table = fibras_domain.get_fibras_v2(more)
+    if not any(row["price"] is not None for row in table["rows"]):
+        raise _upstream_down("las FIBRAs")
+    source = "yahoo,computed"
+    if table.get("rateSource"):
+        source += "," + table["rateSource"]
+    return {
+        "rows": table["rows"],
+        "cetes28": table["cetes28"],
+        "meta": meta(
+            source,
+            as_of=table["asOf"],
+            delay_minutes=DELAY_MINUTES,
+            fallback=bool(table.get("rateFallback")),
+            notes=table["notes"],
+        ),
+    }
