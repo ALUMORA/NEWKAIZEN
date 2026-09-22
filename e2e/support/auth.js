@@ -1,8 +1,9 @@
-// Sesión sembrada para specs de la app nueva. PROVISIONAL: S2 define la forma final de la
-// sesión en src/lib/auth/; aquí solo se fija la llave y un valor de ejemplo.
+// Sesión sembrada para specs de la app nueva. La forma es la de src/lib/auth/session.js:
+//   { token, expiresAt (ISO), user: { username, displayName } }
+// y la llave "kaizen.session" de sessionStorage.
 //
 //   await seedSession(page)                       // sesión por defecto
-//   await seedSession(page, { token: 'x', ... })  // forma propia
+//   await seedSession(page, { ...DEFAULT_SESSION, expiresAt: '2026-09-22T15:00:00Z' })
 //
 // Se escribe con addInitScript, o sea antes de que corra cualquier script de la página y en
 // cada navegación del mismo `page`.
@@ -11,8 +12,8 @@ export const SESSION_KEY = 'kaizen.session'
 
 export const DEFAULT_SESSION = Object.freeze({
   token: 'e2e-token',
-  user: { id: 'e2e-user', email: 'e2e@kaizen.test', name: 'Usuario E2E' },
   expiresAt: '2099-01-01T00:00:00.000Z',
+  user: Object.freeze({ username: 'e2e', displayName: 'Usuario E2E' }),
 })
 
 /**

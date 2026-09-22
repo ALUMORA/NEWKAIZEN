@@ -1,4 +1,4 @@
-// Todo lo específico de la app LEGADA (src/App.jsx) que comparten el grabador
+// Todo lo específico de la app LEGADA (src/legacy/App.legacy.jsx) que comparten el grabador
 // (scripts/record-legacy-fixtures.mjs) y el spec de baseline (e2e/baseline.spec.js): tabs,
 // navegación, criterio de "ya terminó de cargar" y rutas de los fixtures. Si el grabador y el
 // spec no usan exactamente el mismo recorrido, el replay pide cosas que no se grabaron.
@@ -7,9 +7,9 @@ import { fileURLToPath } from 'node:url'
 
 export const LEGACY_API_ORIGIN = 'http://127.0.0.1:8002'
 
-// Lo que se graba y se sirve desde el HAR: el backend viejo y Google Fonts (index.css importa
-// Plus Jakarta Sans y JetBrains Mono desde fonts.googleapis.com; sin grabarlas el replay
-// dependería de la red o caería a otra tipografía).
+// Lo que se graba y se sirve desde el HAR: el backend viejo y Google Fonts. Desde S2 la app sirve
+// sus fuentes (@fontsource-variable) y ya no pide nada a Google; el HAR de septiembre todavía trae
+// esas entradas y se dejan en el patrón para que una regrabación con una versión vieja no falle.
 export const LEGACY_HAR_URL = /^(http:\/\/127\.0\.0\.1:8002|https:\/\/fonts\.(googleapis|gstatic)\.com)\//
 
 export const LEGACY_FIXTURES_DIR = fileURLToPath(new URL('../fixtures/legacy/', import.meta.url))
@@ -23,7 +23,7 @@ export function readLegacyMeta() {
   return JSON.parse(readFileSync(LEGACY_META_PATH, 'utf8'))
 }
 
-// Orden del recorrido y etiquetas tal como aparecen en src/App.jsx: la barra lateral en
+// Orden del recorrido y etiquetas tal como aparecen en src/legacy/App.legacy.jsx: la barra lateral en
 // escritorio y las pastillas de la barra inferior en móvil (que usan nombres cortos).
 export const LEGACY_TABS = [
   { id: 'news', slug: 'noticias', desktop: 'Noticias', mobile: 'Noticias' },
