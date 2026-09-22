@@ -163,6 +163,21 @@ test.describe('login', () => {
     await expect(page).toHaveURL(/\/mercados$/)
     await legacySettled(page, net)
   })
+
+  // El parser de URL borra tab y saltos de línea y trata "\" como "/": sin filtrarlos, React
+  // Router se negaba a navegar ("External navigation is not allowed") y el login caía en la
+  // pantalla de error.
+  for (const next of ['%2F%09%2Fexample.com', '%2F%0A%2Fexample.com', '%2F%5Cexample.com', '%2F%250D%2Fexample.com']) {
+    test(`?next=${next} (control o diagonal invertida) cae en /mercados sin pantalla de error`, async ({ page, baseURL }) => {
+      await setupApp(page, { baseURL, session: true, legacyApi: true })
+      const net = trackNetwork(page, API_URL_RE)
+      await page.goto(`/login?next=${next}`)
+      await expect(page).toHaveURL(/\/mercados$/)
+      await legacySettled(page, net)
+      await expect(page.getByText('Algo salió mal')).toHaveCount(0)
+      await expect(page.locator('.app-topbar')).toContainText('Noticias')
+    })
+  }
 })
 
 test.describe('app legada dentro de LegacyPage', () => {

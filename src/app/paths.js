@@ -77,16 +77,67 @@ export function pathLearnTerm(term) {
   return `/aprender/${encodeURIComponent(String(term).trim().toLowerCase())}`
 }
 
+/** Origen contra el que se revisa ?next cuando no hay window (pruebas en Node). */
+const CHECK_ORIGIN = 'http://kaizen.invalid'
+
+function currentOrigin() {
+  try {
+    const origin = globalThis.location?.origin
+    return origin && origin !== 'null' ? origin : CHECK_ORIGIN
+  } catch {
+    return CHECK_ORIGIN
+  }
+}
+
 /**
- * Solo acepta rutas internas ("/algo"), nunca "//otro-sitio", esquemas ni la propia /login:
- * evita redirecciones abiertas con ?next.
+ * Caracteres de control ASCII (U+0000 a U+001F y U+007F) o diagonal invertida. El parser de URL
+ * borra tabs y saltos de línea y trata "\" como "/": "/\t/example.com" o "/\\example.com"
+ * terminan siendo "//example.com", otro sitio.
+ * @param {string} s
+ */
+function hasUnsafeChars(s) {
+  for (let i = 0; i < s.length; i += 1) {
+    const c = s.charCodeAt(i)
+    if (c < 0x20 || c === 0x7f || c === 0x5c) return true
+  }
+  return false
+}
+
+/**
+ * Destino seguro para ?next: solo rutas internas de este mismo origen, nunca la propia /login.
+ * Evita redirecciones abiertas y que un link armado tumbe el login con "Algo salió mal" (React
+ * Router se niega a navegar a otro origen). Rechaza, tal cual o ya decodificado con %XX:
+ * caracteres de control, diagonales invertidas, "//otro-sitio", esquemas ("https:",
+ * "javascript:") y cualquier cosa que el navegador resuelva a otro origen. Devuelve la ruta
+ * normalizada (pathname + search + hash) o `fallback`.
  * @param {string | null | undefined} next
  * @param {string} [fallback]
  */
 export function safeNext(next, fallback = DEFAULT_PRIVATE_PATH) {
-  if (typeof next !== 'string' || !next.startsWith('/') || next.startsWith('//') || next.includes('\\')) return fallback
-  if (/^\/login(?:[/?#]|$)/.test(next)) return fallback
-  return next
+  if (typeof next !== 'string' || !next.startsWith('/') || next.startsWith('//')) return fallback
+  let decoded
+  try {
+    decoded = decodeURIComponent(next)
+  } catch {
+    return fallback
+  }
+  if (hasUnsafeChars(next) || hasUnsafeChars(decoded) || decoded.startsWith('//')) return fallback
+  const origin = currentOrigin()
+  let url
+  try {
+    url = new URL(next, origin)
+  } catch {
+    return fallback
+  }
+  if (url.origin !== origin) return fallback
+  let path
+  try {
+    path = decodeURIComponent(url.pathname)
+  } catch {
+    return fallback
+  }
+  if (/^\/login(?:\/|$)/i.test(path)) return fallback
+  return `${url.pathname}${url.search}${url.hash}`
 }
 
 /**
