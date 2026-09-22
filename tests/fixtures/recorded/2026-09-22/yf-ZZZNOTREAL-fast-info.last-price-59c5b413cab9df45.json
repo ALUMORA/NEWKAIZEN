@@ -1,0 +1,21 @@
+{
+ "key": "yf:ZZZNOTREAL:fast_info.last_price",
+ "provider": "yfinance",
+ "symbol": "ZZZNOTREAL",
+ "attr": "fast_info.last_price",
+ "kwargs": {},
+ "kind": "exception",
+ "exception": {
+  "type": "builtins.KeyError",
+  "args": [
+   "currentTradingPeriod"
+  ],
+  "str": "'currentTradingPeriod'"
+ },
+ "logs": [
+  "$ZZZNOTREAL: No data found, symbol may be delisted"
+ ],
+ "recorded_at": "2026-09-22T14:53:38+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

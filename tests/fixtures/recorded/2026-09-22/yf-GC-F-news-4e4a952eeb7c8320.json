@@ -1,0 +1,634 @@
+{
+ "key": "yf:GC=F:news",
+ "provider": "yfinance",
+ "symbol": "GC=F",
+ "attr": "news",
+ "kwargs": {},
+ "kind": "value",
+ "payload": [
+  {
+   "id": "05aaab51-51ec-41dd-86fb-82e2195d054f",
+   "content": {
+    "id": "05aaab51-51ec-41dd-86fb-82e2195d054f",
+    "contentType": "STORY",
+    "title": "Gold price today, Tuesday, September 22, 2026: Gold prices holding as Chinese gold imports set record",
+    "description": "",
+    "summary": "Gold futures opened at $4,382.50 per troy ounce on Tuesday, September 22, 2026, flat from Monday's closing price. Gold fell slightly in early trading to $4,368.40 as of 6:27 a.m. ET.",
+    "pubDate": "2026-09-22T10:43:26Z",
+    "displayTime": "2026-09-22T10:43:26Z",
+    "isHosted": true,
+    "bypassModal": true,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://s.yimg.com/uu/api/res/1.2/xs7mrxGI84M.xOkOI_ISMg--~B/aD0xMDgwO3c9MTkyMDthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/tuesday.png",
+     "originalWidth": 1920,
+     "originalHeight": 1080,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/xs7mrxGI84M.xOkOI_ISMg--~B/aD0xMDgwO3c9MTkyMDthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/tuesday.png",
+       "width": 1920,
+       "height": 1080,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/XaBYEkRnbAj6Fnji1RnV6A--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/tuesday.png",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Yahoo Personal Finance",
+     "url": "https://finance.yahoo.com/",
+     "sourceId": "yahoo_personal_finance_397"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/personal-finance/investing/article/gold-price-today-tuesday-september-22-2026-gold-prices-holding-as-chinese-gold-imports-set-record-104326063.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/personal-finance/investing/article/gold-price-today-tuesday-september-22-2026-gold-prices-holding-as-chinese-gold-imports-set-record-104326063.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": true
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "16ede5cc-f06b-3a42-852b-62a93c7be7d5",
+   "content": {
+    "id": "16ede5cc-f06b-3a42-852b-62a93c7be7d5",
+    "contentType": "VIDEO",
+    "title": "Tomahawk Metals chair: Slovakia and Australia assets set stage for AIM listing",
+    "description": "<p>Tomahawk Metals Plc (AQSE:TMHK) executive chairman Rolf Gerritsen spoke with Proactive's Stephen Gunnio about the company's gold and antimony assets in Slovakia and Australia, recent exploration results from its Saturn licence, and plans to seek admission to AIM.</p>\n<p>Gerritsen explained that Tomahawk Metals is a relatively new natural resources business following its pivot from Shortwave Life Sciences, having taken on antimony and gold assets in Slovakia alongside the Saturn gold licence in the Southern Cross area of Western Australia.</p>\n<p>In Slovakia, Gerritsen highlighted the region's mining history and opportunities tied to European critical minerals initiatives. Tomahawk now has three licences transferred into its Slovakian subsidiary, with another two under application, and is eyeing potential European Community grants to support exploration and development.</p>\n<p>In Australia, attention is focused on Saturn, where Tomahawk recently reported a rock-chip result of up to 44.85 grams per tonne gold following a site visit that identified historical workings and exploration digs. \"There are a number of clearly identifiable areas to explore further,\" Gerritsen said, with the next work programme being defined and potentially leading to trenching and drill target identification.</p>\n<p>Gerritsen also discussed Tomahawk's proposed AIM listing, with admission documents in preparation and completion of the Competent Person's Report for the Slovakian asset a critical step. The company is aiming to complete the admission document, and ideally the listing itself, by year-end, subject to market conditions and necessary approvals.</p>\n<p>Visit Proactive’s YouTube channel for more interviews and market updates. Don’t forget to like this video, subscribe to the channel and enable notifications for future content.</p>\n<p>Read Proactive's Editorial Policy here: https://www.proactiveinvestors.co.uk/pages/editorialPolicy</p>\n<p>#TomahawkMetals #Gold #GoldExploration #Antimony #CriticalMinerals #Mining #AIM #SaturnProject #WesternAustralia #Slovakia #NaturalResources #JuniorMining #MiningStocks #Exploration #Proactive</p>",
+    "summary": "Tomahawk Metals Plc (AQSE:TMHK) executive chairman Rolf Gerritsen spoke with Proactive's Stephen Gunnio about the company's gold and antimony assets in Slovakia and Australia, recent exploration results from its Saturn licence, and plans to seek admission to AIM. Gerritsen explained that Tomahawk Metals is a relatively new natural resources business following its pivot from Shortwave Life Sciences, having taken on antimony and gold assets in Slovakia alongside the Saturn gold licence in the Southern Cross area of Western Australia. In Slovakia, Gerritsen highlighted the region's mining history and opportunities tied to European critical minerals initiatives. Tomahawk now has three licences transferred into its Slovakian subsidiary, with another two under application, and is eyeing potential European Community grants to support exploration and development. In Australia, attention is focused on Saturn, where Tomahawk recently reported a rock-chip result of up to 44.85 grams per tonne gold following a site visit that identified historical workings and exploration digs. \"There are a number of clearly identifiable areas to explore further,\" Gerritsen said, with the next work programme being defined and potentially leading to trenching and drill target identification. Gerritsen also discussed Tomahawk's proposed AIM listing, with admission documents in preparation and completion of the Competent Person's Report for the Slovakian asset a critical step. The company is aiming to complete the admission document, and ideally the listing itself, by year-end, subject to market conditions and necessary approvals. Visit Proactive’s YouTube channel for more interviews and market updates. Don’t forget to like this video, subscribe to the channel and enable notifications for future content. Read Proactive's Editorial Policy here: https://www.proactiveinvestors.co.uk/pages/editorialPolicy #TomahawkMetals #Gold #GoldExploration #Antimony #CriticalMinerals #Mining #AIM #SaturnProject #WesternAustralia #Slovakia #NaturalResources #JuniorMining #MiningStocks #Exploration #Proactive",
+    "pubDate": "2026-09-22T13:42:08Z",
+    "displayTime": "",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/proactive_video_751/a4e34d1c58ce3d96b8a3c1aa51e0fce2.jpg",
+     "originalWidth": 1920,
+     "originalHeight": 1080,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/2Qm5PmZK2ZGykoXfkjjaLg--~B/aD0xMDgwO3c9MTkyMDthcHBpZD15dGFjaHlvbg--/https://media.zenfs.com/en/proactive_video_751/a4e34d1c58ce3d96b8a3c1aa51e0fce2.jpg",
+       "width": 1920,
+       "height": 1080,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/_pqhNA29WQ8IsnTcPf9ZMw--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/proactive_video_751/a4e34d1c58ce3d96b8a3c1aa51e0fce2.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Proactive",
+     "url": "https://www.proactiveinvestors.com/",
+     "sourceId": "proactive_video_751"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/video/tomahawk-metals-chair-slovakia-australia-134208933.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/video/tomahawk-metals-chair-slovakia-australia-134208933.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "3685cc2e-9e87-39b2-854d-7855d865de01",
+   "content": {
+    "id": "3685cc2e-9e87-39b2-854d-7855d865de01",
+    "contentType": "STORY",
+    "title": "Meridian Mining shares jump 10% as Cabaçal study points to $2bn value",
+    "description": "",
+    "summary": "Shares in Meridian Mining Plc (LSE:MNO, TSX:MNO, OTCQX:MRRDF) rose 10% after a definitive feasibility study valued its Cabaçal gold-copper-silver project in Brazil at more than $2 billion. The stock climbed to 109p in early trading. Meridian, a miner listed in London and Toronto, has been...",
+    "pubDate": "2026-09-22T10:07:00Z",
+    "displayTime": "2026-09-22T10:07:00Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/proactive_us_504/ebd913b909e093de57c13910115ba1db.jpg",
+     "originalWidth": 1280,
+     "originalHeight": 720,
+     "caption": "Meridian Mining shares jump 10% as Cabaçal study points to $2bn value",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/kYMImsZOPpq5ass_EtUotA--~B/aD03MjA7dz0xMjgwO2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/proactive_us_504/ebd913b909e093de57c13910115ba1db.jpg",
+       "width": 1280,
+       "height": 720,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/dmLpsnomZ_eSZ0AMbS1kGA--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/proactive_us_504/ebd913b909e093de57c13910115ba1db.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Proactive",
+     "url": "https://www.proactiveinvestors.com/",
+     "sourceId": "proactive_us_504"
+    },
+    "canonicalUrl": {
+     "url": "https://www.proactiveinvestors.com/companies/news/1098875/meridian-mining-shares-jump-10-as-cabacal-study-points-to-2bn-value-1098875.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/meridian-mining-shares-jump-10-100700425.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "87313f85-4dcf-327f-8493-b9a24762c547",
+   "content": {
+    "id": "87313f85-4dcf-327f-8493-b9a24762c547",
+    "contentType": "STORY",
+    "title": "Gold Prices Fall as Stronger Dollar and Fed Rate Expectations Weigh on Bullion",
+    "description": "",
+    "summary": "Gold prices declined on Tuesday as the US dollar strengthened and investors assessed the possibility of further interest rate increases by the Federal Reserve following last week’s hike. At 04:43 ET (08:43 GMT), spot gold fell 0.",
+    "pubDate": "2026-09-22T09:44:01Z",
+    "displayTime": "2026-09-22T09:44:01Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/investorshub_458/9733c99b80258efab8aac3002d2b2a0d.png",
+     "originalWidth": 1200,
+     "originalHeight": 659,
+     "caption": "Large gold nugget ©James St. John",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/L9afIzQ.uHoHMAdZzY_RUQ--~B/aD02NTk7dz0xMjAwO2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/investorshub_458/9733c99b80258efab8aac3002d2b2a0d.png",
+       "width": 1200,
+       "height": 659,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/cc2dI8exYopuoMgVIpB4KQ--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/investorshub_458/9733c99b80258efab8aac3002d2b2a0d.png",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "InvestorsHub",
+     "url": "https://investorshub.advfn.com/",
+     "sourceId": "investorshub_458"
+    },
+    "canonicalUrl": {
+     "url": "https://investorshub.advfn.com/market-news/article/36672/gold-prices-fall-as-stronger-dollar-and-fed-rate-expectations-weigh-on-bullion",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/commodities/articles/gold-prices-fall-stronger-dollar-094401799.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "e0a62d55-2e70-3c5b-a6d1-6c2e6a382090",
+   "content": {
+    "id": "e0a62d55-2e70-3c5b-a6d1-6c2e6a382090",
+    "contentType": "VIDEO",
+    "title": "Sunda Energy, Meridian Mining, Quantum Helium, Light Science Technologies, Foresight Solar, hVIVO",
+    "description": "<p>Sunda Energy PLC (AIM:SNDA, FRA:GHA0) has raised £5.25 million to fund completion of its New Zealand acquisition. It's also launching a retail offer for a further £525,000.</p>\n<p>Meridian Mining Plc (LSE:MNO, TSX:MNO, OTCQX:MRRDF) has delivered a net present value of $2.09 billion for its Cabaçal project in Brazil. The CEO says the economics could make it the next major near-term gold-copper mine.</p>\n<p>Quantum Helium Ltd (AIM:QHE) is targeting Q4 2026 for a larger fracture stimulation programme at Sagebrush-1 in Colorado. It's also taking a 9% stake in Herencia Resources.</p>\n<p>Light Science Technologies Holdings PLC (AIM:LST, FRA:9FD) has secured a repeat order from a healthcare devices customer, pushing that contract past £500,000. It's building out higher-margin work in defence and medical sectors.</p>\n<p>Foresight Solar Fund Ltd (LSE:FSFL, FRA:1F5) says it's considering all strategic options to lift a share price stuck below the value of its assets. The board says it needs to \"act decisively\" to close that gap.</p>\n<p>hVIVO PLC (AIM:HVO) has appointed Caroline Shaw as an independent non-executive director. She brings more than 30 years of senior healthcare leadership to the board.</p>\n<p>Follow us and subscribe on YouTube, our social channels, and on proactiveinvestors.co.uk.</p>",
+    "summary": "Sunda Energy PLC (AIM:SNDA, FRA:GHA0) has raised £5.25 million to fund completion of its New Zealand acquisition. It's also launching a retail offer for a further £525,000. Meridian Mining Plc (LSE:MNO, TSX:MNO, OTCQX:MRRDF) has delivered a net present value of $2.09 billion for its Cabaçal project in Brazil. The CEO says the economics could make it the next major near-term gold-copper mine. Quantum Helium Ltd (AIM:QHE) is targeting Q4 2026 for a larger fracture stimulation programme at Sagebrush-1 in Colorado. It's also taking a 9% stake in Herencia Resources. Light Science Technologies Holdings PLC (AIM:LST, FRA:9FD) has secured a repeat order from a healthcare devices customer, pushing that contract past £500,000. It's building out higher-margin work in defence and medical sectors. Foresight Solar Fund Ltd (LSE:FSFL, FRA:1F5) says it's considering all strategic options to lift a share price stuck below the value of its assets. The board says it needs to \"act decisively\" to close that gap. hVIVO PLC (AIM:HVO) has appointed Caroline Shaw as an independent non-executive director. She brings more than 30 years of senior healthcare leadership to the board. Follow us and subscribe on YouTube, our social channels, and on proactiveinvestors.co.uk.",
+    "pubDate": "2026-09-22T08:49:52Z",
+    "displayTime": "",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/proactive_video_751/ab3691fd3c4b412bfbbac5af83f53046.jpg",
+     "originalWidth": 1920,
+     "originalHeight": 1080,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/JiMRaDEFtHNttDboB0chrA--~B/aD0xMDgwO3c9MTkyMDthcHBpZD15dGFjaHlvbg--/https://media.zenfs.com/en/proactive_video_751/ab3691fd3c4b412bfbbac5af83f53046.jpg",
+       "width": 1920,
+       "height": 1080,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/FwMeJyKvRQ4iCHmIqisF_Q--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/proactive_video_751/ab3691fd3c4b412bfbbac5af83f53046.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Proactive",
+     "url": "https://www.proactiveinvestors.com/",
+     "sourceId": "proactive_video_751"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/video/sunda-energy-meridian-mining-quantum-084952496.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/video/sunda-energy-meridian-mining-quantum-084952496.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "1e3bc248-8082-39ca-8b1b-b423d43249a2",
+   "content": {
+    "id": "1e3bc248-8082-39ca-8b1b-b423d43249a2",
+    "contentType": "STORY",
+    "title": "Meridian Mining's Cabaçal gold-copper-silver project valued at $2bn",
+    "description": "",
+    "summary": "Meridian Mining Plc (LSE:MNO, TSX:MNO, OTCQX:MRRDF) told investors that its Cabaçal gold-copper-silver project in Brazil has delivered an after-tax net present value of US$2.09 billion, a 108% internal rate of return and a payback period of less than one year. That's the headline findings for...",
+    "pubDate": "2026-09-22T06:31:00Z",
+    "displayTime": "2026-09-22T06:31:00Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/proactive_us_504/f0179bc7c20139a92a26b6b1155dd870.jpg",
+     "originalWidth": 1280,
+     "originalHeight": 720,
+     "caption": "Meridian Mining's Cabaçal gold-copper-silver project valued at $2bn",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/BC7pc6Vd9jmxK57qpT9zgQ--~B/aD03MjA7dz0xMjgwO2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/proactive_us_504/f0179bc7c20139a92a26b6b1155dd870.jpg",
+       "width": 1280,
+       "height": 720,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/dCQgUDQutzVJeWIlhliskQ--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/proactive_us_504/f0179bc7c20139a92a26b6b1155dd870.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Proactive",
+     "url": "https://www.proactiveinvestors.com/",
+     "sourceId": "proactive_us_504"
+    },
+    "canonicalUrl": {
+     "url": "https://www.proactiveinvestors.com/companies/news/1098868/meridian-mining-s-cabacal-gold-copper-silver-project-valued-at-2bn-1098868.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/commodities/articles/meridian-minings-caba-al-gold-063100690.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "2ff5dd6f-f985-32aa-9868-2accd3a6b940",
+   "content": {
+    "id": "2ff5dd6f-f985-32aa-9868-2accd3a6b940",
+    "contentType": "STORY",
+    "title": "Gold Edges Higher as Lower Oil Prices Damp Chance of Rate Hikes",
+    "description": "",
+    "summary": "Gold edged higher as a slump in oil prices over the past few sessions reduced the chance of further interest-rate hikes by the Federal Reserve to contain inflation.",
+    "pubDate": "2026-09-22T00:26:00Z",
+    "displayTime": "2026-09-22T00:26:00Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/bloomberg_holding_pen_162/e73862823152fdb7c1978d1c602844bc.jpg",
+     "originalWidth": 2010,
+     "originalHeight": 1392,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/LNGzlq5VQs1_qRMmHaMfew--~B/aD0xMzkyO3c9MjAxMDthcHBpZD15dGFjaHlvbg--/https://media.zenfs.com/en/bloomberg_holding_pen_162/e73862823152fdb7c1978d1c602844bc.jpg",
+       "width": 2010,
+       "height": 1392,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/jE_xBiV1ubR.r1DBFrqsZQ--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/bloomberg_holding_pen_162/e73862823152fdb7c1978d1c602844bc.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Bloomberg",
+     "url": "https://www.bloomberg.com/company",
+     "sourceId": "bloomberg_holding_pen_162"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/commodities/articles/gold-edges-higher-lower-oil-002600744.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/commodities/articles/gold-edges-higher-lower-oil-002600744.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "7da4f54c-506c-3b69-85bf-c9ca06c79c1e",
+   "content": {
+    "id": "7da4f54c-506c-3b69-85bf-c9ca06c79c1e",
+    "contentType": "STORY",
+    "title": "Agnico Eagle Mines (AEM) Stock Declines While Market Improves: Some Information for Investors",
+    "description": "",
+    "summary": "The latest trading day saw Agnico Eagle Mines (AEM) settling at $197.48, representing a -1.01% change from its previous close.",
+    "pubDate": "2026-09-21T21:45:04Z",
+    "displayTime": "2026-09-21T21:45:04Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/zacks.com/a41b81fe729c761f3f94f42ff348f70c.jpg",
+     "originalWidth": 900,
+     "originalHeight": 602,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/bb.QpzAX0V8LyEu2d76T8Q--~B/aD02MDI7dz05MDA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/a41b81fe729c761f3f94f42ff348f70c.jpg",
+       "width": 900,
+       "height": 602,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/vhJuhHO0tgtYo.QGpde_0w--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/a41b81fe729c761f3f94f42ff348f70c.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Zacks",
+     "url": "http://www.zacks.com/",
+     "sourceId": "zacks.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/agnico-eagle-mines-aem-stock-214504910.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/agnico-eagle-mines-aem-stock-214504910.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "d19d4258-40e2-3383-ab1d-afd9a5910942",
+   "content": {
+    "id": "d19d4258-40e2-3383-ab1d-afd9a5910942",
+    "contentType": "STORY",
+    "title": "Oil ETFs Surge: What's Next for Commodity Investors?",
+    "description": "",
+    "summary": "What's next for oil, gold and copper as geopolitical risks reshape commodity markets?",
+    "pubDate": "2026-09-21T21:45:00Z",
+    "displayTime": "2026-09-21T21:45:00Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/zacks.com/7fdce8a07454a8109180edf15d393124.jpg",
+     "originalWidth": 900,
+     "originalHeight": 900,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/KO8.S4lVOlFrwP3plrhrSw--~B/aD05MDA7dz05MDA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/7fdce8a07454a8109180edf15d393124.jpg",
+       "width": 900,
+       "height": 900,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/cnKAXYRnWFsXF4qU8BbrCA--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/7fdce8a07454a8109180edf15d393124.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Zacks",
+     "url": "http://www.zacks.com/",
+     "sourceId": "zacks.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/commodities/articles/oil-etfs-surge-whats-next-214500474.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/commodities/articles/oil-etfs-surge-whats-next-214500474.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "2fc696ce-8a00-3c3f-a7e1-af4bafb94ebe",
+   "content": {
+    "id": "2fc696ce-8a00-3c3f-a7e1-af4bafb94ebe",
+    "contentType": "STORY",
+    "title": "Stock Market Today, Sept. 21: Tech Strength Powers Nasdaq to Record Close",
+    "description": "",
+    "summary": "Today, Sept. 21, 2026, semiconductor stocks surged on AI demand while Bitcoin topped $87,000, offsetting energy sector weakness.",
+    "pubDate": "2026-09-21T21:22:22Z",
+    "displayTime": "2026-09-21T21:22:22Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/motleyfool.com/a19c508dd84971836e666155215947ca.png",
+     "originalWidth": 800,
+     "originalHeight": 714,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/QhzIO2oLpoYMf14N2o3Tdw--~B/aD03MTQ7dz04MDA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/motleyfool.com/a19c508dd84971836e666155215947ca.png",
+       "width": 800,
+       "height": 714,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/TKlWuIf5b_j0IWKw4Nr88Q--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/motleyfool.com/a19c508dd84971836e666155215947ca.png",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Motley Fool",
+     "url": "http://www.fool.com/",
+     "sourceId": "motleyfool.com"
+    },
+    "canonicalUrl": {
+     "url": "https://www.fool.com/coverage/stock-market-today/2026/09/21/stock-market-today-sept-21-tech-strength-powers-nasdaq-to-record-close/",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/stock-market-today-sept-21-212222022.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  }
+ ],
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T14:54:43+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

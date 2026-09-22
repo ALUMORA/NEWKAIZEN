@@ -1,0 +1,76 @@
+{
+ "key": "yf:^MXX:news",
+ "provider": "yfinance",
+ "symbol": "^MXX",
+ "attr": "news",
+ "kwargs": {},
+ "kind": "value",
+ "payload": [
+  {
+   "id": "a55c09ea-7756-3dfa-bca2-fe1d06a794bd",
+   "content": {
+    "id": "a55c09ea-7756-3dfa-bca2-fe1d06a794bd",
+    "contentType": "STORY",
+    "title": "As U.S. Stocks Hit Records, Do Mexican Equities Offer Diversification Opportunities?",
+    "description": "",
+    "summary": "Beyond the U.S. market's recent highs, Mexican equities reveal a possible case for portfolio diversification. Explore their historically low correlation with U.S. stocks and the economic differences that could set their future trajectory apart.",
+    "pubDate": "2025-10-01T14:52:00Z",
+    "displayTime": "2025-10-01T14:52:00Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/cme_group_973/c349b931838c80bfa8b94c516478d7fd",
+     "originalWidth": 600,
+     "originalHeight": 350,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/ezbca3cvmGZ6RBPHV5t.4g--~B/aD0zNTA7dz02MDA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/cme_group_973/c349b931838c80bfa8b94c516478d7fd",
+       "width": 600,
+       "height": 350,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/mrMB.CjDZdFEthBG1j.mSQ--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/cme_group_973/c349b931838c80bfa8b94c516478d7fd",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "CME Group",
+     "url": "https://www.cmegroup.com/",
+     "sourceId": "cme_group_973"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/news/u-stocks-hit-records-mexican-145200620.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/news/u-stocks-hit-records-mexican-145200620.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  }
+ ],
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T14:53:31+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

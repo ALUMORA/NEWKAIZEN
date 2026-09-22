@@ -1,0 +1,53 @@
+{
+  "function": "get_stock",
+  "args": [
+    "WALMEX.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "name": "WAL-MART DE MEXICO SAB DE CV",
+    "price": 45.02,
+    "pe": 15.58,
+    "eps": 2.89,
+    "peg": null,
+    "pegy": null,
+    "evEbitda": 8.52,
+    "pb": 3.25,
+    "roe": 21.92,
+    "profitMargin": 4.9,
+    "debtEquity": 34.83,
+    "revenueGrowth": 1.9,
+    "priceChange52w": -20.51,
+    "beta": 0.02,
+    "marketCap": 775254835200.0,
+    "dividendYield": 4.45,
+    "pcf": null,
+    "debtToAssets": 16.8,
+    "leverageRatio": 1.35,
+    "sector": "Consumer Defensive",
+    "totalRevenue": 1019541651456.0,
+    "netIncomeToCommon": 49999036416.0,
+    "totalAssets": 495273263000.0,
+    "totalDebt": 83098099712.0,
+    "operatingCashflow": 88613535744.0,
+    "freeCashflow": 22467825664.0,
+    "description": "Wal-Mart de México, S.A.B. de C.V. owns and operates self-service stores in Mexico and Central America. The company operates discount stores under the Bodega Aurrerá, Despensa Familiar, and Palí names; hypermarkets under the Walmart name; supermarkets under the Walmart Express, Paiz, La Despensa de Don Juan, La Unión, and Más x Menos names; and membership self-service wholesale stores under the Sam's Club name. It also offers mobile internet connectivity services, advertising services, and financial services through digital wallet, as well as sells airtime recharges and imports goods for resale. In addition, the company develops and manages real estate properties. The company was founded in 1958 and is headquartered in Mexico City, Mexico. Wal-Mart de México, S.A.B. de C.V. operates as a subsidiary of Intersalt, S. de R.L. de C.V.",
+    "industry": "Discount Stores",
+    "website": "https://www.walmex.mx",
+    "employees": 235142,
+    "country": "Mexico",
+    "currency": "MXN"
+  },
+  "fixtures_used": [
+    "yf:WALMEX.MX:balance_sheet",
+    "yf:WALMEX.MX:cashflow",
+    "yf:WALMEX.MX:financials",
+    "yf:WALMEX.MX:income_stmt",
+    "yf:WALMEX.MX:info"
+  ],
+  "live_match": true
+}

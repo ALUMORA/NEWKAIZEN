@@ -1,0 +1,657 @@
+{
+ "key": "yf:CL=F:news",
+ "provider": "yfinance",
+ "symbol": "CL=F",
+ "attr": "news",
+ "kwargs": {},
+ "kind": "value",
+ "payload": [
+  {
+   "id": "4d64f9f3-7e53-4a71-9134-587671d895e1",
+   "content": {
+    "id": "4d64f9f3-7e53-4a71-9134-587671d895e1",
+    "contentType": "STORY",
+    "title": "Stock market today: Nasdaq, S&P 500 drift higher as oil retreats, AI trade powers market",
+    "description": "",
+    "summary": "US stocks steadied on Tuesday after confidence in artificial intelligence and falling oil prices spurred a rally on Wall Street.",
+    "pubDate": "2026-09-22T08:06:25Z",
+    "displayTime": "2026-09-22T14:16:01Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://s.yimg.com/uu/api/res/1.2/oKXjq3H1JslC0ffQ.G1F8A--~B/aD01NjU4O3c9ODQ4NzthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/2026-09/37f22e80-6f8b-4044-abe4-f5cd6fdce5b9",
+     "originalWidth": 8487,
+     "originalHeight": 5658,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/oKXjq3H1JslC0ffQ.G1F8A--~B/aD01NjU4O3c9ODQ4NzthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/2026-09/37f22e80-6f8b-4044-abe4-f5cd6fdce5b9",
+       "width": 8487,
+       "height": 5658,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/kUUx_vLj9ki2tZ_JBW2SBQ--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://d29szjachogqwa.cloudfront.net/images/2026-09/37f22e80-6f8b-4044-abe4-f5cd6fdce5b9",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Yahoo Finance",
+     "url": "http://finance.yahoo.com/",
+     "sourceId": "yahoofinance.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/live/stock-market-today-tuesday-september-22-nasdaq-dow-sp-500-080625961.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/live/stock-market-today-tuesday-september-22-nasdaq-dow-sp-500-080625961.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": true
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": {
+     "storylineItems": [
+      {
+       "content": {
+        "id": "fc2da618-8b70-46ef-8950-5d1fa9810afa",
+        "contentType": "STORY",
+        "isHosted": true,
+        "title": "Treasury yields ease, oil falls as Trump-Xi meeting looms: AlphaCheck",
+        "thumbnail": {
+         "originalUrl": "https://s.yimg.com/uu/api/res/1.2/Dm0LN_pd7N9kbrHU7mh0iw--~B/aD00MDAwO3c9NjAwMDthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/2026-09/cd30b118-b909-4084-a97a-8b06a645176d",
+         "originalWidth": 6000,
+         "originalHeight": 4000,
+         "caption": "",
+         "resolutions": null
+        },
+        "provider": {
+         "displayName": "Yahoo Finance",
+         "sourceId": "yahoofinance.com"
+        },
+        "previewUrl": null,
+        "providerContentUrl": "",
+        "canonicalUrl": {
+         "url": "https://finance.yahoo.com/markets/article/treasury-yields-ease-oil-falls-as-trump-xi-meeting-looms-alphacheck-134137146.html"
+        },
+        "clickThroughUrl": {
+         "url": "https://finance.yahoo.com/markets/article/treasury-yields-ease-oil-falls-as-trump-xi-meeting-looms-alphacheck-134137146.html"
+        }
+       }
+      },
+      {
+       "content": {
+        "id": "301b2d19-346d-431c-b388-825f6c4463e9",
+        "contentType": "STORY",
+        "isHosted": true,
+        "title": "Bitcoin and ethereum prices today, Tuesday, September 22, 2026: Crypto prices continue to surge to prices last seen in January",
+        "thumbnail": {
+         "originalUrl": "https://s.yimg.com/uu/api/res/1.2/R4fhNy.vnr_QIatr9RUOpQ--~B/aD00MDU7dz02MTI7YXBwaWQ9eXRhY2h5b24-/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/ethereum_%20_bitcoin_2_2928.jpg",
+         "originalWidth": 612,
+         "originalHeight": 405,
+         "caption": "",
+         "resolutions": null
+        },
+        "provider": {
+         "displayName": "Yahoo Personal Finance",
+         "sourceId": "yahoo_personal_finance_397"
+        },
+        "previewUrl": null,
+        "providerContentUrl": "",
+        "canonicalUrl": {
+         "url": "https://finance.yahoo.com/personal-finance/investing/article/bitcoin-and-ethereum-prices-today-tuesday-september-22-2026-crypto-prices-continue-to-surge-to-prices-last-seen-in-january-114724449.html"
+        },
+        "clickThroughUrl": {
+         "url": "https://finance.yahoo.com/personal-finance/investing/article/bitcoin-and-ethereum-prices-today-tuesday-september-22-2026-crypto-prices-continue-to-surge-to-prices-last-seen-in-january-114724449.html"
+        }
+       }
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "403c8cdb-814a-4245-8624-293f8dd9914d",
+   "content": {
+    "id": "403c8cdb-814a-4245-8624-293f8dd9914d",
+    "contentType": "STORY",
+    "title": "Stock market today: Nasdaq surges 2% to record high, Dow and S&P 500 gain as chip stocks rally, oil  falls",
+    "description": "",
+    "summary": "Stocks have largely powered through a wall of worry this month, though rising bond yields, geopolitical risk in the Middle East, and AI jitters have given investors reason to pause.",
+    "pubDate": "2026-09-21T08:02:14Z",
+    "displayTime": "2026-09-21T20:05:02Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://s.yimg.com/uu/api/res/1.2/zNsPwG9.tsoipNNAE0v50g--~B/aD0yNzQxO3c9NDg3MzthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/4313e6b9-695b-43db-a298-abcd105114ba_9c15b2a9edf68b0e114f39c967ea21f5b8312ddef329d32b658068b40bd6048a.jpg",
+     "originalWidth": 4873,
+     "originalHeight": 2741,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/zNsPwG9.tsoipNNAE0v50g--~B/aD0yNzQxO3c9NDg3MzthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/4313e6b9-695b-43db-a298-abcd105114ba_9c15b2a9edf68b0e114f39c967ea21f5b8312ddef329d32b658068b40bd6048a.jpg",
+       "width": 4873,
+       "height": 2741,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/ayNVuHJmv6Si_HKItibG6g--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/4313e6b9-695b-43db-a298-abcd105114ba_9c15b2a9edf68b0e114f39c967ea21f5b8312ddef329d32b658068b40bd6048a.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Yahoo Finance",
+     "url": "http://finance.yahoo.com/",
+     "sourceId": "yahoofinance.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/live/stock-market-today-monday-september-21-dow-sp-500-nasdaq-080214605.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/live/stock-market-today-monday-september-21-dow-sp-500-nasdaq-080214605.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": true
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "bf121127-9b97-34aa-89b7-7a3cf7eef6c2",
+   "content": {
+    "id": "bf121127-9b97-34aa-89b7-7a3cf7eef6c2",
+    "contentType": "STORY",
+    "title": "Nasdaq hits intraday record high on Alphabet boost, Mideast negotiation hopes",
+    "description": "",
+    "summary": "By Johann M Cherian and Tharuniyaa Lakshmi Sept 22 (Reuters) - The tech-heavy Nasdaq hit an intraday record high for the first time since early June on Tuesday, underpinned by strong gains in Gemini-",
+    "pubDate": "2026-09-22T14:30:15Z",
+    "displayTime": "2026-09-22T14:30:15Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/reuters.com/ab5e32f0f4621e82eb263f7578c1cfef.jpg",
+     "originalWidth": 800,
+     "originalHeight": 533,
+     "caption": "A trader works on the floor at the New York Stock Exchange (NYSE) in New York City, U.S., September 16, 2026. REUTERS/Jeenah Moon",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/EI9usOTRKP2.Z0A4lKrWNQ--~B/aD01MzM7dz04MDA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/reuters.com/ab5e32f0f4621e82eb263f7578c1cfef.jpg",
+       "width": 800,
+       "height": 533,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/vrKA9vGAoyCDQfV.UOGlrw--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/reuters.com/ab5e32f0f4621e82eb263f7578c1cfef.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Reuters",
+     "url": "https://www.reuters.com/",
+     "sourceId": "reuters.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/articles/wall-st-futures-pause-ai-101907090.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/articles/wall-st-futures-pause-ai-101907090.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "5b4d073b-ac34-397a-b401-9c9e9dc9e423",
+   "content": {
+    "id": "5b4d073b-ac34-397a-b401-9c9e9dc9e423",
+    "contentType": "STORY",
+    "title": "This Fund Trimmed Murphy USA (MUSA) Amid Fuel Margin Strengths",
+    "description": "",
+    "summary": "The London Company, an investment management company, released its second-quarter 2026 investor letter for its “Small Cap Strategy.” U.S. equities rebounded in the quarter, driven by AI infrastructure spending and positive earnings. The letter can be downloaded here. Despite this optimism, rate outlook uncertainty persisted. Technology, previously weak, surged to lead the market, especially in semiconductors, […]",
+    "pubDate": "2026-09-22T14:28:00Z",
+    "displayTime": "2026-09-22T14:28:00Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/insidermonkey.com/1791afabc755bd8780a2cbdf9284bddd.jpg",
+     "originalWidth": 768,
+     "originalHeight": 430,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/0CYPxSFaVe6yAmMg_1oDYA--~B/aD00MzA7dz03Njg7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/insidermonkey.com/1791afabc755bd8780a2cbdf9284bddd.jpg",
+       "width": 768,
+       "height": 430,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/cYpqLfYHyZkVJzg5e5La0A--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/insidermonkey.com/1791afabc755bd8780a2cbdf9284bddd.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Insider Monkey",
+     "url": "http://www.insidermonkey.com",
+     "sourceId": "insidermonkey.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/fund-trimmed-murphy-usa-musa-142800363.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/fund-trimmed-murphy-usa-musa-142800363.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "33f7445c-16d6-3523-b358-72b98fae43d0",
+   "content": {
+    "id": "33f7445c-16d6-3523-b358-72b98fae43d0",
+    "contentType": "STORY",
+    "title": "Strong Results Lifted CTS Corporation (CTS) in Q2",
+    "description": "",
+    "summary": "The London Company, an investment management company, released its second-quarter 2026 investor letter for its “Small Cap Strategy.” U.S. equities rebounded in the quarter, driven by AI infrastructure spending and positive earnings. The letter can be downloaded here. Despite this optimism, rate outlook uncertainty persisted. Technology, previously weak, surged to lead the market, especially in semiconductors, […]",
+    "pubDate": "2026-09-22T14:25:59Z",
+    "displayTime": "2026-09-22T14:25:59Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/insidermonkey.com/7463b65c45dac235f68dc78b9af2f348.jpg",
+     "originalWidth": 768,
+     "originalHeight": 430,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/hPvoyM8bOSF_gXO3nJ.97A--~B/aD00MzA7dz03Njg7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/insidermonkey.com/7463b65c45dac235f68dc78b9af2f348.jpg",
+       "width": 768,
+       "height": 430,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/5.6lAtsmPzTU9Y_I2ZRT0w--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/insidermonkey.com/7463b65c45dac235f68dc78b9af2f348.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Insider Monkey",
+     "url": "http://www.insidermonkey.com",
+     "sourceId": "insidermonkey.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/strong-results-lifted-cts-corporation-142559440.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/strong-results-lifted-cts-corporation-142559440.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "5dd95ca6-26b8-36de-870e-2ad42954ae14",
+   "content": {
+    "id": "5dd95ca6-26b8-36de-870e-2ad42954ae14",
+    "contentType": "STORY",
+    "title": "Brent Remains Below $100 on Improved Supply Prospects",
+    "description": "",
+    "summary": "Oil prices continued to trade lower, with Brent crude below $100 a barrel on hopes for improved Gulf supply.",
+    "pubDate": "2026-09-22T14:21:00Z",
+    "displayTime": "2026-09-22T14:21:00Z",
+    "isHosted": false,
+    "bypassModal": false,
+    "previewUrl": "https://finance.yahoo.com/m/5dd95ca6-26b8-36de-870e-2ad42954ae14/brent-remains-below-100-on.html",
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/wsj.com/7b2c285183be07ca3c4e8242b25a59a8.png",
+     "originalWidth": 1200,
+     "originalHeight": 630,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/YGeB9O_Eb21P2ve_VHG5Qg--~B/aD02MzA7dz0xMjAwO2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/wsj.com/7b2c285183be07ca3c4e8242b25a59a8.png",
+       "width": 1200,
+       "height": 630,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/8FSdswt4pir2EAQYTFEAzA--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/wsj.com/7b2c285183be07ca3c4e8242b25a59a8.png",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "The Wall Street Journal",
+     "url": "http://www.wsj.com/",
+     "sourceId": "wsj.com"
+    },
+    "canonicalUrl": {
+     "url": "https://www.wsj.com/finance/commodities-futures/oil-edges-higher-focus-on-signs-of-diplomacy-in-mideast-conflict-2712f57a?siteid=yhoof2&yptr=yahoo",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": null,
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "64f25797-67c0-31af-8b26-7a59fec957b8",
+   "content": {
+    "id": "64f25797-67c0-31af-8b26-7a59fec957b8",
+    "contentType": "STORY",
+    "title": "Oil Prices Fall As Trump Heads To Make-Or-Break U.N. Conference",
+    "description": "",
+    "summary": "Oil prices fell back toward $90 a barrel on Tuesday morning as President Donald Trump headed to the United Nations for a 9:55 a.m. ET General Assembly address and afternoon meetings with Gulf state leaders.  Meanwhile, reports that Saudi Arabia restarted its east-west pipeline, enabling oil exports via the Red Sea, provided a tangible reason for the continued slide in oil prices.",
+    "pubDate": "2026-09-22T14:20:54Z",
+    "displayTime": "2026-09-22T14:20:54Z",
+    "isHosted": false,
+    "bypassModal": false,
+    "previewUrl": "https://finance.yahoo.com/m/64f25797-67c0-31af-8b26-7a59fec957b8/oil-prices-fall-as-trump.html",
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/ibd.com/940bfb7ff3b5d5fe9f59a57c0bd92b82.jpg",
+     "originalWidth": 1000,
+     "originalHeight": 511,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/musOSbb8T1CY6bFyOicy5w--~B/aD01MTE7dz0xMDAwO2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/ibd.com/940bfb7ff3b5d5fe9f59a57c0bd92b82.jpg",
+       "width": 1000,
+       "height": 511,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/tmTNNPRDKsNmMq6QdP6f5g--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/ibd.com/940bfb7ff3b5d5fe9f59a57c0bd92b82.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Investor's Business Daily",
+     "url": "http://www.investors.com/",
+     "sourceId": "ibd.com"
+    },
+    "canonicalUrl": {
+     "url": "https://www.investors.com/news/oil-prices-trump-united-nations-iraq-hormuz/?src=A00220&yptr=yahoo",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": null,
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "0143595d-3423-3fca-8750-9ab0a98fa022",
+   "content": {
+    "id": "0143595d-3423-3fca-8750-9ab0a98fa022",
+    "contentType": "STORY",
+    "title": "Stock Market Today: Dow Slips, Oil Stocks Fall On U.S.-Iran Hopes; Homebuilders, Retailers Shine (Live Coverage)",
+    "description": "",
+    "summary": "Stock Market Today: The Dow Jones index was firm on U.S.-Iran peace hopes Tuesday as oil prices and Treasury yields continue to fall.",
+    "pubDate": "2026-09-22T14:19:29Z",
+    "displayTime": "2026-09-22T14:19:29Z",
+    "isHosted": false,
+    "bypassModal": false,
+    "previewUrl": "https://finance.yahoo.com/m/0143595d-3423-3fca-8750-9ab0a98fa022/stock-market-today-dow.html",
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/ibd.com/e5692e76a00de22721308a6d4522c6ff.jpg",
+     "originalWidth": 1000,
+     "originalHeight": 563,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/S7u3cQ.S.STRDXGno88nVg--~B/aD01NjM7dz0xMDAwO2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/ibd.com/e5692e76a00de22721308a6d4522c6ff.jpg",
+       "width": 1000,
+       "height": 563,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/QcGd3xcoxCVtcQVgZH1rXg--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/ibd.com/e5692e76a00de22721308a6d4522c6ff.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Investor's Business Daily",
+     "url": "http://www.investors.com/",
+     "sourceId": "ibd.com"
+    },
+    "canonicalUrl": {
+     "url": "https://www.investors.com/market-trend/stock-market-today/dow-jones-sp500-nasdaq-us-iran-peace-hopes-oil-prices-treasury-yields/?src=A00220&yptr=yahoo",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": null,
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "8358a2b6-4f26-3d65-b8ce-809d7e97f689",
+   "content": {
+    "id": "8358a2b6-4f26-3d65-b8ce-809d7e97f689",
+    "contentType": "STORY",
+    "title": "Still Waters Bring Mixed Pre-Market Levels",
+    "description": "",
+    "summary": "A grand total of zero monthly or quarterly economic reports have come out so far this week.",
+    "pubDate": "2026-09-22T14:16:00Z",
+    "displayTime": "2026-09-22T14:16:00Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": null,
+    "provider": {
+     "displayName": "Zacks",
+     "url": "http://www.zacks.com/",
+     "sourceId": "zacks.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/still-waters-bring-mixed-pre-141600857.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/still-waters-bring-mixed-pre-141600857.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "b2a4f329-72cd-3847-9436-9d1e0b04f43e",
+   "content": {
+    "id": "b2a4f329-72cd-3847-9436-9d1e0b04f43e",
+    "contentType": "STORY",
+    "title": "Stocks climb as oil slides, AI buzz returns",
+    "description": "",
+    "summary": "Stock markets advanced Tuesday as oil prices fell further on speculation the United States and Iran could make progress on talks to end the Mideast war this week, with enthusiasm about Meta's new AI agent fanning a tech rally.Enthusiasm poured back into the technology sector after Facebook owner Meta's free AI agent Muse topped the download charts following its release this month.",
+    "pubDate": "2026-09-22T14:08:20Z",
+    "displayTime": "2026-09-22T14:08:20Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/afp.com/0847dcdc7d17b12f49513f383e19a9c8.jpg",
+     "originalWidth": 768,
+     "originalHeight": 512,
+     "caption": "Meta has poured billions of dollars into its AI division (Kirill KUDRYAVTSEV)",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/veRhOlhyi8GIrjgQpDLp6Q--~B/aD01MTI7dz03Njg7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/afp.com/0847dcdc7d17b12f49513f383e19a9c8.jpg",
+       "width": 768,
+       "height": 512,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/gbRNzbmD02bXkSdaCY5q5Q--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/afp.com/0847dcdc7d17b12f49513f383e19a9c8.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "AFP",
+     "url": "http://www.afp.com/",
+     "sourceId": "afp.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/stocks-rise-ai-buzz-drop-023748822.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/stocks-rise-ai-buzz-drop-023748822.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  }
+ ],
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T14:54:44+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

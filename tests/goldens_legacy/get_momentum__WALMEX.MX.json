@@ -1,0 +1,37 @@
+{
+  "function": "get_momentum",
+  "args": [
+    "WALMEX.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "sector": "Consumer Defensive",
+    "benchmark": "XLP",
+    "stock": {
+      "m3": -11.5,
+      "m6": -22.42,
+      "m12": -17.24
+    },
+    "sector_r": {
+      "m3": -1.58,
+      "m6": 2.65,
+      "m12": 9.16
+    },
+    "alpha": {
+      "m3": -9.92,
+      "m6": -25.07,
+      "m12": -26.4
+    },
+    "score": 0
+  },
+  "fixtures_used": [
+    "yf:WALMEX.MX:history?interval=1wk&period=2y",
+    "yf:WALMEX.MX:info",
+    "yf:XLP:history?interval=1wk&period=2y"
+  ],
+  "live_match": true
+}

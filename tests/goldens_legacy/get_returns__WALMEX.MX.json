@@ -1,0 +1,23 @@
+{
+  "function": "get_returns",
+  "args": [
+    "WALMEX.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "1mo": -6.23,
+    "3mo": -11.5,
+    "6mo": -22.42,
+    "1y": -17.24,
+    "2y": -17.48,
+    "5y": -26.13
+  },
+  "fixtures_used": [
+    "yf:WALMEX.MX:history?interval=1wk&period=5y"
+  ],
+  "live_match": true
+}

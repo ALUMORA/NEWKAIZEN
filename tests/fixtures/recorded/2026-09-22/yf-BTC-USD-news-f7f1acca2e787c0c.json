@@ -1,0 +1,729 @@
+{
+ "key": "yf:BTC-USD:news",
+ "provider": "yfinance",
+ "symbol": "BTC-USD",
+ "attr": "news",
+ "kwargs": {},
+ "kind": "value",
+ "payload": [
+  {
+   "id": "301b2d19-346d-431c-b388-825f6c4463e9",
+   "content": {
+    "id": "301b2d19-346d-431c-b388-825f6c4463e9",
+    "contentType": "STORY",
+    "title": "Bitcoin and ethereum prices today, Tuesday, September 22, 2026: Crypto prices continue to surge to prices last seen in January",
+    "description": "",
+    "summary": "Bitcoin opened at $86,597.82 on Tuesday, September 22, 2026, 6.7% higher than Monday's opening price. As of 7:20 a.m. ET this morning, the price of bitcoin slid to $86,035.18. Ethereum opened at $2,775.96 on Tuesday, September 22, 2026, up 5% from Monday's opening price. The price of ethereum slid lower this morning to $2,734.44 as of 7:20 a.m. ET.",
+    "pubDate": "2026-09-22T11:47:24Z",
+    "displayTime": "2026-09-22T11:47:24Z",
+    "isHosted": true,
+    "bypassModal": true,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://s.yimg.com/uu/api/res/1.2/R4fhNy.vnr_QIatr9RUOpQ--~B/aD00MDU7dz02MTI7YXBwaWQ9eXRhY2h5b24-/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/ethereum_%20_bitcoin_2_2928.jpg",
+     "originalWidth": 612,
+     "originalHeight": 405,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/R4fhNy.vnr_QIatr9RUOpQ--~B/aD00MDU7dz02MTI7YXBwaWQ9eXRhY2h5b24-/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/ethereum_%20_bitcoin_2_2928.jpg",
+       "width": 612,
+       "height": 405,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/eZg9iZwuwBJI8wVDI_VUEg--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/ethereum_%20_bitcoin_2_2928.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Yahoo Personal Finance",
+     "url": "https://finance.yahoo.com/",
+     "sourceId": "yahoo_personal_finance_397"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/personal-finance/investing/article/bitcoin-and-ethereum-prices-today-tuesday-september-22-2026-crypto-prices-continue-to-surge-to-prices-last-seen-in-january-114724449.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/personal-finance/investing/article/bitcoin-and-ethereum-prices-today-tuesday-september-22-2026-crypto-prices-continue-to-surge-to-prices-last-seen-in-january-114724449.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": true
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": {
+     "storylineItems": [
+      {
+       "content": {
+        "id": "63262dd5-13c0-49e1-96e9-eeb3108b28e4",
+        "contentType": "VIDEO",
+        "isHosted": true,
+        "title": "Bitcoin-related stocks are surging: The momentum is 'incredible'",
+        "thumbnail": {
+         "originalUrl": "https://s.yimg.com/uu/api/res/1.2/i4SgNjK4uXMI33dHdL_UUw--~B/aD0zOTM3O3c9NzAwMDthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/856c6700-93d0-11f0-a774-5f361b360fb3_86b825a845e684d5456c0bf948b6d0c8b5ea3ea8aa8810d4dfee60a4c08b9fc9.jpg",
+         "originalWidth": 7000,
+         "originalHeight": 3937,
+         "caption": "",
+         "resolutions": null
+        },
+        "provider": {
+         "displayName": "Yahoo Finance Video",
+         "sourceId": "video.yahoofinance.com"
+        },
+        "previewUrl": null,
+        "providerContentUrl": "",
+        "canonicalUrl": {
+         "url": "https://finance.yahoo.com/video/bitcoin-related-stocks-surging-momentum-204500572.html"
+        },
+        "clickThroughUrl": {
+         "url": "https://finance.yahoo.com/video/bitcoin-related-stocks-surging-momentum-204500572.html"
+        }
+       }
+      },
+      {
+       "content": {
+        "id": "403c8cdb-814a-4245-8624-293f8dd9914d",
+        "contentType": "STORY",
+        "isHosted": true,
+        "title": "Stock market today: Nasdaq surges 2% to record high, Dow and S&P 500 gain as chip stocks rally, oil  falls",
+        "thumbnail": {
+         "originalUrl": "https://s.yimg.com/uu/api/res/1.2/zNsPwG9.tsoipNNAE0v50g--~B/aD0yNzQxO3c9NDg3MzthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/4313e6b9-695b-43db-a298-abcd105114ba_9c15b2a9edf68b0e114f39c967ea21f5b8312ddef329d32b658068b40bd6048a.jpg",
+         "originalWidth": 4873,
+         "originalHeight": 2741,
+         "caption": "",
+         "resolutions": null
+        },
+        "provider": {
+         "displayName": "Yahoo Finance",
+         "sourceId": "yahoofinance.com"
+        },
+        "previewUrl": null,
+        "providerContentUrl": "",
+        "canonicalUrl": {
+         "url": "https://finance.yahoo.com/markets/live/stock-market-today-monday-september-21-dow-sp-500-nasdaq-080214605.html"
+        },
+        "clickThroughUrl": {
+         "url": "https://finance.yahoo.com/markets/live/stock-market-today-monday-september-21-dow-sp-500-nasdaq-080214605.html"
+        }
+       }
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "1db4060c-e8de-45a1-9aa6-103c1e6e19a5",
+   "content": {
+    "id": "1db4060c-e8de-45a1-9aa6-103c1e6e19a5",
+    "contentType": "VIDEO",
+    "title": "Bastion takes major step toward becoming a trust bank",
+    "description": "<p>Scott Melker discusses Bastion's conditional approval from the Office of the Comptroller of the Currency (OCC) to establish a national trust bank.</p>\n<p>\"<a target=\"_blank\" rel=\"\" class=\"link\" href=\"https://finance.yahoo.com/videos/series/daily-wolf/?fr=sycsrp_catchall\" data-i13n=\"cpos:1;pos:1\"><u>The Daily Wolf with Scott Melker</u></a>\" airs every day at 12:00 p.m. Tune in for your daily dose of all things crypto.</p>\n<p>Make sure to also check out Yahoo Finance's new <a target=\"_blank\" rel=\"\" class=\"link\" href=\"https://finance.yahoo.com/markets/crypto/\" data-i13n=\"cpos:2;pos:1\"><u>crypto hub</u></a> to find the latest crypto-related news.</p>\n<p></p>",
+    "summary": "Scott Melker discusses Bastion's conditional approval from the Office of the Comptroller of the Currency (OCC) to establish a national trust bank. \"The Daily Wolf with Scott Melker\" airs every day at 12:00 p.m. Tune in for your daily dose of all things crypto. Make sure to also check out Yahoo Finance's new crypto hub to find the latest crypto-related news.",
+    "pubDate": "2026-09-21T20:00:00Z",
+    "displayTime": "",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://s.yimg.com/uu/api/res/1.2/Nn_mjVEGJA07KtLWFVHMPw--~B/aD0xMDgwO3c9MTkyMDthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/video-frame-1790004482790_8310.jpg",
+     "originalWidth": 1920,
+     "originalHeight": 1080,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/Nn_mjVEGJA07KtLWFVHMPw--~B/aD0xMDgwO3c9MTkyMDthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/video-frame-1790004482790_8310.jpg",
+       "width": 1920,
+       "height": 1080,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/zAXwEuC1CBOgAC49lb6e2g--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/video-frame-1790004482790_8310.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Yahoo Finance Video",
+     "url": "https://finance.yahoo.com/",
+     "sourceId": "video.yahoofinance.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/video/bastion-takes-major-step-toward-200000597.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/video/bastion-takes-major-step-toward-200000597.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": true
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": {
+     "storylineItems": [
+      {
+       "content": {
+        "id": "cdfcf41e-51d9-479a-97fb-f0333ff44907",
+        "contentType": "VIDEO",
+        "isHosted": true,
+        "title": "Is it worth investing in bitcoin if I'm Gen X?",
+        "thumbnail": {
+         "originalUrl": "https://s.yimg.com/uu/api/res/1.2/oFvLeQbTS36m_ZF_UwfnJQ--~B/aD0xNjg3O3c9MzAwMDthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/fe376780-03af-11f1-bdbe-5bf6f41e7c2e_88e59d857796f0171653177a807c51569e92eac61a0b439e95ced3ca6d9557a9.jpg",
+         "originalWidth": 3000,
+         "originalHeight": 1687,
+         "caption": "",
+         "resolutions": null
+        },
+        "provider": {
+         "displayName": "Yahoo Finance Video",
+         "sourceId": "video.yahoofinance.com"
+        },
+        "previewUrl": null,
+        "providerContentUrl": "",
+        "canonicalUrl": {
+         "url": "https://finance.yahoo.com/video/is-it-worth-investing-in-bitcoin-if-im-gen-x-220000679.html"
+        },
+        "clickThroughUrl": {
+         "url": "https://finance.yahoo.com/video/is-it-worth-investing-in-bitcoin-if-im-gen-x-220000679.html"
+        }
+       }
+      },
+      {
+       "content": {
+        "id": "522ea376-ad40-47b5-962b-60be06570d89",
+        "contentType": "VIDEO",
+        "isHosted": true,
+        "title": "Strategy is buying bitcoin again! But this crypto treasury is buying more.",
+        "thumbnail": {
+         "originalUrl": "https://s.yimg.com/uu/api/res/1.2/gwtMTLop7.tkYUsOZ3E.8g--~B/aD0yNjM0O3c9NDY4NDthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/9ca66a01-4825-4989-a20e-2da2debce407_7535f7014d05f4a41d0c4066a4030e43eb61344c9ee2996619ed74cb64c89493.jpg",
+         "originalWidth": 4684,
+         "originalHeight": 2634,
+         "caption": "",
+         "resolutions": null
+        },
+        "provider": {
+         "displayName": "Yahoo Finance Video",
+         "sourceId": "video.yahoofinance.com"
+        },
+        "previewUrl": null,
+        "providerContentUrl": "",
+        "canonicalUrl": {
+         "url": "https://finance.yahoo.com/video/strategy-buying-bitcoin-again-crypto-180000505.html"
+        },
+        "clickThroughUrl": {
+         "url": "https://finance.yahoo.com/video/strategy-buying-bitcoin-again-crypto-180000505.html"
+        }
+       }
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "0805fde9-b71d-4526-9879-9f57ef5587bc",
+   "content": {
+    "id": "0805fde9-b71d-4526-9879-9f57ef5587bc",
+    "contentType": "VIDEO",
+    "title": "Bitcoin may have exited a bear market, but is it out of the woods just yet?",
+    "description": "<p>Scott Melker discusses bitcoin's (<a target=\"_blank\" rel=\"\" class=\"link\" href=\"https://finance.yahoo.com/quote/BTC-USD/\" data-i13n=\"cpos:1;pos:1\">BTC-USD</a>) exit from bear market territory as the cryptocurrency climbs above $86,000 on Monday.</p>\n<p>\"<a target=\"_blank\" rel=\"\" class=\"link\" href=\"https://finance.yahoo.com/videos/series/daily-wolf/?fr=sycsrp_catchall\" data-i13n=\"cpos:2;pos:1\">The Daily Wolf with Scott Melker</a>\" airs every day at 12:00 p.m. Tune in for your daily dose of all things crypto.</p>\n<p>Make sure to also check out Yahoo Finance's new <a target=\"_blank\" rel=\"\" class=\"link\" href=\"https://finance.yahoo.com/markets/crypto/\" data-i13n=\"cpos:3;pos:1\"><u>crypto hub</u></a> to find the latest crypto-related news.</p>",
+    "summary": "Scott Melker discusses bitcoin's (BTC-USD) exit from bear market territory as the cryptocurrency climbs above $86,000 on Monday. \"The Daily Wolf with Scott Melker\" airs every day at 12:00 p.m. Tune in for your daily dose of all things crypto. Make sure to also check out Yahoo Finance's new crypto hub to find the latest crypto-related news.",
+    "pubDate": "2026-09-21T17:00:00Z",
+    "displayTime": "",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://s.yimg.com/uu/api/res/1.2/PK4fBnJotX4STDJcdjNm_A--~B/aD0xMDgwO3c9MTkyMDthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/video-frame-1790003899232_2203.jpg_17f59ce50637b44ab725bdde7119af256ad1ab4938e5294068ca26f2cbfd23ca.jpg",
+     "originalWidth": 1920,
+     "originalHeight": 1080,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/PK4fBnJotX4STDJcdjNm_A--~B/aD0xMDgwO3c9MTkyMDthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/video-frame-1790003899232_2203.jpg_17f59ce50637b44ab725bdde7119af256ad1ab4938e5294068ca26f2cbfd23ca.jpg",
+       "width": 1920,
+       "height": 1080,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/PUx2I.f9YAnIXAiuGLnlYw--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/video-frame-1790003899232_2203.jpg_17f59ce50637b44ab725bdde7119af256ad1ab4938e5294068ca26f2cbfd23ca.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Yahoo Finance Video",
+     "url": "https://finance.yahoo.com/",
+     "sourceId": "video.yahoofinance.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/video/bitcoin-may-exited-bear-market-170000924.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/video/bitcoin-may-exited-bear-market-170000924.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": true
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "c60647f4-c873-4b91-b3f0-f55e25c8bfe2",
+   "content": {
+    "id": "c60647f4-c873-4b91-b3f0-f55e25c8bfe2",
+    "contentType": "VIDEO",
+    "title": "Inside crypto's Clarity Act collapse",
+    "description": "<p>Scott Melker breaks down why he believes the bitcoin (<a target=\"_blank\" rel=\"\" class=\"link\" href=\"https://finance.yahoo.com/quote/BTC-USD/\" data-i13n=\"cpos:1;pos:1\">BTC-USD</a>) bear market is over, looks inside the collapse of the Clarity Act and  Strive (<a target=\"_blank\" rel=\"\" class=\"link\" href=\"https://finance.yahoo.com/quote/ASST/\" data-i13n=\"cpos:2;pos:1\">ASST</a>) outpurchasing Strategy  (<a target=\"_blank\" rel=\"\" class=\"link\" href=\"https://finance.yahoo.com/quote/MSTR/\" data-i13n=\"cpos:3;pos:1\">MSTR</a>) on bitcoin.</p>\n<p>\"<a target=\"_blank\" rel=\"\" class=\"link\" href=\"https://finance.yahoo.com/videos/series/daily-wolf/?fr=sycsrp_catchall\" data-i13n=\"cpos:4;pos:1\"><u>The Daily Wolf with Scott Melker</u></a>\" airs every day at 12:00 p.m. Tune in for your daily dose of all things crypto.</p>\n<p>Make sure to also check out Yahoo Finance's new <a target=\"_blank\" rel=\"\" class=\"link\" href=\"https://finance.yahoo.com/markets/crypto/\" data-i13n=\"cpos:5;pos:1\"><u>crypto hub</u></a> to find the latest crypto-related news.</p>",
+    "summary": "Scott Melker breaks down why he believes the bitcoin (BTC-USD) bear market is over, looks inside the collapse of the Clarity Act and Strive (ASST) outpurchasing Strategy (MSTR) on bitcoin. \"The Daily Wolf with Scott Melker\" airs every day at 12:00 p.m. Tune in for your daily dose of all things crypto. Make sure to also check out Yahoo Finance's new crypto hub to find the latest crypto-related news.",
+    "pubDate": "2026-09-21T15:50:00Z",
+    "displayTime": "",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://s.yimg.com/uu/api/res/1.2/1R.hBRum1tbnE5VAM5n_HQ--~B/aD0xMDgwO3c9MTkyMDthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/dailywolf-thumbnail-website-0921_9283.png",
+     "originalWidth": 1920,
+     "originalHeight": 1080,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/1R.hBRum1tbnE5VAM5n_HQ--~B/aD0xMDgwO3c9MTkyMDthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/dailywolf-thumbnail-website-0921_9283.png",
+       "width": 1920,
+       "height": 1080,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/nzNDocXewPEBJ382IiR9RA--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/dailywolf-thumbnail-website-0921_9283.png",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Yahoo Finance Video",
+     "url": "https://finance.yahoo.com/",
+     "sourceId": "video.yahoofinance.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/video/inside-cryptos-clarity-act-collapse-155000946.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/video/inside-cryptos-clarity-act-collapse-155000946.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": true
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "4553d705-cdf8-3850-8faa-4f17a6c1fcdf",
+   "content": {
+    "id": "4553d705-cdf8-3850-8faa-4f17a6c1fcdf",
+    "contentType": "STORY",
+    "title": "3 Crypto Stocks To Watch In September 2026",
+    "description": "",
+    "summary": "AI-fuelled enthusiasm has swung global markets back toward high growth stories, and crypto and blockchain are sharing that spotlight as investors look for the next big infrastructure plays behind digital assets. With capital chasing clear business models instead of pure speculation, listed companies building the rails and plumbing of this ecosystem are drawing fresh attention. This article walks through three stocks from our curated crypto and blockchain basket. The stocks covered below are...",
+    "pubDate": "2026-09-22T14:15:19Z",
+    "displayTime": "2026-09-22T14:15:19Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/simply_wall_st__316/f9563a7ba9d7550a7453b52641b98e31.jpg",
+     "originalWidth": 1600,
+     "originalHeight": 900,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/KbRJcVkRKEHvRvXiqd38oA--~B/aD05MDA7dz0xNjAwO2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/simply_wall_st__316/f9563a7ba9d7550a7453b52641b98e31.jpg",
+       "width": 1600,
+       "height": 900,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/kxYnoG7KhXqD3gLYcxMh_w--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/simply_wall_st__316/f9563a7ba9d7550a7453b52641b98e31.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Simply Wall St.",
+     "url": "https://simplywall.st/",
+     "sourceId": "simply_wall_st__316"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/crypto/articles/3-crypto-stocks-watch-september-141519735.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/crypto/articles/3-crypto-stocks-watch-september-141519735.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "b13ebc8f-8a7a-3cb1-a983-a37e59c2d553",
+   "content": {
+    "id": "b13ebc8f-8a7a-3cb1-a983-a37e59c2d553",
+    "contentType": "STORY",
+    "title": "Scaramucci Says Bitcoin Doesn’t Need the Clarity Act. He Says Bessent’s Bond Move Is What’s Really Driving the Rally.",
+    "description": "",
+    "summary": "Anthony Scaramucci thinks everyone is watching the wrong catalyst for Bitcoin's recent surge, and his argument points to a corner of the bond market most crypto investors are not watching.",
+    "pubDate": "2026-09-22T14:11:19Z",
+    "displayTime": "2026-09-22T14:11:19Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/24_7_wall_st__718/f073d5da27c2a7ba47fec6245740601b.jpg",
+     "originalWidth": 1500,
+     "originalHeight": 1000,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/uqmRB5HDbhf46bGG9fFnlg--~B/aD0xMDAwO3c9MTUwMDthcHBpZD15dGFjaHlvbg--/https://media.zenfs.com/en/24_7_wall_st__718/f073d5da27c2a7ba47fec6245740601b.jpg",
+       "width": 1500,
+       "height": 1000,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/efVJ08K84r.mEikpexf1bA--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/24_7_wall_st__718/f073d5da27c2a7ba47fec6245740601b.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "24/7 Wall St.",
+     "url": "https://247wallst.com/",
+     "sourceId": "24_7_wall_st__718"
+    },
+    "canonicalUrl": {
+     "url": "https://247wallst.com/investing/2026/09/22/scaramucci-says-bitcoin-doesnt-need-the-clarity-act-he-says-bessents-bond-move-is-whats-really-driving-the-rally/",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/crypto/articles/scaramucci-says-bitcoin-doesn-t-141119675.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "59c3038e-0f13-34e2-b434-1a7fa26735fe",
+   "content": {
+    "id": "59c3038e-0f13-34e2-b434-1a7fa26735fe",
+    "contentType": "STORY",
+    "title": "Elon Musk’s X Offers Crypto Trading To Users",
+    "description": "",
+    "summary": "Social media company X, formerly known as Twitter, is moving forward with plans to offer trading in Bitcoin (CRYPTO...",
+    "pubDate": "2026-09-22T13:49:00Z",
+    "displayTime": "2026-09-22T13:49:00Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/cryptoprowl_304/22aa638f921b9c01a61c46ce66ea5ece.jpg",
+     "originalWidth": 1000,
+     "originalHeight": 600,
+     "caption": "Elon Musk’s X Offers Crypto Trading To Users",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/OHBORCu1RRgusottArUqUw--~B/aD02MDA7dz0xMDAwO2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/cryptoprowl_304/22aa638f921b9c01a61c46ce66ea5ece.jpg",
+       "width": 1000,
+       "height": 600,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/EY4xGb7kb0IMh4iRwCqaxQ--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/cryptoprowl_304/22aa638f921b9c01a61c46ce66ea5ece.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "CryptoProwl",
+     "url": "https://www.cryptoprowl.com/",
+     "sourceId": "cryptoprowl_304"
+    },
+    "canonicalUrl": {
+     "url": "https://www.cryptoprowl.com/releases/elon-musks-x-offers-crypto-trading-to-users-7112",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/crypto/articles/elon-musk-x-offers-crypto-134900718.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "d58b25e3-8817-3a2d-ac66-92ce46620e93",
+   "content": {
+    "id": "d58b25e3-8817-3a2d-ac66-92ce46620e93",
+    "contentType": "STORY",
+    "title": "Bitcoin Surges Above $86,000: ETFs in Focus",
+    "description": "",
+    "summary": "Bitcoin tops $86,000. Read on to learn how Bitcoin ETFs are riding the rally.",
+    "pubDate": "2026-09-22T13:47:00Z",
+    "displayTime": "2026-09-22T13:47:00Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/zacks.com/2677d4ba68204c51d83bcea4db6ae8b8.jpg",
+     "originalWidth": 620,
+     "originalHeight": 349,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/q2GIbfTLte0iddIPgSAwGA--~B/aD0zNDk7dz02MjA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/2677d4ba68204c51d83bcea4db6ae8b8.jpg",
+       "width": 620,
+       "height": 349,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/k0NjhDQ2x_MOdV3O0L_5jg--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/2677d4ba68204c51d83bcea4db6ae8b8.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Zacks",
+     "url": "http://www.zacks.com/",
+     "sourceId": "zacks.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/crypto/articles/bitcoin-surges-above-86-000-134700203.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/crypto/articles/bitcoin-surges-above-86-000-134700203.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "4c703fe6-a17b-34f4-8b91-84a146192c5a",
+   "content": {
+    "id": "4c703fe6-a17b-34f4-8b91-84a146192c5a",
+    "contentType": "STORY",
+    "title": "Crypto's Next Catalyst Could Be Tokenized Stocks: Clear Street Raises Bullish, Coinbase Targets",
+    "description": "",
+    "summary": "Clear Street raised price target for crypto exchange Bullish, citing that the setback in CLARITY Act could lead to adoption of tokenized stocks.",
+    "pubDate": "2026-09-22T13:42:19Z",
+    "displayTime": "2026-09-22T13:42:19Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/stocktwits_383/4979ecceebc5f9adadf7f8a9de2987e3",
+     "originalWidth": 1280,
+     "originalHeight": 960,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/BhGvYZyc5xfxYdV.Gne7ug--~B/aD05NjA7dz0xMjgwO2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/stocktwits_383/4979ecceebc5f9adadf7f8a9de2987e3",
+       "width": 1280,
+       "height": 960,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/zm85CnuW7mcBzmwyCORsIw--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/stocktwits_383/4979ecceebc5f9adadf7f8a9de2987e3",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Stocktwits",
+     "url": "Stocktwits",
+     "sourceId": "stocktwits_383"
+    },
+    "canonicalUrl": {
+     "url": "https://stocktwits.com/news-articles/markets/equity/crypto-catalyst-tokenized-stocks-bullish-coinbase/cZMPoi8RBes",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/crypto/articles/cryptos-next-catalyst-could-tokenized-134219162.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "41850ff4-bac3-3505-bbea-581c4fa76b8f",
+   "content": {
+    "id": "41850ff4-bac3-3505-bbea-581c4fa76b8f",
+    "contentType": "STORY",
+    "title": "Exchange-Traded Funds Mixed, Equity Futures Up Pre-Bell Tuesday as Oil Prices Drop Due to Possible Diplomacy in US-Iran Conflict",
+    "description": "",
+    "summary": "The broad market exchange-traded fund SPDR S&P 500 ETF Trust (SPY) was up 0.1%, and the actively tra",
+    "pubDate": "2026-09-22T13:08:32Z",
+    "displayTime": "2026-09-22T13:08:32Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": null,
+    "provider": {
+     "displayName": "MT Newswires",
+     "url": "https://www.mtnewswires.com/",
+     "sourceId": "mt_newswires_premium_news_706"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-mixed-equity-130832359.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-mixed-equity-130832359.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": true,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  }
+ ],
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T14:54:45+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

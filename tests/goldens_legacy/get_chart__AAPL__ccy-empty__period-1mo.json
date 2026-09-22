@@ -1,0 +1,46 @@
+{
+  "function": "get_chart",
+  "args": [
+    "AAPL"
+  ],
+  "kwargs": {
+    "period": "1mo",
+    "ccy": ""
+  },
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "closes": [
+      310.34,
+      309.9,
+      313.45,
+      314.58,
+      319.7,
+      316.85,
+      325.13,
+      324.96,
+      328.21,
+      319.97,
+      316.22,
+      315.34,
+      326.57,
+      332.27,
+      333.08,
+      331.34,
+      332.41,
+      337.0,
+      336.13,
+      338.98,
+      341.4873
+    ],
+    "period": "1mo",
+    "bars": 21,
+    "currency": "USD"
+  },
+  "fixtures_used": [
+    "yf:AAPL:history?period=1mo"
+  ],
+  "live_match": true
+}

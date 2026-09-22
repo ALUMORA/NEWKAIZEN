@@ -1,0 +1,46 @@
+{
+  "function": "get_chart",
+  "args": [
+    "CEMEXCPO.MX"
+  ],
+  "kwargs": {
+    "period": "1mo",
+    "ccy": "MXN"
+  },
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "closes": [
+      18.7141,
+      18.6343,
+      18.6244,
+      18.5246,
+      18.5246,
+      18.2654,
+      17.7769,
+      17.9464,
+      18.395,
+      18.5845,
+      18.734,
+      18.6244,
+      18.3751,
+      18.076,
+      18.086,
+      17.8666,
+      17.57,
+      17.51,
+      17.45,
+      17.33,
+      17.32
+    ],
+    "period": "1mo",
+    "bars": 21,
+    "currency": "MXN"
+  },
+  "fixtures_used": [
+    "yf:CEMEXCPO.MX:history?period=1mo"
+  ],
+  "live_match": true
+}

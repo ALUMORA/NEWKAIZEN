@@ -1,0 +1,37 @@
+{
+  "function": "get_momentum",
+  "args": [
+    "AAPL.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "sector": "Technology",
+    "benchmark": "XLK",
+    "stock": {
+      "m3": 17.53,
+      "m6": 29.68,
+      "m12": 24.58
+    },
+    "sector_r": {
+      "m3": 7.78,
+      "m6": 50.42,
+      "m12": 40.56
+    },
+    "alpha": {
+      "m3": 9.75,
+      "m6": -20.74,
+      "m12": -15.98
+    },
+    "score": 1
+  },
+  "fixtures_used": [
+    "yf:AAPL.MX:history?interval=1wk&period=2y",
+    "yf:AAPL.MX:info",
+    "yf:XLK:history?interval=1wk&period=2y"
+  ],
+  "live_match": true
+}

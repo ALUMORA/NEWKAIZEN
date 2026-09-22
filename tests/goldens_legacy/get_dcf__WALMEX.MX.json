@@ -1,0 +1,58 @@
+{
+  "function": "get_dcf",
+  "args": [
+    "WALMEX.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "price": 45.02,
+    "priceCurrency": "MXN",
+    "financialCurrency": "MXN",
+    "fxRate": 1.0,
+    "fxNote": null,
+    "fairPrice": 65.75,
+    "margin": 31.5,
+    "overall": "INFRAVALORADO",
+    "methods": [
+      {
+        "name": "P/E",
+        "actual": 15.58,
+        "fair": 22,
+        "target": 63.58,
+        "signal": "barato"
+      },
+      {
+        "name": "P/B",
+        "actual": 3.25,
+        "fair": 6,
+        "target": 83.14,
+        "signal": "barato"
+      },
+      {
+        "name": "P/FCF",
+        "actual": 34.51,
+        "fair": 22,
+        "target": 28.7,
+        "signal": "caro"
+      },
+      {
+        "name": "EV/EBITDA",
+        "actual": 8.52,
+        "fair": 16,
+        "target": 87.56,
+        "signal": "barato"
+      }
+    ],
+    "sector": "Consumer Defensive",
+    "sectorNote": null,
+    "nMethods": 4
+  },
+  "fixtures_used": [
+    "yf:WALMEX.MX:info"
+  ],
+  "live_match": true
+}

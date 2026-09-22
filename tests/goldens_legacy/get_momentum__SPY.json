@@ -1,0 +1,36 @@
+{
+  "function": "get_momentum",
+  "args": [
+    "SPY"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "sector": "—",
+    "benchmark": "SPY",
+    "stock": {
+      "m3": 6.36,
+      "m6": 22.59,
+      "m12": 18.13
+    },
+    "sector_r": {
+      "m3": 6.36,
+      "m6": 22.59,
+      "m12": 18.13
+    },
+    "alpha": {
+      "m3": 0.0,
+      "m6": 0.0,
+      "m12": 0.0
+    },
+    "score": 0
+  },
+  "fixtures_used": [
+    "yf:SPY:history?interval=1wk&period=2y",
+    "yf:SPY:info"
+  ],
+  "live_match": true
+}

@@ -1,0 +1,629 @@
+{
+ "key": "yf:WALMEX.MX:news",
+ "provider": "yfinance",
+ "symbol": "WALMEX.MX",
+ "attr": "news",
+ "kwargs": {},
+ "kind": "value",
+ "payload": [
+  {
+   "id": "1612c0fe-f88b-3721-9a9e-26b7605bb9a6",
+   "content": {
+    "id": "1612c0fe-f88b-3721-9a9e-26b7605bb9a6",
+    "contentType": "STORY",
+    "title": "Worried About an AI Slowdown? Check Out the Staples.",
+    "description": "",
+    "summary": "Consumer staples could be a good hunting ground for stockpickers., whether inflation goes up or eases.",
+    "pubDate": "2026-09-17T14:25:00Z",
+    "displayTime": "2026-09-17T14:25:00Z",
+    "isHosted": false,
+    "bypassModal": false,
+    "previewUrl": "https://finance.yahoo.com/m/1612c0fe-f88b-3721-9a9e-26b7605bb9a6/worried-about-an-ai-slowdown-.html",
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/Barrons.com/741ac349ec45e72366c6e8fa0ea3c92b.jpg",
+     "originalWidth": 1280,
+     "originalHeight": 640,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/blTPudSJDT8iDq0jXsUgrQ--~B/aD02NDA7dz0xMjgwO2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/Barrons.com/741ac349ec45e72366c6e8fa0ea3c92b.jpg",
+       "width": 1280,
+       "height": 640,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/Cq_rLyV92WlvJyQMfZi6Zg--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/Barrons.com/741ac349ec45e72366c6e8fa0ea3c92b.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Barrons.com",
+     "url": "http://www.barrons.com/",
+     "sourceId": "Barrons.com"
+    },
+    "canonicalUrl": {
+     "url": "https://www.barrons.com/articles/ai-slowdown-consumer-staples-buy-16ce9300?siteid=yhoof2&yptr=yahoo",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": null,
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "2264a261-a730-33a9-9896-afa1fe60f8a1",
+   "content": {
+    "id": "2264a261-a730-33a9-9896-afa1fe60f8a1",
+    "contentType": "STORY",
+    "title": "Walmex (BMV:WALMEX *) Stock Sees Modest Fair Value Cut On Softer Mexico Consumer Trends",
+    "description": "",
+    "summary": "The fair value price target for Wal-Mart de México has been revised slightly lower from MX$62.71 to MX$61.04, a reduction of about 2.7%. Analysts are linking this small adjustment to a softer consumer backdrop in Mexico, while still pointing to stabilizing trends and resilient margins around the company. As you read on, you will see how this updated target fits into the broader analyst narrative and how to keep track of where the story goes next. Analyst Price Targets don't always capture the...",
+    "pubDate": "2026-08-01T11:15:40Z",
+    "displayTime": "2026-08-01T11:15:40Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/simply_wall_st__316/a025415f846c3c8277a9ccd53850ea0b",
+     "originalWidth": 1194,
+     "originalHeight": 432,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/IWK1Ma49PkR_sGy.3QAETw--~B/aD00MzI7dz0xMTk0O2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/simply_wall_st__316/a025415f846c3c8277a9ccd53850ea0b",
+       "width": 1194,
+       "height": 432,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/WxzsWzzcPjCIDVPGWFIcFw--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/simply_wall_st__316/a025415f846c3c8277a9ccd53850ea0b",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Simply Wall St.",
+     "url": "https://simplywall.st/",
+     "sourceId": "simply_wall_st__316"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/walmex-bmv-walmex-stock-sees-111540865.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/walmex-bmv-walmex-stock-sees-111540865.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "3b8a6cb6-93c1-3e09-8a8d-9426effe80c7",
+   "content": {
+    "id": "3b8a6cb6-93c1-3e09-8a8d-9426effe80c7",
+    "contentType": "STORY",
+    "title": "Wal Mex (BMV:WALMEX *) Stock Sees Modest Fair Value Cut As Analysts Turn Cautious",
+    "description": "",
+    "summary": "The latest analyst revisions for Wal-Mart de México center on a reduced price target, with the average moving from MX$66 to MX$63 and a fair value estimate adjusted from MX$64.82 to MX$62.71. This shift aligns with a more cautious tone in recent research, as analysts factor softer consumption trends into their models while keeping discount rate assumptions broadly steady. Read on to see what is behind these changes and how to track the evolving narrative around Wal-Mart de México. Analyst...",
+    "pubDate": "2026-07-17T00:17:51Z",
+    "displayTime": "2026-07-17T00:17:51Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/simply_wall_st__316/a025415f846c3c8277a9ccd53850ea0b",
+     "originalWidth": 1194,
+     "originalHeight": 432,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/IWK1Ma49PkR_sGy.3QAETw--~B/aD00MzI7dz0xMTk0O2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/simply_wall_st__316/a025415f846c3c8277a9ccd53850ea0b",
+       "width": 1194,
+       "height": 432,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/WxzsWzzcPjCIDVPGWFIcFw--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/simply_wall_st__316/a025415f846c3c8277a9ccd53850ea0b",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Simply Wall St.",
+     "url": "https://simplywall.st/",
+     "sourceId": "simply_wall_st__316"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/wal-mex-bmv-walmex-stock-001751503.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/wal-mex-bmv-walmex-stock-001751503.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "5887b7b0-9cb1-3fca-b5cc-226a3c9c4825",
+   "content": {
+    "id": "5887b7b0-9cb1-3fca-b5cc-226a3c9c4825",
+    "contentType": "STORY",
+    "title": "WMMVY or WMT: Which Is the Better Value Stock Right Now?",
+    "description": "",
+    "summary": "WMMVY vs. WMT: Which Stock Is the Better Value Option?",
+    "pubDate": "2026-06-25T15:40:03Z",
+    "displayTime": "2026-06-25T15:40:03Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/zacks.com/3d7c5b2146ac04ffd51752e17ff2a619",
+     "originalWidth": 900,
+     "originalHeight": 506,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/132juehTNIyEUn7pK7.GPA--~B/aD01MDY7dz05MDA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/3d7c5b2146ac04ffd51752e17ff2a619",
+       "width": 900,
+       "height": 506,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/ntuaEXebAoViSP2xpnvkrA--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/3d7c5b2146ac04ffd51752e17ff2a619",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Zacks",
+     "url": "http://www.zacks.com/",
+     "sourceId": "zacks.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/wmmvy-wmt-better-value-stock-154003925.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/wmmvy-wmt-better-value-stock-154003925.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "8eb0c560-7d37-3c32-b752-803ce1f4e80f",
+   "content": {
+    "id": "8eb0c560-7d37-3c32-b752-803ce1f4e80f",
+    "contentType": "STORY",
+    "title": "How The Wal-Mart De México (BMV:WALMEX *) Story Is Shifting With A Cautious Analyst Stance",
+    "description": "",
+    "summary": "The fair value estimate for Wal-Mart de México, de has been adjusted slightly, moving from MX$65.37 to MX$65.32, which keeps the modelled price target essentially in the same range. This small trim aligns with a more cautious analyst stance, where the rating has been downgraded even as both supportive and challenging factors are being weighed. As you read on, you will see how these updated numbers fit into the evolving narrative and what to watch as sentiment shifts. Analyst Price Targets...",
+    "pubDate": "2026-05-11T05:10:27Z",
+    "displayTime": "2026-05-11T05:10:27Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/simply_wall_st__316/a025415f846c3c8277a9ccd53850ea0b",
+     "originalWidth": 1194,
+     "originalHeight": 432,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/IWK1Ma49PkR_sGy.3QAETw--~B/aD00MzI7dz0xMTk0O2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/simply_wall_st__316/a025415f846c3c8277a9ccd53850ea0b",
+       "width": 1194,
+       "height": 432,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/WxzsWzzcPjCIDVPGWFIcFw--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/simply_wall_st__316/a025415f846c3c8277a9ccd53850ea0b",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Simply Wall St.",
+     "url": "https://simplywall.st/",
+     "sourceId": "simply_wall_st__316"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/wal-mart-m-xico-bmv-051027465.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/wal-mart-m-xico-bmv-051027465.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "8c1bbeac-1d66-3526-9cdf-f8a5d146d602",
+   "content": {
+    "id": "8c1bbeac-1d66-3526-9cdf-f8a5d146d602",
+    "contentType": "STORY",
+    "title": "Walmex posts revenue growth amid margin pressure",
+    "description": "",
+    "summary": "For January to March, consolidated revenue increased 1.7% from a year earlier to 245.01bn pesos.",
+    "pubDate": "2026-04-29T09:28:38Z",
+    "displayTime": "2026-04-29T09:28:38Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/retail_insight_network_724/752d2374a11ab9cead524bd87c411871",
+     "originalWidth": 1440,
+     "originalHeight": 810,
+     "caption": "Overall",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/b3RjlHnDdR2QsOgtsaBUGQ--~B/aD04MTA7dz0xNDQwO2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/retail_insight_network_724/752d2374a11ab9cead524bd87c411871",
+       "width": 1440,
+       "height": 810,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/T1NZOWMgZGxYwH_6YbLhPw--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/retail_insight_network_724/752d2374a11ab9cead524bd87c411871",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Retail Insight Network",
+     "url": "https://www.globaldata.com/",
+     "sourceId": "retail_insight_network_724"
+    },
+    "canonicalUrl": {
+     "url": "https://www.retail-insight-network.com/news/walmex-revenue-growth-margin-pressure/",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/walmex-posts-revenue-growth-amid-092838917.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "351c18ce-8a16-3ce5-97b6-489ff99f06c1",
+   "content": {
+    "id": "351c18ce-8a16-3ce5-97b6-489ff99f06c1",
+    "contentType": "STORY",
+    "title": "How The Narrative On Wal‑Mart de México (BMV:WALMEX *) Is Shifting After Fair Value Trim",
+    "description": "",
+    "summary": "The latest update trimmed Wal-Mart de México’s fair value estimate from MX$65.98 to MX$65.37, a move of around 0.9%. Bullish and bearish analysts interpret this shift differently, with supportive views seeing it as a recalibration of expectations and more cautious voices treating it as a warning flag on risks around growth and margins. Read on to see what is driving these views and how you can track this evolving narrative over time. Stay updated as the Fair Value for Wal-Mart de México. de...",
+    "pubDate": "2026-04-23T12:06:13Z",
+    "displayTime": "2026-04-23T12:06:13Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/simply_wall_st__316/a025415f846c3c8277a9ccd53850ea0b",
+     "originalWidth": 1194,
+     "originalHeight": 432,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/IWK1Ma49PkR_sGy.3QAETw--~B/aD00MzI7dz0xMTk0O2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/simply_wall_st__316/a025415f846c3c8277a9ccd53850ea0b",
+       "width": 1194,
+       "height": 432,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/WxzsWzzcPjCIDVPGWFIcFw--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/simply_wall_st__316/a025415f846c3c8277a9ccd53850ea0b",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Simply Wall St.",
+     "url": "https://simplywall.st/",
+     "sourceId": "simply_wall_st__316"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/narrative-wal-mart-m-xico-120613686.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/narrative-wal-mart-m-xico-120613686.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "5a813793-93d7-35b8-abf0-cc35b02a5a49",
+   "content": {
+    "id": "5a813793-93d7-35b8-abf0-cc35b02a5a49",
+    "contentType": "STORY",
+    "title": "How Walmart’s Push Into Higher-Margin Ecosystem Plays Could Impact Walmart (WMT) Investors",
+    "description": "",
+    "summary": "In late March 2026, brands including Opopop, FHI Heat, Zep, and Clean Simple Eats announced nationwide or expanded launches at Walmart, while Walmex outlined a US$2.50 billion 2026 investment plan and Walmart advanced retail media partnerships with VIZIO. Together with Sam’s Club’s first membership fee increase in four years and fast-growing advertising and eCommerce businesses, these moves underscore Walmart’s shift toward higher-margin, tech-enabled retail and broader ecosystem...",
+    "pubDate": "2026-04-04T21:12:59Z",
+    "displayTime": "2026-04-04T21:12:59Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/simply_wall_st__316/4559202443400de02cb22c3c39f33e03",
+     "originalWidth": 1194,
+     "originalHeight": 432,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/nWgcjMtWIl9.Ug6_ScDJ0w--~B/aD00MzI7dz0xMTk0O2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/simply_wall_st__316/4559202443400de02cb22c3c39f33e03",
+       "width": 1194,
+       "height": 432,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/rM6.21X18coYZypOvAPAKA--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/simply_wall_st__316/4559202443400de02cb22c3c39f33e03",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Simply Wall St.",
+     "url": "https://simplywall.st/",
+     "sourceId": "simply_wall_st__316"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/walmart-push-higher-margin-ecosystem-211259854.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/walmart-push-higher-margin-ecosystem-211259854.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "ca0a4b84-6451-33be-940b-acb13166a329",
+   "content": {
+    "id": "ca0a4b84-6451-33be-940b-acb13166a329",
+    "contentType": "STORY",
+    "title": "WalMart de Mexico (WMMVY) Upgraded to Buy: What Does It Mean for the Stock?",
+    "description": "",
+    "summary": "WalMart de Mexico (WMMVY) has been upgraded to a Zacks Rank #2 (Buy), reflecting growing optimism about the company's earnings prospects. This might drive the stock higher in the near term.",
+    "pubDate": "2026-04-02T16:00:02Z",
+    "displayTime": "2026-04-02T16:00:02Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/zacks.com/e8e4b0344809eaac6d73c9fd25fd180a",
+     "originalWidth": 900,
+     "originalHeight": 600,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/7h8ntzJXcDOdVmDKQ08gRg--~B/aD02MDA7dz05MDA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/e8e4b0344809eaac6d73c9fd25fd180a",
+       "width": 900,
+       "height": 600,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/HPPe9cVpY.5CDqgVwfXxLg--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/e8e4b0344809eaac6d73c9fd25fd180a",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Zacks",
+     "url": "http://www.zacks.com/",
+     "sourceId": "zacks.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/walmart-mexico-wmmvy-upgraded-buy-160002283.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/walmart-mexico-wmmvy-upgraded-buy-160002283.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "7f827a62-b783-314c-8e62-dc4a13c68ee1",
+   "content": {
+    "id": "7f827a62-b783-314c-8e62-dc4a13c68ee1",
+    "contentType": "STORY",
+    "title": "Are Retail-Wholesale Stocks Lagging  Tapestry (TPR) This Year?",
+    "description": "",
+    "summary": "Here is how Tapestry (TPR) and Wal-Mart de Mexico SAB de CV (WMMVY) have performed compared to their sector so far this year.",
+    "pubDate": "2026-04-02T13:40:02Z",
+    "displayTime": "2026-04-02T13:40:02Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/zacks.com/46ebfcbff417ac1bbde85ad33fa0d4be",
+     "originalWidth": 900,
+     "originalHeight": 594,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/Fj4TPQveJWuth16WIsEVAw--~B/aD01OTQ7dz05MDA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/46ebfcbff417ac1bbde85ad33fa0d4be",
+       "width": 900,
+       "height": 594,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/62dkWUCwtvZuSH5R1aSTiA--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/46ebfcbff417ac1bbde85ad33fa0d4be",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Zacks",
+     "url": "http://www.zacks.com/",
+     "sourceId": "zacks.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/retail-wholesale-stocks-lagging-tapestry-134002436.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/retail-wholesale-stocks-lagging-tapestry-134002436.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  }
+ ],
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T14:52:36+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

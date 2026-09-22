@@ -1,0 +1,20 @@
+{
+  "function": "get_edgar_financials",
+  "args": [
+    "SPY"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "available": false,
+    "error": "SEC EDGAR no tiene expediente XBRL para este emisor."
+  },
+  "fixtures_used": [
+    "http:GET https://data.sec.gov/api/xbrl/companyfacts/CIK0000884394.json",
+    "http:GET https://www.sec.gov/files/company_tickers.json"
+  ],
+  "live_match": true
+}

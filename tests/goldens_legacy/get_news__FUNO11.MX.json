@@ -1,0 +1,61 @@
+{
+  "function": "get_news",
+  "args": [
+    "FUNO11.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [
+    "news[*].time"
+  ],
+  "output": {
+    "news": [
+      {
+        "title": "How The Fibra UNO (BMV:FUNO 11) Story Is Shifting With New Fair Value And Risks",
+        "summary": "Fibra UNO’s updated analyst narrative now anchors around a fair value of MX$34.15 per unit, compared with MX$33.91 previously. This reflects a small adjustment in the modelled price target. Recent Street research on comparable real estate and leisure",
+        "url": "https://finance.yahoo.com/news/fibra-uno-bmv-funo-11-200905561.html",
+        "publisher": "Simply Wall St.",
+        "time": 1773000545,
+        "sentiment": "negative"
+      },
+      {
+        "title": "Why The Narrative Around Fibra UNO (BMV:FUNO 11) Is Shifting After The MX$33.91 Fair Value Update",
+        "summary": "Fibra UNO’s latest fair value move from MX$33.04 to MX$33.91 reflects a recalibration of expectations rather than a wholesale rethink of the story. The modestly lower 16.28% discount rate and updated revenue growth assumption of 4.25% are fueling a f",
+        "url": "https://finance.yahoo.com/news/why-narrative-around-fibra-uno-180611505.html",
+        "publisher": "Simply Wall St.",
+        "time": 1770487571,
+        "sentiment": "positive"
+      },
+      {
+        "title": "What Is Shaping The New Fibra UNO (BMV:FUNO 11) Story For Investors Now",
+        "summary": "Fibra UNO is back in focus after analysts revised their price target, signaling a fresh look at how the market values Mexico's largest real estate investment trust. This change reflects updated views on its portfolio, funding conditions, and the broa",
+        "url": "https://finance.yahoo.com/news/shaping-fibra-uno-bmv-funo-140827748.html",
+        "publisher": "Simply Wall St.",
+        "time": 1769263707,
+        "sentiment": "neutral"
+      },
+      {
+        "title": "How Subtle Valuation Shifts Are Rewriting The Story For Fibra UNO (BMV:FUNO 11)",
+        "summary": "What the New MX$32.82 Target Really Signals The adjusted fair value target for Fibra UNO, now set at MX$32.82 versus MX$32.70 previously, reflects analysts fine tuning their models rather than making a sweeping call on the stock. The slightly higher ",
+        "url": "https://finance.yahoo.com/news/subtle-valuation-shifts-rewriting-story-081229457.html",
+        "publisher": "Simply Wall St.",
+        "time": 1768032749,
+        "sentiment": "negative"
+      },
+      {
+        "title": "How Recent Developments Are Rewriting the Story for Fibra UNO",
+        "summary": "The consensus analyst price target for Fibra UNO stock has increased slightly from MX$32.19 to MX$32.70. This change reflects a subtle shift in sentiment and suggests improved confidence in the company’s projected value, driven by a mix of resilient ",
+        "url": "https://finance.yahoo.com/news/recent-developments-rewriting-story-fibra-061219119.html",
+        "publisher": "Simply Wall St.",
+        "time": 1763705539,
+        "sentiment": "neutral"
+      }
+    ]
+  },
+  "fixtures_used": [
+    "yf:FUNO11.MX:news"
+  ],
+  "live_match": true
+}

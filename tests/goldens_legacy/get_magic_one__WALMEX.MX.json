@@ -1,0 +1,28 @@
+{
+  "function": "get_magic_one",
+  "args": [
+    "WALMEX.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "ticker": "WALMEX.MX",
+    "name": "Wal-Mart de México, S.A.B. de C.V.",
+    "sector": "Consumer Defensive",
+    "marketCap": 775254835200.0,
+    "price": 45.02,
+    "ey": 9.39,
+    "roc": 30.82,
+    "pe": 15.58,
+    "pb": 3.25
+  },
+  "fixtures_used": [
+    "yf:WALMEX.MX:balance_sheet",
+    "yf:WALMEX.MX:income_stmt",
+    "yf:WALMEX.MX:info"
+  ],
+  "live_match": true
+}

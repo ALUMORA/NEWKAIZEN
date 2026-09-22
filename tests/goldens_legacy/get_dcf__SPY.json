@@ -1,0 +1,22 @@
+{
+  "function": "get_dcf",
+  "args": [
+    "SPY"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "isETF": true,
+    "error": "ETF/Fondo — valuación por múltiplos de acciones no aplica",
+    "price": 773.47,
+    "priceCurrency": "USD",
+    "sector": "Large Blend"
+  },
+  "fixtures_used": [
+    "yf:SPY:info"
+  ],
+  "live_match": true
+}

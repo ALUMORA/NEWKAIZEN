@@ -1,0 +1,572 @@
+{
+ "key": "yf:CEMEXCPO.MX:news",
+ "provider": "yfinance",
+ "symbol": "CEMEXCPO.MX",
+ "attr": "news",
+ "kwargs": {},
+ "kind": "value",
+ "payload": [
+  {
+   "id": "bd5d31d3-d2bf-35d0-89a2-32e566fbbb7a",
+   "content": {
+    "id": "bd5d31d3-d2bf-35d0-89a2-32e566fbbb7a",
+    "contentType": "STORY",
+    "title": "CEMEX (CX) Q2 2026 Earnings Call Transcript",
+    "description": "",
+    "summary": "Free cash flow hit $651 million as cost savings accelerated.",
+    "pubDate": "2026-07-24T01:26:37Z",
+    "displayTime": "2026-07-24T01:26:37Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/motleyfool.com/e48e86dda35543079ee2080fd9208b73",
+     "originalWidth": 400,
+     "originalHeight": 427,
+     "caption": "Logo of jester cap with thought bubble.",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/AgPxjmk.l0_x4qaFILkqiQ--~B/aD00Mjc7dz00MDA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/motleyfool.com/e48e86dda35543079ee2080fd9208b73",
+       "width": 400,
+       "height": 427,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/GLLDkBGnPusEHUUPHMcY8g--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/motleyfool.com/e48e86dda35543079ee2080fd9208b73",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Motley Fool",
+     "url": "http://www.fool.com/",
+     "sourceId": "motleyfool.com"
+    },
+    "canonicalUrl": {
+     "url": "https://www.fool.com/earnings/call-transcripts/2026/07/23/cemex-cx-q2-2026-earnings-call-transcript/",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/cemex-cx-q2-2026-earnings-012637514.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "c50819e9-32e7-336b-b1aa-02e38028a8fd",
+   "content": {
+    "id": "c50819e9-32e7-336b-b1aa-02e38028a8fd",
+    "contentType": "STORY",
+    "title": "Cemex SAB de CV (CX) Q2 2026 Earnings Call Highlights: Record Cash Flow and Raised Guidance ...",
+    "description": "",
+    "summary": "Cemex SAB de CV (CX) reports robust EBITDA growth and record free cash flow, while navigating operational disruptions and market uncertainties.",
+    "pubDate": "2026-07-23T21:04:01Z",
+    "displayTime": "2026-07-23T21:04:01Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": null,
+    "provider": {
+     "displayName": "GuruFocus.com",
+     "url": "http://www.gurufocus.com/",
+     "sourceId": "us.finance.gurufocus"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/cemex-sab-cv-cx-q2-210401077.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/cemex-sab-cv-cx-q2-210401077.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "68d6bece-215f-3a88-a634-11b23dbcc3c8",
+   "content": {
+    "id": "68d6bece-215f-3a88-a634-11b23dbcc3c8",
+    "contentType": "STORY",
+    "title": "Cemex Q2 Earnings Call Highlights",
+    "description": "",
+    "summary": "Cemex (NYSE:CX) reported what executives described as strong second-quarter 2026 results, with consolidated EBITDA exceeding $1 billion and management raising its full-year EBITDA growth outlook as cost savings and operational initiatives continued to support margins and free cash flow. Chief Execu",
+    "pubDate": "2026-07-23T19:07:23Z",
+    "displayTime": "2026-07-23T19:07:23Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/marketbeat_955/66ab76f12bed5c4fc71bfeadf26cc696",
+     "originalWidth": 1200,
+     "originalHeight": 675,
+     "caption": "Cemex logo",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/miNGOwwE8u.bNpKLH4R2Qg--~B/aD02NzU7dz0xMjAwO2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/marketbeat_955/66ab76f12bed5c4fc71bfeadf26cc696",
+       "width": 1200,
+       "height": 675,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/0ZIHtoxbHljrO46LiAhe1A--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/marketbeat_955/66ab76f12bed5c4fc71bfeadf26cc696",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "MarketBeat",
+     "url": "https://www.marketbeat.com/",
+     "sourceId": "marketbeat_955"
+    },
+    "canonicalUrl": {
+     "url": "https://www.marketbeat.com/instant-alerts/cemex-q2-earnings-call-highlights-2026-07-23/?utm_source=yahoofinance&utm_medium=yahoofinance",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/cemex-q2-earnings-call-highlights-190723848.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "2a64457c-06a5-3af1-bfc1-9a7fbd9eabc3",
+   "content": {
+    "id": "2a64457c-06a5-3af1-bfc1-9a7fbd9eabc3",
+    "contentType": "STORY",
+    "title": "EU Says Construction Companies, Trade Bodies Likely Formed Pricing Cartel",
+    "description": "",
+    "summary": "Ten chemical groups and three trade bodies operated a cartel to raise prices following the Covid-19 pandemic and Russia’s invasion of Ukraine, the commission said it provisionally found.",
+    "pubDate": "2026-07-20T12:38:00Z",
+    "displayTime": "2026-07-20T12:38:00Z",
+    "isHosted": false,
+    "bypassModal": false,
+    "previewUrl": "https://finance.yahoo.com/m/2a64457c-06a5-3af1-bfc1-9a7fbd9eabc3/eu-says-construction.html",
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/wsj.com/da95d001da581587c5a7a17ab5acc160",
+     "originalWidth": 1280,
+     "originalHeight": 640,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/6lWUU7pUHBzEgOCnInXfCA--~B/aD02NDA7dz0xMjgwO2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/wsj.com/da95d001da581587c5a7a17ab5acc160",
+       "width": 1280,
+       "height": 640,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/PuScC3eOqVaYfoZPHQJlsA--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/wsj.com/da95d001da581587c5a7a17ab5acc160",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "The Wall Street Journal",
+     "url": "http://www.wsj.com/",
+     "sourceId": "wsj.com"
+    },
+    "canonicalUrl": {
+     "url": "https://www.wsj.com/business/retail/eu-says-construction-companies-trade-bodies-likely-formed-pricing-cartel-05189568?siteid=yhoof2&yptr=yahoo",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": null,
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "7163ff73-078c-311b-a2f0-9ccf5a7e29b5",
+   "content": {
+    "id": "7163ff73-078c-311b-a2f0-9ccf5a7e29b5",
+    "contentType": "STORY",
+    "title": "MCEM Stock Outperforms Industry in 6 Months: Time to Buy?",
+    "description": "",
+    "summary": "Monarch Cement's long-life reserves, capacity investments, expansion strategy and discounted valuation make it a compelling building materials stock to buy.",
+    "pubDate": "2026-07-06T16:00:00Z",
+    "displayTime": "2026-07-06T16:00:00Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/zacks.com/23c511afca431213fbe7b29620c075b2",
+     "originalWidth": 635,
+     "originalHeight": 400,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/Ev_tIU5ISpaQ5VhHtkljDQ--~B/aD00MDA7dz02MzU7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/23c511afca431213fbe7b29620c075b2",
+       "width": 635,
+       "height": 400,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/V6OLw9eW0IasTJnM4Ef51g--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/23c511afca431213fbe7b29620c075b2",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Zacks",
+     "url": "http://www.zacks.com/",
+     "sourceId": "zacks.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/mcem-stock-outperforms-industry-6-160000133.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/mcem-stock-outperforms-industry-6-160000133.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "f9146700-079c-3681-91f7-3a20a5a5b405",
+   "content": {
+    "id": "f9146700-079c-3681-91f7-3a20a5a5b405",
+    "contentType": "STORY",
+    "title": "Amazon Labor Ruling Puts Cemex Precedent in Play",
+    "description": "",
+    "summary": "Amazon plans to appeal after a judge ordered bargaining with San Francisco delivery workers backed by Teamsters.",
+    "pubDate": "2026-06-23T19:02:29Z",
+    "displayTime": "2026-06-23T19:02:29Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": null,
+    "provider": {
+     "displayName": "GuruFocus.com",
+     "url": "http://www.gurufocus.com/",
+     "sourceId": "us.finance.gurufocus"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/economy/policy/articles/amazon-labor-ruling-puts-cemex-190229285.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/economy/policy/articles/amazon-labor-ruling-puts-cemex-190229285.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "376bbc71-8fe0-365d-bf62-05838657b223",
+   "content": {
+    "id": "376bbc71-8fe0-365d-bf62-05838657b223",
+    "contentType": "STORY",
+    "title": "Update: Amazon Ordered to Bargain With Teamsters at California Facility",
+    "description": "",
+    "summary": "(Updates with details from the labor judge's decision and Teamsters' comment in the last paragraph.)",
+    "pubDate": "2026-06-23T16:44:04Z",
+    "displayTime": "2026-06-23T16:44:04Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": null,
+    "provider": {
+     "displayName": "MT Newswires",
+     "url": "https://www.mtnewswires.com/",
+     "sourceId": "mt_newswires_premium_news_706"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/economy/policy/articles/amazon-ordered-bargain-teamsters-california-164404131.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/economy/policy/articles/amazon-ordered-bargain-teamsters-california-164404131.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": true,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "5e677c30-8732-3b13-9d58-8c6de5760814",
+   "content": {
+    "id": "5e677c30-8732-3b13-9d58-8c6de5760814",
+    "contentType": "STORY",
+    "title": "Eagle Materials (EXP) Surges 5.3%: Is This an Indication of Further Gains?",
+    "description": "",
+    "summary": "Eagle Materials (EXP) witnessed a jump in share price last session on above-average trading volume. The latest trend in earnings estimate revisions for the stock suggests that there could be more strength down the road.",
+    "pubDate": "2026-06-19T15:32:00Z",
+    "displayTime": "2026-06-19T15:32:00Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/zacks.com/fa43c4eaaf2c43661fdafeb8b1abe011",
+     "originalWidth": 900,
+     "originalHeight": 600,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/WMROMd8N6r8Rq9IP6KQAsA--~B/aD02MDA7dz05MDA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/fa43c4eaaf2c43661fdafeb8b1abe011",
+       "width": 900,
+       "height": 600,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/m79EO0p3NZ4l1_X.sD_o.g--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/fa43c4eaaf2c43661fdafeb8b1abe011",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Zacks",
+     "url": "http://www.zacks.com/",
+     "sourceId": "zacks.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/eagle-materials-exp-surges-5-153200636.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/eagle-materials-exp-surges-5-153200636.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "fdc629c6-ee7f-3de5-be2c-9befb16d6289",
+   "content": {
+    "id": "fdc629c6-ee7f-3de5-be2c-9befb16d6289",
+    "contentType": "STORY",
+    "title": "3 Stocks That Announced Dividend Hikes Amid Geopolitical Tensions",
+    "description": "",
+    "summary": "CASY, CX and UNH raise dividends as geopolitical tensions, rising oil prices and rate uncertainty fuel the need for steady income.",
+    "pubDate": "2026-06-11T12:20:00Z",
+    "displayTime": "2026-06-11T12:20:00Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/zacks.com/73ecaacd3c36869f2282cd0c42edd945",
+     "originalWidth": 620,
+     "originalHeight": 412,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/Xyo_stVJBlQpE.b7OAO28Q--~B/aD00MTI7dz02MjA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/73ecaacd3c36869f2282cd0c42edd945",
+       "width": 620,
+       "height": 412,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/rvuh0SDXMDfbLXL4WuWcdQ--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/73ecaacd3c36869f2282cd0c42edd945",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Zacks",
+     "url": "http://www.zacks.com/",
+     "sourceId": "zacks.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/3-stocks-announced-dividend-hikes-122000588.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/3-stocks-announced-dividend-hikes-122000588.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "155aa962-0139-33e3-93f4-0ecc4fcfcbad",
+   "content": {
+    "id": "155aa962-0139-33e3-93f4-0ecc4fcfcbad",
+    "contentType": "STORY",
+    "title": "How EWZ and EWW Investors Are Riding Commodity and Supply Chain Tailwinds",
+    "description": "",
+    "summary": "Latin American equities have quietly become one of the strongest regional trades of 2026, and three exchange-traded funds capture the move from very different angles. iShares MSCI Brazil ETF (NYSEARCA:EWZ) is up about 26% year to date on a wave of commodity strength and improving fiscal signals. iShares MSCI Mexico ETF (NYSEARCA:EWW) has added roughly ... How EWZ and EWW Investors Are Riding Commodity and Supply Chain Tailwinds",
+    "pubDate": "2026-05-07T15:06:28Z",
+    "displayTime": "2026-05-07T15:06:28Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/24_7_wall_st__718/25ea29c8449cddaf60c2b9de920e88d2",
+     "originalWidth": 1368,
+     "originalHeight": 768,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/o.9YHDJrSMct1De883dwdA--~B/aD03Njg7dz0xMzY4O2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/24_7_wall_st__718/25ea29c8449cddaf60c2b9de920e88d2",
+       "width": 1368,
+       "height": 768,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/_DebMDFldPURepM2dT6O4A--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/24_7_wall_st__718/25ea29c8449cddaf60c2b9de920e88d2",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "24/7 Wall St.",
+     "url": "https://247wallst.com/",
+     "sourceId": "24_7_wall_st__718"
+    },
+    "canonicalUrl": {
+     "url": "https://247wallst.com/investing/2026/05/07/how-ewz-and-eww-investors-are-riding-commodity-and-supply-chain-tailwinds/",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/commodities/articles/ewz-eww-investors-riding-commodity-150628424.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  }
+ ],
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T14:52:49+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

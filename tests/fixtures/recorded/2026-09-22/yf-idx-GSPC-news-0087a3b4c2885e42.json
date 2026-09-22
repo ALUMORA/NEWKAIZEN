@@ -1,0 +1,662 @@
+{
+ "key": "yf:^GSPC:news",
+ "provider": "yfinance",
+ "symbol": "^GSPC",
+ "attr": "news",
+ "kwargs": {},
+ "kind": "value",
+ "payload": [
+  {
+   "id": "4d64f9f3-7e53-4a71-9134-587671d895e1",
+   "content": {
+    "id": "4d64f9f3-7e53-4a71-9134-587671d895e1",
+    "contentType": "STORY",
+    "title": "Stock market today: Nasdaq, S&P 500 drift higher as oil retreats, AI trade powers market",
+    "description": "",
+    "summary": "US stocks steadied on Tuesday after confidence in artificial intelligence and falling oil prices spurred a rally on Wall Street.",
+    "pubDate": "2026-09-22T08:06:25Z",
+    "displayTime": "2026-09-22T14:16:01Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://s.yimg.com/uu/api/res/1.2/oKXjq3H1JslC0ffQ.G1F8A--~B/aD01NjU4O3c9ODQ4NzthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/2026-09/37f22e80-6f8b-4044-abe4-f5cd6fdce5b9",
+     "originalWidth": 8487,
+     "originalHeight": 5658,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/oKXjq3H1JslC0ffQ.G1F8A--~B/aD01NjU4O3c9ODQ4NzthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/2026-09/37f22e80-6f8b-4044-abe4-f5cd6fdce5b9",
+       "width": 8487,
+       "height": 5658,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/kUUx_vLj9ki2tZ_JBW2SBQ--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://d29szjachogqwa.cloudfront.net/images/2026-09/37f22e80-6f8b-4044-abe4-f5cd6fdce5b9",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Yahoo Finance",
+     "url": "http://finance.yahoo.com/",
+     "sourceId": "yahoofinance.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/live/stock-market-today-tuesday-september-22-nasdaq-dow-sp-500-080625961.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/live/stock-market-today-tuesday-september-22-nasdaq-dow-sp-500-080625961.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": true
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": {
+     "storylineItems": [
+      {
+       "content": {
+        "id": "af7e0092-8c94-4514-b7f7-5ffd7ab165c6",
+        "contentType": "VIDEO",
+        "isHosted": true,
+        "title": "The return of the AI rally: What's fueling the latest push into tech?",
+        "thumbnail": {
+         "originalUrl": "https://s.yimg.com/uu/api/res/1.2/KlV8iyf7FU6DdDAHJYoxOQ--~B/aD04OTA7dz0xNTgyO2FwcGlkPXl0YWNoeW9u/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/video-frame-1790080887564_8405.jpg_3db1957cdafb7f92618dafda8846f295a6a58dac8b8a4c8520fe6a70b466eded.jpg",
+         "originalWidth": 1582,
+         "originalHeight": 890,
+         "caption": "",
+         "resolutions": null
+        },
+        "provider": {
+         "displayName": "Yahoo Finance Video",
+         "sourceId": "video.yahoofinance.com"
+        },
+        "previewUrl": null,
+        "providerContentUrl": "",
+        "canonicalUrl": {
+         "url": "https://finance.yahoo.com/video/return-ai-rally-whats-fueling-125206390.html"
+        },
+        "clickThroughUrl": {
+         "url": "https://finance.yahoo.com/video/return-ai-rally-whats-fueling-125206390.html"
+        }
+       }
+      },
+      {
+       "content": {
+        "id": "8433fbb9-2c1a-418a-a6ae-e023d20612a8",
+        "contentType": "VIDEO",
+        "isHosted": true,
+        "title": "Warren Buffett will go down as the 'greatest investor of all time'",
+        "thumbnail": {
+         "originalUrl": "https://s.yimg.com/uu/api/res/1.2/cir9e0hg5UyaQtYFt8EWuA--~B/aD0xOTU3O3c9MzQ4MDthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/191e7800-e6bd-11f0-9bf4-cef690c991c9_3b3449f2a217f1a5a9f2655d4ab4837ccf9aa4a608ccb645614edfbd1c5257ad.jpg",
+         "originalWidth": 3480,
+         "originalHeight": 1957,
+         "caption": "",
+         "resolutions": null
+        },
+        "provider": {
+         "displayName": "Yahoo Finance Video",
+         "sourceId": "video.yahoofinance.com"
+        },
+        "previewUrl": null,
+        "providerContentUrl": "",
+        "canonicalUrl": {
+         "url": "https://finance.yahoo.com/video/warren-buffett-down-greatest-investor-203100448.html"
+        },
+        "clickThroughUrl": {
+         "url": "https://finance.yahoo.com/video/warren-buffett-down-greatest-investor-203100448.html"
+        }
+       }
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "403c8cdb-814a-4245-8624-293f8dd9914d",
+   "content": {
+    "id": "403c8cdb-814a-4245-8624-293f8dd9914d",
+    "contentType": "STORY",
+    "title": "Stock market today: Nasdaq surges 2% to record high, Dow and S&P 500 gain as chip stocks rally, oil  falls",
+    "description": "",
+    "summary": "Stocks have largely powered through a wall of worry this month, though rising bond yields, geopolitical risk in the Middle East, and AI jitters have given investors reason to pause.",
+    "pubDate": "2026-09-21T08:02:14Z",
+    "displayTime": "2026-09-21T20:05:02Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://s.yimg.com/uu/api/res/1.2/zNsPwG9.tsoipNNAE0v50g--~B/aD0yNzQxO3c9NDg3MzthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/4313e6b9-695b-43db-a298-abcd105114ba_9c15b2a9edf68b0e114f39c967ea21f5b8312ddef329d32b658068b40bd6048a.jpg",
+     "originalWidth": 4873,
+     "originalHeight": 2741,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/zNsPwG9.tsoipNNAE0v50g--~B/aD0yNzQxO3c9NDg3MzthcHBpZD15dGFjaHlvbg--/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/4313e6b9-695b-43db-a298-abcd105114ba_9c15b2a9edf68b0e114f39c967ea21f5b8312ddef329d32b658068b40bd6048a.jpg",
+       "width": 4873,
+       "height": 2741,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/ayNVuHJmv6Si_HKItibG6g--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://d29szjachogqwa.cloudfront.net/images/user-uploaded/4313e6b9-695b-43db-a298-abcd105114ba_9c15b2a9edf68b0e114f39c967ea21f5b8312ddef329d32b658068b40bd6048a.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Yahoo Finance",
+     "url": "http://finance.yahoo.com/",
+     "sourceId": "yahoofinance.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/live/stock-market-today-monday-september-21-dow-sp-500-nasdaq-080214605.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/live/stock-market-today-monday-september-21-dow-sp-500-nasdaq-080214605.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": true
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "8825d6e2-d32d-36dd-a1fb-ec5f0b9990fc",
+   "content": {
+    "id": "8825d6e2-d32d-36dd-a1fb-ec5f0b9990fc",
+    "contentType": "STORY",
+    "title": "No Margin Account? This ETF Is the Most Popular Way to Short the S&P 500",
+    "description": "",
+    "summary": "Shorting the S&P 500 without a margin account sounds like a loophole, but the most popular tool for doing it carries a hidden cost that turns a decade of bearish bets into a slow-motion wipeout.",
+    "pubDate": "2026-09-22T14:42:12Z",
+    "displayTime": "2026-09-22T14:42:12Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/24_7_wall_st__718/3a72a0bbf39330728797a18e65d49a05.jpg",
+     "originalWidth": 2560,
+     "originalHeight": 1707,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/rCaiUPIZfkBJkFUbwAiXuA--~B/aD0xNzA3O3c9MjU2MDthcHBpZD15dGFjaHlvbg--/https://media.zenfs.com/en/24_7_wall_st__718/3a72a0bbf39330728797a18e65d49a05.jpg",
+       "width": 2560,
+       "height": 1707,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/H9mUBvAMwO7URXQGuwKxqQ--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/24_7_wall_st__718/3a72a0bbf39330728797a18e65d49a05.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "24/7 Wall St.",
+     "url": "https://247wallst.com/",
+     "sourceId": "24_7_wall_st__718"
+    },
+    "canonicalUrl": {
+     "url": "https://247wallst.com/investing/etf/2026/09/22/no-margin-account-this-etf-is-the-most-popular-way-to-short-the-sp-500/",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/options/articles/no-margin-account-etf-most-144212812.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "a516ca55-c400-317b-8c83-1f9076700bba",
+   "content": {
+    "id": "a516ca55-c400-317b-8c83-1f9076700bba",
+    "contentType": "STORY",
+    "title": "ABM Stock Rises 12.7% in Three Months: Here's What You Should Know",
+    "description": "",
+    "summary": "ABM shares jump 12.7% in three months as infrastructure growth, stronger cash flow and a raised earnings midpoint supported performance.",
+    "pubDate": "2026-09-22T14:40:00Z",
+    "displayTime": "2026-09-22T14:40:00Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/zacks.com/c90875943916847af9aa7f0b54e5fd1e.jpg",
+     "originalWidth": 635,
+     "originalHeight": 400,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/lsegzNiOWlIh3_MqTWJ.Zw--~B/aD00MDA7dz02MzU7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/c90875943916847af9aa7f0b54e5fd1e.jpg",
+       "width": 635,
+       "height": 400,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/sw6pM3ut7_el.aHthdTuwg--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/c90875943916847af9aa7f0b54e5fd1e.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Zacks",
+     "url": "http://www.zacks.com/",
+     "sourceId": "zacks.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/abm-stock-rises-12-7-144000970.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/abm-stock-rises-12-7-144000970.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "0143595d-3423-3fca-8750-9ab0a98fa022",
+   "content": {
+    "id": "0143595d-3423-3fca-8750-9ab0a98fa022",
+    "contentType": "STORY",
+    "title": "Stock Market Today: Dow Slips, Oil Stocks Fall On U.S.-Iran Hopes; Homebuilders, Retailers Shine (Live Coverage)",
+    "description": "",
+    "summary": "Stock Market Today: The Dow Jones index was firm on U.S.-Iran peace hopes Tuesday as oil prices and Treasury yields continue to fall.",
+    "pubDate": "2026-09-22T14:19:29Z",
+    "displayTime": "2026-09-22T14:19:29Z",
+    "isHosted": false,
+    "bypassModal": false,
+    "previewUrl": "https://finance.yahoo.com/m/0143595d-3423-3fca-8750-9ab0a98fa022/stock-market-today-dow.html",
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/ibd.com/e5692e76a00de22721308a6d4522c6ff.jpg",
+     "originalWidth": 1000,
+     "originalHeight": 563,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/S7u3cQ.S.STRDXGno88nVg--~B/aD01NjM7dz0xMDAwO2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/ibd.com/e5692e76a00de22721308a6d4522c6ff.jpg",
+       "width": 1000,
+       "height": 563,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/QcGd3xcoxCVtcQVgZH1rXg--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/ibd.com/e5692e76a00de22721308a6d4522c6ff.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Investor's Business Daily",
+     "url": "http://www.investors.com/",
+     "sourceId": "ibd.com"
+    },
+    "canonicalUrl": {
+     "url": "https://www.investors.com/market-trend/stock-market-today/dow-jones-sp500-nasdaq-us-iran-peace-hopes-oil-prices-treasury-yields/?src=A00220&yptr=yahoo",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": null,
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "8358a2b6-4f26-3d65-b8ce-809d7e97f689",
+   "content": {
+    "id": "8358a2b6-4f26-3d65-b8ce-809d7e97f689",
+    "contentType": "STORY",
+    "title": "Still Waters Bring Mixed Pre-Market Levels",
+    "description": "",
+    "summary": "A grand total of zero monthly or quarterly economic reports have come out so far this week.",
+    "pubDate": "2026-09-22T14:16:00Z",
+    "displayTime": "2026-09-22T14:16:00Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": null,
+    "provider": {
+     "displayName": "Zacks",
+     "url": "http://www.zacks.com/",
+     "sourceId": "zacks.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/still-waters-bring-mixed-pre-141600857.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/still-waters-bring-mixed-pre-141600857.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "41d984a9-e3de-3775-8932-fdce030da2f8",
+   "content": {
+    "id": "41d984a9-e3de-3775-8932-fdce030da2f8",
+    "contentType": "STORY",
+    "title": "Why Gabelli Global Growth Fund Added Advanced Micro Devices (AMD) in Q2",
+    "description": "",
+    "summary": "Gabelli Investment Management Firm recently released its “Global Growth Fund” second-quarter 2026 investor letter. A copy of the letter can be downloaded here. The Fund returned 12.84% in the second quarter of 2026, compared with 15.2% for the S&P 500 Index and 15.1% for the MSCI All Country World Index. The Fund benefited from strong […]",
+    "pubDate": "2026-09-22T14:10:47Z",
+    "displayTime": "2026-09-22T14:10:47Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/insidermonkey.com/fe0b16308278491a239b6a2819deebec.jpg",
+     "originalWidth": 1200,
+     "originalHeight": 800,
+     "caption": "Why Gabelli Global Growth Fund Added Advanced Micro Devices (AMD) in Q2",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/IMt3UfKOLVxrtQxyvSAy5w--~B/aD04MDA7dz0xMjAwO2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/insidermonkey.com/fe0b16308278491a239b6a2819deebec.jpg",
+       "width": 1200,
+       "height": 800,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/L7wBZ8TGXrNlhM1avfRuaA--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/insidermonkey.com/fe0b16308278491a239b6a2819deebec.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Insider Monkey",
+     "url": "http://www.insidermonkey.com",
+     "sourceId": "insidermonkey.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/why-gabelli-global-growth-fund-141047976.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/why-gabelli-global-growth-fund-141047976.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "cc61c765-2dc5-3a6c-8591-da34dd783338",
+   "content": {
+    "id": "cc61c765-2dc5-3a6c-8591-da34dd783338",
+    "contentType": "STORY",
+    "title": "Why Gabelli Global Growth Fund Added Micron Technology (MU) in Q2",
+    "description": "",
+    "summary": "Gabelli Investment Management Firm recently released its “Global Growth Fund” second-quarter 2026 investor letter. A copy of the letter can be downloaded here. The Fund returned 12.84% in the second quarter of 2026, compared with 15.2% for the S&P 500 Index and 15.1% for the MSCI All Country World Index. The Fund benefited from strong […]",
+    "pubDate": "2026-09-22T14:10:37Z",
+    "displayTime": "2026-09-22T14:10:37Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/insidermonkey.com/6f397e05100d25ea799a24f996c32db4.jpg",
+     "originalWidth": 1280,
+     "originalHeight": 854,
+     "caption": "International Small Cap Fund's Q2 2026 Investor Letter",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/q_8y6ms_cioN94jhHlRP1A--~B/aD04NTQ7dz0xMjgwO2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/insidermonkey.com/6f397e05100d25ea799a24f996c32db4.jpg",
+       "width": 1280,
+       "height": 854,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/Rr_pnMNpQ38J0NU35uetKQ--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/insidermonkey.com/6f397e05100d25ea799a24f996c32db4.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Insider Monkey",
+     "url": "http://www.insidermonkey.com",
+     "sourceId": "insidermonkey.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/why-gabelli-global-growth-fund-141037360.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/why-gabelli-global-growth-fund-141037360.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "11df2982-f1ef-3c4e-863a-f674929436a9",
+   "content": {
+    "id": "11df2982-f1ef-3c4e-863a-f674929436a9",
+    "contentType": "STORY",
+    "title": "Best Momentum Stocks to Buy for September 22nd",
+    "description": "",
+    "summary": "VNCE, NMR and MNTK made it to the Zacks Rank #1 (Strong Buy) momentum stocks list on September 22nd, 2026.",
+    "pubDate": "2026-09-22T14:00:00Z",
+    "displayTime": "2026-09-22T14:00:00Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/zacks.com/554021100402da6aee5a3d8666297e6e.jpg",
+     "originalWidth": 635,
+     "originalHeight": 400,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/N0C51hHYlN3m6ZpqWyg7gQ--~B/aD00MDA7dz02MzU7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/554021100402da6aee5a3d8666297e6e.jpg",
+       "width": 635,
+       "height": 400,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/hmj2RlL_u7u_X9_1ZodmmA--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/zacks.com/554021100402da6aee5a3d8666297e6e.jpg",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Zacks",
+     "url": "http://www.zacks.com/",
+     "sourceId": "zacks.com"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/best-momentum-stocks-buy-september-140000465.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/markets/stocks/articles/best-momentum-stocks-buy-september-140000465.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "e8cb4a57-9ba1-3508-8516-46fb19f26561",
+   "content": {
+    "id": "e8cb4a57-9ba1-3508-8516-46fb19f26561",
+    "contentType": "STORY",
+    "title": "Stocks Inch Higher, Testing the Recent Risk-On Rally",
+    "description": "",
+    "summary": "Stocks opened Tuesday's trading session higher, extending the risk-on rally fueled by hopes for diplomacy between the U.S. and Iran. The Nasdaq Composite added 0.4%. The S&P 500 rose 0.1%. The Dow Jones Industrial Average fell 0.",
+    "pubDate": "2026-09-22T13:58:23Z",
+    "displayTime": "2026-09-22T13:58:23Z",
+    "isHosted": false,
+    "bypassModal": false,
+    "previewUrl": "https://finance.yahoo.com/m/e8cb4a57-9ba1-3508-8516-46fb19f26561/stocks-inch-higher-testing.html",
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/Barrons.com/12ea0f43d8f8307249a68d1cb2e0587e.png",
+     "originalWidth": 320,
+     "originalHeight": 65,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/3seIyMYRD0699UBVb3FN8A--~B/aD02NTt3PTMyMDthcHBpZD15dGFjaHlvbg--/https://media.zenfs.com/en/Barrons.com/12ea0f43d8f8307249a68d1cb2e0587e.png",
+       "width": 320,
+       "height": 65,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/HHwc2jgLBdNgcqVuof1_nw--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/Barrons.com/12ea0f43d8f8307249a68d1cb2e0587e.png",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Barrons.com",
+     "url": "http://www.barrons.com/",
+     "sourceId": "Barrons.com"
+    },
+    "canonicalUrl": {
+     "url": "https://www.barrons.com/livecoverage/stock-market-news-today-092226/card/stocks-inch-higher-testing-the-recent-risk-on-rally-dTxTv0GrjSAW1wMYn9Sj?siteid=yhoof2&yptr=yahoo",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": null,
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  }
+ ],
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T14:54:41+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

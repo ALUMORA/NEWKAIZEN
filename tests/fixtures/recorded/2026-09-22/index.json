@@ -1,0 +1,3104 @@
+{
+ "set": "2026-09-22",
+ "entries": {
+  "http:GET https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv": {
+   "file": "http-GET-https-cdn.cboe.com-api-global-us-indices-dai-d9ce21525c5ef66d.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:51:42+00:00"
+  },
+  "http:GET https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json": {
+   "file": "http-GET-https-data.sec.gov-api-xbrl-companyfacts-CIK-53621d12c5afb391.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:51:39+00:00"
+  },
+  "http:GET https://data.sec.gov/api/xbrl/companyfacts/CIK0000884394.json": {
+   "file": "http-GET-https-data.sec.gov-api-xbrl-companyfacts-CIK-b30bd97cf66bbd24.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:18+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-6af8b2ca44caacb6.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:51:40+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS2": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-5d07401ae093dd2f.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:51:41+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=IRLTLT01MXM156N": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-56f060168481c614.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:51:45+00:00"
+  },
+  "http:GET https://stooq.com/q/d/l/?i=d&s=dxy.fo": {
+   "file": "http-GET-https-stooq.com-q-d-l-bcd60703b4f41bc2.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:51:43+00:00"
+  },
+  "http:GET https://www.sec.gov/files/company_tickers.json": {
+   "file": "http-GET-https-www.sec.gov-files-company-tickers.json-d7004202841a6370.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:51:38+00:00"
+  },
+  "yf.download:ZZZNOTREAL?interval=1wk&period=1y": {
+   "file": "yf.download-ZZZNOTREAL-b7624bdf8eb2462e.json",
+   "provider": "yfinance.download",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:48+00:00"
+  },
+  "yf.download:[DX-Y.NYB]?period=5d": {
+   "file": "yf.download-DX-Y.NYB-5594dcc228686d96.json",
+   "provider": "yfinance.download",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:51:44+00:00"
+  },
+  "yf.download:[SPY,EWC,EWW,EWZ,ECH,EWU,EWG,EWQ,EWI,EWP,EWN,EWL,EWD,EWO,EWJ,FXI,EWA,INDA,EWY,EWT,EWH,EWS,EZA,KSA,TUR,EPOL]?period=5d": {
+   "file": "yf.download-SPY-EWC-EWW-EWZ-ECH-EWU-EWG-EWQ-EWI-EWP-EWN-EWL--11c148e2ce537eb3.json",
+   "provider": "yfinance.download",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:40+00:00"
+  },
+  "yf.download:[^GSPC,^IXIC,^DJI,^MXX,^N225,^FTSE,^GDAXI,^FCHI,^HSI,USDMXN=X,EURUSD=X,EURMXN=X,GBPUSD=X,USDJPY=X,CL=F,BZ=F,GC=F,SI=F,HG=F,NG=F,BTC-USD,ETH-USD,^VIX,DX-Y.NYB,^TNX,IVE,IVV,IVW,IJJ,IJH,IJK,IJS,IJR,IJT]?period=5d": {
+   "file": "yf.download-idx-GSPC-idx-IXIC-idx-DJI-idx-MXX-idx-N225-idx-F-2482a9849345c6d8.json",
+   "provider": "yfinance.download",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:39+00:00"
+  },
+  "yf:AAPL.MX:balance_sheet": {
+   "file": "yf-AAPL.MX-balance-sheet-af6e4ed0c8ccf7db.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:16+00:00"
+  },
+  "yf:AAPL.MX:cashflow": {
+   "file": "yf-AAPL.MX-cashflow-609da29a25e73a43.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:17+00:00"
+  },
+  "yf:AAPL.MX:financials": {
+   "file": "yf-AAPL.MX-financials-6c10096ef06ebc04.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:14+00:00"
+  },
+  "yf:AAPL.MX:history?interval=1wk&period=1y": {
+   "file": "yf-AAPL.MX-history-48db88d3b9f25722.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:19+00:00"
+  },
+  "yf:AAPL.MX:history?interval=1wk&period=2y": {
+   "file": "yf-AAPL.MX-history-809c2e3cb3d5ba1a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:22+00:00"
+  },
+  "yf:AAPL.MX:history?interval=1wk&period=5y": {
+   "file": "yf-AAPL.MX-history-a2148483abbabcef.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:20+00:00"
+  },
+  "yf:AAPL.MX:history?period=1mo": {
+   "file": "yf-AAPL.MX-history-807948216d8132a7.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:18+00:00"
+  },
+  "yf:AAPL.MX:income_stmt": {
+   "file": "yf-AAPL.MX-income-stmt-9c1eb2d53580af1e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:14+00:00"
+  },
+  "yf:AAPL.MX:info": {
+   "file": "yf-AAPL.MX-info-993fb194be0603ab.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:13+00:00"
+  },
+  "yf:AAPL.MX:insider_transactions": {
+   "file": "yf-AAPL.MX-insider-transactions-fbb76add42fae071.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:24+00:00"
+  },
+  "yf:AAPL.MX:institutional_holders": {
+   "file": "yf-AAPL.MX-institutional-holders-0c8d45f95d233ad3.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:25+00:00"
+  },
+  "yf:AAPL.MX:news": {
+   "file": "yf-AAPL.MX-news-905b520226cd82cf.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:23+00:00"
+  },
+  "yf:AAPL:balance_sheet": {
+   "file": "yf-AAPL-balance-sheet-0f003d3b3557d7c1.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:51:34+00:00"
+  },
+  "yf:AAPL:cashflow": {
+   "file": "yf-AAPL-cashflow-e10b58a6bae79782.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:51:35+00:00"
+  },
+  "yf:AAPL:financials": {
+   "file": "yf-AAPL-financials-70e5b8b12b78f5ec.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:51:32+00:00"
+  },
+  "yf:AAPL:history?interval=1wk&period=1y": {
+   "file": "yf-AAPL-history-be1c1d7c176feaa0.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:51:36+00:00"
+  },
+  "yf:AAPL:history?interval=1wk&period=2y": {
+   "file": "yf-AAPL-history-3b98db79d79943b2.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:08+00:00"
+  },
+  "yf:AAPL:history?interval=1wk&period=5y": {
+   "file": "yf-AAPL-history-c02e91b421fbee58.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:06+00:00"
+  },
+  "yf:AAPL:history?period=1mo": {
+   "file": "yf-AAPL-history-9ffcfcfc25bd833b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:04+00:00"
+  },
+  "yf:AAPL:income_stmt": {
+   "file": "yf-AAPL-income-stmt-295f7f5455253191.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:51:33+00:00"
+  },
+  "yf:AAPL:info": {
+   "file": "yf-AAPL-info-52d2c9c5732511f9.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:51:31+00:00"
+  },
+  "yf:AAPL:insider_transactions": {
+   "file": "yf-AAPL-insider-transactions-7faddfd6d795bf66.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:11+00:00"
+  },
+  "yf:AAPL:institutional_holders": {
+   "file": "yf-AAPL-institutional-holders-29bb2ec072bfc0d4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:11+00:00"
+  },
+  "yf:AAPL:news": {
+   "file": "yf-AAPL-news-02d6f4143d460ccf.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:10+00:00"
+  },
+  "yf:AAPL:quarterly_balance_sheet": {
+   "file": "yf-AAPL-quarterly-balance-sheet-509c1f137bcec2ba.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T15:00:50+00:00"
+  },
+  "yf:AAPL:quarterly_cashflow": {
+   "file": "yf-AAPL-quarterly-cashflow-9d1c71a95f304b79.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T15:00:51+00:00"
+  },
+  "yf:AAPL:quarterly_income_stmt": {
+   "file": "yf-AAPL-quarterly-income-stmt-12b3be4183e25c2d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T15:00:49+00:00"
+  },
+  "yf:ABBV:balance_sheet": {
+   "file": "yf-ABBV-balance-sheet-ab155046ce6fe505.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:51+00:00"
+  },
+  "yf:ABBV:income_stmt": {
+   "file": "yf-ABBV-income-stmt-afc75bd97b9c50ee.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:50+00:00"
+  },
+  "yf:ABBV:info": {
+   "file": "yf-ABBV-info-2864e26ace1de157.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:50+00:00"
+  },
+  "yf:ABT:balance_sheet": {
+   "file": "yf-ABT-balance-sheet-9ae78a8fe9221c6a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:01+00:00"
+  },
+  "yf:ABT:income_stmt": {
+   "file": "yf-ABT-income-stmt-fa0fd581636f3ffb.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:59+00:00"
+  },
+  "yf:ABT:info": {
+   "file": "yf-ABT-info-9e34d04de2d1f0c8.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:59+00:00"
+  },
+  "yf:ACN:balance_sheet": {
+   "file": "yf-ACN-balance-sheet-4c3f9dc00057fdc5.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:30+00:00"
+  },
+  "yf:ACN:income_stmt": {
+   "file": "yf-ACN-income-stmt-bc901a603fbfd751.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:29+00:00"
+  },
+  "yf:ACN:info": {
+   "file": "yf-ACN-info-7f3795c981f5acb4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:28+00:00"
+  },
+  "yf:ADBE:balance_sheet": {
+   "file": "yf-ADBE-balance-sheet-375d4ef5e35cc43e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:03+00:00"
+  },
+  "yf:ADBE:income_stmt": {
+   "file": "yf-ADBE-income-stmt-66dd4c4eb09b830c.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:02+00:00"
+  },
+  "yf:ADBE:info": {
+   "file": "yf-ADBE-info-18ffed35a2384c24.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:01+00:00"
+  },
+  "yf:AMD:balance_sheet": {
+   "file": "yf-AMD-balance-sheet-28228c78059853d2.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:09+00:00"
+  },
+  "yf:AMD:income_stmt": {
+   "file": "yf-AMD-income-stmt-f264ca36151fd8c1.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:08+00:00"
+  },
+  "yf:AMD:info": {
+   "file": "yf-AMD-info-f579da8c21539fad.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:07+00:00"
+  },
+  "yf:AMGN:balance_sheet": {
+   "file": "yf-AMGN-balance-sheet-1ff4d439be464543.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:07+00:00"
+  },
+  "yf:AMGN:income_stmt": {
+   "file": "yf-AMGN-income-stmt-5d2362f8f84717ac.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:06+00:00"
+  },
+  "yf:AMGN:info": {
+   "file": "yf-AMGN-info-88ef3673d0bf2f85.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:05+00:00"
+  },
+  "yf:AMZN:balance_sheet": {
+   "file": "yf-AMZN-balance-sheet-fa8a898a9fc47762.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:28+00:00"
+  },
+  "yf:AMZN:income_stmt": {
+   "file": "yf-AMZN-income-stmt-c605c0d15c24ae02.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:27+00:00"
+  },
+  "yf:AMZN:info": {
+   "file": "yf-AMZN-info-731307b6d717298c.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:26+00:00"
+  },
+  "yf:APD:balance_sheet": {
+   "file": "yf-APD-balance-sheet-ee4d94c46e030071.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:38+00:00"
+  },
+  "yf:APD:income_stmt": {
+   "file": "yf-APD-income-stmt-c9af4b6e4719e873.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:37+00:00"
+  },
+  "yf:APD:info": {
+   "file": "yf-APD-info-dbcb5ece8aabfed6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:36+00:00"
+  },
+  "yf:AVGO:balance_sheet": {
+   "file": "yf-AVGO-balance-sheet-10a902b00c8e4361.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:57+00:00"
+  },
+  "yf:AVGO:income_stmt": {
+   "file": "yf-AVGO-income-stmt-8e044dd81b1302cd.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:56+00:00"
+  },
+  "yf:AVGO:info": {
+   "file": "yf-AVGO-info-a97624051ca6153d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:55+00:00"
+  },
+  "yf:AZO:balance_sheet": {
+   "file": "yf-AZO-balance-sheet-fcc8a2006faff16e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:10+00:00"
+  },
+  "yf:AZO:income_stmt": {
+   "file": "yf-AZO-income-stmt-64c813db90802638.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:09+00:00"
+  },
+  "yf:AZO:info": {
+   "file": "yf-AZO-info-7f1ab20a32332dcc.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:08+00:00"
+  },
+  "yf:BA:balance_sheet": {
+   "file": "yf-BA-balance-sheet-2969d473b4d89379.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:58+00:00"
+  },
+  "yf:BA:income_stmt": {
+   "file": "yf-BA-income-stmt-3867224387f3fad2.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:57+00:00"
+  },
+  "yf:BA:info": {
+   "file": "yf-BA-info-d91e819ed0c6db6b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:56+00:00"
+  },
+  "yf:BKNG:balance_sheet": {
+   "file": "yf-BKNG-balance-sheet-fe687c8b83605d67.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:46+00:00"
+  },
+  "yf:BKNG:income_stmt": {
+   "file": "yf-BKNG-income-stmt-75b177bad5f40412.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:45+00:00"
+  },
+  "yf:BKNG:info": {
+   "file": "yf-BKNG-info-29f81fbe377cba8d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:44+00:00"
+  },
+  "yf:BMY:balance_sheet": {
+   "file": "yf-BMY-balance-sheet-62d7380292838270.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:04+00:00"
+  },
+  "yf:BMY:income_stmt": {
+   "file": "yf-BMY-income-stmt-5bca1126d806d05a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:02+00:00"
+  },
+  "yf:BMY:info": {
+   "file": "yf-BMY-info-d695fc19aab6619d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:02+00:00"
+  },
+  "yf:BTC-USD:news": {
+   "file": "yf-BTC-USD-news-f7f1acca2e787c0c.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:45+00:00"
+  },
+  "yf:CAT:balance_sheet": {
+   "file": "yf-CAT-balance-sheet-784c1cb9bf936ddc.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:43+00:00"
+  },
+  "yf:CAT:income_stmt": {
+   "file": "yf-CAT-income-stmt-e5fb344d11f86f5f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:42+00:00"
+  },
+  "yf:CAT:info": {
+   "file": "yf-CAT-info-0e498d80fbd54393.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:41+00:00"
+  },
+  "yf:CDNS:balance_sheet": {
+   "file": "yf-CDNS-balance-sheet-a84dddc82a202937.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:39+00:00"
+  },
+  "yf:CDNS:income_stmt": {
+   "file": "yf-CDNS-income-stmt-3b5054837d98b93b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:38+00:00"
+  },
+  "yf:CDNS:info": {
+   "file": "yf-CDNS-info-f2f0f4fe8180cf17.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:37+00:00"
+  },
+  "yf:CEMEXCPO.MX:balance_sheet": {
+   "file": "yf-CEMEXCPO.MX-balance-sheet-68b51103ed22b1be.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:42+00:00"
+  },
+  "yf:CEMEXCPO.MX:cashflow": {
+   "file": "yf-CEMEXCPO.MX-cashflow-6c9bac2aa4f81516.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:43+00:00"
+  },
+  "yf:CEMEXCPO.MX:financials": {
+   "file": "yf-CEMEXCPO.MX-financials-0c4beaff2415f106.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:40+00:00"
+  },
+  "yf:CEMEXCPO.MX:history?interval=1wk&period=1y": {
+   "file": "yf-CEMEXCPO.MX-history-b0fc594b44997d76.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:45+00:00"
+  },
+  "yf:CEMEXCPO.MX:history?interval=1wk&period=2y": {
+   "file": "yf-CEMEXCPO.MX-history-0742bd13502dbef0.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:47+00:00"
+  },
+  "yf:CEMEXCPO.MX:history?interval=1wk&period=5y": {
+   "file": "yf-CEMEXCPO.MX-history-4f3a78eeb4f8cf29.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:46+00:00"
+  },
+  "yf:CEMEXCPO.MX:history?period=1mo": {
+   "file": "yf-CEMEXCPO.MX-history-de5e1c613dec4e0c.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:44+00:00"
+  },
+  "yf:CEMEXCPO.MX:income_stmt": {
+   "file": "yf-CEMEXCPO.MX-income-stmt-96db27cc5327e97d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:41+00:00"
+  },
+  "yf:CEMEXCPO.MX:info": {
+   "file": "yf-CEMEXCPO.MX-info-3ddc913d8c53f626.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:39+00:00"
+  },
+  "yf:CEMEXCPO.MX:insider_transactions": {
+   "file": "yf-CEMEXCPO.MX-insider-transactions-05ae9f2a3b87be99.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:52:50+00:00"
+  },
+  "yf:CEMEXCPO.MX:institutional_holders": {
+   "file": "yf-CEMEXCPO.MX-institutional-holders-b364a634a2d132a4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:52:51+00:00"
+  },
+  "yf:CEMEXCPO.MX:news": {
+   "file": "yf-CEMEXCPO.MX-news-741e8dbd2694e1cd.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:49+00:00"
+  },
+  "yf:CI:balance_sheet": {
+   "file": "yf-CI-balance-sheet-89377f4e88ca5f2b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:25+00:00"
+  },
+  "yf:CI:income_stmt": {
+   "file": "yf-CI-income-stmt-0c8cb0ddaeecc514.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:24+00:00"
+  },
+  "yf:CI:info": {
+   "file": "yf-CI-info-1185c3992edc9429.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:23+00:00"
+  },
+  "yf:CL:balance_sheet": {
+   "file": "yf-CL-balance-sheet-d47dc4b03247d1df.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:37+00:00"
+  },
+  "yf:CL:income_stmt": {
+   "file": "yf-CL-income-stmt-54057f0434c8a6fa.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:36+00:00"
+  },
+  "yf:CL:info": {
+   "file": "yf-CL-info-4ec12516571a56ce.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:35+00:00"
+  },
+  "yf:CL=F:news": {
+   "file": "yf-CL-F-news-32e1b42b9365cc51.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:44+00:00"
+  },
+  "yf:CMCSA:balance_sheet": {
+   "file": "yf-CMCSA-balance-sheet-dd464c68ac71af21.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:53+00:00"
+  },
+  "yf:CMCSA:income_stmt": {
+   "file": "yf-CMCSA-income-stmt-4ffcfc6652d958f8.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:52+00:00"
+  },
+  "yf:CMCSA:info": {
+   "file": "yf-CMCSA-info-4badb562fe4feab3.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:51+00:00"
+  },
+  "yf:CMG:balance_sheet": {
+   "file": "yf-CMG-balance-sheet-a35c50f8a7b900a4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:55+00:00"
+  },
+  "yf:CMG:income_stmt": {
+   "file": "yf-CMG-income-stmt-e321a923a7408db1.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:54+00:00"
+  },
+  "yf:CMG:info": {
+   "file": "yf-CMG-info-f12084650e4296e7.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:53+00:00"
+  },
+  "yf:COP:balance_sheet": {
+   "file": "yf-COP-balance-sheet-66d065c691761c8f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:19+00:00"
+  },
+  "yf:COP:income_stmt": {
+   "file": "yf-COP-income-stmt-4846b683d1b49f4c.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:18+00:00"
+  },
+  "yf:COP:info": {
+   "file": "yf-COP-info-b821bacd4a4bc694.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:17+00:00"
+  },
+  "yf:COST:balance_sheet": {
+   "file": "yf-COST-balance-sheet-65b3960b36f9a926.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:16+00:00"
+  },
+  "yf:COST:income_stmt": {
+   "file": "yf-COST-income-stmt-d40109fd57aa3498.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:15+00:00"
+  },
+  "yf:COST:info": {
+   "file": "yf-COST-info-eb903c9d83fa295a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:14+00:00"
+  },
+  "yf:CRM:balance_sheet": {
+   "file": "yf-CRM-balance-sheet-420277b25141737e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:06+00:00"
+  },
+  "yf:CRM:income_stmt": {
+   "file": "yf-CRM-income-stmt-3dab263ed187d145.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:05+00:00"
+  },
+  "yf:CRM:info": {
+   "file": "yf-CRM-info-4c6fcb7ca2148efd.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:04+00:00"
+  },
+  "yf:CTSH:balance_sheet": {
+   "file": "yf-CTSH-balance-sheet-1d56dcbd06e9b4b6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:33+00:00"
+  },
+  "yf:CTSH:income_stmt": {
+   "file": "yf-CTSH-income-stmt-8418af8a6304bd2b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:32+00:00"
+  },
+  "yf:CTSH:info": {
+   "file": "yf-CTSH-info-935a51c2329f5daf.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:31+00:00"
+  },
+  "yf:CVS:balance_sheet": {
+   "file": "yf-CVS-balance-sheet-74fe4d3900d3f59e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:22+00:00"
+  },
+  "yf:CVS:income_stmt": {
+   "file": "yf-CVS-income-stmt-f0572258f5e7ca45.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:21+00:00"
+  },
+  "yf:CVS:info": {
+   "file": "yf-CVS-info-663ed1ca5be22f1f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:20+00:00"
+  },
+  "yf:CVX:balance_sheet": {
+   "file": "yf-CVX-balance-sheet-0caf01b88baf37dc.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:16+00:00"
+  },
+  "yf:CVX:income_stmt": {
+   "file": "yf-CVX-income-stmt-719360aea786bbcd.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:15+00:00"
+  },
+  "yf:CVX:info": {
+   "file": "yf-CVX-info-73fabe495127155a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:15+00:00"
+  },
+  "yf:DANHOS13.MX:balance_sheet": {
+   "file": "yf-DANHOS13.MX-balance-sheet-16b252285dc3628a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:17+00:00"
+  },
+  "yf:DANHOS13.MX:cashflow": {
+   "file": "yf-DANHOS13.MX-cashflow-93f0a698d3674f12.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:18+00:00"
+  },
+  "yf:DANHOS13.MX:income_stmt": {
+   "file": "yf-DANHOS13.MX-income-stmt-65d246e23e39446f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:19+00:00"
+  },
+  "yf:DANHOS13.MX:info": {
+   "file": "yf-DANHOS13.MX-info-570d97d3d6d0d3b4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:16+00:00"
+  },
+  "yf:DE:balance_sheet": {
+   "file": "yf-DE-balance-sheet-8b4f5dc4d50d0793.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:46+00:00"
+  },
+  "yf:DE:income_stmt": {
+   "file": "yf-DE-income-stmt-d7e4679da1fff65b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:45+00:00"
+  },
+  "yf:DE:info": {
+   "file": "yf-DE-info-c2f208b10b1bd67d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:44+00:00"
+  },
+  "yf:DIS:balance_sheet": {
+   "file": "yf-DIS-balance-sheet-14a2ffd3b2927846.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:50+00:00"
+  },
+  "yf:DIS:income_stmt": {
+   "file": "yf-DIS-income-stmt-834e12985205ebcb.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:49+00:00"
+  },
+  "yf:DIS:info": {
+   "file": "yf-DIS-info-054aa14e33ad4f1f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:48+00:00"
+  },
+  "yf:EA:balance_sheet": {
+   "file": "yf-EA-balance-sheet-4fdc2fceb2958a14.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:56+00:00"
+  },
+  "yf:EA:income_stmt": {
+   "file": "yf-EA-income-stmt-b8d7f879e2bc62f8.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:55+00:00"
+  },
+  "yf:EA:info": {
+   "file": "yf-EA-info-5996df72578afab3.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:54+00:00"
+  },
+  "yf:EOG:balance_sheet": {
+   "file": "yf-EOG-balance-sheet-8503b0170137dcde.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:32+00:00"
+  },
+  "yf:EOG:income_stmt": {
+   "file": "yf-EOG-income-stmt-51ff0b510a5db572.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:30+00:00"
+  },
+  "yf:EOG:info": {
+   "file": "yf-EOG-info-7f46cc0542cd16d7.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:30+00:00"
+  },
+  "yf:F:balance_sheet": {
+   "file": "yf-F-balance-sheet-1d21080e3534dcf6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:01+00:00"
+  },
+  "yf:F:income_stmt": {
+   "file": "yf-F-income-stmt-ca87e897bac6c8fa.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:00+00:00"
+  },
+  "yf:F:info": {
+   "file": "yf-F-info-88b7f1665a8260d7.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:59+00:00"
+  },
+  "yf:FCX:balance_sheet": {
+   "file": "yf-FCX-balance-sheet-b5c1fcaeb479815f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:44+00:00"
+  },
+  "yf:FCX:income_stmt": {
+   "file": "yf-FCX-income-stmt-47d0ec45e64c6597.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:43+00:00"
+  },
+  "yf:FCX:info": {
+   "file": "yf-FCX-info-8bb39166d7a2a866.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:42+00:00"
+  },
+  "yf:FDX:balance_sheet": {
+   "file": "yf-FDX-balance-sheet-6edf91e1b0450278.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:01+00:00"
+  },
+  "yf:FDX:income_stmt": {
+   "file": "yf-FDX-income-stmt-3cc34bfec0966afc.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:00+00:00"
+  },
+  "yf:FDX:info": {
+   "file": "yf-FDX-info-606f68d71ebfad97.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:59+00:00"
+  },
+  "yf:FHIPO14.MX:balance_sheet": {
+   "file": "yf-FHIPO14.MX-balance-sheet-aef46e7abd1b840f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:26+00:00"
+  },
+  "yf:FHIPO14.MX:cashflow": {
+   "file": "yf-FHIPO14.MX-cashflow-d6e0a217f0d7246d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:27+00:00"
+  },
+  "yf:FHIPO14.MX:income_stmt": {
+   "file": "yf-FHIPO14.MX-income-stmt-03187368c38a8d16.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:28+00:00"
+  },
+  "yf:FHIPO14.MX:info": {
+   "file": "yf-FHIPO14.MX-info-e878b0988d2c7e6d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:25+00:00"
+  },
+  "yf:FIBRAMQ12.MX:balance_sheet": {
+   "file": "yf-FIBRAMQ12.MX-balance-sheet-96ec50bf1b53a336.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:00+00:00"
+  },
+  "yf:FIBRAMQ12.MX:cashflow": {
+   "file": "yf-FIBRAMQ12.MX-cashflow-93162d7438f7c4f4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:01+00:00"
+  },
+  "yf:FIBRAMQ12.MX:income_stmt": {
+   "file": "yf-FIBRAMQ12.MX-income-stmt-d99d2eec0398a2c4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:02+00:00"
+  },
+  "yf:FIBRAMQ12.MX:info": {
+   "file": "yf-FIBRAMQ12.MX-info-295ae7c5d5e9b743.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:59+00:00"
+  },
+  "yf:FIBRAPL14.MX:balance_sheet": {
+   "file": "yf-FIBRAPL14.MX-balance-sheet-51a0da44aa537e58.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:04+00:00"
+  },
+  "yf:FIBRAPL14.MX:cashflow": {
+   "file": "yf-FIBRAPL14.MX-cashflow-52a39907afaab705.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:05+00:00"
+  },
+  "yf:FIBRAPL14.MX:income_stmt": {
+   "file": "yf-FIBRAPL14.MX-income-stmt-792a98d268e31716.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:06+00:00"
+  },
+  "yf:FIBRAPL14.MX:info": {
+   "file": "yf-FIBRAPL14.MX-info-d3086004d03f8344.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:03+00:00"
+  },
+  "yf:FINN13.MX:balance_sheet": {
+   "file": "yf-FINN13.MX-balance-sheet-b8711ddfd1cc5baa.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:13+00:00"
+  },
+  "yf:FINN13.MX:cashflow": {
+   "file": "yf-FINN13.MX-cashflow-c7f568749c3082fe.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:14+00:00"
+  },
+  "yf:FINN13.MX:income_stmt": {
+   "file": "yf-FINN13.MX-income-stmt-99318dcd3ad9fff1.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:15+00:00"
+  },
+  "yf:FINN13.MX:info": {
+   "file": "yf-FINN13.MX-info-8b66a620ae1138f6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:12+00:00"
+  },
+  "yf:FMTY14.MX:balance_sheet": {
+   "file": "yf-FMTY14.MX-balance-sheet-8cf95c0fa92d61aa.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:22+00:00"
+  },
+  "yf:FMTY14.MX:cashflow": {
+   "file": "yf-FMTY14.MX-cashflow-bda1cce9bd52b3c1.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:23+00:00"
+  },
+  "yf:FMTY14.MX:fast_info.shares": {
+   "file": "yf-FMTY14.MX-fast-info.shares-6e8d2361e9c6bfa6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:21+00:00"
+  },
+  "yf:FMTY14.MX:income_stmt": {
+   "file": "yf-FMTY14.MX-income-stmt-0d1a986f494f2a83.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:24+00:00"
+  },
+  "yf:FMTY14.MX:info": {
+   "file": "yf-FMTY14.MX-info-6c5756b5e279c78b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:20+00:00"
+  },
+  "yf:FNOVA17.MX:balance_sheet": {
+   "file": "yf-FNOVA17.MX-balance-sheet-d5bdb9b8c420d2c9.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:09+00:00"
+  },
+  "yf:FNOVA17.MX:cashflow": {
+   "file": "yf-FNOVA17.MX-cashflow-bd8004998be2d23e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:10+00:00"
+  },
+  "yf:FNOVA17.MX:fast_info.shares": {
+   "file": "yf-FNOVA17.MX-fast-info.shares-21a69a0b6c75f997.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:08+00:00"
+  },
+  "yf:FNOVA17.MX:income_stmt": {
+   "file": "yf-FNOVA17.MX-income-stmt-a11818b0b05077b1.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:11+00:00"
+  },
+  "yf:FNOVA17.MX:info": {
+   "file": "yf-FNOVA17.MX-info-f88b5e4074fa565b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:07+00:00"
+  },
+  "yf:FOXA:balance_sheet": {
+   "file": "yf-FOXA-balance-sheet-50b386ff55d6ce2a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:59+00:00"
+  },
+  "yf:FOXA:income_stmt": {
+   "file": "yf-FOXA-income-stmt-02a595dc14b4f056.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:58+00:00"
+  },
+  "yf:FOXA:info": {
+   "file": "yf-FOXA-info-3f55a3c2a3843f69.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:57+00:00"
+  },
+  "yf:FSHOP13.MX:balance_sheet": {
+   "file": "yf-FSHOP13.MX-balance-sheet-2c49ac3e9cf12f98.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:36+00:00"
+  },
+  "yf:FSHOP13.MX:cashflow": {
+   "file": "yf-FSHOP13.MX-cashflow-252a6df3af6e2a06.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:37+00:00"
+  },
+  "yf:FSHOP13.MX:income_stmt": {
+   "file": "yf-FSHOP13.MX-income-stmt-c48648307113954b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:38+00:00"
+  },
+  "yf:FSHOP13.MX:info": {
+   "file": "yf-FSHOP13.MX-info-42f8c16bcb527ed4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:35+00:00"
+  },
+  "yf:FTNT:balance_sheet": {
+   "file": "yf-FTNT-balance-sheet-c639b7849979ebda.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:36+00:00"
+  },
+  "yf:FTNT:income_stmt": {
+   "file": "yf-FTNT-income-stmt-ab6fdcba6cc7e26c.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:35+00:00"
+  },
+  "yf:FTNT:info": {
+   "file": "yf-FTNT-info-73a10332510bee4b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:34+00:00"
+  },
+  "yf:FUNO11.MX:balance_sheet": {
+   "file": "yf-FUNO11.MX-balance-sheet-7d241f50a0932df0.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:55+00:00"
+  },
+  "yf:FUNO11.MX:cashflow": {
+   "file": "yf-FUNO11.MX-cashflow-6713fa10bc7edb95.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:56+00:00"
+  },
+  "yf:FUNO11.MX:financials": {
+   "file": "yf-FUNO11.MX-financials-6c661b8f413a2bc0.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:53+00:00"
+  },
+  "yf:FUNO11.MX:history?interval=1wk&period=1y": {
+   "file": "yf-FUNO11.MX-history-fbe6b8af44009186.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:58+00:00"
+  },
+  "yf:FUNO11.MX:history?interval=1wk&period=2y": {
+   "file": "yf-FUNO11.MX-history-4880da9127a9d8bf.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:00+00:00"
+  },
+  "yf:FUNO11.MX:history?interval=1wk&period=5y": {
+   "file": "yf-FUNO11.MX-history-a882b0bd1c7dae1d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:59+00:00"
+  },
+  "yf:FUNO11.MX:history?period=1mo": {
+   "file": "yf-FUNO11.MX-history-2ba6622ddbc8c08c.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:57+00:00"
+  },
+  "yf:FUNO11.MX:income_stmt": {
+   "file": "yf-FUNO11.MX-income-stmt-72961d0347e9a784.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:54+00:00"
+  },
+  "yf:FUNO11.MX:info": {
+   "file": "yf-FUNO11.MX-info-6f1e0c80dcd47f1e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:52+00:00"
+  },
+  "yf:FUNO11.MX:insider_transactions": {
+   "file": "yf-FUNO11.MX-insider-transactions-9fda30d6421e2c06.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:03+00:00"
+  },
+  "yf:FUNO11.MX:institutional_holders": {
+   "file": "yf-FUNO11.MX-institutional-holders-34ec8119ad92791b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:04+00:00"
+  },
+  "yf:FUNO11.MX:news": {
+   "file": "yf-FUNO11.MX-news-20759cb9d7ee8de8.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:02+00:00"
+  },
+  "yf:FUNO11.MX:quarterly_balance_sheet": {
+   "file": "yf-FUNO11.MX-quarterly-balance-sheet-20efc92a28b9cc18.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T15:00:47+00:00"
+  },
+  "yf:FUNO11.MX:quarterly_cashflow": {
+   "file": "yf-FUNO11.MX-quarterly-cashflow-eaba7567dd19c89e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T15:00:48+00:00"
+  },
+  "yf:FUNO11.MX:quarterly_income_stmt": {
+   "file": "yf-FUNO11.MX-quarterly-income-stmt-281940b3fa7620d0.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T15:00:46+00:00"
+  },
+  "yf:GC=F:news": {
+   "file": "yf-GC-F-news-4e4a952eeb7c8320.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:43+00:00"
+  },
+  "yf:GE:balance_sheet": {
+   "file": "yf-GE-balance-sheet-8349ccf21c6d5e8a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:55+00:00"
+  },
+  "yf:GE:income_stmt": {
+   "file": "yf-GE-income-stmt-ba09b515eb6b97fd.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:54+00:00"
+  },
+  "yf:GE:info": {
+   "file": "yf-GE-info-e2b49d216d79cba4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:53+00:00"
+  },
+  "yf:GILD:balance_sheet": {
+   "file": "yf-GILD-balance-sheet-92e341c1dfc00f3e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:10+00:00"
+  },
+  "yf:GILD:income_stmt": {
+   "file": "yf-GILD-income-stmt-f0b190d4382a5f7c.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:09+00:00"
+  },
+  "yf:GILD:info": {
+   "file": "yf-GILD-info-ab614a2c9d807346.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:08+00:00"
+  },
+  "yf:GM:balance_sheet": {
+   "file": "yf-GM-balance-sheet-bfa95453bc27ecff.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:04+00:00"
+  },
+  "yf:GM:income_stmt": {
+   "file": "yf-GM-income-stmt-ba53a82fa2321871.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:03+00:00"
+  },
+  "yf:GM:info": {
+   "file": "yf-GM-info-650169cb8033f59c.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:02+00:00"
+  },
+  "yf:GOOGL:balance_sheet": {
+   "file": "yf-GOOGL-balance-sheet-eaa8e5b6309a6ff8.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:51+00:00"
+  },
+  "yf:GOOGL:income_stmt": {
+   "file": "yf-GOOGL-income-stmt-1b02a3d3e40ca854.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:50+00:00"
+  },
+  "yf:GOOGL:info": {
+   "file": "yf-GOOGL-info-f2939d5b137c782b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:49+00:00"
+  },
+  "yf:HD:balance_sheet": {
+   "file": "yf-HD-balance-sheet-1592ee54415b10ab.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:34+00:00"
+  },
+  "yf:HD:income_stmt": {
+   "file": "yf-HD-income-stmt-0ea94e7e86f74adb.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:33+00:00"
+  },
+  "yf:HD:info": {
+   "file": "yf-HD-info-1445f7c120d3fe74.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:32+00:00"
+  },
+  "yf:HON:balance_sheet": {
+   "file": "yf-HON-balance-sheet-06b5f98022a2912d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:49+00:00"
+  },
+  "yf:HON:income_stmt": {
+   "file": "yf-HON-income-stmt-88df3eed58df4722.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:48+00:00"
+  },
+  "yf:HON:info": {
+   "file": "yf-HON-info-45b88c08d3316d9e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:47+00:00"
+  },
+  "yf:IBM:balance_sheet": {
+   "file": "yf-IBM-balance-sheet-81bdd13169fa9d67.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:27+00:00"
+  },
+  "yf:IBM:income_stmt": {
+   "file": "yf-IBM-income-stmt-0fa30a2235539b64.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:26+00:00"
+  },
+  "yf:IBM:info": {
+   "file": "yf-IBM-info-41993245c7785198.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:25+00:00"
+  },
+  "yf:INTC:balance_sheet": {
+   "file": "yf-INTC-balance-sheet-ddd86e687cc03473.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:12+00:00"
+  },
+  "yf:INTC:income_stmt": {
+   "file": "yf-INTC-income-stmt-7cee8d56415e160c.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:11+00:00"
+  },
+  "yf:INTC:info": {
+   "file": "yf-INTC-info-374c637d2a567c3e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:10+00:00"
+  },
+  "yf:ISRG:balance_sheet": {
+   "file": "yf-ISRG-balance-sheet-685d8c71278fbbad.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:16+00:00"
+  },
+  "yf:ISRG:income_stmt": {
+   "file": "yf-ISRG-income-stmt-d76beba96d634923.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:15+00:00"
+  },
+  "yf:ISRG:info": {
+   "file": "yf-ISRG-info-d26c548244070510.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:14+00:00"
+  },
+  "yf:JNJ:balance_sheet": {
+   "file": "yf-JNJ-balance-sheet-0e65c1baf488f1c9.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:48+00:00"
+  },
+  "yf:JNJ:income_stmt": {
+   "file": "yf-JNJ-income-stmt-31f20e9f7850ce0f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:47+00:00"
+  },
+  "yf:JNJ:info": {
+   "file": "yf-JNJ-info-5be445f1616cd666.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:46+00:00"
+  },
+  "yf:KO:balance_sheet": {
+   "file": "yf-KO-balance-sheet-f09c2bbc90871655.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:22+00:00"
+  },
+  "yf:KO:income_stmt": {
+   "file": "yf-KO-income-stmt-26ca4e2ec19cee3a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:21+00:00"
+  },
+  "yf:KO:info": {
+   "file": "yf-KO-info-b00259693d6f12c0.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:20+00:00"
+  },
+  "yf:LIN:balance_sheet": {
+   "file": "yf-LIN-balance-sheet-e175efb3c5bdccd9.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:35+00:00"
+  },
+  "yf:LIN:income_stmt": {
+   "file": "yf-LIN-income-stmt-ebc5746f79c85c81.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:34+00:00"
+  },
+  "yf:LIN:info": {
+   "file": "yf-LIN-info-4c2053994996ec9a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:33+00:00"
+  },
+  "yf:LLY:balance_sheet": {
+   "file": "yf-LLY-balance-sheet-20a2d5b8aa199d08.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:42+00:00"
+  },
+  "yf:LLY:income_stmt": {
+   "file": "yf-LLY-income-stmt-d848ccf13d05f963.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:41+00:00"
+  },
+  "yf:LLY:info": {
+   "file": "yf-LLY-info-1995c4c21fdf5ac5.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:40+00:00"
+  },
+  "yf:LMT:balance_sheet": {
+   "file": "yf-LMT-balance-sheet-f5acb12c67c49868.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:10+00:00"
+  },
+  "yf:LMT:income_stmt": {
+   "file": "yf-LMT-income-stmt-9bc2eef09f6f34fd.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:09+00:00"
+  },
+  "yf:LMT:info": {
+   "file": "yf-LMT-info-5691689bbfaa0954.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:08+00:00"
+  },
+  "yf:LOW:balance_sheet": {
+   "file": "yf-LOW-balance-sheet-378417fa7629a140.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:58+00:00"
+  },
+  "yf:LOW:income_stmt": {
+   "file": "yf-LOW-income-stmt-4a7ada18430cdfc5.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:57+00:00"
+  },
+  "yf:LOW:info": {
+   "file": "yf-LOW-info-7bc0837ae5ea7129.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:56+00:00"
+  },
+  "yf:MCD:balance_sheet": {
+   "file": "yf-MCD-balance-sheet-a0372888680992b4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:37+00:00"
+  },
+  "yf:MCD:income_stmt": {
+   "file": "yf-MCD-income-stmt-ddc46cbeb8bd42df.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:36+00:00"
+  },
+  "yf:MCD:info": {
+   "file": "yf-MCD-info-8249c3e528715ee4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:35+00:00"
+  },
+  "yf:MCK:balance_sheet": {
+   "file": "yf-MCK-balance-sheet-db3c4358c7c3c49f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:19+00:00"
+  },
+  "yf:MCK:income_stmt": {
+   "file": "yf-MCK-income-stmt-039ea97f124efe70.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:18+00:00"
+  },
+  "yf:MCK:info": {
+   "file": "yf-MCK-info-822789e5619b43f7.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:17+00:00"
+  },
+  "yf:MDLZ:balance_sheet": {
+   "file": "yf-MDLZ-balance-sheet-63225fd11cfee93b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:40+00:00"
+  },
+  "yf:MDLZ:income_stmt": {
+   "file": "yf-MDLZ-income-stmt-c51e89c6f0ffaf02.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:39+00:00"
+  },
+  "yf:MDLZ:info": {
+   "file": "yf-MDLZ-info-badafd746955ab1b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:38+00:00"
+  },
+  "yf:META:balance_sheet": {
+   "file": "yf-META-balance-sheet-7adcf093a6ad4bb9.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:54+00:00"
+  },
+  "yf:META:income_stmt": {
+   "file": "yf-META-income-stmt-a27a0dff6eb7a87a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:53+00:00"
+  },
+  "yf:META:info": {
+   "file": "yf-META-info-5dc3d00297043f88.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:52+00:00"
+  },
+  "yf:MO:balance_sheet": {
+   "file": "yf-MO-balance-sheet-9897ff9bf00b4506.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:34+00:00"
+  },
+  "yf:MO:income_stmt": {
+   "file": "yf-MO-income-stmt-bc6255a7144094c5.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:33+00:00"
+  },
+  "yf:MO:info": {
+   "file": "yf-MO-info-49cbeb03fe91dc79.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:32+00:00"
+  },
+  "yf:MPC:balance_sheet": {
+   "file": "yf-MPC-balance-sheet-b1c65a8311b554bd.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:29+00:00"
+  },
+  "yf:MPC:income_stmt": {
+   "file": "yf-MPC-income-stmt-acb9b5f4701ecf38.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:27+00:00"
+  },
+  "yf:MPC:info": {
+   "file": "yf-MPC-info-438c9536b76099e6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:27+00:00"
+  },
+  "yf:MRK:balance_sheet": {
+   "file": "yf-MRK-balance-sheet-94763ff8b7761472.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:54+00:00"
+  },
+  "yf:MRK:income_stmt": {
+   "file": "yf-MRK-income-stmt-e497b9c4b9ccc3ae.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:53+00:00"
+  },
+  "yf:MRK:info": {
+   "file": "yf-MRK-info-1083b084284dd39d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:53+00:00"
+  },
+  "yf:MSFT:balance_sheet": {
+   "file": "yf-MSFT-balance-sheet-274e0844b8e532fa.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:58+00:00"
+  },
+  "yf:MSFT:income_stmt": {
+   "file": "yf-MSFT-income-stmt-20c12c6f8a088ee5.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:57+00:00"
+  },
+  "yf:MSFT:info": {
+   "file": "yf-MSFT-info-5cacba1f54be2a67.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:56+00:00"
+  },
+  "yf:MXN=X:history?interval=1wk&period=1y": {
+   "file": "yf-MXN-X-history-f7aedd0fe98c49c0.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:51:37+00:00"
+  },
+  "yf:MXN=X:history?interval=1wk&period=5y": {
+   "file": "yf-MXN-X-history-b6cb6a5f7f54cc73.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:07+00:00"
+  },
+  "yf:MXN=X:history?period=1mo": {
+   "file": "yf-MXN-X-history-d42e79f663a83887.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:05+00:00"
+  },
+  "yf:NEM:balance_sheet": {
+   "file": "yf-NEM-balance-sheet-be4ee9a0692afc07.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:41+00:00"
+  },
+  "yf:NEM:income_stmt": {
+   "file": "yf-NEM-income-stmt-5d8a30aa4a98b37b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:39+00:00"
+  },
+  "yf:NEM:info": {
+   "file": "yf-NEM-info-ad3c5fe3d247dbbb.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:39+00:00"
+  },
+  "yf:NFLX:balance_sheet": {
+   "file": "yf-NFLX-balance-sheet-3f5456f2690113d9.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:24+00:00"
+  },
+  "yf:NFLX:income_stmt": {
+   "file": "yf-NFLX-income-stmt-20a820b837ec0861.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:23+00:00"
+  },
+  "yf:NFLX:info": {
+   "file": "yf-NFLX-info-987716f3d657331b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:22+00:00"
+  },
+  "yf:NKE:balance_sheet": {
+   "file": "yf-NKE-balance-sheet-07e34b9c7604a2a7.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:43+00:00"
+  },
+  "yf:NKE:income_stmt": {
+   "file": "yf-NKE-income-stmt-52b07ab704c7368c.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:42+00:00"
+  },
+  "yf:NKE:info": {
+   "file": "yf-NKE-info-b6307f3baf51e3b5.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:41+00:00"
+  },
+  "yf:NOW:balance_sheet": {
+   "file": "yf-NOW-balance-sheet-f86b0eef343b0b45.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:21+00:00"
+  },
+  "yf:NOW:income_stmt": {
+   "file": "yf-NOW-income-stmt-c994c1eb936cb24c.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:20+00:00"
+  },
+  "yf:NOW:info": {
+   "file": "yf-NOW-info-459ca4cb120972d6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:19+00:00"
+  },
+  "yf:NVDA:balance_sheet": {
+   "file": "yf-NVDA-balance-sheet-17425b3ff784568b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:48+00:00"
+  },
+  "yf:NVDA:income_stmt": {
+   "file": "yf-NVDA-income-stmt-a7d86631dc8a274a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:47+00:00"
+  },
+  "yf:NVDA:info": {
+   "file": "yf-NVDA-info-325eb3a71349a3ea.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:46+00:00"
+  },
+  "yf:ORCL:balance_sheet": {
+   "file": "yf-ORCL-balance-sheet-ac8e7dd065eb16f4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:00+00:00"
+  },
+  "yf:ORCL:income_stmt": {
+   "file": "yf-ORCL-income-stmt-73baf2b0f2bd7ec0.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:59+00:00"
+  },
+  "yf:ORCL:info": {
+   "file": "yf-ORCL-info-2ddf85a72ad14f63.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:58+00:00"
+  },
+  "yf:ORLY:balance_sheet": {
+   "file": "yf-ORLY-balance-sheet-692289c4d4b5e6db.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:07+00:00"
+  },
+  "yf:ORLY:income_stmt": {
+   "file": "yf-ORLY-income-stmt-3de72308c4fe7f15.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:06+00:00"
+  },
+  "yf:ORLY:info": {
+   "file": "yf-ORLY-info-9feee2cbdc47aff9.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:05+00:00"
+  },
+  "yf:OXY:balance_sheet": {
+   "file": "yf-OXY-balance-sheet-71f9977e92e2cbe1.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:25+00:00"
+  },
+  "yf:OXY:income_stmt": {
+   "file": "yf-OXY-income-stmt-3b260fd9fd1c669f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:24+00:00"
+  },
+  "yf:OXY:info": {
+   "file": "yf-OXY-info-5982e7cfdfe5e6ca.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:24+00:00"
+  },
+  "yf:PEP:balance_sheet": {
+   "file": "yf-PEP-balance-sheet-f97aa2a3ae24f4d5.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:25+00:00"
+  },
+  "yf:PEP:income_stmt": {
+   "file": "yf-PEP-income-stmt-2f4cf0dbb00b0b23.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:24+00:00"
+  },
+  "yf:PEP:info": {
+   "file": "yf-PEP-info-5064eb56818d4a18.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:23+00:00"
+  },
+  "yf:PG:balance_sheet": {
+   "file": "yf-PG-balance-sheet-31a7ab77b9f38630.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:19+00:00"
+  },
+  "yf:PG:income_stmt": {
+   "file": "yf-PG-income-stmt-c6edd456a1a77792.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:18+00:00"
+  },
+  "yf:PG:info": {
+   "file": "yf-PG-info-dd5076dffe16e852.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:17+00:00"
+  },
+  "yf:PM:balance_sheet": {
+   "file": "yf-PM-balance-sheet-77d04f8245f738fc.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:28+00:00"
+  },
+  "yf:PM:income_stmt": {
+   "file": "yf-PM-income-stmt-2d82ccffe430e219.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:27+00:00"
+  },
+  "yf:PM:info": {
+   "file": "yf-PM-info-fe115e1dd370d933.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:26+00:00"
+  },
+  "yf:QCOM:balance_sheet": {
+   "file": "yf-QCOM-balance-sheet-394b1478258f981d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:15+00:00"
+  },
+  "yf:QCOM:income_stmt": {
+   "file": "yf-QCOM-income-stmt-b2b737fb59cc826d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:14+00:00"
+  },
+  "yf:QCOM:info": {
+   "file": "yf-QCOM-info-64d207d8aa45d643.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:13+00:00"
+  },
+  "yf:ROST:balance_sheet": {
+   "file": "yf-ROST-balance-sheet-001e483a9059bbb6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:52+00:00"
+  },
+  "yf:ROST:income_stmt": {
+   "file": "yf-ROST-income-stmt-1bf0b285a63f93f4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:51+00:00"
+  },
+  "yf:ROST:info": {
+   "file": "yf-ROST-info-12c26c304a046b43.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:50+00:00"
+  },
+  "yf:RTX:balance_sheet": {
+   "file": "yf-RTX-balance-sheet-ad2d2dd35da54400.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:52+00:00"
+  },
+  "yf:RTX:income_stmt": {
+   "file": "yf-RTX-income-stmt-a68dced036da02a4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:51+00:00"
+  },
+  "yf:RTX:info": {
+   "file": "yf-RTX-info-9bbd40d7e3c0a634.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:50+00:00"
+  },
+  "yf:SBUX:balance_sheet": {
+   "file": "yf-SBUX-balance-sheet-bc21bd5308386b01.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:40+00:00"
+  },
+  "yf:SBUX:income_stmt": {
+   "file": "yf-SBUX-income-stmt-e1aacf5845b28744.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:39+00:00"
+  },
+  "yf:SBUX:info": {
+   "file": "yf-SBUX-info-f4aa7641eae6c63d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:38+00:00"
+  },
+  "yf:SHW:balance_sheet": {
+   "file": "yf-SHW-balance-sheet-de9f3429a93578c6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:47+00:00"
+  },
+  "yf:SHW:income_stmt": {
+   "file": "yf-SHW-income-stmt-9d5f53067f7917a8.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:46+00:00"
+  },
+  "yf:SHW:info": {
+   "file": "yf-SHW-info-2ecfa481cdf62a57.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:45+00:00"
+  },
+  "yf:SLB:balance_sheet": {
+   "file": "yf-SLB-balance-sheet-3a542a5f68e1352f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:22+00:00"
+  },
+  "yf:SLB:income_stmt": {
+   "file": "yf-SLB-income-stmt-00359a40b66d7f25.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:21+00:00"
+  },
+  "yf:SLB:info": {
+   "file": "yf-SLB-info-3366f1c874488e24.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:21+00:00"
+  },
+  "yf:SPY:balance_sheet": {
+   "file": "yf-SPY-balance-sheet-5c5c712f88d92e80.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:08+00:00"
+  },
+  "yf:SPY:cashflow": {
+   "file": "yf-SPY-cashflow-d1d51066fe958f29.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:09+00:00"
+  },
+  "yf:SPY:fast_info.market_cap": {
+   "file": "yf-SPY-fast-info.market-cap-92a350c93a47a3de.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:10+00:00"
+  },
+  "yf:SPY:financials": {
+   "file": "yf-SPY-financials-6323e86d5080e657.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:06+00:00"
+  },
+  "yf:SPY:history?interval=1wk&period=1y": {
+   "file": "yf-SPY-history-069fed9deb8e3bab.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:11+00:00"
+  },
+  "yf:SPY:history?interval=1wk&period=2y": {
+   "file": "yf-SPY-history-1d2682005b58042f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:14+00:00"
+  },
+  "yf:SPY:history?interval=1wk&period=5y": {
+   "file": "yf-SPY-history-e0a7724ff7dda5a2.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:13+00:00"
+  },
+  "yf:SPY:history?period=1mo": {
+   "file": "yf-SPY-history-84e5e006f86c1794.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:12+00:00"
+  },
+  "yf:SPY:income_stmt": {
+   "file": "yf-SPY-income-stmt-b0a4dd228d9add62.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:07+00:00"
+  },
+  "yf:SPY:info": {
+   "file": "yf-SPY-info-082d39a0fa400218.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:05+00:00"
+  },
+  "yf:SPY:insider_transactions": {
+   "file": "yf-SPY-insider-transactions-30144d35378f65d4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:16+00:00"
+  },
+  "yf:SPY:institutional_holders": {
+   "file": "yf-SPY-institutional-holders-671939e844cf5c23.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:17+00:00"
+  },
+  "yf:SPY:news": {
+   "file": "yf-SPY-news-74cd21f2b883979a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:15+00:00"
+  },
+  "yf:STORAGE18.MX:balance_sheet": {
+   "file": "yf-STORAGE18.MX-balance-sheet-48fa11b49f79d695.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:54:32+00:00"
+  },
+  "yf:STORAGE18.MX:cashflow": {
+   "file": "yf-STORAGE18.MX-cashflow-efef64bb5ccb0ec6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:54:33+00:00"
+  },
+  "yf:STORAGE18.MX:fast_info.market_cap": {
+   "file": "yf-STORAGE18.MX-fast-info.market-cap-860d6bf007fe76a1.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:30+00:00"
+  },
+  "yf:STORAGE18.MX:fast_info.shares": {
+   "file": "yf-STORAGE18.MX-fast-info.shares-2f7413ed5fe75b23.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:31+00:00"
+  },
+  "yf:STORAGE18.MX:income_stmt": {
+   "file": "yf-STORAGE18.MX-income-stmt-99f27bb57eb07dea.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:54:34+00:00"
+  },
+  "yf:STORAGE18.MX:info": {
+   "file": "yf-STORAGE18.MX-info-094868b88bff611d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:29+00:00"
+  },
+  "yf:TGT:balance_sheet": {
+   "file": "yf-TGT-balance-sheet-669f256ed16ce71d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:31+00:00"
+  },
+  "yf:TGT:income_stmt": {
+   "file": "yf-TGT-income-stmt-ecd3ac36e9dc2499.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:30+00:00"
+  },
+  "yf:TGT:info": {
+   "file": "yf-TGT-info-883d392badb9904f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:29+00:00"
+  },
+  "yf:TJX:balance_sheet": {
+   "file": "yf-TJX-balance-sheet-9bdaa09cd2d408a4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:49+00:00"
+  },
+  "yf:TJX:income_stmt": {
+   "file": "yf-TJX-income-stmt-18841531d5d7a477.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:48+00:00"
+  },
+  "yf:TJX:info": {
+   "file": "yf-TJX-info-a087a09785659a1f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:47+00:00"
+  },
+  "yf:TMO:balance_sheet": {
+   "file": "yf-TMO-balance-sheet-866b77981a008713.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:58+00:00"
+  },
+  "yf:TMO:income_stmt": {
+   "file": "yf-TMO-income-stmt-1435d50f5da0f461.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:56+00:00"
+  },
+  "yf:TMO:info": {
+   "file": "yf-TMO-info-8c6fca6c8d358847.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:56+00:00"
+  },
+  "yf:TSLA:balance_sheet": {
+   "file": "yf-TSLA-balance-sheet-8fd004c5e03c30e7.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:31+00:00"
+  },
+  "yf:TSLA:income_stmt": {
+   "file": "yf-TSLA-income-stmt-9c6abe757c91e300.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:30+00:00"
+  },
+  "yf:TSLA:info": {
+   "file": "yf-TSLA-info-dbcc3643c3861825.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:29+00:00"
+  },
+  "yf:TXN:balance_sheet": {
+   "file": "yf-TXN-balance-sheet-b92011a7e58a3282.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:18+00:00"
+  },
+  "yf:TXN:income_stmt": {
+   "file": "yf-TXN-income-stmt-29a44702002c36e4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:17+00:00"
+  },
+  "yf:TXN:info": {
+   "file": "yf-TXN-info-4b73bc53be9de619.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:16+00:00"
+  },
+  "yf:UNH:balance_sheet": {
+   "file": "yf-UNH-balance-sheet-63332eba1a957649.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:45+00:00"
+  },
+  "yf:UNH:income_stmt": {
+   "file": "yf-UNH-income-stmt-77438d5a1099ce5b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:44+00:00"
+  },
+  "yf:UNH:info": {
+   "file": "yf-UNH-info-cfa4289f3dc525cd.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:55:44+00:00"
+  },
+  "yf:UNP:balance_sheet": {
+   "file": "yf-UNP-balance-sheet-8bc9cc53f4644416.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:07+00:00"
+  },
+  "yf:UNP:income_stmt": {
+   "file": "yf-UNP-income-stmt-3cdde5eeabc380bc.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:06+00:00"
+  },
+  "yf:UNP:info": {
+   "file": "yf-UNP-info-166b425e60aa4e3f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:05+00:00"
+  },
+  "yf:UPS:balance_sheet": {
+   "file": "yf-UPS-balance-sheet-7170497576f62f98.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:04+00:00"
+  },
+  "yf:UPS:income_stmt": {
+   "file": "yf-UPS-income-stmt-1f40f397313311d5.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:03+00:00"
+  },
+  "yf:UPS:info": {
+   "file": "yf-UPS-info-83af394c4cb2d2b0.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:02+00:00"
+  },
+  "yf:USDMXN=X:history?period=2d": {
+   "file": "yf-USDMXN-X-history-5eb59f5b31b984bc.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:21+00:00"
+  },
+  "yf:USDMXN=X:news": {
+   "file": "yf-USDMXN-X-news-2002bb81dc576221.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:54:42+00:00"
+  },
+  "yf:VRTX:balance_sheet": {
+   "file": "yf-VRTX-balance-sheet-47db449c73dbfe12.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:13+00:00"
+  },
+  "yf:VRTX:income_stmt": {
+   "file": "yf-VRTX-income-stmt-062f1142c352705e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:12+00:00"
+  },
+  "yf:VRTX:info": {
+   "file": "yf-VRTX-info-7ffc1020c573ce3a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:56:11+00:00"
+  },
+  "yf:WALMEX.MX:balance_sheet": {
+   "file": "yf-WALMEX.MX-balance-sheet-e3c1bbd2ac932fc2.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:29+00:00"
+  },
+  "yf:WALMEX.MX:cashflow": {
+   "file": "yf-WALMEX.MX-cashflow-b628e5215f11a017.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:30+00:00"
+  },
+  "yf:WALMEX.MX:financials": {
+   "file": "yf-WALMEX.MX-financials-c383375ff63a963c.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:27+00:00"
+  },
+  "yf:WALMEX.MX:history?interval=1wk&period=1y": {
+   "file": "yf-WALMEX.MX-history-45d18f648d43eddb.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:32+00:00"
+  },
+  "yf:WALMEX.MX:history?interval=1wk&period=2y": {
+   "file": "yf-WALMEX.MX-history-de3cec278383a8a3.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:34+00:00"
+  },
+  "yf:WALMEX.MX:history?interval=1wk&period=5y": {
+   "file": "yf-WALMEX.MX-history-fe48bbda39ea2ebf.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:33+00:00"
+  },
+  "yf:WALMEX.MX:history?period=1mo": {
+   "file": "yf-WALMEX.MX-history-360fe957e2bd78b5.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:31+00:00"
+  },
+  "yf:WALMEX.MX:income_stmt": {
+   "file": "yf-WALMEX.MX-income-stmt-c19bd2df9809e61b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:28+00:00"
+  },
+  "yf:WALMEX.MX:info": {
+   "file": "yf-WALMEX.MX-info-08d7a1cc7f2b3b8c.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:26+00:00"
+  },
+  "yf:WALMEX.MX:insider_transactions": {
+   "file": "yf-WALMEX.MX-insider-transactions-359c8ec12a315fbe.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:52:37+00:00"
+  },
+  "yf:WALMEX.MX:institutional_holders": {
+   "file": "yf-WALMEX.MX-institutional-holders-9bdfa741ee28090c.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:38+00:00"
+  },
+  "yf:WALMEX.MX:news": {
+   "file": "yf-WALMEX.MX-news-11b6b3a19127cfab.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:36+00:00"
+  },
+  "yf:WALMEX.MX:quarterly_balance_sheet": {
+   "file": "yf-WALMEX.MX-quarterly-balance-sheet-4f67a4a6ee07a0ac.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T15:00:44+00:00"
+  },
+  "yf:WALMEX.MX:quarterly_cashflow": {
+   "file": "yf-WALMEX.MX-quarterly-cashflow-625304c9fb735fa5.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T15:00:45+00:00"
+  },
+  "yf:WALMEX.MX:quarterly_income_stmt": {
+   "file": "yf-WALMEX.MX-quarterly-income-stmt-a8cf88f1a38be740.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T15:00:43+00:00"
+  },
+  "yf:WMT:balance_sheet": {
+   "file": "yf-WMT-balance-sheet-cbbb285a206795ce.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:13+00:00"
+  },
+  "yf:WMT:income_stmt": {
+   "file": "yf-WMT-income-stmt-276a545e5353fd82.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:12+00:00"
+  },
+  "yf:WMT:info": {
+   "file": "yf-WMT-info-f27e79b425964a23.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:57:11+00:00"
+  },
+  "yf:XLB:history?interval=1wk&period=2y": {
+   "file": "yf-XLB-history-e59be604a419504f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:48+00:00"
+  },
+  "yf:XLK:history?interval=1wk&period=2y": {
+   "file": "yf-XLK-history-ab28aaca0e76bb8f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:09+00:00"
+  },
+  "yf:XLP:history?interval=1wk&period=2y": {
+   "file": "yf-XLP-history-a5abde864bea1bc1.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:52:35+00:00"
+  },
+  "yf:XLRE:history?interval=1wk&period=2y": {
+   "file": "yf-XLRE-history-14121ed365cabf0a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:01+00:00"
+  },
+  "yf:XOM:balance_sheet": {
+   "file": "yf-XOM-balance-sheet-9ccdac429fdee8cc.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:13+00:00"
+  },
+  "yf:XOM:income_stmt": {
+   "file": "yf-XOM-income-stmt-4dfa49e74cb2fa81.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:12+00:00"
+  },
+  "yf:XOM:info": {
+   "file": "yf-XOM-info-ea06d98dac2f764a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:58:11+00:00"
+  },
+  "yf:ZZZNOTREAL:balance_sheet": {
+   "file": "yf-ZZZNOTREAL-balance-sheet-361ebbff289b9afe.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:42+00:00"
+  },
+  "yf:ZZZNOTREAL:cashflow": {
+   "file": "yf-ZZZNOTREAL-cashflow-1f2d2dfb02c9e430.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:43+00:00"
+  },
+  "yf:ZZZNOTREAL:fast_info.last_price": {
+   "file": "yf-ZZZNOTREAL-fast-info.last-price-59c5b413cab9df45.json",
+   "provider": "yfinance",
+   "kind": "exception",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:38+00:00"
+  },
+  "yf:ZZZNOTREAL:fast_info.market_cap": {
+   "file": "yf-ZZZNOTREAL-fast-info.market-cap-6565051c6b22a391.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:45+00:00"
+  },
+  "yf:ZZZNOTREAL:fast_info.shares": {
+   "file": "yf-ZZZNOTREAL-fast-info.shares-f50234a695e0e51e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:44+00:00"
+  },
+  "yf:ZZZNOTREAL:financials": {
+   "file": "yf-ZZZNOTREAL-financials-2c0d61355c9233a3.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:40+00:00"
+  },
+  "yf:ZZZNOTREAL:history?interval=1wk&period=1y": {
+   "file": "yf-ZZZNOTREAL-history-cf5f47250e8f9c29.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:46+00:00"
+  },
+  "yf:ZZZNOTREAL:history?interval=1wk&period=2y": {
+   "file": "yf-ZZZNOTREAL-history-ab73e28b766daefd.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:52+00:00"
+  },
+  "yf:ZZZNOTREAL:history?interval=1wk&period=5y": {
+   "file": "yf-ZZZNOTREAL-history-f78892108f9ccec8.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:51+00:00"
+  },
+  "yf:ZZZNOTREAL:history?period=1mo": {
+   "file": "yf-ZZZNOTREAL-history-a40420c0871c417e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:50+00:00"
+  },
+  "yf:ZZZNOTREAL:history?period=5d": {
+   "file": "yf-ZZZNOTREAL-history-1b08b7d2eceed867.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:39+00:00"
+  },
+  "yf:ZZZNOTREAL:income_stmt": {
+   "file": "yf-ZZZNOTREAL-income-stmt-f772f7a4fbecd4ed.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:41+00:00"
+  },
+  "yf:ZZZNOTREAL:info": {
+   "file": "yf-ZZZNOTREAL-info-e379b650d733e593.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:34+00:00"
+  },
+  "yf:ZZZNOTREAL:insider_transactions": {
+   "file": "yf-ZZZNOTREAL-insider-transactions-dc9e3c1445084534.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:54+00:00"
+  },
+  "yf:ZZZNOTREAL:institutional_holders": {
+   "file": "yf-ZZZNOTREAL-institutional-holders-e145b915654e786a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:55+00:00"
+  },
+  "yf:ZZZNOTREAL:news": {
+   "file": "yf-ZZZNOTREAL-news-ee783b86425f313d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:53+00:00"
+  },
+  "yf:^GSPC:news": {
+   "file": "yf-idx-GSPC-news-0087a3b4c2885e42.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:54:41+00:00"
+  },
+  "yf:^MXX:balance_sheet": {
+   "file": "yf-idx-MXX-balance-sheet-0c5d4c8b2162a696.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:22+00:00"
+  },
+  "yf:^MXX:cashflow": {
+   "file": "yf-idx-MXX-cashflow-6d7b380e85455043.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:23+00:00"
+  },
+  "yf:^MXX:fast_info.market_cap": {
+   "file": "yf-idx-MXX-fast-info.market-cap-14e283a450a0d71c.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:25+00:00"
+  },
+  "yf:^MXX:fast_info.shares": {
+   "file": "yf-idx-MXX-fast-info.shares-c38462051600326e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:24+00:00"
+  },
+  "yf:^MXX:financials": {
+   "file": "yf-idx-MXX-financials-e378af7287630b74.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:20+00:00"
+  },
+  "yf:^MXX:history?interval=1wk&period=1y": {
+   "file": "yf-idx-MXX-history-80a7a937b8027a50.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:26+00:00"
+  },
+  "yf:^MXX:history?interval=1wk&period=2y": {
+   "file": "yf-idx-MXX-history-7ab918939006bc3a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:29+00:00"
+  },
+  "yf:^MXX:history?interval=1wk&period=5y": {
+   "file": "yf-idx-MXX-history-7f36f692fc79e8e9.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:28+00:00"
+  },
+  "yf:^MXX:history?period=1mo": {
+   "file": "yf-idx-MXX-history-aee84278e0bb19ce.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:27+00:00"
+  },
+  "yf:^MXX:income_stmt": {
+   "file": "yf-idx-MXX-income-stmt-6a9138d4c4d081a5.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:21+00:00"
+  },
+  "yf:^MXX:info": {
+   "file": "yf-idx-MXX-info-8b028d883dc57745.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:19+00:00"
+  },
+  "yf:^MXX:insider_transactions": {
+   "file": "yf-idx-MXX-insider-transactions-c72cfee6693289cf.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:31+00:00"
+  },
+  "yf:^MXX:institutional_holders": {
+   "file": "yf-idx-MXX-institutional-holders-71c1455a0a8e45be.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T14:53:32+00:00"
+  },
+  "yf:^MXX:news": {
+   "file": "yf-idx-MXX-news-1b1c3d5bdab9c6f7.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T14:53:31+00:00"
+  }
+ },
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "created_at": "2026-09-22T14:51:31+00:00",
+ "yfinance_version": "1.7.0",
+ "summary": {
+  "keys_total": 432,
+  "keys_by_provider": {
+   "http:cdn.cboe.com": 1,
+   "http:data.sec.gov": 2,
+   "http:fred.stlouisfed.org": 3,
+   "http:stooq.com": 1,
+   "http:www.sec.gov": 1,
+   "yf": 420,
+   "yf.download": 4
+  },
+  "exceptions_by_provider": {
+   "yf": 1
+  },
+  "empty_by_provider": {
+   "http:data.sec.gov": 1,
+   "yf": 32,
+   "yf.download": 1
+  },
+  "symbols_with_failed_or_empty_calls": {
+   "CEMEXCPO.MX": [
+    "insider_transactions",
+    "institutional_holders"
+   ],
+   "FUNO11.MX": [
+    "insider_transactions"
+   ],
+   "SPY": [
+    "balance_sheet",
+    "cashflow",
+    "financials",
+    "income_stmt",
+    "insider_transactions",
+    "institutional_holders"
+   ],
+   "STORAGE18.MX": [
+    "balance_sheet",
+    "cashflow",
+    "income_stmt"
+   ],
+   "USDMXN=X": [
+    "news"
+   ],
+   "WALMEX.MX": [
+    "insider_transactions"
+   ],
+   "ZZZNOTREAL": [
+    "balance_sheet",
+    "cashflow",
+    "fast_info.last_price",
+    "financials",
+    "history?interval=1wk&period=1y",
+    "history?interval=1wk&period=2y",
+    "history?interval=1wk&period=5y",
+    "history?period=1mo",
+    "history?period=5d",
+    "income_stmt",
+    "insider_transactions",
+    "institutional_holders",
+    "news"
+   ],
+   "^MXX": [
+    "balance_sheet",
+    "cashflow",
+    "financials",
+    "income_stmt",
+    "insider_transactions",
+    "institutional_holders"
+   ]
+  }
+ },
+ "updated_at": "2026-09-22T15:00:51+00:00"
+}

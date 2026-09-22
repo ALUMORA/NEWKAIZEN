@@ -1,0 +1,53 @@
+{
+  "function": "get_stock",
+  "args": [
+    "FUNO11.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "name": "BANCO ACTINVER SA",
+    "price": 29.49,
+    "pe": 6.14,
+    "eps": 4.8,
+    "peg": null,
+    "pegy": null,
+    "evEbitda": 12.95,
+    "pb": 0.59,
+    "roe": 12.71,
+    "profitMargin": 73.29,
+    "debtEquity": 61.36,
+    "revenueGrowth": 5.5,
+    "priceChange52w": 2.01,
+    "beta": 0.18,
+    "marketCap": 112376061952.0,
+    "dividendYield": 8.71,
+    "pcf": null,
+    "debtToAssets": 35.6,
+    "leverageRatio": 1.61,
+    "sector": "Real Estate",
+    "totalRevenue": 31327449088.0,
+    "netIncomeToCommon": 22958639104.0,
+    "totalAssets": 414841337000.0,
+    "totalDebt": 147709263872.0,
+    "operatingCashflow": 18073110528.0,
+    "freeCashflow": 1410225664.0,
+    "description": "Fibra Uno is the first and largest REIT in the Mexican market. It operates and develops a wide range of real estate intended for leasing, primarily in the industrial, commercial, and office sectors. As of September 30, 2025, FUNO had a portfolio of 586 properties that totaled more than 11.2 million of 2 with presence in all the states of the Mexican Republic. The Fideicomiso Fibra Uno strategy. It focuses on having the best locations, the highest quality properties, and a diversification of segments, geographies, and tenants. Likewise, the team. FUNO's administrative team has over 35 years of experience in development and operation in all segments of the real estate sector. Fibra UNO was incorporated in 2011 in Mexico.",
+    "industry": "REIT - Diversified",
+    "website": "https://funo.mx",
+    "employees": null,
+    "country": "Mexico",
+    "currency": "MXN"
+  },
+  "fixtures_used": [
+    "yf:FUNO11.MX:balance_sheet",
+    "yf:FUNO11.MX:cashflow",
+    "yf:FUNO11.MX:financials",
+    "yf:FUNO11.MX:income_stmt",
+    "yf:FUNO11.MX:info"
+  ],
+  "live_match": true
+}

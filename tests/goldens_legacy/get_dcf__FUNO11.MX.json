@@ -1,0 +1,58 @@
+{
+  "function": "get_dcf",
+  "args": [
+    "FUNO11.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "price": 29.49,
+    "priceCurrency": "MXN",
+    "financialCurrency": "MXN",
+    "fxRate": 1.0,
+    "fxNote": null,
+    "fairPrice": 75.09,
+    "margin": 60.7,
+    "overall": "INFRAVALORADO",
+    "methods": [
+      {
+        "name": "P/E",
+        "actual": 6.14,
+        "fair": 30,
+        "target": 144.0,
+        "signal": "barato"
+      },
+      {
+        "name": "P/B",
+        "actual": 0.59,
+        "fair": 1.5,
+        "target": 75.3,
+        "signal": "barato"
+      },
+      {
+        "name": "P/FCF",
+        "actual": 79.69,
+        "fair": 22,
+        "target": 8.14,
+        "signal": "caro"
+      },
+      {
+        "name": "EV/EBITDA",
+        "actual": 12.95,
+        "fair": 18,
+        "target": 72.91,
+        "signal": "barato"
+      }
+    ],
+    "sector": "Real Estate",
+    "sectorNote": null,
+    "nMethods": 4
+  },
+  "fixtures_used": [
+    "yf:FUNO11.MX:info"
+  ],
+  "live_match": true
+}

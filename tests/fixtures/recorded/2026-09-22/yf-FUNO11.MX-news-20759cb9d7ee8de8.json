@@ -1,0 +1,324 @@
+{
+ "key": "yf:FUNO11.MX:news",
+ "provider": "yfinance",
+ "symbol": "FUNO11.MX",
+ "attr": "news",
+ "kwargs": {},
+ "kind": "value",
+ "payload": [
+  {
+   "id": "8e430d67-d82f-3c1a-be8e-3c7578763c9f",
+   "content": {
+    "id": "8e430d67-d82f-3c1a-be8e-3c7578763c9f",
+    "contentType": "STORY",
+    "title": "How The Fibra UNO (BMV:FUNO 11) Story Is Shifting With New Fair Value And Risks",
+    "description": "",
+    "summary": "Fibra UNO’s updated analyst narrative now anchors around a fair value of MX$34.15 per unit, compared with MX$33.91 previously. This reflects a small adjustment in the modelled price target. Recent Street research on comparable real estate and leisure names, including how they think about capital deployment, execution risk and private market transactions, helps frame how analysts arrived at this new MX$34.15 mark. As you read on, you will see how these moving pieces fit together and how you...",
+    "pubDate": "2026-03-08T20:09:05Z",
+    "displayTime": "2026-03-08T20:09:05Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/simply_wall_st__316/d00ee847ef7380b1dca436e10505fcee",
+     "originalWidth": 1194,
+     "originalHeight": 432,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/Rf4cqXNke4q2vfJwaKQkjQ--~B/aD00MzI7dz0xMTk0O2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/simply_wall_st__316/d00ee847ef7380b1dca436e10505fcee",
+       "width": 1194,
+       "height": 432,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/cKbSHcXE4Anifk9HB.l1tQ--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/simply_wall_st__316/d00ee847ef7380b1dca436e10505fcee",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Simply Wall St.",
+     "url": "https://simplywall.st/",
+     "sourceId": "simply_wall_st__316"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/news/fibra-uno-bmv-funo-11-200905561.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/news/fibra-uno-bmv-funo-11-200905561.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "7eef1c9c-137c-3f89-bbbb-74dc4ed2f787",
+   "content": {
+    "id": "7eef1c9c-137c-3f89-bbbb-74dc4ed2f787",
+    "contentType": "STORY",
+    "title": "Why The Narrative Around Fibra UNO (BMV:FUNO 11) Is Shifting After The MX$33.91 Fair Value Update",
+    "description": "",
+    "summary": "Fibra UNO’s latest fair value move from MX$33.04 to MX$33.91 reflects a recalibration of expectations rather than a wholesale rethink of the story. The modestly lower 16.28% discount rate and updated revenue growth assumption of 4.25% are fueling a fresh debate on how much risk and upside are really built into the units today. As you read on, you will see practical ways to keep track of these shifting assumptions so you can stay on top of how the narrative around Fibra UNO evolves over...",
+    "pubDate": "2026-02-07T18:06:11Z",
+    "displayTime": "2026-02-07T18:06:11Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/simply_wall_st__316/d00ee847ef7380b1dca436e10505fcee",
+     "originalWidth": 1194,
+     "originalHeight": 432,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/Rf4cqXNke4q2vfJwaKQkjQ--~B/aD00MzI7dz0xMTk0O2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/simply_wall_st__316/d00ee847ef7380b1dca436e10505fcee",
+       "width": 1194,
+       "height": 432,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/cKbSHcXE4Anifk9HB.l1tQ--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/simply_wall_st__316/d00ee847ef7380b1dca436e10505fcee",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Simply Wall St.",
+     "url": "https://simplywall.st/",
+     "sourceId": "simply_wall_st__316"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/news/why-narrative-around-fibra-uno-180611505.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/news/why-narrative-around-fibra-uno-180611505.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "1c69892c-040f-3d57-ab4a-62577f858272",
+   "content": {
+    "id": "1c69892c-040f-3d57-ab4a-62577f858272",
+    "contentType": "STORY",
+    "title": "What Is Shaping The New Fibra UNO (BMV:FUNO 11) Story For Investors Now",
+    "description": "",
+    "summary": "Fibra UNO is back in focus after analysts revised their price target, signaling a fresh look at how the market values Mexico's largest real estate investment trust. This change reflects updated views on its portfolio, funding conditions, and the broader real estate backdrop that investors are watching closely. Read on to see what is driving the new price target and how you can stay informed about future shifts in the Fibra UNO story. Analyst Price Targets don't always capture the full story...",
+    "pubDate": "2026-01-24T14:08:27Z",
+    "displayTime": "2026-01-24T14:08:27Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/simply_wall_st__316/d00ee847ef7380b1dca436e10505fcee",
+     "originalWidth": 1194,
+     "originalHeight": 432,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/Rf4cqXNke4q2vfJwaKQkjQ--~B/aD00MzI7dz0xMTk0O2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/simply_wall_st__316/d00ee847ef7380b1dca436e10505fcee",
+       "width": 1194,
+       "height": 432,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/cKbSHcXE4Anifk9HB.l1tQ--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/simply_wall_st__316/d00ee847ef7380b1dca436e10505fcee",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Simply Wall St.",
+     "url": "https://simplywall.st/",
+     "sourceId": "simply_wall_st__316"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/news/shaping-fibra-uno-bmv-funo-140827748.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/news/shaping-fibra-uno-bmv-funo-140827748.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "136165bf-52f5-399a-8e52-91a3612196cc",
+   "content": {
+    "id": "136165bf-52f5-399a-8e52-91a3612196cc",
+    "contentType": "STORY",
+    "title": "How Subtle Valuation Shifts Are Rewriting The Story For Fibra UNO (BMV:FUNO 11)",
+    "description": "",
+    "summary": "What the New MX$32.82 Target Really Signals The adjusted fair value target for Fibra UNO, now set at MX$32.82 versus MX$32.70 previously, reflects analysts fine tuning their models rather than making a sweeping call on the stock. The slightly higher discount rate of 16.66% compared with 16.64% and an assumed revenue growth rate that effectively holds at 3.37% suggest a mix of caution and ongoing confidence in how Fibra UNO fits into the current operating backdrop. As you read on, keep an eye...",
+    "pubDate": "2026-01-10T08:12:29Z",
+    "displayTime": "2026-01-10T08:12:29Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/simply_wall_st__316/d00ee847ef7380b1dca436e10505fcee",
+     "originalWidth": 1194,
+     "originalHeight": 432,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/Rf4cqXNke4q2vfJwaKQkjQ--~B/aD00MzI7dz0xMTk0O2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/simply_wall_st__316/d00ee847ef7380b1dca436e10505fcee",
+       "width": 1194,
+       "height": 432,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/cKbSHcXE4Anifk9HB.l1tQ--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/simply_wall_st__316/d00ee847ef7380b1dca436e10505fcee",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Simply Wall St.",
+     "url": "https://simplywall.st/",
+     "sourceId": "simply_wall_st__316"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/news/subtle-valuation-shifts-rewriting-story-081229457.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/news/subtle-valuation-shifts-rewriting-story-081229457.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  },
+  {
+   "id": "41db994d-e39c-3484-b99e-e71a85e9b334",
+   "content": {
+    "id": "41db994d-e39c-3484-b99e-e71a85e9b334",
+    "contentType": "STORY",
+    "title": "How Recent Developments Are Rewriting the Story for Fibra UNO",
+    "description": "",
+    "summary": "The consensus analyst price target for Fibra UNO stock has increased slightly from MX$32.19 to MX$32.70. This change reflects a subtle shift in sentiment and suggests improved confidence in the company’s projected value, driven by a mix of resilient fundamentals and evolving market perspectives. Stay tuned to discover how you can follow future updates and deeper insights into Fibra UNO’s changing investment narrative. Analyst Price Targets don't always capture the full story. Head over to our...",
+    "pubDate": "2025-11-21T06:12:19Z",
+    "displayTime": "2025-11-21T06:12:19Z",
+    "isHosted": true,
+    "bypassModal": false,
+    "previewUrl": null,
+    "thumbnail": {
+     "originalUrl": "https://media.zenfs.com/en/simply_wall_st__316/d00ee847ef7380b1dca436e10505fcee",
+     "originalWidth": 1194,
+     "originalHeight": 432,
+     "caption": "",
+     "resolutions": [
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/Rf4cqXNke4q2vfJwaKQkjQ--~B/aD00MzI7dz0xMTk0O2FwcGlkPXl0YWNoeW9u/https://media.zenfs.com/en/simply_wall_st__316/d00ee847ef7380b1dca436e10505fcee",
+       "width": 1194,
+       "height": 432,
+       "tag": "original"
+      },
+      {
+       "url": "https://s.yimg.com/uu/api/res/1.2/cKbSHcXE4Anifk9HB.l1tQ--~B/Zmk9c3RyaW07aD0xMjg7dz0xNzA7YXBwaWQ9eXRhY2h5b24-/https://media.zenfs.com/en/simply_wall_st__316/d00ee847ef7380b1dca436e10505fcee",
+       "width": 170,
+       "height": 128,
+       "tag": "170x128"
+      }
+     ]
+    },
+    "provider": {
+     "displayName": "Simply Wall St.",
+     "url": "https://simplywall.st/",
+     "sourceId": "simply_wall_st__316"
+    },
+    "canonicalUrl": {
+     "url": "https://finance.yahoo.com/news/recent-developments-rewriting-story-fibra-061219119.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "clickThroughUrl": {
+     "url": "https://finance.yahoo.com/news/recent-developments-rewriting-story-fibra-061219119.html",
+     "site": "finance",
+     "region": "US",
+     "lang": "en-US"
+    },
+    "metadata": {
+     "editorsPick": false
+    },
+    "finance": {
+     "premiumFinance": {
+      "isPremiumNews": false,
+      "isPremiumFreeNews": false
+     }
+    },
+    "storyline": null
+   }
+  }
+ ],
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T14:53:02+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

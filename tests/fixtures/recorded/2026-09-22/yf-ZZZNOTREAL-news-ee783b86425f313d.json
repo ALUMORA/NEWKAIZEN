@@ -1,0 +1,13 @@
+{
+ "key": "yf:ZZZNOTREAL:news",
+ "provider": "yfinance",
+ "symbol": "ZZZNOTREAL",
+ "attr": "news",
+ "kwargs": {},
+ "kind": "value",
+ "payload": [],
+ "soft_failure": true,
+ "recorded_at": "2026-09-22T14:53:53+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

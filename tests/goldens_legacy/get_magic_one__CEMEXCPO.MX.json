@@ -1,0 +1,28 @@
+{
+  "function": "get_magic_one",
+  "args": [
+    "CEMEXCPO.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "ticker": "CEMEXCPO.MX",
+    "name": "CEMEX, S.A.B. de C.V.",
+    "sector": "Basic Materials",
+    "marketCap": 249775063040.0,
+    "price": 17.31,
+    "ey": 0.5,
+    "roc": 11.69,
+    "pe": 28.85,
+    "pb": 1.17
+  },
+  "fixtures_used": [
+    "yf:CEMEXCPO.MX:balance_sheet",
+    "yf:CEMEXCPO.MX:income_stmt",
+    "yf:CEMEXCPO.MX:info"
+  ],
+  "live_match": true
+}

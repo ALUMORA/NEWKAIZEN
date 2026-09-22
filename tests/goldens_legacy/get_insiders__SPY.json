@@ -1,0 +1,20 @@
+{
+  "function": "get_insiders",
+  "args": [
+    "SPY"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "transactions": [],
+    "institutions": []
+  },
+  "fixtures_used": [
+    "yf:SPY:insider_transactions",
+    "yf:SPY:institutional_holders"
+  ],
+  "live_match": true
+}

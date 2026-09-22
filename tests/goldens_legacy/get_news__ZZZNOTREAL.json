@@ -1,0 +1,18 @@
+{
+  "function": "get_news",
+  "args": [
+    "ZZZNOTREAL"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "news": []
+  },
+  "fixtures_used": [
+    "yf:ZZZNOTREAL:news"
+  ],
+  "live_match": true
+}

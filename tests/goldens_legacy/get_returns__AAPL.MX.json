@@ -1,0 +1,23 @@
+{
+  "function": "get_returns",
+  "args": [
+    "AAPL.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "1mo": 7.18,
+    "3mo": 17.53,
+    "6mo": 29.68,
+    "1y": 24.58,
+    "2y": 30.18,
+    "5y": 101.18
+  },
+  "fixtures_used": [
+    "yf:AAPL.MX:history?interval=1wk&period=5y"
+  ],
+  "live_match": true
+}

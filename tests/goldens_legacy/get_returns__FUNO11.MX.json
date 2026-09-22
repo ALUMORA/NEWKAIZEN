@@ -1,0 +1,23 @@
+{
+  "function": "get_returns",
+  "args": [
+    "FUNO11.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "1mo": 0.17,
+    "3mo": 1.72,
+    "6mo": 9.16,
+    "1y": 15.69,
+    "2y": 51.88,
+    "5y": 104.45
+  },
+  "fixtures_used": [
+    "yf:FUNO11.MX:history?interval=1wk&period=5y"
+  ],
+  "live_match": true
+}

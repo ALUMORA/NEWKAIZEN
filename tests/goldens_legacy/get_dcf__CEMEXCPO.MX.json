@@ -1,0 +1,59 @@
+{
+  "function": "get_dcf",
+  "args": [
+    "CEMEXCPO.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "price": 17.31,
+    "priceCurrency": "MXN",
+    "financialCurrency": "USD",
+    "fxRate": 17.2275,
+    "fxNote": "Financieros en USD → MXN (1 USD = 17.23 MXN)",
+    "fairPrice": 22.02,
+    "margin": 21.4,
+    "overall": "INFRAVALORADO",
+    "methods": [
+      {
+        "name": "P/E",
+        "actual": 28.85,
+        "fair": 14,
+        "target": 8.4,
+        "signal": "caro"
+      },
+      {
+        "name": "P/B",
+        "actual": 1.17,
+        "fair": 2,
+        "target": 29.6,
+        "signal": "barato"
+      },
+      {
+        "name": "P/FCF",
+        "actual": 12.92,
+        "fair": 14,
+        "target": 18.76,
+        "signal": "justo"
+      },
+      {
+        "name": "EV/EBITDA",
+        "actual": 79.7,
+        "fair": 10,
+        "target": 31.33,
+        "signal": "barato"
+      }
+    ],
+    "sector": "Basic Materials",
+    "sectorNote": null,
+    "nMethods": 4
+  },
+  "fixtures_used": [
+    "yf:CEMEXCPO.MX:info",
+    "yf:USDMXN=X:history?period=2d"
+  ],
+  "live_match": true
+}
