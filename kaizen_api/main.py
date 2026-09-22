@@ -168,6 +168,10 @@ class ConcurrencyLimitMiddleware:
     El código es ``RATE_LIMITED`` porque es el más cercano de los que ya existen en el contrato
     congelado (``schemas.ErrorCode``): el cliente tiene que esperar y reintentar, que es justo lo que
     dice ``Retry-After``. No es ``UPSTREAM_UNAVAILABLE`` porque aquí ninguna fuente falló.
+
+    El contador es un entero simple porque el API corre con **un** worker: sube y baja siempre en el
+    mismo event loop, entre ``await`` completos, así que no hace falta candado. Con varios workers
+    cada proceso contaría los suyos, igual que pasa con el límite de tasa del login.
     """
 
     MESSAGE = "El servidor está saturado en este momento. Espera unos segundos y vuelve a intentarlo."

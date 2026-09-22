@@ -112,12 +112,14 @@ def record_provider_call(name: str, ok: bool) -> None:
     convierte en una llamada por sondeo (Render sondea cada pocos segundos) y en un camino perfecto
     para que nos limiten por tasa.
     """
-    _provider_signals[str(name)] = (bool(ok), time.time())
+    with _cache_lock:  # el mismo candado que el resto del estado del proceso
+        _provider_signals[str(name)] = (bool(ok), time.time())
 
 
 def provider_ok(name: str, ttl: float = PROVIDER_SIGNAL_TTL) -> bool | None:
     """La última señal de ``name`` si sigue fresca; ``None`` (no sé) si no hay o ya venció."""
-    signal = _provider_signals.get(name)
+    with _cache_lock:
+        signal = _provider_signals.get(name)
     if signal is None or time.time() - signal[1] >= ttl:
         return None
     return signal[0]
