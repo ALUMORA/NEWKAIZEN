@@ -264,6 +264,19 @@ def get_filing_document(cik: str, accession: str, document: str) -> str | None:
     return _cached(f"v2:sec:doc:{folder}:{document}", fetch, ttl=SEC_FORM4_TTL, ok=lambda t: bool(t))
 
 
+def raw_document_name(document: str) -> str:
+    """Quita la carpeta ``xsl.../`` del documento principal para quedarse con el XML de verdad.
+
+    ``primaryDocument`` de una Forma 4 apunta a la versión RENDERIZADA
+    (``xslF345X06/form4.xml``), que es HTML con hojas de estilo y no se puede parsear como XML.
+    El archivo fuente vive al lado, en la misma carpeta del expediente (``form4.xml``).
+    """
+    parts = str(document).split("/")
+    if len(parts) > 1 and parts[0].lower().startswith("xsl"):
+        return "/".join(parts[1:])
+    return str(document)
+
+
 def get_form4_documents(symbol: str, limit: int = FORM4_MAX) -> list[dict]:
     """Las Formas 4 recientes del emisor con su XML ya descargado.
 
@@ -272,9 +285,10 @@ def get_form4_documents(symbol: str, limit: int = FORM4_MAX) -> list[dict]:
     """
     out: list[dict] = []
     for filing in recent_filings(symbol, "4", limit):
-        if not str(filing["document"]).lower().endswith(".xml"):
+        document = raw_document_name(filing["document"])
+        if not document.lower().endswith(".xml"):
             continue
-        xml = get_filing_document(filing["cik"], filing["accession"], filing["document"])
+        xml = get_filing_document(filing["cik"], filing["accession"], document)
         if not xml:
             continue
         out.append({"accession": filing["accession"], "filingDate": filing["filingDate"], "xml": xml})

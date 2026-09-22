@@ -1,0 +1,30 @@
+{
+ "key": "yf:FUNO11.MX:calendar",
+ "provider": "yfinance",
+ "symbol": "FUNO11.MX",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-08-07"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-28"
+   }
+  ],
+  "Earnings High": 0.72,
+  "Earnings Low": 0.59821,
+  "Earnings Average": 0.6761,
+  "Revenue High": 8178350000,
+  "Revenue Low": 8063718560,
+  "Revenue Average": 8136716690
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T19:15:34+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "adf141d04b4c"
+}

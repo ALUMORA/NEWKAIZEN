@@ -15,6 +15,7 @@ from typing import Any
 
 from kaizen_api.domain import safe
 from kaizen_api.domain.currency import normalize_currency
+from kaizen_api.provenance import utc_now
 from kaizen_api.providers.yahoo import fundamentals as _yahoo
 
 CALENDAR_FIELDS: dict[str, str] = {
@@ -56,7 +57,7 @@ def _as_date(value: Any) -> str | None:
     return text
 
 
-def _symbol_events(symbol: str, notes: list[str]) -> list[dict]:
+def _symbol_events(symbol: str, today: str, notes: list[str]) -> list[dict]:
     calendar = _yahoo.get_calendar(symbol)
     info = _yahoo.get_info(symbol)
     currency, _divisor = normalize_currency(info.get("currency"))
@@ -69,11 +70,14 @@ def _symbol_events(symbol: str, notes: list[str]) -> list[dict]:
         if not date or (kind, date) in found:
             return
         found.add((kind, date))
+        # El consenso de UPA es para el reporte que VIENE. Colgárselo a una fecha que ya pasó
+        # haría creer que ese fue el resultado, y no lo es.
+        upcoming = kind == "earnings" and date >= today and estimate is not None
         items.append({
             "symbol": symbol,
             "type": kind,
             "date": date,
-            "estimate": round(estimate, 4) if kind == "earnings" and estimate is not None else None,
+            "estimate": round(estimate, 4) if upcoming else None,
             "amount": None,
             "currency": currency if kind in ("exDividend", "dividendPay") else None,
         })
@@ -99,22 +103,25 @@ def get_events(symbols: list[str]) -> dict:
     Devuelve ``{"items", "notes", "as_of", "missing"}``; el router arma ``meta``. ``missing`` son
     los símbolos para los que Yahoo no publicó ninguna fecha.
     """
+    today = utc_now().date().isoformat()
     notes: list[str] = []
     items: list[dict] = []
     missing: list[str] = []
     for symbol in symbols:
-        found = _symbol_events(symbol.upper(), notes)
+        found = _symbol_events(symbol.upper(), today, notes)
         if not found:
             missing.append(symbol.upper())
         items.extend(found)
     items.sort(key=lambda row: (row["date"], row["symbol"], row["type"]))
+    if any(row["date"] < today for row in items):
+        notes.append("Yahoo mezcla la última fecha ocurrida con la que viene; aquí salen las dos, en orden.")
     if missing:
         notes.append("Sin fechas publicadas para: " + ", ".join(missing) + ".")
-    # Sin duplicar la misma nota cuando se piden varios símbolos.
-    unique_notes = list(dict.fromkeys(notes))
     return {
         "items": items,
-        "notes": unique_notes,
-        "as_of": items[-1]["date"] if items else None,
+        # El calendario vale al momento de leerlo: poner la fecha del evento más lejano en asOf
+        # diría que el dato es del futuro.
+        "notes": list(dict.fromkeys(notes)),
+        "as_of": today,
         "missing": missing,
     }

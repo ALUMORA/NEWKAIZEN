@@ -1,0 +1,34 @@
+{
+ "key": "yf:AAPL:calendar",
+ "provider": "yfinance",
+ "symbol": "AAPL",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-08-13"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-08-10"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-29"
+   }
+  ],
+  "Earnings High": 2.07,
+  "Earnings Low": 1.93,
+  "Earnings Average": 1.98124,
+  "Revenue High": 117219700000,
+  "Revenue Low": 112248100000,
+  "Revenue Average": 113624521680
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T19:15:32+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "adf141d04b4c"
+}

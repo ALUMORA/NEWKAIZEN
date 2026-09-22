@@ -166,8 +166,11 @@ def _planned(transaction, root) -> bool | None:
     Antes de abril de 2023 la casilla no existía; en esos expedientes se busca la mención en las
     notas al pie que cita la propia operación. Sin nada de eso, ``None`` es "no sabemos".
     """
-    for scope in (transaction, root):
-        for node in scope.iter():
+    # Primero la casilla de ESTA operación; luego la del documento, que son solo los hijos
+    # directos de la raíz. Buscarla con ``root.iter()`` tomaría la casilla de otra operación y le
+    # pondría plan a una que no lo declara.
+    for nodes in (transaction.iter(), iter(root)):
+        for node in nodes:
             if _local(node.tag) != "aff10b5One":
                 continue
             inner = node.find("value")

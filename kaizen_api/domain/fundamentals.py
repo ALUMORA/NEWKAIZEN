@@ -633,7 +633,7 @@ def get_instrument(symbol: str) -> dict:
         "netMargin": _round(safe(info.get("profitMargins")) or _ratio(net_income, revenue)),
         "revenueGrowthYoY": _round(revenue_growth),
         "epsGrowthYoY": _round(eps_growth),
-        "debtToEquity": _round(debt_to_equity, 4),
+        "debtToEquity": _round(debt_to_equity),  # 6 decimales: viene de dividir un porcentaje
         "netDebtToEbitda": _round(
             _ratio(None if total_debt is None or total_cash is None else total_debt - total_cash, _pos(ebitda)),
             4,

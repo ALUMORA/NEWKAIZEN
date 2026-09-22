@@ -1,0 +1,279 @@
+{
+ "set": "2026-09-22-b3a",
+ "entries": {
+  "http:GET https://data.sec.gov/submissions/CIK0000320193.json": {
+   "file": "http-GET-https-data.sec.gov-submissions-CIK0000320193-bc40f0bcb54d426f.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:38+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000105923526000004/wk-form4_1772148856.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-541fa91c3b539dbf.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:57+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126013190/form4.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-35a20232b3f0e162.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:55+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126013191/form4.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-52e0a24ac04ea2f3.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:54+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126013192/form4.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-c5697b5be8cb2dad.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:53+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126015420/form4.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-e95db0efdd5c7634.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:52+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126015421/form4.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-1393bfe3b837884a.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:51+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126017175/form4.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-740f49c7512c6271.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:50+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126020298/form4.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-8549513e5514688c.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:49+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126020871/form4.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-cf3c8c124f9b4a7b.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:48+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126023363/form4.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-67f2fc94fb092cc6.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:47+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126025620/form4.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-c39bda9c85be7945.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:46+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126025622/form4.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-2b4d2bbf31716afd.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:46+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126032884/form4.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-fd1efa53d68362ff.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:44+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126033928/form4.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-fa9060b2b81c6606.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:43+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126034741/form4.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-e8aa5f1dcbeaa890.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:42+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126035362/form4.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-6593e11e3ed8342b.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:41+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126035636/form4.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-550f7db396a6ae75.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:40+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126036226/form4.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-fbbfc5ed453c80bb.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:39+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126037020/form4.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-cc332508ed2d9940.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:38+00:00"
+  },
+  "http:GET https://www.sec.gov/Archives/edgar/data/320193/000178052526000005/wk-form4_1773786674.xml": {
+   "file": "http-GET-https-www.sec.gov-Archives-edgar-data-320193-34a7b59e8999b445.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:56+00:00"
+  },
+  "yf:AAPL.MX:calendar": {
+   "file": "yf-AAPL.MX-calendar-758c3477146af5f6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:35+00:00"
+  },
+  "yf:AAPL.MX:dividends": {
+   "file": "yf-AAPL.MX-dividends-7d52b497024d520c.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:30+00:00"
+  },
+  "yf:AAPL:calendar": {
+   "file": "yf-AAPL-calendar-1ce4886a804321b8.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:32+00:00"
+  },
+  "yf:AAPL:dividends": {
+   "file": "yf-AAPL-dividends-1b82f08f56886dea.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:27+00:00"
+  },
+  "yf:CEMEXCPO.MX:calendar": {
+   "file": "yf-CEMEXCPO.MX-calendar-4f9bdac41991ac25.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:36+00:00"
+  },
+  "yf:CEMEXCPO.MX:dividends": {
+   "file": "yf-CEMEXCPO.MX-dividends-e81d695c7d9cf088.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:31+00:00"
+  },
+  "yf:FUNO11.MX:calendar": {
+   "file": "yf-FUNO11.MX-calendar-65e2dcc5f7ce51c4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:34+00:00"
+  },
+  "yf:FUNO11.MX:dividends": {
+   "file": "yf-FUNO11.MX-dividends-f72a2de6906ebd60.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:29+00:00"
+  },
+  "yf:NAFTRAC.MX:history?interval=1wk&period=1y": {
+   "file": "yf-NAFTRAC.MX-history-a943e3d0f581f835.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:17:01+00:00"
+  },
+  "yf:NAFTRAC.MX:history?interval=1wk&period=2y": {
+   "file": "yf-NAFTRAC.MX-history-44ea83ed9476bd3e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:16:58+00:00"
+  },
+  "yf:NAFTRAC.MX:history?interval=1wk&period=5y": {
+   "file": "yf-NAFTRAC.MX-history-fbf5df069b135706.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:16:59+00:00"
+  },
+  "yf:NAFTRAC.MX:info": {
+   "file": "yf-NAFTRAC.MX-info-c8ff7904f638c060.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:17:02+00:00"
+  },
+  "yf:SPY:dividends": {
+   "file": "yf-SPY-dividends-2567508728928142.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:32+00:00"
+  },
+  "yf:WALMEX.MX:calendar": {
+   "file": "yf-WALMEX.MX-calendar-b42bac242e3e1250.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:33+00:00"
+  },
+  "yf:WALMEX.MX:dividends": {
+   "file": "yf-WALMEX.MX-dividends-2a26cfcb21b644e6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:15:28+00:00"
+  }
+ },
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "created_at": "2026-09-22T19:15:26+00:00",
+ "yfinance_version": "1.7.0",
+ "layered_on": [
+  "2026-09-22"
+ ],
+ "lookup_order": [
+  "2026-09-22",
+  "2026-09-22-b3a"
+ ],
+ "summary": {
+  "keys_total": 32,
+  "keys_by_provider": {
+   "http:data.sec.gov": 1,
+   "http:www.sec.gov": 20,
+   "yf": 11
+  },
+  "exceptions_by_provider": {},
+  "empty_by_provider": {},
+  "symbols_with_failed_or_empty_calls": {}
+ },
+ "updated_at": "2026-09-22T19:17:02+00:00"
+}
