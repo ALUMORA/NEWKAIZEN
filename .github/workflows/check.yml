@@ -1,0 +1,56 @@
+# Compuertas de CI. E2E todavía no corre aquí: los baselines visuales son por plataforma
+# (-darwin) y se corren en local con npm run e2e:baseline.
+name: check
+
+on:
+  push:
+    branches: [main, analizavende, alumora]
+  pull_request:
+    branches: [main, analizavende, alumora]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: web (lint, typecheck, test, build, bundle)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build
+      - run: npm run bundle
+
+  api:
+    name: api (ruff, pytest)
+    # 24.04 fijo y no ubuntu-latest: setup-python solo publica 3.11.8 hasta Ubuntu 24.04.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11.8'
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check .
+      - name: pytest -q
+        run: |
+          if [ -d tests ]; then
+            pytest -q
+          else
+            echo "::notice::Todavía no hay tests/: se omite pytest."
+          fi
