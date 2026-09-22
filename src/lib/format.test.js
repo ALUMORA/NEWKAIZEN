@@ -231,6 +231,24 @@ describe('fechas en America/Mexico_City', () => {
     expect(fmtRelative('2026-02-31', Date.UTC(2026, 8, 19))).toBe('s/d')
     expect(fmtDateTime('2026-02-28')).toBe('27 feb 2026, 18:00')
   })
+
+  // Las fechas del API (meta.asOf entre otras) llegan como instantes ISO completos: la validación
+  // tiene que mirar el prefijo YYYY-MM-DD aunque la cadena siga con la hora.
+  it('un instante ISO con fecha imposible también da s/d', () => {
+    expect(fmtDateTime('2026-02-31T10:00:00Z')).toBe('s/d')
+    expect(fmtDate('2026-02-30T00:00:00Z')).toBe('s/d')
+    expect(fmtDate('2026-02-31T10:00:00-06:00')).toBe('s/d')
+    expect(fmtDateTime('2025-02-29T12:00:00Z')).toBe('s/d')
+    expect(fmtDateTime('2026-04-31T12:00:00Z')).toBe('s/d')
+    expect(fmtRelative('2026-02-31T10:00:00Z', Date.parse('2026-03-03T10:00:00Z'))).toBe('s/d')
+  })
+
+  it('los instantes ISO buenos siguen pasando', () => {
+    expect(fmtDateTime('2026-09-19T14:05:00Z')).toBe('19 sep 2026, 08:05')
+    expect(fmtDate('2024-02-29T18:00:00Z')).toBe('29 feb 2024')
+    expect(fmtDateTime('2026-09-19T14:05:00.250Z')).toBe('19 sep 2026, 08:05')
+    expect(fmtRelative('2026-09-22T14:55:00Z', Date.parse('2026-09-22T15:00:00Z'))).toBe('hace 5 min')
+  })
 })
 
 describe('fmtRelative', () => {

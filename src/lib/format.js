@@ -190,6 +190,8 @@ export function describeMultiple(x, options) {
 // ─── Fechas ─────────────────────────────────────────────────────────────────
 
 const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/
+// La misma fecha, pero al principio de una cadena que puede seguir con "T10:00:00Z".
+const DATE_HEAD = /^\d{4}-\d{2}-\d{2}/
 
 /**
  * Fecha de calendario YYYY-MM-DD que de verdad existe. La forma no basta: "2026-02-31" y
@@ -239,9 +241,11 @@ function toDate(value) {
   if (isNum(value)) return new Date(value)
   if (typeof value === 'string' && value.trim()) {
     const text = value.trim()
-    // Una fecha sola pasa primero por la validación estricta: así fmtDateTime y fmtRelative
-    // tampoco aceptan un 31 de febrero.
-    if (DATE_ONLY.test(text) && !calendarDate(text)) return null
+    // Toda cadena que empiece con YYYY-MM-DD pasa primero por la validación estricta, traiga
+    // hora o no: así fmtDateTime y fmtRelative tampoco aceptan un 31 de febrero, que si no V8
+    // corre al 3 de marzo. Las fechas del API llegan como instantes ISO completos, no solas.
+    const head = DATE_HEAD.exec(text)
+    if (head && !calendarDate(head[0])) return null
     const d = new Date(text)
     return Number.isNaN(d.getTime()) ? null : d
   }
