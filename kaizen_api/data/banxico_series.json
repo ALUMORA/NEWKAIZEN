@@ -1,7 +1,7 @@
 {
   "revisado": "2026-09-22",
   "fuente": "SIE de Banxico, https://www.banxico.org.mx/SieAPIRest/service/v1",
-  "porQue": "Un id equivocado del SIE devuelve una serie real con el nombre equivocado, y eso no se nota mirando el numero. Por eso cada id trae las palabras que su titulo tiene que contener, y solo se publica el que el SIE confirma.",
+  "porQue": "Un id equivocado del SIE devuelve una serie real con el nombre equivocado, y eso no se nota mirando el número. Por eso cada id trae las palabras que su título tiene que contener, y solo se publica el que el SIE confirma.",
   "verificadas": [
     "SF43718",
     "SF61745"
@@ -9,9 +9,9 @@
   "comoVerificar": {
     "token": "Sacar el token gratis en https://www.banxico.org.mx/SieAPIRest/service/v1/token",
     "comando": "export BANXICO_TOKEN=... KAIZEN_LIVE=1 && .venv/bin/python -m pytest -q -p no:cacheprovider -o addopts=\"\" tests/unit/b2b/test_banxico_live.py -s",
-    "queHace": "Pide GET /series/<ids> (solo metadatos, no datos) y compara el titulo que devuelve el SIE contra tituloContiene de cada id, ademas de revisar periodicidad y fechaFin. Imprime la lista de ids confirmados.",
-    "despues": "Poner verified en true nada mas para los ids que la prueba confirmo, y anotar la fecha en revisado. Un id que no pase se queda en false y su renglon no sale en /v2/rates/mx.",
-    "enCaliente": "Aunque el archivo diga false, el servidor con token vuelve a preguntar los metadatos al SIE (cache de 24 h) y publica solo los ids que confirma. El flag de aqui es la revision humana; la de caliente es la red de seguridad."
+    "queHace": "Pide GET /series/<ids> (solo metadatos, no datos) y compara el título que devuelve el SIE contra tituloContiene de cada id, además de revisar periodicidad y fechaFin. Imprime la lista de ids confirmados.",
+    "despues": "Poner verified en true nada más para los ids que la prueba confirmó, y anotar la fecha en revisado. Un id que no pase se queda en false y su renglón no sale en /v2/rates/mx.",
+    "enCaliente": "Aunque el archivo diga false, el servidor con token vuelve a preguntar los metadatos al SIE (caché de 24 h) y publica solo los ids que confirma. El flag de aquí es la revisión humana; la de caliente es la red de seguridad."
   },
   "series": [
     {
@@ -23,7 +23,10 @@
       "verified": true,
       "periodicidad": "Diaria",
       "maxAgeDays": 5,
-      "tituloContiene": ["tipo de cambio", "fix"],
+      "tituloContiene": [
+        "tipo de cambio",
+        "fix"
+      ],
       "nota": "Pesos por dolar. Es el tipo de cambio para solventar obligaciones en moneda extranjera, publicado un dia habil despues de la fecha de determinacion."
     },
     {
@@ -35,115 +38,142 @@
       "verified": true,
       "periodicidad": "Diaria",
       "maxAgeDays": 5,
-      "tituloContiene": ["objetivo"],
+      "tituloContiene": [
+        "objetivo"
+      ],
       "nota": "Tasa de interes interbancaria a un dia, objetivo de la politica monetaria."
     },
     {
       "id": "SF43783",
       "rateId": "tiie28",
-      "label": "TIIE a 28 dias",
+      "label": "TIIE a 28 días",
       "unit": "fraction",
       "sieUnit": "percent",
       "verified": false,
       "periodicidad": "Diaria",
       "maxAgeDays": 5,
-      "tituloContiene": ["tiie", "28"],
+      "tituloContiene": [
+        "tiie",
+        "28"
+      ],
       "nota": "Tasa de interes interbancaria de equilibrio a 28 dias."
     },
     {
       "id": "SF331451",
       "rateId": "tiieFondeo",
-      "label": "TIIE de Fondeo a un dia",
+      "label": "TIIE de Fondeo a un día",
       "unit": "fraction",
       "sieUnit": "percent",
       "verified": false,
       "periodicidad": "Diaria",
       "maxAgeDays": 5,
-      "tituloContiene": ["fondeo"],
+      "tituloContiene": [
+        "fondeo"
+      ],
       "nota": "Tasa de fondeo bancario a un dia habil, la referencia nueva que sustituye a la TIIE de 28 dias en instrumentos nuevos."
     },
     {
       "id": "SF43936",
       "rateId": "cetes28",
-      "label": "CETES 28 dias",
+      "label": "CETES 28 días",
       "unit": "fraction",
       "sieUnit": "percent",
       "verified": false,
       "periodicidad": "Semanal",
       "maxAgeDays": 14,
-      "tituloContiene": ["cetes", "28"],
+      "tituloContiene": [
+        "cetes",
+        "28"
+      ],
       "nota": "Rendimiento en el mercado primario de la subasta semanal. Es la tasa libre de riesgo de /v2/rates/rf."
     },
     {
       "id": "SF43939",
       "rateId": "cetes91",
-      "label": "CETES 91 dias",
+      "label": "CETES 91 días",
       "unit": "fraction",
       "sieUnit": "percent",
       "verified": false,
       "periodicidad": "Semanal",
       "maxAgeDays": 14,
-      "tituloContiene": ["cetes", "91"],
+      "tituloContiene": [
+        "cetes",
+        "91"
+      ],
       "nota": "Rendimiento en el mercado primario de la subasta semanal."
     },
     {
       "id": "SF43942",
       "rateId": "cetes182",
-      "label": "CETES 182 dias",
+      "label": "CETES 182 días",
       "unit": "fraction",
       "sieUnit": "percent",
       "verified": false,
       "periodicidad": "Semanal",
       "maxAgeDays": 21,
-      "tituloContiene": ["cetes", "182"],
+      "tituloContiene": [
+        "cetes",
+        "182"
+      ],
       "nota": "Rendimiento en el mercado primario de la subasta semanal."
     },
     {
       "id": "SF43945",
       "rateId": "cetes364",
-      "label": "CETES 364 dias",
+      "label": "CETES 364 días",
       "unit": "fraction",
       "sieUnit": "percent",
       "verified": false,
       "periodicidad": "Semanal",
       "maxAgeDays": 35,
-      "tituloContiene": ["cetes", "364"],
+      "tituloContiene": [
+        "cetes",
+        "364"
+      ],
       "nota": "Rendimiento en el mercado primario; la subasta de 364 dias no es todas las semanas."
     },
     {
       "id": "SF43881",
       "rateId": "bonoM10",
-      "label": "Bono M a 10 anos",
+      "label": "Bono M a 10 años",
       "unit": "fraction",
       "sieUnit": "percent",
       "verified": false,
       "periodicidad": "Diaria",
       "maxAgeDays": 7,
-      "tituloContiene": ["bonos", "10"],
+      "tituloContiene": [
+        "bonos",
+        "10"
+      ],
       "nota": "Rendimiento del bono de desarrollo del Gobierno Federal a tasa fija, 10 anos."
     },
     {
       "id": "SP74625",
       "rateId": "inflationYoY",
-      "label": "Inflacion anual (INPC)",
+      "label": "Inflación anual (INPC)",
       "unit": "fraction",
       "sieUnit": "percent",
       "verified": false,
       "periodicidad": "Quincenal",
       "maxAgeDays": 45,
-      "tituloContiene": ["inflacion", "anual"],
+      "tituloContiene": [
+        "inflacion",
+        "anual"
+      ],
       "nota": "Variacion anual del INPC."
     },
     {
       "id": "SP74626",
       "rateId": "coreInflationYoY",
-      "label": "Inflacion subyacente anual",
+      "label": "Inflación subyacente anual",
       "unit": "fraction",
       "sieUnit": "percent",
       "verified": false,
       "periodicidad": "Quincenal",
       "maxAgeDays": 45,
-      "tituloContiene": ["subyacente"],
+      "tituloContiene": [
+        "subyacente"
+      ],
       "nota": "Variacion anual del INPC subyacente."
     },
     {
@@ -155,7 +185,9 @@
       "verified": false,
       "periodicidad": "Diaria",
       "maxAgeDays": 5,
-      "tituloContiene": ["udis"],
+      "tituloContiene": [
+        "udis"
+      ],
       "nota": "Pesos por unidad de inversion."
     }
   ]

@@ -314,6 +314,23 @@ def test_catalogo_esta_completo_y_bien_formado():
     assert vistos == ids_contrato, f"faltan ids del contrato en el catálogo: {sorted(ids_contrato - vistos)}"
 
 
+def test_las_etiquetas_del_catalogo_llevan_acentos():
+    """Las etiquetas del cat\u00e1logo se publican tal cual en ``MxRateItem.label``.
+
+    Sin token ninguna de estas sale, as\u00ed que el defecto ser\u00eda invisible hasta que el due\u00f1o consiga
+    uno: de ah\u00ed la prueba. Se revisa por palabra completa para no cazar "dia" dentro de otra cosa.
+    """
+    import re
+
+    sin_acento = ("dias", "dia", "anos", "Inflacion", "numero", "periodicidad")
+    for sid, item in banxico.catalog().items():
+        etiqueta = item["label"]
+        for palabra in sin_acento:
+            assert not re.search(rf"\b{palabra}\b", etiqueta), (
+                f"{sid} publica '{etiqueta}' sin acentos y eso se ve en la app"
+            )
+
+
 def test_series_for_resuelve_el_id_del_contrato():
     assert banxico.series_for("cetes28") == "SF43936"
     assert banxico.series_for("fix") == banxico.SERIES_FIX

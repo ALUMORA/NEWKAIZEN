@@ -19,7 +19,7 @@ from kaizen_api.providers.yahoo.session import _session
 
 
 def _cboe_vix():
-    """VIX desde el CSV público de CBOE — funciona desde cloud."""
+    """VIX desde el CSV público de CBOE: funciona desde cloud."""
     try:
         resp = _session.get(
             "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv",
@@ -110,7 +110,7 @@ def _get_macro_fresh() -> dict:
 
 
 def get_macro() -> dict:
-    """VIX, spread 10Y-2Y, DXY — indicadores macro clave. Cacheado 5 min."""
+    """VIX, spread 10Y-2Y, DXY: indicadores macro clave. Cacheado 5 min."""
     return _cached("macro", _get_macro_fresh, ttl=300, ok=bool)  # vacío = todas las fuentes fallaron
 
 

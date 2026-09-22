@@ -25,7 +25,7 @@ from kaizen_api.providers.yahoo.session import yft
 
 
 def get_market_news() -> dict:
-    """Noticias de mercados — intenta yfinance y luego RSS como fallback."""
+    """Noticias de mercados: intenta yfinance y luego RSS como fallback."""
     seen, all_news = set(), []
 
     # Primario: yfinance .news (puede fallar en cloud)
