@@ -1,0 +1,974 @@
+{
+  "cases": [
+    {
+      "name": "cetesPerPeriod/y0.0425-d1",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.0425,
+        "days": 1,
+        "tenorDays": 28
+      },
+      "expected": 0.0001178678107440767,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.0425-d7",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.0425,
+        "days": 7,
+        "tenorDays": 28
+      },
+      "expected": 0.0008253664817647888,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.0425-d28",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.0425,
+        "days": 28,
+        "tenorDays": 28
+      },
+      "expected": 0.0033055555555554506,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.0425-d30",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.0425,
+        "days": 30,
+        "tenorDays": 28
+      },
+      "expected": 0.0035420843529809787,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.0425-d91",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.0425,
+        "days": 91,
+        "tenorDays": 28
+      },
+      "expected": 0.010783061329507904,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.0425-d182",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.0425,
+        "days": 182,
+        "tenorDays": 28
+      },
+      "expected": 0.02168239707065167,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.0425-d365",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.0425,
+        "days": 365,
+        "tenorDays": 28
+      },
+      "expected": 0.043957955020888395,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesEffectiveAnnual/y0.0425",
+      "fn": "cetesEffectiveAnnual",
+      "input": {
+        "annualYield": 0.0425,
+        "tenorDays": 28
+      },
+      "expected": 0.043957955020888395,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/plazo91-y0.0425",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.0425,
+        "days": 7,
+        "tenorDays": 91
+      },
+      "expected": 0.0008223193754532954,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/plazo182-y0.0425",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.0425,
+        "days": 7,
+        "tenorDays": 182
+      },
+      "expected": 0.0008179704562989443,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/plazo364-y0.0425",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.0425,
+        "days": 7,
+        "tenorDays": 364
+      },
+      "expected": 0.0008094532592046733,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.07-d1",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.07,
+        "days": 1,
+        "tenorDays": 28
+      },
+      "expected": 0.00019393584000892972,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.07-d7",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.07,
+        "days": 7,
+        "tenorDays": 28
+      },
+      "expected": 0.001358340968717453,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.07-d28",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.07,
+        "days": 28,
+        "tenorDays": 28
+      },
+      "expected": 0.005444444444444363,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.07-d30",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.07,
+        "days": 30,
+        "tenorDays": 28
+      },
+      "expected": 0.0058344656861570865,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.07-d91",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.07,
+        "days": 91,
+        "tenorDays": 28
+      },
+      "expected": 0.01780306885882954,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.07-d182",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.07,
+        "days": 182,
+        "tenorDays": 28
+      },
+      "expected": 0.03592308697845148,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.07-d365",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.07,
+        "days": 365,
+        "tenorDays": 28
+      },
+      "expected": 0.07334476179110117,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesEffectiveAnnual/y0.07",
+      "fn": "cetesEffectiveAnnual",
+      "input": {
+        "annualYield": 0.07,
+        "tenorDays": 28
+      },
+      "expected": 0.07334476179110117,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/plazo91-y0.07",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.07,
+        "days": 7,
+        "tenorDays": 91
+      },
+      "expected": 0.0013501198436978168,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/plazo182-y0.07",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.07,
+        "days": 7,
+        "tenorDays": 182
+      },
+      "expected": 0.001338475506086123,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/plazo364-y0.07",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.07,
+        "days": 7,
+        "tenorDays": 364
+      },
+      "expected": 0.0013159666546966875,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.09-d1",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.09,
+        "days": 1,
+        "tenorDays": 28
+      },
+      "expected": 0.0002491600972371888,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.09-d7",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.09,
+        "days": 7,
+        "tenorDays": 28
+      },
+      "expected": 0.0017454249180117731,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.09-d28",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.09,
+        "days": 28,
+        "tenorDays": 28
+      },
+      "expected": 0.006999999999999895,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.09-d30",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.09,
+        "days": 30,
+        "tenorDays": 28
+      },
+      "expected": 0.007501870951154954,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.09-d91",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.09,
+        "days": 91,
+        "tenorDays": 28
+      },
+      "expected": 0.02292967901743337,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.09-d182",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.09,
+        "days": 182,
+        "tenorDays": 28
+      },
+      "expected": 0.046385128214709415,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.09-d365",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.09,
+        "days": 365,
+        "tenorDays": 28
+      },
+      "expected": 0.09519464738017547,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesEffectiveAnnual/y0.09",
+      "fn": "cetesEffectiveAnnual",
+      "input": {
+        "annualYield": 0.09,
+        "tenorDays": 28
+      },
+      "expected": 0.09519464738017547,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/plazo91-y0.09",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.09,
+        "days": 7,
+        "tenorDays": 91
+      },
+      "expected": 0.001731888591834485,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/plazo182-y0.09",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.09,
+        "days": 7,
+        "tenorDays": 182
+      },
+      "expected": 0.0017128205845799993,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/plazo364-y0.09",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.09,
+        "days": 7,
+        "tenorDays": 364
+      },
+      "expected": 0.0016763016340988202,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.11-d1",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.11,
+        "days": 1,
+        "tenorDays": 28
+      },
+      "expected": 0.0003043021550912517,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.11-d7",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.11,
+        "days": 7,
+        "tenorDays": 28
+      },
+      "expected": 0.0021320606680137466,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.11-d28",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.11,
+        "days": 28,
+        "tenorDays": 28
+      },
+      "expected": 0.00855555555555565,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.11-d30",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.11,
+        "days": 30,
+        "tenorDays": 28
+      },
+      "expected": 0.009169460205769697,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.11-d91",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.11,
+        "days": 91,
+        "tenorDays": 28
+      },
+      "expected": 0.02807413858321728,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.11-d182",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.11,
+        "days": 182,
+        "tenorDays": 28
+      },
+      "expected": 0.05693643442362406,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.11-d365",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.11,
+        "days": 365,
+        "tenorDays": 28
+      },
+      "expected": 0.11745456680042521,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesEffectiveAnnual/y0.11",
+      "fn": "cetesEffectiveAnnual",
+      "input": {
+        "annualYield": 0.11,
+        "tenorDays": 28
+      },
+      "expected": 0.11745456680042521,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/plazo91-y0.11",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.11,
+        "days": 7,
+        "tenorDays": 91
+      },
+      "expected": 0.0021119193398213554,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/plazo182-y0.11",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.11,
+        "days": 7,
+        "tenorDays": 182
+      },
+      "expected": 0.0020837006418352733,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/plazo364-y0.11",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.11,
+        "days": 7,
+        "tenorDays": 364
+      },
+      "expected": 0.0020301447023500785,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.1125-d1",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.1125,
+        "days": 1,
+        "tenorDays": 28
+      },
+      "expected": 0.00031118914508576623,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.1125-d7",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.1125,
+        "days": 7,
+        "tenorDays": 28
+      },
+      "expected": 0.0021803586830233534,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.1125-d28",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.1125,
+        "days": 28,
+        "tenorDays": 28
+      },
+      "expected": 0.008750000000000036,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.1125-d30",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.1125,
+        "days": 30,
+        "tenorDays": 28
+      },
+      "expected": 0.00937792178623309,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.1125-d91",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.1125,
+        "days": 91,
+        "tenorDays": 28
+      },
+      "expected": 0.02871845278213292,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.1125-d182",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.1125,
+        "days": 182,
+        "tenorDays": 28
+      },
+      "expected": 0.05826165509446524,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.1125-d365",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.1125,
+        "days": 365,
+        "tenorDays": 28
+      },
+      "expected": 0.12026623688444205,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesEffectiveAnnual/y0.1125",
+      "fn": "cetesEffectiveAnnual",
+      "input": {
+        "annualYield": 0.1125,
+        "tenorDays": 28
+      },
+      "expected": 0.12026623688444205,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/plazo91-y0.1125",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.1125,
+        "days": 7,
+        "tenorDays": 91
+      },
+      "expected": 0.0021593017996981434,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/plazo182-y0.1125",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.1125,
+        "days": 7,
+        "tenorDays": 182
+      },
+      "expected": 0.0021298202623385443,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/plazo364-y0.1125",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.1125,
+        "days": 7,
+        "tenorDays": 364
+      },
+      "expected": 0.0020739303131522835,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.15-d1",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.15,
+        "days": 1,
+        "tenorDays": 28
+      },
+      "expected": 0.000414340666938795,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.15-d7",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.15,
+        "days": 7,
+        "tenorDays": 28
+      },
+      "expected": 0.002903992401220634,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.15-d28",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.15,
+        "days": 28,
+        "tenorDays": 28
+      },
+      "expected": 0.011666666666666714,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.15-d30",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.15,
+        "days": 30,
+        "tenorDays": 28
+      },
+      "expected": 0.012505189630539926,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.15-d91",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.15,
+        "days": 91,
+        "tenorDays": 28
+      },
+      "expected": 0.038416743839889245,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.15-d182",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.15,
+        "days": 182,
+        "tenorDays": 28
+      },
+      "expected": 0.0783093338870382,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/y0.15-d365",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.15,
+        "days": 365,
+        "tenorDays": 28
+      },
+      "expected": 0.16323279458083118,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesEffectiveAnnual/y0.15",
+      "fn": "cetesEffectiveAnnual",
+      "input": {
+        "annualYield": 0.15,
+        "tenorDays": 28
+      },
+      "expected": 0.16323279458083118,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/plazo91-y0.15",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.15,
+        "days": 7,
+        "tenorDays": 91
+      },
+      "expected": 0.0028668322130398494,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/plazo182-y0.15",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.15,
+        "days": 7,
+        "tenorDays": 182
+      },
+      "expected": 0.002815323102344003,
+      "tol": 1e-13
+    },
+    {
+      "name": "cetesPerPeriod/plazo364-y0.15",
+      "fn": "cetesPerPeriod",
+      "input": {
+        "annualYield": 0.15,
+        "days": 7,
+        "tenorDays": 364
+      },
+      "expected": 0.002719270692152387,
+      "tol": 1e-13
+    },
+    {
+      "name": "annualToPerPeriod/0.05-k12",
+      "fn": "annualToPerPeriod",
+      "input": {
+        "annualRate": 0.05,
+        "k": 12
+      },
+      "expected": 0.0040741237836483535,
+      "tol": 1e-13
+    },
+    {
+      "name": "annualToPerPeriod/0.05-k52",
+      "fn": "annualToPerPeriod",
+      "input": {
+        "annualRate": 0.05,
+        "k": 52
+      },
+      "expected": 0.0009387127031117437,
+      "tol": 1e-13
+    },
+    {
+      "name": "annualToPerPeriod/0.05-k252",
+      "fn": "annualToPerPeriod",
+      "input": {
+        "annualRate": 0.05,
+        "k": 252
+      },
+      "expected": 0.00019363050654397362,
+      "tol": 1e-13
+    },
+    {
+      "name": "annualToPerPeriod/0.1174545668-k12",
+      "fn": "annualToPerPeriod",
+      "input": {
+        "annualRate": 0.1174545668,
+        "k": 12
+      },
+      "expected": 0.009297404034922074,
+      "tol": 1e-13
+    },
+    {
+      "name": "annualToPerPeriod/0.1174545668-k52",
+      "fn": "annualToPerPeriod",
+      "input": {
+        "annualRate": 0.1174545668,
+        "k": 52
+      },
+      "expected": 0.002137924234324684,
+      "tol": 1e-13
+    },
+    {
+      "name": "annualToPerPeriod/0.1174545668-k252",
+      "fn": "annualToPerPeriod",
+      "input": {
+        "annualRate": 0.1174545668,
+        "k": 252
+      },
+      "expected": 0.00044078517507206705,
+      "tol": 1e-13
+    },
+    {
+      "name": "annualToPerPeriod/0.25-k12",
+      "fn": "annualToPerPeriod",
+      "input": {
+        "annualRate": 0.25,
+        "k": 12
+      },
+      "expected": 0.018769265121506118,
+      "tol": 1e-13
+    },
+    {
+      "name": "annualToPerPeriod/0.25-k52",
+      "fn": "annualToPerPeriod",
+      "input": {
+        "annualRate": 0.25,
+        "k": 52
+      },
+      "expected": 0.004300442618710099,
+      "tol": 1e-13
+    },
+    {
+      "name": "annualToPerPeriod/0.25-k252",
+      "fn": "annualToPerPeriod",
+      "input": {
+        "annualRate": 0.25,
+        "k": 252
+      },
+      "expected": 0.0008858824452568914,
+      "tol": 1e-13
+    },
+    {
+      "name": "changeInBp/0.08-a-0.0825",
+      "fn": "changeInBp",
+      "input": {
+        "from": 0.08,
+        "to": 0.0825
+      },
+      "expected": 25.00000000000002,
+      "tol": 1e-09
+    },
+    {
+      "name": "changeInBp/0.1125-a-0.105",
+      "fn": "changeInBp",
+      "input": {
+        "from": 0.1125,
+        "to": 0.105
+      },
+      "expected": -75.00000000000007,
+      "tol": 1e-09
+    },
+    {
+      "name": "changeInBp/0.0-a-0.0001",
+      "fn": "changeInBp",
+      "input": {
+        "from": 0.0,
+        "to": 0.0001
+      },
+      "expected": 1.0,
+      "tol": 1e-09
+    },
+    {
+      "name": "rfSeriesForDates/semanal-con-publicacion-los-jueves",
+      "fn": "rfSeriesForDates",
+      "input": {
+        "rfSeries": {
+          "dates": [
+            "2025-12-18",
+            "2025-12-25",
+            "2026-01-01",
+            "2026-01-08",
+            "2026-01-15",
+            "2026-01-22",
+            "2026-01-29",
+            "2026-02-05",
+            "2026-02-12",
+            "2026-02-19",
+            "2026-02-26",
+            "2026-03-05",
+            "2026-03-12",
+            "2026-03-19",
+            "2026-03-26",
+            "2026-04-02"
+          ],
+          "values": [
+            0.1125,
+            0.112,
+            0.1115,
+            0.111,
+            0.1105,
+            0.11,
+            0.1095,
+            0.109,
+            0.1085,
+            0.108,
+            0.1075,
+            0.107,
+            0.1065,
+            0.106,
+            0.1055,
+            0.105
+          ]
+        },
+        "targetDates": [
+          "2026-01-05",
+          "2026-01-12",
+          "2026-01-19",
+          "2026-01-26",
+          "2026-02-02",
+          "2026-02-09",
+          "2026-02-16",
+          "2026-02-23",
+          "2026-03-02",
+          "2026-03-09",
+          "2026-03-16",
+          "2026-03-23",
+          "2026-03-30",
+          "2026-04-06"
+        ],
+        "interval": "1wk"
+      },
+      "expected": [
+        0.0021610403149745494,
+        0.002151380711991502,
+        0.0021417208296774515,
+        0.0021320606680137466,
+        0.0021224002269812914,
+        0.002112739506561212,
+        0.002103078506735079,
+        0.002093417227483574,
+        0.0020837556687880454,
+        0.0020740938306296197,
+        0.002064431712989423,
+        0.0020547693158483593,
+        0.002045106639187999
+      ],
+      "tol": 1e-13
+    },
+    {
+      "name": "rfSeriesForDates/serie-que-se-corta-deja-nulos",
+      "fn": "rfSeriesForDates",
+      "input": {
+        "rfSeries": {
+          "dates": [
+            "2025-12-18",
+            "2025-12-25",
+            "2026-01-01",
+            "2026-01-08"
+          ],
+          "values": [
+            0.1125,
+            0.112,
+            0.1115,
+            0.111
+          ]
+        },
+        "targetDates": [
+          "2026-01-05",
+          "2026-01-12",
+          "2026-01-19",
+          "2026-01-26",
+          "2026-02-02",
+          "2026-02-09",
+          "2026-02-16",
+          "2026-02-23",
+          "2026-03-02",
+          "2026-03-09",
+          "2026-03-16",
+          "2026-03-23",
+          "2026-03-30",
+          "2026-04-06"
+        ],
+        "interval": "1wk"
+      },
+      "expected": [
+        0.0021610403149745494,
+        0.002151380711991502,
+        0.002151380711991502,
+        0.002151380711991502,
+        0.002151380711991502,
+        0.002151380711991502,
+        0.002151380711991502,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      ],
+      "tol": 1e-13
+    }
+  ]
+}
