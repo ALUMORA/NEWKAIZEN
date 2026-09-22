@@ -2,6 +2,9 @@
 
 Every test runs with the network blocked (sockets, DNS and libcurl) unless it is marked
 ``@pytest.mark.live``; live tests are skipped unless ``KAIZEN_LIVE=1``.
+
+``KAIZEN_REPLAY_SET`` picks the recorded set for the ``replay_set``/``replay``/``frozen_time``
+fixtures; it may stack layers, e.g. ``KAIZEN_REPLAY_SET=2026-09-22,2026-09-22-b2a`` (first hit wins).
 """
 
 from __future__ import annotations
@@ -12,7 +15,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from tests.replay import DEFAULT_SET, FixtureStore, ReplaySession, block_network, replaying, unblock_network
+from tests.replay import DEFAULT_SET, ReplaySession, block_network, format_sets, open_sets, replaying, unblock_network
 from tests.replay import guard as _guard
 
 
@@ -42,16 +45,19 @@ def _offline_by_default(request: pytest.FixtureRequest) -> Iterator[None]:
 
 @pytest.fixture(scope="session")
 def replay_set() -> str:
-    """Name of the recorded fixture set (``tests/fixtures/recorded/<set>``)."""
-    return os.environ.get("KAIZEN_REPLAY_SET", DEFAULT_SET)
+    """Recorded set(s) under ``tests/fixtures/recorded/``: one name or ``"base,capa"`` in lookup order."""
+    return format_sets(os.environ.get("KAIZEN_REPLAY_SET") or DEFAULT_SET)
 
 
 @pytest.fixture
 def frozen_time(replay_set: str) -> Iterator[_dt.datetime]:
-    """Freeze the clock at the instant the set was recorded (``index.json`` → ``frozen_at``)."""
+    """Freeze the clock at the instant the set was recorded (``index.json`` → ``frozen_at``).
+
+    With layers it is the first layer's ``frozen_at``, which every upper layer inherits.
+    """
     import time_machine
 
-    raw = FixtureStore.open(replay_set).frozen_at
+    raw = open_sets(replay_set).frozen_at
     if not raw:
         pytest.skip(f"el set {replay_set} no tiene frozen_at")
     instant = _dt.datetime.fromisoformat(raw)

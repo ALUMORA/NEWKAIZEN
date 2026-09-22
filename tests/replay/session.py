@@ -1,4 +1,10 @@
-"""Record/replay sessions: install the stand-ins, freeze time, block the network."""
+"""Record/replay sessions: install the stand-ins, freeze time, block the network.
+
+A session takes one recorded set or several stacked layers (``"2026-09-22,2026-09-22-b2a"``):
+replay looks each key up layer by layer (first hit wins, a miss only after every layer); recording
+serves keys found in earlier layers from those layers as they are and writes new calls ONLY to the
+last layer. The clock is the first layer's ``frozen_at`` and a new top layer inherits it.
+"""
 
 from __future__ import annotations
 
@@ -24,7 +30,7 @@ from .proxies import (
     make_ticker_class,
 )
 from .serialize import SerializationError, decode, encode
-from .store import DEFAULT_SET, FixtureStore
+from .store import DEFAULT_SET, FIXTURES_ROOT, FixtureStore, LayeredStore, SetSpec, available_sets, parse_sets
 
 _real_sleep = time.sleep
 _RATE_LIMIT_MARKERS = ("too many requests", "rate limited", "yfratelimiterror")
@@ -39,6 +45,10 @@ class ReplayMiss(BaseException):  # noqa: N818 - public name fixed by the task c
         self.set_name = set_name
 
     def __str__(self) -> str:
+        names = [n for n in self.set_name.split(",") if n]
+        if len(names) > 1:
+            listed = ", ".join(repr(n) for n in names)
+            return f"Llamada no grabada en ninguno de los sets {listed}: {self.key}"
         return f"Llamada no grabada en el set {self.set_name!r}: {self.key}"
 
 
@@ -115,6 +125,14 @@ def _is_empty(value: Any) -> bool:
     return False
 
 
+def _missing_sets_message(missing: list[FixtureStore], root: Path | None, *, what: str) -> str:
+    base = Path(root) if root else FIXTURES_ROOT
+    names = ", ".join(repr(layer.name) for layer in missing)
+    known = ", ".join(available_sets(root)) or "ninguno"
+    where = ", ".join(str(layer.dir) for layer in missing)
+    return f"No existe el set grabado {names} ({where}){what}. Sets disponibles en {base}: {known}."
+
+
 def _rank(rec: dict | None) -> int:
     if rec is None:
         return -1
@@ -171,7 +189,7 @@ class ReplaySession:
 
     def __init__(
         self,
-        set_name: str = DEFAULT_SET,
+        set_name: SetSpec = DEFAULT_SET,
         *,
         mode: str = "replay",
         root: Path | None = None,
@@ -187,11 +205,23 @@ class ReplaySession:
     ):
         if mode not in ("replay", "record"):
             raise ValueError(f"modo inválido: {mode}")
-        self.set_name = set_name
+        self.set_names = parse_sets(set_name)
+        self.set_name = ",".join(self.set_names)
         self.mode = mode
-        self.store = FixtureStore.open(set_name, root)
-        if mode == "replay" and not self.store.exists:
-            raise FileNotFoundError(f"No existe el set grabado {self.store.dir}")
+        self.store = LayeredStore.open(self.set_names, root)
+        if mode == "replay" and self.store.missing():
+            raise FileNotFoundError(_missing_sets_message(self.store.missing(), root, what=""))
+        if mode == "record":
+            missing_bases = [layer for layer in self.store.bases if not layer.exists]
+            if missing_bases:
+                raise FileNotFoundError(
+                    _missing_sets_message(
+                        missing_bases,
+                        root,
+                        what=": las capas base tienen que existir, al grabar solo se crea la última",
+                    )
+                )
+        self.store.check_clock()
         self.freeze_time = freeze_time
         self.block_network = (mode == "replay") if block_network is None else block_network
         self.fast_sleep = (mode == "replay") if fast_sleep is None else fast_sleep
@@ -254,15 +284,21 @@ class ReplaySession:
             "as_completed": concurrent.futures.as_completed,
             "sleep": time.sleep,
         }
-        if self.mode == "record" and not self.store.frozen_at:
+        top = self.store.top
+        if self.mode == "record" and not top.frozen_at:
+            # A new layer inherits the clock of the layers under it, so keys that depend on "now"
+            # (date ranges in URLs) are the same when recording and when replaying the stack.
             now = self.real_now().replace(microsecond=0)
-            self.store.set_meta(
-                set=self.set_name,
-                frozen_at=now.isoformat(),
-                created_at=now.isoformat(),
-                yfinance_version=getattr(yfinance, "__version__", "?"),
-            )
-            self.store.save_index()
+            fields: dict[str, Any] = {
+                "set": top.name,
+                "frozen_at": self.store.frozen_at or now.isoformat(),
+                "created_at": now.isoformat(),
+                "yfinance_version": getattr(yfinance, "__version__", "?"),
+            }
+            if self.store.bases:
+                fields["layered_on"] = [layer.name for layer in self.store.bases]
+            top.set_meta(**fields)
+            top.save_index()
 
         ticker_cls = make_ticker_class(self)
         download = make_download(self)
@@ -360,7 +396,13 @@ class ReplaySession:
         with self._lock:
             key_lock = self._key_locks.setdefault(key, threading.Lock())
         with key_lock:
-            rec = self.store.get(key)
+            layer, rec = self.store.locate(key)
+            if rec is not None and layer is not self.store.top:
+                # An earlier layer is read-only and shadows the top one: served as recorded, even a
+                # recorded failure and even with refresh. Re-record it in its own set, never here.
+                self.stats["hits"] += 1
+                self.stats["base_hits"] += 1
+                return self._materialize(rec, decoder)
             if rec is not None and (key in self._seen or (not self.refresh and _rank(rec) == 2)):
                 self.stats["hits"] += 1
                 return self._materialize(rec, decoder)
@@ -376,7 +418,7 @@ class ReplaySession:
                     "run_id": self.run_id,
                 }
                 self.store.put(key, record)
-                rec = self.store.get(key)
+                rec = self.store.top.get(key)
             else:
                 self.stats["kept_previous"] += 1
             if rec.get("kind") != "value":
@@ -449,23 +491,33 @@ class ReplaySession:
 
 
 @contextmanager
-def replaying(set_name: str = DEFAULT_SET, **kwargs: Any) -> Iterator[ReplaySession]:
-    """Serve every yfinance/HTTP call from fixtures. Network blocked, time frozen, sleeps skipped."""
+def replaying(set_name: SetSpec = DEFAULT_SET, **kwargs: Any) -> Iterator[ReplaySession]:
+    """Serve every yfinance/HTTP call from fixtures. Network blocked, time frozen, sleeps skipped.
+
+    ``set_name`` may stack layers (``"2026-09-22,2026-09-22-b2a"``): first hit wins.
+    """
     session = ReplaySession(set_name, mode="replay", **kwargs)
     with session:
         yield session
 
 
 @contextmanager
-def recording(set_name: str = DEFAULT_SET, **kwargs: Any) -> Iterator[ReplaySession]:
-    """Serve recorded calls from fixtures and fetch (throttled) + store everything else."""
+def recording(set_name: SetSpec = DEFAULT_SET, **kwargs: Any) -> Iterator[ReplaySession]:
+    """Serve recorded calls from fixtures and fetch (throttled) + store everything else.
+
+    With several layers, keys found in earlier layers come from them untouched and every new call
+    is written to the LAST layer only (created with its own ``index.json`` if needed).
+    """
     session = ReplaySession(set_name, mode="record", **kwargs)
     with session:
         yield session
 
 
-def install_replay(set_name: str = DEFAULT_SET, **kwargs: Any) -> ReplaySession:
-    """Install replay process-wide (for servers/scripts). Call ``.uninstall()`` to undo."""
+def install_replay(set_name: SetSpec = DEFAULT_SET, **kwargs: Any) -> ReplaySession:
+    """Install replay process-wide (for servers/scripts). Call ``.uninstall()`` to undo.
+
+    Accepts the same one-or-several-layers spec as :func:`replaying`.
+    """
     return ReplaySession(set_name, mode="replay", **kwargs).install()
 
 

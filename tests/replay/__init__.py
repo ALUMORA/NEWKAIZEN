@@ -20,6 +20,13 @@ Usage::
     session = install_replay("2026-09-22")  # process-wide, e.g. for a server
     ...
     session.uninstall()
+
+Layers: every entry point takes an ordered comma-separated list of sets::
+
+    with replaying("2026-09-22,2026-09-22-b2a"):   # key by key, the first layer that has it wins
+        ...
+    with recording("2026-09-22,2026-09-22-b2a"):   # new calls go ONLY to 2026-09-22-b2a
+        ...
 """
 
 from .golden import (
@@ -47,24 +54,38 @@ from .session import (
     recording,
     replaying,
 )
-from .store import DEFAULT_SET, FIXTURES_ROOT, FixtureStore
+from .store import (
+    DEFAULT_SET,
+    FIXTURES_ROOT,
+    FixtureSetError,
+    FixtureStore,
+    LayeredStore,
+    available_sets,
+    format_sets,
+    open_sets,
+    parse_sets,
+)
 
 __all__ = [
     "DEFAULT_SET",
     "FIXTURES_ROOT",
     "GOLDENS_DIR",
+    "FixtureSetError",
     "FixtureStore",
+    "LayeredStore",
     "NetworkBlocked",
     "RecordedUpstreamError",
     "ReplayMiss",
     "ReplaySession",
     "active_session",
+    "available_sets",
     "block_network",
     "call_captured",
     "compare",
     "decode",
     "encode",
     "find_volatile_paths",
+    "format_sets",
     "golden_name",
     "install_replay",
     "list_goldens",
@@ -72,7 +93,9 @@ __all__ = [
     "load_module",
     "no_network",
     "normalize",
+    "open_sets",
     "ordered_as_completed",
+    "parse_sets",
     "recording",
     "replaying",
     "reset_backend_state",
