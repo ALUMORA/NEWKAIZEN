@@ -178,20 +178,35 @@ export function matVec(matrix, vector) {
 
 /**
  * Pesos de un objeto `{símbolo: peso}` en el orden de `symbols`, normalizados para que sumen 1.
- * @param {Record<string, number>} weights
+ *
+ * Dos cosas que se rechazan a propósito, porque las dos se veían bien en pantalla y estaban mal:
+ *
+ * 1. **Un peso para un símbolo que no está en `symbols`.** Antes solo se leían las llaves pedidas
+ *    y el resto se repartía en silencio entre los demás: con pesos A .5, B .3 y C .2 sobre un
+ *    panel que solo trae A y B salía un backtest 62.5/37.5 sin ninguna señal de que el 20 % de C
+ *    desapareció. La ruta es realista, porque `alignPanel` descarta símbolos por falta de
+ *    historia (y suele tocarle al más volátil), así que la gráfica salía plausible y equivocada.
+ * 2. **Un peso negativo.** Esta es una app de solo largos. La guarda vieja era `|total| < EPS`,
+ *    o sea que dos pesos de −0.5 sumaban −1, se dividían entre −1 y salían como .52 y .48: un
+ *    error de captura se volvía un portafolio con pinta de bueno y con rendimiento positivo.
+ *
+ * @param {Record<string, number>} weights pesos NO negativos, exactamente los de `symbols`
  * @param {string[]} symbols
- * @returns {number[] | null} null si falta algún símbolo, hay valores no finitos o la suma es ~0
+ * @returns {number[] | null} null si falta algún símbolo, si sobra una llave que no está en
+ *   `symbols`, si hay valores no finitos o negativos, o si la suma no es positiva
  */
 export function normalizedWeights(weights, symbols) {
-  if (!weights || typeof weights !== 'object') return null
+  if (!weights || typeof weights !== 'object' || !Array.isArray(symbols)) return null
+  const known = new Set(symbols)
+  for (const key of Object.keys(weights)) if (!known.has(key)) return null
   /** @type {number[]} */
   const raw = new Array(symbols.length)
   for (let i = 0; i < symbols.length; i++) {
     const w = weights[symbols[i]]
-    if (!isNum(w)) return null
+    if (!isNum(w) || w < 0) return null
     raw[i] = w
   }
   const total = sumOf(raw)
-  if (Math.abs(total) < EPS) return null
+  if (total < EPS) return null
   return raw.map((w) => w / total)
 }

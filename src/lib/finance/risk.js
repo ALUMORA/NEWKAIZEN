@@ -114,9 +114,19 @@ export function exposureBy(positions, key) {
 
 /**
  * Exposición a una moneda distinta a la de reporte, como fracción del portafolio.
+ *
+ * Si alguna posición no trae `currency`, la respuesta es `null` y la pantalla muestra "s/d". Es
+ * a propósito: antes esa posición caía del lado extranjero (porque su grupo es `key: null` y
+ * `null !== 'MXN'`) y la pantalla acababa afirmando "33 % en moneda extranjera" cuando la verdad
+ * es que no se sabe. Un dato ausente no se convierte en una afirmación.
+ *
+ * Para ver el detalle cuando esto devuelve null, usen `exposureBy(positions, 'currency')`, que sí
+ * separa el grupo desconocido en `key: null` en vez de esconderlo.
+ *
  * @param {{ value: number, currency?: string }[]} positions posiciones ya valuadas en la moneda base
  * @param {string} baseCurrency moneda de reporte, por ejemplo 'MXN'
- * @returns {number | null} fracción del valor en monedas distintas a la base
+ * @returns {number | null} fracción del valor en monedas distintas a la base; null si las
+ *   posiciones no sirven, si el total es ~0 o si a alguna le falta la moneda
  */
 export function foreignExposure(positions, baseCurrency) {
   const groups = exposureBy(positions, 'currency')
@@ -124,6 +134,7 @@ export function foreignExposure(positions, baseCurrency) {
   let foreign = 0
   let total = 0
   for (const group of groups) {
+    if (group.key === null) return null
     total += group.value
     if (group.key !== baseCurrency) foreign += group.value
   }

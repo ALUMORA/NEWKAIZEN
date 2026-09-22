@@ -179,10 +179,26 @@ const C = [-7.784894002430293e-3, -3.223964580411365e-1, -2.400758277161838, -2.
 const D = [7.784695709041462e-3, 3.224671290700398e-1, 2.445134137142996, 3.754408661907416]
 const P_LOW = 0.02425
 
+/** |z| a partir del cual el refinamiento de Halley estorba en vez de ayudar (ver normalInvCdf). */
+const HALLEY_MAX_Z = 5
+
 /**
  * Inversa de la acumulada normal estándar (cuantil z de una probabilidad p), por Acklam con un
- * paso de refinamiento de Halley usando `normalCdf`. Queda al nivel del doble, que es lo que
- * necesita el VaR paramétrico: con la aproximación cruda el 95 % se movía en el sexto decimal.
+ * paso de refinamiento de Halley usando `normalCdf`. Con la aproximación cruda el VaR al 95 % se
+ * movía en el sexto decimal, que es justo lo que este refinamiento vino a arreglar.
+ *
+ * Exactitud medida contra `scipy.stats.norm.ppf` en 25 valores de p de 1e−13 a 1 − 1e−13, y esto
+ * es lo que se promete, ni más:
+ * - p entre 1e−6 y 1 − 1e−6: error relativo ≤ 1e−11 (peor caso medido 7.2e−12). Ahí viven todos
+ *   los niveles de confianza que usa la app (.90 a .9999), y ahí está amarrado con casos golden.
+ * - fuera de ese rango: Acklam crudo, error relativo ≤ 2e−9 (peor caso medido 1.1e−9), que es su
+ *   precisión de diseño. También hay casos golden en p = 1e−8 y 1 − 1e−8 para que no se afloje.
+ *
+ * El refinamiento se salta en las colas a propósito, porque ahí EMPEORA. `normalCdf` calcula la
+ * cola superior como 1 − Φ(−z), que no tiene precisión relativa cuando Φ ya vale casi 1, así que
+ * el residual `cdf − p` del paso de Halley es puro ruido: en p = 1 − 1e−12 el "refinamiento"
+ * llegaba a un error de 6.6e−6, mil veces peor que no haberlo hecho.
+ *
  * @param {number} p probabilidad en (0, 1)
  * @returns {number | null} null fuera de (0, 1) o si p no es número
  */
@@ -200,6 +216,10 @@ export function normalInvCdf(p) {
     const q = Math.sqrt(-2 * Math.log(1 - p))
     x = -(((((C[0] * q + C[1]) * q + C[2]) * q + C[3]) * q + C[4]) * q + C[5]) / ((((D[0] * q + D[1]) * q + D[2]) * q + D[3]) * q + 1)
   }
+  // En las colas el residual de Halley es ruido de cancelación, así que ahí mandamos el Acklam
+  // crudo. El corte se midió contra scipy: entre 4.8 y 5.5 el resultado es idéntico (peor caso
+  // 7.2e−12 adentro del rango útil y 1.1e−9 afuera), así que 5 queda a media meseta.
+  if (Math.abs(x) > HALLEY_MAX_Z) return x
   const cdf = normalCdf(x)
   const pdf = normalPdf(x)
   if (cdf === null || pdf === null || pdf < EPS) return x

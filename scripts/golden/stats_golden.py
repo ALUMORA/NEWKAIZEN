@@ -129,6 +129,21 @@ def build() -> list[dict]:
                 "tol": 1e-11,
             }
         )
+
+    # Colas extremas, con la tolerancia floja que de verdad cumple Acklam sin refinar (~1e-9
+    # relativo). Van aparte justamente para que la promesa del JSDoc quede amarrada a una prueba:
+    # antes los casos solo llegaban a p = .001 y .999, así que nada detectaba que el paso de
+    # Halley EMPEORABA la cola (en p = 1 − 1e−12 el error llegaba a 6.6e−6).
+    for p in (1e-8, 1e-6, 1 - 1e-6, 1 - 1e-8):
+        cases.append(
+            {
+                "name": f"normalInvCdf/cola p{p!r}",
+                "fn": "normalInvCdf",
+                "input": {"p": p},
+                "expected": float(sps.norm.ppf(p)),
+                "tol": 2e-9,
+            }
+        )
     return cases
 
 

@@ -119,13 +119,23 @@ export function sortino(returns, rfPerPeriod, k, marPerPeriod) {
  * al fondo, `recoveryIndex` el primer momento en que se recupera ese máximo (null si no se
  * recuperó) y `durationPeriods` va del máximo a la recuperación, o al final si no la hubo.
  * Mínimo 2 valores.
- * @param {number[]} values trayectoria de valor del portafolio (no rendimientos)
- * @returns {Drawdowns | null} null si algún valor no es positivo
+ *
+ * El arranque tiene que ser positivo, pero un 0 más adelante SÍ se acepta: una cartera que se va
+ * a cero tiene caída máxima −1, que es el número más seguro de toda la ficha, y antes salía en
+ * null porque la guarda pedía que todos los valores fueran positivos. O sea que la ruina total,
+ * el único caso donde no hay ninguna duda, se dibujaba como "s/d". Con `values[0] > 0` el pico
+ * nunca puede ser 0 (solo crece), así que `w[i] / pico − 1` sigue bien definido.
+ *
+ * @param {number[]} values trayectoria de valor del portafolio (no rendimientos); el primero
+ *   positivo y ninguno negativo
+ * @returns {Drawdowns | null} null si el primer valor no es positivo o si alguno es negativo
  */
 export function drawdowns(values) {
   const w = numericArray(values, 2)
-  if (w === null) return null
-  for (let i = 0; i < w.length; i++) if (w[i] <= 0) return null
+  if (w === null || !(w[0] > 0)) return null
+  // Un valor en cero o negativo no es un patrimonio: la caída contra el pico dejaría de tener
+  // sentido (daría -100 % y de ahí no se sale), así que no hay dato en vez de un número raro.
+  for (let i = 0; i < w.length; i++) if (!(w[i] > 0)) return null
   /** @type {number[]} */
   const series = new Array(w.length)
   let peak = w[0]

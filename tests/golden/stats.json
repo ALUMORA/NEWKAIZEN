@@ -2594,6 +2594,42 @@
       },
       "expected": 3.090232306167813,
       "tol": 1e-11
+    },
+    {
+      "name": "normalInvCdf/cola p1e-08",
+      "fn": "normalInvCdf",
+      "input": {
+        "p": 1e-08
+      },
+      "expected": -5.612001244174789,
+      "tol": 2e-09
+    },
+    {
+      "name": "normalInvCdf/cola p1e-06",
+      "fn": "normalInvCdf",
+      "input": {
+        "p": 1e-06
+      },
+      "expected": -4.753424308822899,
+      "tol": 2e-09
+    },
+    {
+      "name": "normalInvCdf/cola p0.999999",
+      "fn": "normalInvCdf",
+      "input": {
+        "p": 0.999999
+      },
+      "expected": 4.753424308817087,
+      "tol": 2e-09
+    },
+    {
+      "name": "normalInvCdf/cola p0.99999999",
+      "fn": "normalInvCdf",
+      "input": {
+        "p": 0.99999999
+      },
+      "expected": 5.612001243305505,
+      "tol": 2e-09
     }
   ]
 }

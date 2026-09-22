@@ -7,7 +7,7 @@
 //   posición del arreglo, que compara el martes de uno contra el jueves del otro.
 // - Los rendimientos se calculan DESPUÉS de alinear, nunca antes.
 
-import { EPS, daysBetween, isNum, numericArray, parseIsoDate } from './_util.js'
+import { ascendingIsoDates, EPS, daysBetween, isNum, numericArray, parseIsoDate } from './_util.js'
 
 /** @typedef {'1d' | '1wk' | '1mo'} Interval */
 /** @typedef {{ dates: string[], values: number[] }} Series */
@@ -32,11 +32,17 @@ export function periodsPerYear(interval) {
 /**
  * Deduce el intervalo de una serie de fechas por la mediana de los huecos:
  * hasta 3 días es diario, hasta 10 es semanal, más es mensual.
- * @param {string[]} dates fechas ISO `YYYY-MM-DD` en orden ascendente
- * @returns {Interval | null} null con menos de 2 fechas o si alguna no es ISO válida
+ * El calendario tiene que venir ascendente y sin repetir, y eso se VERIFICA, no se supone: con
+ * las fechas al revés la mediana de los huecos salía negativa y la función contestaba '1d' tan
+ * campante. Ese '1d' falso se convierte en k = 252 y de ahí en una volatilidad anualizada
+ * inflada como 2.2 veces sobre lo que en realidad era una serie mensual.
+ *
+ * @param {string[]} dates fechas ISO `YYYY-MM-DD` ascendentes y sin repetir
+ * @returns {Interval | null} null con menos de 2 fechas, si alguna no es ISO válida o si no
+ *   vienen en orden ascendente estricto
  */
 export function inferInterval(dates) {
-  if (!Array.isArray(dates) || dates.length < 2) return null
+  if (ascendingIsoDates(dates, 2) === null) return null
   /** @type {number[]} */
   const gaps = []
   for (let i = 1; i < dates.length; i++) {

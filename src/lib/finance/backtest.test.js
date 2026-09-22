@@ -299,3 +299,46 @@ describe('golden de numpy', () => {
     expectClose(call[testCase.fn](testCase.input), testCase.expected, testCase.tol)
   })
 })
+
+describe('pesos que no corresponden al panel', () => {
+  // La ruta es real: alignPanel descarta un símbolo por falta de historia y lo deja en `dropped`,
+  // el llamador pasa los pesos objetivo originales y la gráfica sale plausible y equivocada.
+  const precios = { values: { A: [1, 1.1], B: [1, 1] } }
+  const rendimientos = { values: { A: [0.1], B: [0] } }
+
+  it('buyAndHold devuelve null si sobra un símbolo, en vez de repartir su peso', () => {
+    expect(buyAndHold(precios, { A: 0.5, B: 0.3, C: 0.2 })).toBeNull()
+    // Con los pesos que sí corresponden al panel corre normal.
+    expect(buyAndHold(precios, { A: 0.5, B: 0.3 })?.weights.A).toBeCloseTo(0.6470588235294118, 12)
+  })
+
+  it('constantMix devuelve null si sobra un símbolo', () => {
+    expect(constantMix(rendimientos, { A: 0.5, B: 0.3, C: 0.2 }, 1)).toBeNull()
+    expect(constantMix(rendimientos, { A: 0.5, B: 0.3 }, 1)).not.toBeNull()
+  })
+
+  it('el peso que falta sigue siendo null, como siempre', () => {
+    expect(buyAndHold(precios, { A: 1 })).toBeNull()
+  })
+})
+
+describe('pesos negativos', () => {
+  // Esta app es de solo largos: dos pesos de −0.5 sumaban −1 y la normalización volteaba el
+  // signo, así que un error de captura salía como un portafolio con rendimiento positivo.
+  it('constantMix devuelve null en vez de voltear el signo', () => {
+    expect(constantMix({ values: { A: [0.1], B: [0] } }, { A: -0.5, B: -0.5 }, 1)).toBeNull()
+  })
+
+  it('buyAndHold tampoco acepta un peso negativo suelto', () => {
+    expect(buyAndHold({ values: { A: [1, 1.1], B: [1, 1] } }, { A: 1.5, B: -0.5 })).toBeNull()
+  })
+
+  it('un peso en 0 sí es legítimo', () => {
+    const r = buyAndHold({ values: { A: [1, 1.1], B: [1, 1] } }, { A: 1, B: 0 })
+    expect(r?.values[1]).toBeCloseTo(1.1, 12)
+  })
+
+  it('todos los pesos en 0 no forman cartera', () => {
+    expect(buyAndHold({ values: { A: [1, 1.1], B: [1, 1] } }, { A: 0, B: 0 })).toBeNull()
+  })
+})
