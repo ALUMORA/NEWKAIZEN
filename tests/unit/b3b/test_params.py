@@ -65,6 +65,23 @@ def test_riesgo_pais_de_mexico_y_estados_unidos(data):
     assert us["statutoryTaxRate"] == 0.25
 
 
+def test_la_prima_total_de_cada_pais_es_la_del_archivo(data):
+    """Comprobado contra ctryprem.xls de enero 2026, hoja "ERPs by country".
+
+    México sale de la fórmula (mercado maduro más prima país) y da 0.06694963, que redondeado
+    a cinco decimales es lo que guardamos. Estados Unidos NO: el archivo trae 0.0446 a mano,
+    que no es 0.0423 + 0.002334. Copiamos lo que dice el archivo y explicamos la diferencia.
+    """
+    mx = data["countries"]["Mexico"]
+    assert mx["erpTotal"] == 0.06695
+    assert round(data["matureMarketErp"] + mx["crp"], 5) == mx["erpTotal"]
+    us = data["countries"]["United States"]
+    assert us["erpTotal"] == 0.0446
+    assert round(data["matureMarketErp"] + us["crp"], 6) != us["erpTotal"]
+    assert us["erpTotal"] == data["erpUsdInFile"]
+    assert "4.46" in us["erpTotalNote"]
+
+
 def test_el_pais_se_escribe_en_espanol_para_el_texto_visible():
     assert params.country_risk("Mexico").label == "México"
     assert params.country_risk("United States").label == "Estados Unidos"

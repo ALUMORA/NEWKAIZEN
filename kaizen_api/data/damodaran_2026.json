@@ -105,9 +105,10 @@
   "United States": {
    "rating": "Aa1",
    "defaultSpread": 0.002334,
-   "erpTotal": 0.044634,
+   "erpTotal": 0.0446,
    "crp": 0.002334,
-   "statutoryTaxRate": 0.25
+   "statutoryTaxRate": 0.25,
+   "erpTotalNote": "En el archivo, la prima total de Estados Unidos es la prima implícita que el autor captura a mano (4.46 %), no la suma de mercado maduro (4.23 %) más su prima país (0.2334 %), que daría 4.4634 %. Se copia el 4.46 % del archivo; el CAPM del DCF usa mercado maduro más prima país, así que esa diferencia de 0.34 pb no entra en ningún cálculo."
   }
  },
  "sectorIndustries": {
