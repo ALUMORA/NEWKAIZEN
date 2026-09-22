@@ -55,7 +55,9 @@
     "scripts/record_fixtures.py",
     "tests/characterization/**",
     "tests/conftest.py",
-    "pyproject.toml"
+    "pyproject.toml",
+    "tests/replay/**",
+    "tests/goldens_legacy/**"
   ],
   "S2": [
     "index.html",
@@ -74,7 +76,6 @@
     "src/lib/csv.test.js",
     "src/lib/portfolio/**",
     "src/lib/finance/ledger.js",
-    "src/features/*/index.jsx",
     "vercel.json",
     ".env.example",
     "e2e/support/**",
@@ -83,10 +84,11 @@
     "vite.config.js",
     "src/index.css",
     "src/components/ui/UiProvider.jsx",
-    "src/features/*/routes.jsx",
-    "src/features/*/LegacyPage.jsx",
     "e2e/fixtures/app/**",
-    "scripts/record-api-fixtures.mjs"
+    "scripts/record-api-fixtures.mjs",
+    "src/features/**",
+    "src/app/**",
+    "src/test/**"
   ],
   "A": [
     "src/lib/finance/**",
