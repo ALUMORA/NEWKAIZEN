@@ -1,0 +1,90 @@
+{
+ "set": "2026-09-22-b2b",
+ "entries": {
+  "http:GET https://expansion.mx/rss/economia": {
+   "file": "http-GET-https-expansion.mx-rss-economia-618914b83e045dde.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:12:34+00:00"
+  },
+  "http:GET https://expansion.mx/rss/mercados": {
+   "file": "http-GET-https-expansion.mx-rss-mercados-2ef804eed9aa7c44.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:14:57+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=DFF": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-9ff93fe58b0a755c.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:12:30+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS3MO": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-eb62bbf48c2ab755.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:12:28+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=IR3TIB01MXM156N": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-0fd5fa4fd3c88a87.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:12:27+00:00"
+  },
+  "http:GET https://www.elfinanciero.com.mx/arc/outboundfeeds/rss/category/economia/?outputType=xml": {
+   "file": "http-GET-https-www.elfinanciero.com.mx-arc-outboundfe-29db596eed2a3f86.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:14:58+00:00"
+  },
+  "http:GET https://www.elfinanciero.com.mx/arc/outboundfeeds/rss/category/mercados/?outputType=xml": {
+   "file": "http-GET-https-www.elfinanciero.com.mx-arc-outboundfe-900090050e29fcc2.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:12:36+00:00"
+  },
+  "yf:USDMXN=X:news": {
+   "file": "yf-USDMXN-X-news-2002bb81dc576221.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T19:14:56+00:00"
+  }
+ },
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "created_at": "2026-09-22T19:12:26+00:00",
+ "yfinance_version": "1.7.0",
+ "layered_on": [
+  "2026-09-22"
+ ],
+ "lookup_order": [
+  "2026-09-22-b2b",
+  "2026-09-22"
+ ],
+ "summary": {
+  "keys_total": 8,
+  "keys_by_provider": {
+   "http:expansion.mx": 2,
+   "http:fred.stlouisfed.org": 3,
+   "http:www.elfinanciero.com.mx": 2,
+   "yf": 1
+  },
+  "exceptions_by_provider": {},
+  "empty_by_provider": {
+   "yf": 1
+  },
+  "symbols_with_failed_or_empty_calls": {
+   "USDMXN=X": [
+    "news"
+   ]
+  }
+ },
+ "updated_at": "2026-09-22T19:14:58+00:00"
+}
