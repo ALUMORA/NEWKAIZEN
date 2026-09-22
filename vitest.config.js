@@ -11,6 +11,10 @@ export default defineConfig({
   test: {
     globals: true,
     setupFiles,
+    // Vitest carga .env.local igual que vite dev, y en esta máquina trae VITE_SKIP_LOGIN=true:
+    // sin esto, las pruebas corren con la sesión sintética de desarrollo y 6 de sesión y router
+    // fallan solo en la copia del dueño, no en los worktrees. Las pruebas piden su entorno.
+    env: { VITE_SKIP_LOGIN: '', VITE_ALLOW_LEGACY: '' },
     restoreMocks: true,
     unstubEnvs: true,
     unstubGlobals: true,
