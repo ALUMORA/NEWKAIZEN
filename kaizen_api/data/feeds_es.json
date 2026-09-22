@@ -1,0 +1,66 @@
+{
+  "revisado": "2026-09-22",
+  "queSePublica": "Solo el titular, la liga a la nota original y el nombre del medio. Nunca el cuerpo de la nota ni la foto. El resumen que trae el propio feed se recorta a 280 caracteres y se muestra como adelanto, con la liga siempre visible.",
+  "comoSeEligieron": "Feeds que el medio publica abiertamente en su sitio, sin registro ni llave, y cuyo uso normal es justo ese: que otros enlacen la nota. Tres criterios: que respondan a un cliente que no sea navegador, que la seccion sea de mercados o economia (no la portada general, que mezcla deportes y clima) y que sus terminos no pidan permiso por escrito para redistribuir. Si un medio pide que se le quite, se borra su renglon de aqui y ya.",
+  "atribucion": "El campo source de /v2/news lleva el nombre del medio tal como sale en el feed, y la UI lo muestra junto al titular.",
+  "feeds": [
+    {
+      "id": "expansion-mercados",
+      "nombre": "Expansion",
+      "url": "https://expansion.mx/rss/mercados",
+      "lang": "es",
+      "pais": "MX",
+      "tema": "mercados"
+    },
+    {
+      "id": "expansion-economia",
+      "nombre": "Expansion",
+      "url": "https://expansion.mx/rss/economia",
+      "lang": "es",
+      "pais": "MX",
+      "tema": "economia"
+    },
+    {
+      "id": "elfinanciero-mercados",
+      "nombre": "El Financiero",
+      "url": "https://www.elfinanciero.com.mx/arc/outboundfeeds/rss/category/mercados/?outputType=xml",
+      "lang": "es",
+      "pais": "MX",
+      "tema": "mercados"
+    },
+    {
+      "id": "elfinanciero-economia",
+      "nombre": "El Financiero",
+      "url": "https://www.elfinanciero.com.mx/arc/outboundfeeds/rss/category/economia/?outputType=xml",
+      "lang": "es",
+      "pais": "MX",
+      "tema": "economia"
+    }
+  ],
+  "descartados": [
+    {
+      "url": "https://www.eleconomista.com.mx/rss/ultimas-noticias",
+      "porQue": "Responde bien, pero es la portada completa: mezcla politica, clima y videos con las notas financieras, y en una lista ordenada por hora se come a las de mercados. Sus feeds por seccion (mercados, sectorfinanciero, economia) dan 403 o 404, asi que no hay manera de pedirle solo finanzas."
+    },
+    {
+      "url": "https://es-us.finanzas.yahoo.com/rss/",
+      "porQue": "El nombre dice finanzas pero devuelve la portada general de Yahoo en espanol, con ligas a noticias.yahoo.com. Las noticias financieras de Yahoo ya entran por Ticker.news."
+    },
+    {
+      "url": "https://mx.investing.com/rss/news.rss",
+      "porQue": "Sus terminos piden permiso por escrito para redistribuir contenido; no vale la pena el riesgo por diez titulares."
+    },
+    {
+      "url": "https://www.forbes.com.mx/feed/",
+      "porQue": "Responde 403 a cualquier cliente que no sea navegador."
+    },
+    {
+      "url": "https://www.banxico.org.mx/rss/rss-noticias.xml",
+      "porQue": "404: Banxico no publica ese feed. Sus anuncios se leen mejor por las series del SIE."
+    },
+    {
+      "url": "https://www.inegi.org.mx/rss/noticias.xml",
+      "porQue": "Devuelve JSON, no RSS."
+    }
+  ]
+}
