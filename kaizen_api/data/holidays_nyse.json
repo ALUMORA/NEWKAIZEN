@@ -1,0 +1,42 @@
+{
+  "_comment": "Calendario de la Bolsa de Nueva York para marketStatus de /v2/markets/overview. Dato curado a mano por el stream B2a con las reglas de días feriados de la NYSE (Rule 7.2): cuando un feriado cae sábado se observa el viernes previo y cuando cae domingo se observa el lunes siguiente. Si el año pedido no está aquí, el API lo dice en meta.notes en vez de inventar un calendario.",
+  "exchange": "nyse",
+  "label": "Bolsa de Nueva York",
+  "timezone": "America/New_York",
+  "source": "curated",
+  "updatedAt": "2026-09-22",
+  "tradingDays": [1, 2, 3, 4, 5],
+  "regularHours": { "open": "09:30", "close": "16:00" },
+  "years": [2026, 2027],
+  "holidays": {
+    "2026-01-01": "Año Nuevo",
+    "2026-01-19": "Día de Martin Luther King Jr.",
+    "2026-02-16": "Día de los Presidentes",
+    "2026-04-03": "Viernes Santo",
+    "2026-05-25": "Día de los Caídos",
+    "2026-06-19": "Juneteenth",
+    "2026-07-03": "Día de la Independencia (se observa el viernes 3)",
+    "2026-09-07": "Día del Trabajo",
+    "2026-11-26": "Día de Acción de Gracias",
+    "2026-12-25": "Navidad",
+    "2027-01-01": "Año Nuevo",
+    "2027-01-18": "Día de Martin Luther King Jr.",
+    "2027-02-15": "Día de los Presidentes",
+    "2027-03-26": "Viernes Santo",
+    "2027-05-31": "Día de los Caídos",
+    "2027-06-18": "Juneteenth (se observa el viernes 18)",
+    "2027-07-05": "Día de la Independencia (se observa el lunes 5)",
+    "2027-09-06": "Día del Trabajo",
+    "2027-11-25": "Día de Acción de Gracias",
+    "2027-12-24": "Navidad (se observa el viernes 24)"
+  },
+  "earlyCloses": {
+    "2026-11-27": { "close": "13:00", "label": "Viernes después de Acción de Gracias" },
+    "2026-12-24": { "close": "13:00", "label": "Nochebuena" },
+    "2027-11-26": { "close": "13:00", "label": "Viernes después de Acción de Gracias" }
+  },
+  "notes": [
+    "En 2027 la Navidad cae sábado y se observa el viernes 24, así que no hay jornada recortada de Nochebuena.",
+    "America/New_York sí aplica horario de verano, por eso las horas se resuelven con la zona y no con un desfase fijo."
+  ]
+}
