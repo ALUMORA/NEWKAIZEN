@@ -1,7 +1,8 @@
-"""Tasas de México, tasa libre de riesgo en serie y macro de EE. UU. (stream B2).
+"""Tasas de México y tasa libre de riesgo en serie (stream B2b).
 
-Mientras B2 no las implemente responden 501 NOT_IMPLEMENTED. Los ids del SIE distintos de
+Mientras B2b no las implemente responden 501 NOT_IMPLEMENTED. Los ids del SIE distintos de
 SF43718 y SF61745 se verifican contra el endpoint de metadatos del SIE en una prueba antes de usarse.
+La macro de EE. UU. vive en ``macro.py`` (también de B2b).
 """
 
 from __future__ import annotations
@@ -12,7 +13,7 @@ from fastapi import APIRouter, Query
 
 from kaizen_api.errors import invalid_param, not_implemented
 from kaizen_api.routers import ERROR_RESPONSES, IsoDateQuery, cache_control, check_date_range
-from kaizen_api.schemas import MxRatesResponse, RfSeriesResponse, UsMacroResponse
+from kaizen_api.schemas import MxRatesResponse, RfSeriesResponse
 
 router = APIRouter(prefix="/v2", tags=["tasas y macro"], responses=ERROR_RESPONSES)
 CAPABILITIES: list[str] = []
@@ -47,13 +48,3 @@ def rates_rf(
     if tenor_days not in TENORS:
         raise invalid_param("query.tenorDays", "enum", "El plazo debe ser de 28, 91, 182 o 364 días.")
     raise not_implemented("GET /v2/rates/rf")
-
-
-@router.get(
-    "/macro/us",
-    response_model=UsMacroResponse,
-    dependencies=[cache_control("macro")],
-    summary="Tesoro 3M, 2Y y 10Y, diferenciales, VIX, DXY y Fed Funds",
-)
-def macro_us() -> UsMacroResponse:
-    raise not_implemented("GET /v2/macro/us")

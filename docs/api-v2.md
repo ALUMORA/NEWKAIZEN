@@ -7,8 +7,8 @@ este documento y `kaizen_api/schemas.py` solo cambian con una solicitud al orque
 
 Estado hoy: están implementadas `GET /health`, `POST /auth/login`, `GET /auth/me` y las rutas v1
 del backend viejo. Todas las demás rutas v2 ya están registradas, validan sus parámetros y
-responden `501 NOT_IMPLEMENTED` hasta que su stream (B1, B2 o B3) las implemente. `/health`
-anuncia en `capabilities` solo lo que ya funciona.
+responden `501 NOT_IMPLEMENTED` hasta que su stream (B2a, B2b, B3a, B3b o B3c) las implemente.
+`/health` anuncia en `capabilities` solo lo que ya funciona.
 
 ## Convenciones
 
@@ -110,8 +110,11 @@ navegador (el token va en la cabecera).
 ## Endpoints
 
 Cada ruta indica su modelo de respuesta (ver la referencia), su clase de caché y quién la implementa.
+Desde M1 cada archivo de `kaizen_api/routers/` tiene rutas de un solo stream de fase 2; el título
+de cada sección dice cuál y en qué archivo viven (la tabla completa y las dependencias entre streams
+están en `docs/OWNERSHIP.md`).
 
-### Plataforma
+### Plataforma (B1: `routers/health.py` y `routers/auth.py`)
 
 - `GET /health` (pública) → `HealthResponse`. `capabilities` es un subconjunto de
   `schemas.KNOWN_CAPABILITIES` y solo lista lo que ya funciona: hoy `auth` y, con las rutas v1
@@ -122,7 +125,7 @@ Cada ruta indica su modelo de respuesta (ver la referencia), su clase de caché 
   `422 VALIDATION_ERROR`, `429 RATE_LIMITED`. Implementada (dueño: B1).
 - `GET /auth/me` → `MeResponse` `{user, expiresAt}`. Siempre exige token. Implementada (dueño: B1).
 
-### Datos de mercado (B2)
+### Datos de mercado (B2a: `routers/quotes.py`, `routers/history.py` y `routers/search.py`)
 
 - `GET /v2/quotes?symbols=A,B` (hasta 50) → `QuotesResponse`. Los símbolos sin cotización van en
   `missing`, no como error.
@@ -142,7 +145,7 @@ Cada ruta indica su modelo de respuesta (ver la referencia), su clase de caché 
 - `GET /v2/fx/history?pair=USDMXN&start=&end=` → `FxHistoryResponse`. Banxico FIX SF43718 con token,
   si no Yahoo `MXN=X` marcado. `start` y `end` son fechas reales con `start <= end`.
 
-### Tasas y macro (B2)
+### Tasas y macro (B2b: `routers/rates.py` y `routers/macro.py`)
 
 - `GET /v2/rates/mx` → `MxRatesResponse`. Ids: `target` (objetivo, SF61745), `tiie28`,
   `tiieFondeo`, `cetes28`, `cetes91`, `cetes182`, `cetes364`, `bonoM10` (si existe), `inflationYoY`,
@@ -155,19 +158,21 @@ Cada ruta indica su modelo de respuesta (ver la referencia), su clase de caché 
 - `GET /v2/macro/us` → `UsMacroResponse`. Ids: `ust3m`, `ust2y`, `ust10y`, `spread10y2y`,
   `spread10y3m`, `vix`, `dxy`, `fedFunds`.
 
-### Mercados y noticias (B2)
+### Mercados (B2a: `routers/markets.py`)
 
 - `GET /v2/markets/overview` → `MarketsOverviewResponse`. Grupos `mx`, `us`, `global`, `fx`,
-  `commodities`, `crypto`, más `marketStatus` de BMV y NYSE (calendario de B1).
+  `commodities`, `crypto`, más `marketStatus` de BMV y NYSE (calendario de B2a en
+  `domain/market_calendar.py`).
 - `GET /v2/markets/world` → `WorldResponse`. Variación por país con ETF de iShares en USD;
   `country` es ISO 3166-1 numérico de 3 dígitos (484 = México).
+
+### Noticias (B2b: `routers/news.py`)
+
 - `GET /v2/news?symbol=&lang=all&limit=30` (`lang`: `es en all`; `limit` de 1 a 100) →
   `NewsResponse`. Solo titular y liga, entidades HTML decodificadas, sin duplicados por título
   normalizado; tono heurístico `positivo`, `negativo` o `neutral`.
-- `GET /v2/events?symbols=A,B` → `EventsResponse`. Reportes (`earnings`), fecha ex dividendo
-  (`exDividend`) y de pago (`dividendPay`).
 
-### Investigación (B3)
+### Investigación (B3a: `routers/research.py`, `routers/events.py` y `routers/insiders.py`)
 
 - `GET /v2/instrument/{symbol}` → `InstrumentResponse`: cotización, fundamentales en la moneda del
   precio, beta (calculada o de Yahoo, con ventana y observaciones), medianas del sector y cobertura.
@@ -175,6 +180,13 @@ Cada ruta indica su modelo de respuesta (ver la referencia), su clase de caché 
   `StatementsResponse`. Solo renglones reales (SEC para emisores de EE. UU., Yahoo para el resto),
   nunca sintetizados; sin datos, `periods` vacío.
 - `GET /v2/instrument/{symbol}/dividends` → `DividendsResponse`.
+- `GET /v2/events?symbols=A,B` → `EventsResponse`. Reportes (`earnings`), fecha ex dividendo
+  (`exDividend`) y de pago (`dividendPay`).
+- `GET /v2/insiders/{symbol}` → `InsidersResponse`. Tipos `compra`, `venta`, `otorgamiento`,
+  `ejercicio` y `otro`; `summary` cuenta solo compras y ventas en mercado abierto.
+
+### Valuación y momentum (B3b: `routers/valuation.py`)
+
 - `GET /v2/valuation/{symbol}?erp=&crp=&terminalGrowth=&years=&growth=` → `ValuationResponse`.
   Límites: `erp` y `crp` de 0 a 0.2, `terminalGrowth` de -0.02 a 0.06, `years` de 1 a 15, `growth`
   de -0.5 a 1.0. Múltiplos contra el sector (mercado `US` o `EM`), DCF de flujo a la empresa con
@@ -182,7 +194,7 @@ Cada ruta indica su modelo de respuesta (ver la referencia), su clase de caché 
 - `GET /v2/momentum/{symbol}` → `MomentumResponse`. `r12m1` es el rendimiento de 12 meses sin el
   último mes; `relative12m1` contra `benchmark`.
 
-### Screeners (B3)
+### Screeners (B3c: `routers/screeners.py`)
 
 - `GET /v2/screeners/factors?universe=mx` (`mx`, `us` o `custom`; con `custom` se exige
   `symbols=A,B`, hasta 50, y sin `custom` no se acepta `symbols`) → `FactorsResponse`.
@@ -191,8 +203,6 @@ Cada ruta indica su modelo de respuesta (ver la referencia), su clase de caché 
 - `GET /v2/screeners/fibras?extra=A,B` (hasta 20 extra) → `FibrasResponse`. `signal` es
   `descuento`, `en_linea`, `prima` o `sin_datos` (descripción del precio contra el NAV, no una
   recomendación). `ltv` es deuda entre activos totales.
-- `GET /v2/insiders/{symbol}` → `InsidersResponse`. Tipos `compra`, `venta`, `otorgamiento`,
-  `ejercicio` y `otro`; `summary` cuenta solo compras y ventas en mercado abierto.
 
 ## Rutas v1 (legado)
 
@@ -219,6 +229,8 @@ con las respuestas idénticas a `backend.py` (lo prueban los 122 goldens de `tes
 # Con datos grabados (sin red, reloj congelado en el set 2026-09-22):
 .venv/bin/python scripts/run_replay_backend.py --port 8101
 USERS='{"demo":"demo"}' .venv/bin/python scripts/run_replay_backend.py --port 8101   # con login
+# Con la capa de un stream encima de la base (se busca en orden; gana la primera que tenga la llamada):
+.venv/bin/python scripts/run_replay_backend.py --port 8101 --set 2026-09-22,2026-09-22-b2a
 
 # En vivo (red real), como en Render:
 PORT=8101 .venv/bin/python backend.py
