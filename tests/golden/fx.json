@@ -1,0 +1,325 @@
+{
+  "cases": [
+    {
+      "name": "pnlDecomposition/escenario-0",
+      "fn": "pnlDecomposition",
+      "input": {
+        "quantity": 10.0,
+        "price0": 150.0,
+        "price1": 180.0,
+        "fx0": 17.0,
+        "fx1": 19.0
+      },
+      "expected": {
+        "total": 8700.0,
+        "priceEffect": 5100.0,
+        "fxEffect": 3600.0,
+        "cross": 0.0
+      },
+      "tol": 1e-09
+    },
+    {
+      "name": "pnlDecomposition/escenario-1",
+      "fn": "pnlDecomposition",
+      "input": {
+        "quantity": 25.0,
+        "price0": 200.0,
+        "price1": 170.0,
+        "fx0": 20.5,
+        "fx1": 18.25
+      },
+      "expected": {
+        "total": -24937.5,
+        "priceEffect": -15375.0,
+        "fxEffect": -9562.5,
+        "cross": 0.0
+      },
+      "tol": 1e-09
+    },
+    {
+      "name": "pnlDecomposition/escenario-2",
+      "fn": "pnlDecomposition",
+      "input": {
+        "quantity": 3.0,
+        "price0": 1250.0,
+        "price1": 1250.0,
+        "fx0": 16.75,
+        "fx1": 18.9
+      },
+      "expected": {
+        "total": 8062.5,
+        "priceEffect": 0.0,
+        "fxEffect": 8062.4999999999945,
+        "cross": 0.0
+      },
+      "tol": 1e-09
+    },
+    {
+      "name": "pnlDecomposition/escenario-3",
+      "fn": "pnlDecomposition",
+      "input": {
+        "quantity": 120.0,
+        "price0": 42.5,
+        "price1": 47.8,
+        "fx0": 18.0,
+        "fx1": 18.0
+      },
+      "expected": {
+        "total": 11448.0,
+        "priceEffect": 11447.999999999995,
+        "fxEffect": 0.0,
+        "cross": 0.0
+      },
+      "tol": 1e-09
+    },
+    {
+      "name": "pnlDecomposition/escenario-4",
+      "fn": "pnlDecomposition",
+      "input": {
+        "quantity": 495.9188,
+        "price0": 782.9502,
+        "price1": 312.2725,
+        "fx0": 19.5889,
+        "fx1": 19.3799
+      },
+      "expected": {
+        "total": -4604766.413358857,
+        "priceEffect": -4572400.296433,
+        "fxEffect": -32366.11692585694,
+        "cross": 0.0
+      },
+      "tol": 1e-09
+    },
+    {
+      "name": "pnlDecomposition/escenario-5",
+      "fn": "pnlDecomposition",
+      "input": {
+        "quantity": 433.2571,
+        "price0": 662.7304,
+        "price1": 426.5115,
+        "fx0": 19.0639,
+        "fx1": 16.9414
+      },
+      "expected": {
+        "total": -2343281.486975235,
+        "priceEffect": -1951066.5466501203,
+        "fxEffect": -392214.9403251144,
+        "cross": 0.0
+      },
+      "tol": 1e-09
+    },
+    {
+      "name": "pnlDecomposition/escenario-6",
+      "fn": "pnlDecomposition",
+      "input": {
+        "quantity": 413.4204,
+        "price0": 167.6705,
+        "price1": 747.5498,
+        "fx0": 17.3681,
+        "fx1": 17.6981
+      },
+      "expected": {
+        "total": 4265710.17842935,
+        "priceEffect": 4163722.9071084964,
+        "fxEffect": 101987.27132085415,
+        "cross": 0.0
+      },
+      "tol": 1e-09
+    },
+    {
+      "name": "pnlDecomposition/escenario-7",
+      "fn": "pnlDecomposition",
+      "input": {
+        "quantity": 217.1379,
+        "price0": 62.2448,
+        "price1": 726.2693,
+        "fx0": 21.8091,
+        "fx1": 17.3721
+      },
+      "expected": {
+        "total": 2444825.065236227,
+        "priceEffect": 3144542.5858902447,
+        "fxEffect": -699717.5206540176,
+        "cross": 0.0
+      },
+      "tol": 1e-09
+    },
+    {
+      "name": "pnlDecomposition/escenario-8",
+      "fn": "pnlDecomposition",
+      "input": {
+        "quantity": 497.0079,
+        "price0": 730.3548,
+        "price1": 676.471,
+        "fx0": 15.4946,
+        "fx1": 21.5733
+      },
+      "expected": {
+        "total": 1628772.5906244293,
+        "priceEffect": -414955.8357301867,
+        "fxEffect": 2043728.4263546148,
+        "cross": 0.0
+      },
+      "tol": 1e-09
+    },
+    {
+      "name": "pnlDecomposition/escenario-9",
+      "fn": "pnlDecomposition",
+      "input": {
+        "quantity": 86.0688,
+        "price0": 702.8461,
+        "price1": 75.7317,
+        "fx0": 19.0872,
+        "fx1": 20.759
+      },
+      "expected": {
+        "total": -1019334.2914680296,
+        "priceEffect": -1030231.3121372066,
+        "fxEffect": 10897.020669176936,
+        "cross": 0.0
+      },
+      "tol": 1e-09
+    },
+    {
+      "name": "pnlDecomposition/escenario-10",
+      "fn": "pnlDecomposition",
+      "input": {
+        "quantity": 194.9521,
+        "price0": 765.7759,
+        "price1": 130.2502,
+        "fx0": 21.7373,
+        "fx1": 21.1381
+      },
+      "expected": {
+        "total": -2708402.9917451367,
+        "priceEffect": -2693187.7757758964,
+        "fxEffect": -15215.215969239658,
+        "cross": 0.0
+      },
+      "tol": 1e-09
+    },
+    {
+      "name": "pnlDecomposition/escenario-11",
+      "fn": "pnlDecomposition",
+      "input": {
+        "quantity": 425.2978,
+        "price0": 730.2299,
+        "price1": 473.5119,
+        "fx0": 16.8474,
+        "fx1": 19.8685
+      },
+      "expected": {
+        "total": -1231026.1969475131,
+        "priceEffect": -1839426.098292127,
+        "fxEffect": 608399.9013446148,
+        "cross": 0.0
+      },
+      "tol": 1e-09
+    },
+    {
+      "name": "toCurrency/usd-a-mxn-1000.0",
+      "fn": "toCurrency",
+      "input": {
+        "amount": 1000.0,
+        "from": "USD",
+        "to": "MXN",
+        "usdmxn": 18.4321
+      },
+      "expected": 18432.1,
+      "tol": 1e-09
+    },
+    {
+      "name": "toCurrency/mxn-a-usd-1000.0",
+      "fn": "toCurrency",
+      "input": {
+        "amount": 1000.0,
+        "from": "MXN",
+        "to": "USD",
+        "usdmxn": 18.4321
+      },
+      "expected": 54.25317787989432,
+      "tol": 1e-09
+    },
+    {
+      "name": "toCurrency/usd-a-mxn-2500.75",
+      "fn": "toCurrency",
+      "input": {
+        "amount": 2500.75,
+        "from": "USD",
+        "to": "MXN",
+        "usdmxn": 17.0
+      },
+      "expected": 42512.75,
+      "tol": 1e-09
+    },
+    {
+      "name": "toCurrency/mxn-a-usd-2500.75",
+      "fn": "toCurrency",
+      "input": {
+        "amount": 2500.75,
+        "from": "MXN",
+        "to": "USD",
+        "usdmxn": 17.0
+      },
+      "expected": 147.10294117647058,
+      "tol": 1e-09
+    },
+    {
+      "name": "toCurrency/usd-a-mxn-0.0",
+      "fn": "toCurrency",
+      "input": {
+        "amount": 0.0,
+        "from": "USD",
+        "to": "MXN",
+        "usdmxn": 19.5
+      },
+      "expected": 0.0,
+      "tol": 1e-09
+    },
+    {
+      "name": "toCurrency/mxn-a-usd-0.0",
+      "fn": "toCurrency",
+      "input": {
+        "amount": 0.0,
+        "from": "MXN",
+        "to": "USD",
+        "usdmxn": 19.5
+      },
+      "expected": 0.0,
+      "tol": 1e-09
+    },
+    {
+      "name": "returnInBaseCurrency/0.05-17.0-18.0",
+      "fn": "returnInBaseCurrency",
+      "input": {
+        "localReturn": 0.05,
+        "fx0": 17.0,
+        "fx1": 18.0
+      },
+      "expected": 0.11176470588235299,
+      "tol": 1e-12
+    },
+    {
+      "name": "returnInBaseCurrency/-0.12-20.0-18.5",
+      "fn": "returnInBaseCurrency",
+      "input": {
+        "localReturn": -0.12,
+        "fx0": 20.0,
+        "fx1": 18.5
+      },
+      "expected": -0.18599999999999994,
+      "tol": 1e-12
+    },
+    {
+      "name": "returnInBaseCurrency/0.0-18.0-18.0",
+      "fn": "returnInBaseCurrency",
+      "input": {
+        "localReturn": 0.0,
+        "fx0": 18.0,
+        "fx1": 18.0
+      },
+      "expected": 0.0,
+      "tol": 1e-12
+    }
+  ]
+}
