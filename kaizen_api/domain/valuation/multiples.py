@@ -219,3 +219,127 @@ def get_dcf(ticker: str) -> dict:
         }
     except Exception as e:
         return {"error": str(e)}
+
+
+# ─── v2: múltiplos relativos con referencia de Damodaran ─────────────────────
+#
+# Lo de arriba es el legado y se queda igual (los goldens lo prueban). Lo de abajo es el v2 de
+# /v2/valuation: se llama "múltiplos relativos" y NUNCA "DCF", porque no descuenta nada.
+
+from kaizen_api.domain.valuation.inputs import ValuationInputs  # noqa: E402
+from kaizen_api.domain.valuation.params import Classification, SectorBenchmark  # noqa: E402
+
+METHOD_LABELS = {
+    "pe": "Precio / utilidad",
+    "pb": "Precio / valor en libros",
+    "evEbitda": "Valor empresa / EBITDA",
+    "pfcf": "Precio / flujo libre",
+}
+
+
+def enterprise_value(inputs: ValuationInputs) -> float | None:
+    """``capitalización + deuda + minoritarios − efectivo``, todo en MONEDA DE COTIZACIÓN.
+
+    La capitalización ya viene en esa moneda; la deuda, los minoritarios y el efectivo salen del
+    balance, así que pasan por ``to_price()`` antes de sumarse. Sin tipo de cambio no hay EV.
+    """
+    if not inputs.market_cap or inputs.total_debt is None:
+        return None
+    debt = inputs.to_price(inputs.total_debt)
+    if debt is None:
+        return None
+    return debt + inputs.market_cap + (inputs.to_price(inputs.minority_interest) or 0.0) - (inputs.to_price(inputs.cash) or 0.0)
+
+
+def _method(id_: str, current: float | None, benchmark: float | None, implied: float | None, ok: bool) -> dict:
+    return {
+        "id": id_,
+        "label": METHOD_LABELS[id_],
+        "current": round(current, 4) if current is not None else None,
+        "benchmark": round(benchmark, 4) if benchmark is not None else None,
+        "impliedPrice": round(implied, 4) if (ok and implied is not None and implied > 0) else None,
+        "applicable": bool(ok and implied is not None and implied > 0),
+    }
+
+
+def relative_multiples(
+    inputs: ValuationInputs,
+    bench: SectorBenchmark,
+    classification: Classification,
+    *,
+    missing_note: str | None = None,
+) -> tuple[dict, list[str]]:
+    """Bloque ``multiples`` del contrato más las notas en español que lo explican.
+
+    ``applicable=False`` (con razón) en bancos, aseguradoras, FIBRAs/REIT, fondos y cuando las
+    utilidades son negativas: ahí un múltiplo de utilidad no significa nada. Los valores actuales
+    se siguen publicando para que la UI los muestre, pero sin precio implícito ni rango.
+    """
+    notes: list[str] = []
+    reason = classification.multiples_reason
+    negative_earnings = inputs.eps is not None and inputs.eps <= 0
+    if reason is None and negative_earnings:
+        reason = (
+            "Las utilidades de los últimos doce meses son negativas: un múltiplo de utilidad sobre "
+            "una pérdida no dice nada, así que no se publica precio implícito."
+        )
+    applicable = reason is None
+
+    price = inputs.price
+    shares = inputs.shares if (inputs.shares or 0) > 0 else None
+    ev = enterprise_value(inputs)
+
+    pe_current = price / inputs.eps if (price and inputs.eps and inputs.eps > 0) else None
+    pe_implied = inputs.eps * bench.pe if (inputs.eps and inputs.eps > 0 and bench.pe) else None
+
+    pb_current = price / inputs.bvps if (price and inputs.bvps and inputs.bvps > 0) else None
+    pb_implied = inputs.bvps * bench.pb if (inputs.bvps and inputs.bvps > 0 and bench.pb) else None
+
+    ebitda = inputs.to_price(inputs.ebitda)
+    ev_ebitda_current = ev / ebitda if (ev and ebitda and ebitda > 0) else None
+    ev_implied = None
+    if bench.ev_ebitda and ebitda and ebitda > 0 and shares and inputs.total_debt is not None:
+        debt = inputs.to_price(inputs.total_debt)
+        if debt is not None:
+            target_ev = bench.ev_ebitda * ebitda
+            equity = (
+                target_ev - debt - (inputs.to_price(inputs.minority_interest) or 0.0)
+                + (inputs.to_price(inputs.cash) or 0.0)
+            )
+            ev_implied = equity / shares
+
+    fcf_price = inputs.to_price(inputs.free_cash_flow)
+    fcf_ps = fcf_price / shares if (fcf_price and shares) else None
+    pfcf_current = price / fcf_ps if (price and fcf_ps and fcf_ps > 0) else None
+
+    methods = [
+        _method("pe", pe_current, bench.pe, pe_implied, applicable),
+        _method("pb", pb_current, bench.pb, pb_implied, applicable),
+        _method("evEbitda", ev_ebitda_current, bench.ev_ebitda, ev_implied, applicable),
+        _method("pfcf", pfcf_current, None, None, False),
+    ]
+    if missing_note:
+        notes.append(missing_note)
+
+    implied = sorted(m["impliedPrice"] for m in methods if m["impliedPrice"] is not None)
+    fair_range = None
+    if implied:
+        mid = implied[len(implied) // 2] if len(implied) % 2 else (implied[len(implied) // 2 - 1] + implied[len(implied) // 2]) / 2
+        fair_range = {"low": round(implied[0], 4), "mid": round(mid, 4), "high": round(implied[-1], 4)}
+    elif applicable:
+        notes.append("No hubo datos suficientes para un precio implícito por múltiplos.")
+
+    if applicable:
+        notes.append(bench.method + ".")
+    return (
+        {
+            "applicable": applicable,
+            "reason": reason,
+            "market": bench.market,
+            "source": f"Damodaran, datasets de enero 2026 ({bench.market})",
+            "asOf": bench.as_of,
+            "methods": methods,
+            "fairValueRange": fair_range,
+        },
+        notes,
+    )
