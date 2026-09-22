@@ -26,9 +26,12 @@ from kaizen_api import __version__
 from kaizen_api.errors import error_body, install_exception_handlers
 from kaizen_api.routers import (
     auth,
+    events,
     health,
     history,
+    insiders,
     legacy_v1,
+    macro,
     markets,
     news,
     quotes,
@@ -36,6 +39,7 @@ from kaizen_api.routers import (
     research,
     screeners,
     search,
+    valuation,
 )
 from kaizen_api.security.auth import require_user
 from kaizen_api.security.ratelimit import LoginRateLimiter
@@ -43,8 +47,13 @@ from kaizen_api.settings import Settings, SettingsError, configure, get_settings
 
 logger = logging.getLogger("kaizen_api")
 
-V2_ROUTERS = (quotes, history, rates, markets, news, search, research, screeners)
-"""Routers de datos v2: con AUTH_REQUIRED exigen sesión."""
+V2_ROUTERS = (quotes, history, rates, macro, markets, events, news, search, research, valuation, screeners, insiders)
+"""Routers de datos v2: con AUTH_REQUIRED exigen sesión.
+
+Un archivo por stream de fase 2 (ver ``docs/OWNERSHIP.md``): B2a quotes, history, markets y search;
+B2b rates, macro y news; B3a research, events e insiders; B3b valuation; B3c screeners. El orden
+reproduce el registro de rutas previo a la partición de M1 (mismo OpenAPI, mismo orden de rutas).
+"""
 
 _REQUEST_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 

@@ -1,8 +1,17 @@
 """Contrato v2: cada ruta del spec está registrada, valida sus parámetros, declara su modelo y,
-mientras no esté implementada, responde 501 con el cuerpo de error del contrato."""
+mientras no esté implementada, responde 501 con el cuerpo de error del contrato.
+
+Este archivo está congelado bajo O y se ajusta solo: en cuanto un stream de fase 2 implementa su
+ruta (borra el ``@stub`` de su función), la prueba del 501 deja de exigírselo y pasa a exigir lo que
+sí aplica, que su router anuncie LA capacidad de esa ruta, la de la quinta columna del spec. Así
+nadie tiene que abrir un archivo que no es suyo el día que implementa algo, y la prueba nunca llama
+a una ruta ya implementada, que saldría a los proveedores.
+"""
 
 from __future__ import annotations
 
+import inspect
+import sys
 from pathlib import Path
 
 import pytest
@@ -10,6 +19,7 @@ from fastapi.routing import iter_route_contexts
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
+from kaizen_api import routers as routers_pkg
 from kaizen_api import schemas
 from kaizen_api.main import create_app
 from kaizen_api.provenance import meta
@@ -17,45 +27,98 @@ from kaizen_api.settings import Settings
 
 DOCS = Path(__file__).resolve().parents[2] / "docs" / "api-v2.md"
 
-# (método, ruta, modelo, una URL válida de ejemplo). Es el spec v2 completo.
+# (método, ruta, modelo, una URL válida de ejemplo, capacidades que entrega esa ruta).
+# La quinta columna es lo que el router tiene que anunciar en ``CAPABILITIES`` cuando la ruta deja de
+# ser stub; con varias, basta una (una valuación puede llegar primero con múltiplos y después con DCF).
 SPEC = [
-    ("GET", "/health", schemas.HealthResponse, None),
-    ("POST", "/auth/login", schemas.LoginResponse, None),
-    ("GET", "/auth/me", schemas.MeResponse, None),
-    ("GET", "/v2/quotes", schemas.QuotesResponse, "/v2/quotes?symbols=WALMEX.MX,aapl"),
-    ("GET", "/v2/search", schemas.SearchResponse, "/v2/search?q=walmart&limit=5"),
-    ("GET", "/v2/history/{symbol}", schemas.HistoryResponse, "/v2/history/%5EMXX?range=5y&interval=1wk&ccy=MXN"),
-    ("GET", "/v2/panel", schemas.PanelResponse, "/v2/panel?symbols=WALMEX.MX,AAPL&range=1y&interval=1d&ccy=MXN"),
-    ("GET", "/v2/fx", schemas.FxResponse, "/v2/fx?pair=USDMXN"),
-    ("GET", "/v2/fx/history", schemas.FxHistoryResponse, "/v2/fx/history?pair=USDMXN&start=2026-01-02&end=2026-09-22"),
-    ("GET", "/v2/rates/mx", schemas.MxRatesResponse, "/v2/rates/mx"),
-    ("GET", "/v2/rates/rf", schemas.RfSeriesResponse, "/v2/rates/rf?start=2025-01-01&end=2026-09-22&tenorDays=28"),
-    ("GET", "/v2/macro/us", schemas.UsMacroResponse, "/v2/macro/us"),
-    ("GET", "/v2/markets/overview", schemas.MarketsOverviewResponse, "/v2/markets/overview"),
-    ("GET", "/v2/markets/world", schemas.WorldResponse, "/v2/markets/world"),
-    ("GET", "/v2/news", schemas.NewsResponse, "/v2/news?symbol=WALMEX.MX&lang=es&limit=10"),
-    ("GET", "/v2/events", schemas.EventsResponse, "/v2/events?symbols=AAPL,WALMEX.MX"),
-    ("GET", "/v2/instrument/{symbol}", schemas.InstrumentResponse, "/v2/instrument/AAPL.MX"),
+    ("GET", "/health", schemas.HealthResponse, None, ()),
+    ("POST", "/auth/login", schemas.LoginResponse, None, ("auth",)),
+    ("GET", "/auth/me", schemas.MeResponse, None, ("auth",)),
+    ("GET", "/v2/quotes", schemas.QuotesResponse, "/v2/quotes?symbols=WALMEX.MX,aapl", ("quotes",)),
+    ("GET", "/v2/search", schemas.SearchResponse, "/v2/search?q=walmart&limit=5", ("search",)),
+    (
+        "GET",
+        "/v2/history/{symbol}",
+        schemas.HistoryResponse,
+        "/v2/history/%5EMXX?range=5y&interval=1wk&ccy=MXN",
+        ("history",),
+    ),
+    (
+        "GET",
+        "/v2/panel",
+        schemas.PanelResponse,
+        "/v2/panel?symbols=WALMEX.MX,AAPL&range=1y&interval=1d&ccy=MXN",
+        ("panel",),
+    ),
+    ("GET", "/v2/fx", schemas.FxResponse, "/v2/fx?pair=USDMXN", ("fx",)),
+    (
+        "GET",
+        "/v2/fx/history",
+        schemas.FxHistoryResponse,
+        "/v2/fx/history?pair=USDMXN&start=2026-01-02&end=2026-09-22",
+        ("fx.history",),
+    ),
+    ("GET", "/v2/rates/mx", schemas.MxRatesResponse, "/v2/rates/mx", ("rates.mx",)),
+    (
+        "GET",
+        "/v2/rates/rf",
+        schemas.RfSeriesResponse,
+        "/v2/rates/rf?start=2025-01-01&end=2026-09-22&tenorDays=28",
+        ("rf.series",),
+    ),
+    ("GET", "/v2/macro/us", schemas.UsMacroResponse, "/v2/macro/us", ("macro.us",)),
+    ("GET", "/v2/markets/overview", schemas.MarketsOverviewResponse, "/v2/markets/overview", ("markets.overview",)),
+    ("GET", "/v2/markets/world", schemas.WorldResponse, "/v2/markets/world", ("markets.world",)),
+    ("GET", "/v2/news", schemas.NewsResponse, "/v2/news?symbol=WALMEX.MX&lang=es&limit=10", ("news",)),
+    ("GET", "/v2/events", schemas.EventsResponse, "/v2/events?symbols=AAPL,WALMEX.MX", ("events",)),
+    ("GET", "/v2/instrument/{symbol}", schemas.InstrumentResponse, "/v2/instrument/AAPL.MX", ("instrument",)),
     (
         "GET",
         "/v2/instrument/{symbol}/statements",
         schemas.StatementsResponse,
         "/v2/instrument/AAPL/statements?freq=quarterly",
+        ("statements.real",),
     ),
-    ("GET", "/v2/instrument/{symbol}/dividends", schemas.DividendsResponse, "/v2/instrument/FUNO11.MX/dividends"),
+    (
+        "GET",
+        "/v2/instrument/{symbol}/dividends",
+        schemas.DividendsResponse,
+        "/v2/instrument/FUNO11.MX/dividends",
+        ("dividends",),
+    ),
     (
         "GET",
         "/v2/valuation/{symbol}",
         schemas.ValuationResponse,
         "/v2/valuation/WALMEX.MX?erp=0.055&crp=0.02&terminalGrowth=0.03&years=10&growth=0.08",
+        ("valuation.multiples", "valuation.dcf"),
     ),
-    ("GET", "/v2/momentum/{symbol}", schemas.MomentumResponse, "/v2/momentum/CEMEXCPO.MX"),
-    ("GET", "/v2/screeners/factors", schemas.FactorsResponse, "/v2/screeners/factors?universe=custom&symbols=AAPL,MSFT"),
-    ("GET", "/v2/screeners/magic", schemas.MagicResponse, "/v2/screeners/magic?universe=mx"),
-    ("GET", "/v2/screeners/fibras", schemas.FibrasResponse, "/v2/screeners/fibras?extra=FMTY14.MX"),
-    ("GET", "/v2/insiders/{symbol}", schemas.InsidersResponse, "/v2/insiders/AAPL"),
+    ("GET", "/v2/momentum/{symbol}", schemas.MomentumResponse, "/v2/momentum/CEMEXCPO.MX", ("momentum",)),
+    (
+        "GET",
+        "/v2/screeners/factors",
+        schemas.FactorsResponse,
+        "/v2/screeners/factors?universe=custom&symbols=AAPL,MSFT",
+        ("screeners.factors",),
+    ),
+    ("GET", "/v2/screeners/magic", schemas.MagicResponse, "/v2/screeners/magic?universe=mx", ("screeners.magic",)),
+    (
+        "GET",
+        "/v2/screeners/fibras",
+        schemas.FibrasResponse,
+        "/v2/screeners/fibras?extra=FMTY14.MX",
+        ("screeners.fibras",),
+    ),
+    ("GET", "/v2/insiders/{symbol}", schemas.InsidersResponse, "/v2/insiders/AAPL", ("insiders",)),
 ]
-STUBS = [(m, p, model, url) for m, p, model, url in SPEC if url]
+STUBS = [row for row in SPEC if row[3]]
+
+EXTRA_CAPABILITIES = {
+    "legacy.v1",  # el router del backend viejo, que no está en el spec v2
+    "fx.fix",  # refinamiento de /v2/fx: el tipo de cambio salió del FIX de Banxico y no de Yahoo
+    "history.dates",  # refinamiento de /v2/history: acepta rango por fechas, no solo range/interval
+}
+"""Capacidades de ``KNOWN_CAPABILITIES`` que no son "la" capacidad de ninguna ruta del spec."""
 
 
 @pytest.fixture(scope="module")
@@ -66,6 +129,22 @@ def app():
 @pytest.fixture(scope="module")
 def client(app):
     return TestClient(app, raise_server_exceptions=False)
+
+
+def router_module(rc) -> object:
+    """El módulo de ``kaizen_api/routers/`` donde vive la función de la ruta."""
+    return sys.modules[rc.endpoint.__module__]
+
+
+def is_stub(rc) -> bool:
+    """¿La ruta sigue siendo un stub? Lo dice la marca ``@stub`` de ``kaizen_api/routers/__init__.py``.
+
+    Es un dato que pone el dueño de la ruta, no una heurística sobre el texto del código: una ruta
+    ya implementada que conserva un ``not_implemented(...)`` para una rama que no soporta (por
+    ejemplo un intervalo) no es un stub, y llamarla aquí saldría a los proveedores. Estas pruebas
+    corren sin red.
+    """
+    return routers_pkg.is_stub(inspect.unwrap(rc.endpoint))
 
 
 def v2_routes(app) -> dict[tuple[str, str], object]:
@@ -82,23 +161,30 @@ def v2_routes(app) -> dict[tuple[str, str], object]:
 
 
 def test_registered_routes_match_the_spec_exactly(app):
-    assert set(v2_routes(app)) == {(m, p) for m, p, _, _ in SPEC}
+    assert set(v2_routes(app)) == {(m, p) for m, p, _, _, _ in SPEC}
 
 
-@pytest.mark.parametrize("method,path,model,_url", SPEC, ids=[f"{m} {p}" for m, p, _, _ in SPEC])
-def test_every_route_declares_its_contract_model(app, method, path, model, _url):
+@pytest.mark.parametrize("method,path,model,_url,_caps", SPEC, ids=[f"{m} {p}" for m, p, _, _, _ in SPEC])
+def test_every_route_declares_its_contract_model(app, method, path, model, _url, _caps):
     rc = v2_routes(app)[(method, path)]
     assert rc.response_model is model
     assert issubclass(model, schemas.ContractModel)
 
 
 def test_every_response_model_is_in_the_registry():
-    assert {model for _, _, model, _ in SPEC} == set(schemas.RESPONSE_MODELS)
+    assert {model for _, _, model, _, _ in SPEC} == set(schemas.RESPONSE_MODELS)
+
+
+def test_every_known_capability_belongs_to_a_route_or_is_a_declared_extra():
+    """``KNOWN_CAPABILITIES`` y la quinta columna del spec no pueden irse por su lado."""
+    of_routes = {cap for *_, caps in SPEC for cap in caps}
+    assert of_routes | EXTRA_CAPABILITIES == set(schemas.KNOWN_CAPABILITIES)
+    assert not (of_routes & EXTRA_CAPABILITIES)
 
 
 def test_openapi_generates_with_error_body(app):
     spec = app.openapi()
-    for method, path, _, _ in SPEC:
+    for method, path, _, _, _ in SPEC:
         assert method.lower() in spec["paths"][path], (method, path)
     assert "ErrorBody" in spec["components"]["schemas"]
     quotes = spec["paths"]["/v2/quotes"]["get"]
@@ -106,8 +192,29 @@ def test_openapi_generates_with_error_body(app):
     assert not [p for p in spec["paths"] if not (p == "/health" or p.startswith(("/auth/", "/v2/")))]
 
 
-@pytest.mark.parametrize("method,path,model,url", STUBS, ids=[p for _, p, _, _ in STUBS])
-def test_stub_returns_501_error_body(client, method, path, model, url):
+@pytest.mark.parametrize("method,path,model,url,caps", STUBS, ids=[p for _, p, _, _, _ in STUBS])
+def test_stub_returns_501_error_body(app, client, method, path, model, url, caps):
+    """Mientras la ruta sea stub, su 501 es el del contrato; ya implementada, anuncia SU capacidad.
+
+    Las dos cosas se deciden por dato (la marca ``@stub`` y ``CAPABILITIES``), nunca llamando a una
+    ruta implementada, que saldría a los proveedores.
+    """
+    rc = v2_routes(app)[(method, path)]
+    module = rc.endpoint.__module__
+    announced = set(getattr(router_module(rc), "CAPABILITIES", []))
+    assert announced <= set(schemas.KNOWN_CAPABILITIES), sorted(announced - set(schemas.KNOWN_CAPABILITIES))
+    mine = announced & set(caps)
+    listed = " o ".join(repr(c) for c in caps)
+    if not is_stub(rc):
+        assert mine, (
+            f"{method} {path} ya no lleva @stub pero su router no anuncia {listed}: "
+            f"agrégala a CAPABILITIES de {module} (es lo que publica /health)"
+        )
+        return
+    assert not mine, (
+        f"{module} anuncia {sorted(mine)} pero {method} {path} todavía lleva @stub: si ya la "
+        f"implementaste, quita esa línea (y su raise not_implemented); si no, quita la capacidad"
+    )
     r = client.request(method, url)
     assert r.status_code == 501, r.text
     body = schemas.ErrorBody.model_validate(r.json())
@@ -115,6 +222,16 @@ def test_stub_returns_501_error_body(client, method, path, model, url):
     assert body.error.message == "Esta función todavía no está disponible."
     assert body.error.details == {"endpoint": f"{method} {path}"}
     assert r.headers["cache-control"] == "no-store"
+
+
+def test_health_announces_every_capability_that_the_routers_declare(app, client):
+    """Lo que anuncia ``/health`` es exactamente lo que declaran los routers montados."""
+    declared: set[str] = set()
+    for rc in v2_routes(app).values():
+        declared |= set(getattr(router_module(rc), "CAPABILITIES", []))
+    announced = set(client.get("/health").json()["capabilities"])
+    assert declared <= announced, sorted(declared - announced)
+    assert announced <= set(schemas.KNOWN_CAPABILITIES), sorted(announced - set(schemas.KNOWN_CAPABILITIES))
 
 
 @pytest.mark.parametrize(
@@ -225,7 +342,7 @@ def test_meta_rejects_unknown_sources_and_bad_instants():
 
 def test_docs_cover_every_route_and_error_code():
     text = DOCS.read_text(encoding="utf-8")
-    for method, path, _, _ in SPEC:
+    for method, path, _, _, _ in SPEC:
         assert f"{method} {path}" in text, f"{method} {path} no está en docs/api-v2.md"
     for code in schemas.ErrorCode.__args__:
         assert f"`{code}`" in text, code

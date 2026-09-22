@@ -11,7 +11,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 
 from kaizen_api.errors import not_implemented
-from kaizen_api.routers import ERROR_RESPONSES, IsoDateQuery, SymbolPath, Symbols, cache_control, check_date_range
+from kaizen_api.routers import ERROR_RESPONSES, IsoDateQuery, SymbolPath, Symbols, cache_control, check_date_range, stub
 from kaizen_api.routers.quotes import FxPairQuery
 from kaizen_api.schemas import CcyParam, FxHistoryResponse, HistoryResponse, Interval, PanelResponse, Range
 
@@ -29,6 +29,7 @@ CcyQuery = Annotated[CcyParam, Query(description="native = moneda de cotización
     dependencies=[cache_control("history")],
     summary="Cierres ajustados de un símbolo, opcionalmente convertidos a MXN o USD",
 )
+@stub
 def history(
     symbol: SymbolPath,
     range_: RangeQuery = "1y",
@@ -44,6 +45,7 @@ def history(
     dependencies=[cache_control("history")],
     summary="Precios de varios símbolos alineados por fecha (INNER JOIN, sin rellenar)",
 )
+@stub
 def panel(
     symbols: Symbols,
     range_: RangeQuery = "1y",
@@ -59,6 +61,7 @@ def panel(
     dependencies=[cache_control("history")],
     summary="Serie diaria del tipo de cambio (FIX SF43718 con token, si no Yahoo marcado)",
 )
+@stub
 def fx_history(pair: FxPairQuery = "USDMXN", start: IsoDateQuery = None, end: IsoDateQuery = None) -> FxHistoryResponse:
     check_date_range(start, end)
     raise not_implemented("GET /v2/fx/history")

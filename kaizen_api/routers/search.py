@@ -10,7 +10,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 
 from kaizen_api.errors import not_implemented
-from kaizen_api.routers import ERROR_RESPONSES, cache_control
+from kaizen_api.routers import ERROR_RESPONSES, cache_control, stub
 from kaizen_api.schemas import SearchResponse
 
 router = APIRouter(prefix="/v2", tags=["búsqueda"], responses=ERROR_RESPONSES)
@@ -23,6 +23,7 @@ CAPABILITIES: list[str] = []
     dependencies=[cache_control("fundamentals")],
     summary="Busca por símbolo, nombre o alias",
 )
+@stub
 def search(
     q: Annotated[str, Query(min_length=1, max_length=64, description="Texto a buscar")],
     limit: Annotated[int, Query(ge=1, le=50)] = 10,

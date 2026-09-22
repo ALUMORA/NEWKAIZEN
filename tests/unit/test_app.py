@@ -64,7 +64,9 @@ def test_production_hides_docs_and_legacy_routes():
 def test_legacy_routes_can_be_turned_off_in_development():
     client = client_for(KAIZEN_LEGACY_ROUTES="0")
     assert client.get("/stock/AAPL").status_code == 404
-    assert client.get("/health").json()["capabilities"] == ["auth"]
+    # Se afirma lo que depende del legado, no la lista entera: fase 2 va agregando capacidades.
+    caps = client.get("/health").json()["capabilities"]
+    assert "auth" in caps and "legacy.v1" not in caps
 
 
 def test_health_shape():
@@ -78,7 +80,7 @@ def test_health_shape():
         "sec": {"ok": None},
         "eodhd": {"configured": False},
     }
-    assert body["capabilities"] == ["auth", "legacy.v1"]
+    assert {"auth", "legacy.v1"} <= set(body["capabilities"])
 
 
 # ─── CORS, GZip, id de request ───────────────────────────────────────────────

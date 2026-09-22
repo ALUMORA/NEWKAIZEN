@@ -5,7 +5,13 @@ Sirve para grabar fixtures deterministas del navegador y para probar el frontend
 
     python scripts/run_replay_backend.py                          # kaizen_api.main en :8190
     python scripts/run_replay_backend.py --port 8101 --set 2026-09-22
+    python scripts/run_replay_backend.py --set 2026-09-22,2026-09-22-b2a   # capas: gana la primera que tenga la llamada
     USERS='{"demo":"demo"}' python scripts/run_replay_backend.py  # con un usuario de prueba
+
+``--set`` acepta uno o varios sets separados por coma, en orden de búsqueda (el mismo formato que
+``KAIZEN_REPLAY_SET``, que es el valor por omisión si está definido). Todos tienen que existir; una
+capa que no grabó ninguna llamada no se crea, así que no se pone en el spec. ``--root`` sirve para
+servir sets de borrador fuera de ``tests/fixtures/recorded``.
 
 El módulo se importa DESPUÉS de instalar el replay y debe exponer una app ASGI ``app`` (el paquete la
 arma con ``create_app()`` al pedirla). La configuración sale del entorno igual que en producción
@@ -17,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import socket
 import sys
 import threading
@@ -28,7 +35,14 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from kaizen_api.providers.replay import install_replay  # noqa: E402
-from tests.replay import DEFAULT_SET, NetworkBlocked, ReplayMiss, ReplaySession, load_module  # noqa: E402
+from tests.replay import (  # noqa: E402
+    DEFAULT_SET,
+    FixtureSetError,
+    NetworkBlocked,
+    ReplayMiss,
+    ReplaySession,
+    load_module,
+)
 
 DEFAULT_MODULE = "kaizen_api.main"
 _REPLAY_ERRORS = (ReplayMiss, NetworkBlocked)
@@ -138,15 +152,30 @@ class ServerThread:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--module", default=DEFAULT_MODULE, help="módulo con la app ASGI 'app'")
-    parser.add_argument("--set", default=DEFAULT_SET, help="set grabado en tests/fixtures/recorded/")
+    parser.add_argument(
+        "--set",
+        default=os.environ.get("KAIZEN_REPLAY_SET") or DEFAULT_SET,
+        help="set grabado en tests/fixtures/recorded/, o varios separados por coma en orden de búsqueda "
+        "(p. ej. 2026-09-22,2026-09-22-b2a); por omisión KAIZEN_REPLAY_SET o " + DEFAULT_SET,
+    )
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=None,
+        help="carpeta que contiene los sets (por omisión tests/fixtures/recorded); sirve para servir un borrador",
+    )
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8190)
     parser.add_argument("--no-freeze", action="store_true", help="no congelar el reloj")
     args = parser.parse_args()
 
-    session, module = start(args.module, args.set, freeze_time=not args.no_freeze)
+    try:
+        session, module = start(args.module, args.set, freeze_time=not args.no_freeze, root=args.root)
+    except (FileNotFoundError, FixtureSetError) as exc:
+        print(f"[replay] {exc}", file=sys.stderr)
+        return 2
     banner = (
-        f"[replay] {args.module} en http://{args.host}:{args.port} set={args.set} "
+        f"[replay] {args.module} en http://{args.host}:{args.port} set={session.set_name} "
         f"frozen_at={session.store.frozen_at} red=bloqueada"
     )
     try:

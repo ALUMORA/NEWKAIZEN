@@ -8,6 +8,8 @@ export default defineConfig([
   globalIgnores([
     'dist',
     'dist-ssr',
+    // Build de e2e: 'npm run e2e' lo deja minificado y sin ignorarlo 'npm run lint' truena.
+    'dist-e2e',
     '.venv',
     '.venv-golden',
     'venv',
@@ -17,6 +19,9 @@ export default defineConfig([
     'blob-report',
     'coverage',
     'e2e/fixtures',
+    // Guiones de la herramienta Workflow: el harness envuelve el cuerpo en una función, así que su
+    // 'return' de primer nivel es válido ahí pero no como módulo ES. No son código de la app.
+    'docs/overhaul/workflows',
   ]),
   {
     files: ['**/*.{js,jsx}'],
