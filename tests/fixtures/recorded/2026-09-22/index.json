@@ -407,6 +407,34 @@
    "soft_failure": false,
    "recorded_at": "2026-09-22T14:56:28+00:00"
   },
+  "yf:AMZN:cashflow": {
+   "file": "yf-AMZN-cashflow-b39ebfd92f66dbe6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T18:52:13+00:00"
+  },
+  "yf:AMZN:financials": {
+   "file": "yf-AMZN-financials-98b4f9cd9d1215be.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T18:52:12+00:00"
+  },
+  "yf:AMZN:history?interval=1wk&period=1y": {
+   "file": "yf-AMZN-history-94a20c39e1ecaef6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T18:52:17+00:00"
+  },
+  "yf:AMZN:history?interval=1wk&period=5y": {
+   "file": "yf-AMZN-history-5f88e2b7694e26f0.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T18:52:20+00:00"
+  },
   "yf:AMZN:income_stmt": {
    "file": "yf-AMZN-income-stmt-c605c0d15c24ae02.json",
    "provider": "yfinance",
@@ -1506,6 +1534,34 @@
    "soft_failure": false,
    "recorded_at": "2026-09-22T14:54:51+00:00"
   },
+  "yf:GOOGL:cashflow": {
+   "file": "yf-GOOGL-cashflow-8d47e9d287307192.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T18:52:15+00:00"
+  },
+  "yf:GOOGL:financials": {
+   "file": "yf-GOOGL-financials-68e0ab7061eec04f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T18:52:14+00:00"
+  },
+  "yf:GOOGL:history?interval=1wk&period=1y": {
+   "file": "yf-GOOGL-history-f99bca99cc236f50.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T18:52:18+00:00"
+  },
+  "yf:GOOGL:history?interval=1wk&period=5y": {
+   "file": "yf-GOOGL-history-00560de037f1b8a7.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T18:52:21+00:00"
+  },
   "yf:GOOGL:income_stmt": {
    "file": "yf-GOOGL-income-stmt-1b02a3d3e40ca854.json",
    "provider": "yfinance",
@@ -1904,6 +1960,34 @@
    "kind": "value",
    "soft_failure": false,
    "recorded_at": "2026-09-22T14:53:58+00:00"
+  },
+  "yf:MSFT:cashflow": {
+   "file": "yf-MSFT-cashflow-9cbaff2fa68a31cf.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T18:52:11+00:00"
+  },
+  "yf:MSFT:financials": {
+   "file": "yf-MSFT-financials-df65a211e37e974d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T18:52:10+00:00"
+  },
+  "yf:MSFT:history?interval=1wk&period=1y": {
+   "file": "yf-MSFT-history-90f0f51f37470050.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T18:52:16+00:00"
+  },
+  "yf:MSFT:history?interval=1wk&period=5y": {
+   "file": "yf-MSFT-history-ac330a614ea29aff.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T18:52:19+00:00"
   },
   "yf:MSFT:income_stmt": {
    "file": "yf-MSFT-income-stmt-20c12c6f8a088ee5.json",
@@ -3030,14 +3114,14 @@
  "created_at": "2026-09-22T14:51:31+00:00",
  "yfinance_version": "1.7.0",
  "summary": {
-  "keys_total": 432,
+  "keys_total": 444,
   "keys_by_provider": {
    "http:cdn.cboe.com": 1,
    "http:data.sec.gov": 2,
    "http:fred.stlouisfed.org": 3,
    "http:stooq.com": 1,
    "http:www.sec.gov": 1,
-   "yf": 420,
+   "yf": 432,
    "yf.download": 4
   },
   "exceptions_by_provider": {
@@ -3100,5 +3184,5 @@
    ]
   }
  },
- "updated_at": "2026-09-22T15:00:51+00:00"
+ "updated_at": "2026-09-22T18:52:21+00:00"
 }
