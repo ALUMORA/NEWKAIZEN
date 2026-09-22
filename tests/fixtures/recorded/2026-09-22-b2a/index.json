@@ -1,0 +1,80 @@
+{
+ "set": "2026-09-22-b2a",
+ "entries": {
+  "yf:AAPL:history?period=1y": {
+   "file": "yf-AAPL-history-5fbb2efbea2dd6c6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:14:04+00:00"
+  },
+  "yf:MXN=X:history?period=1y": {
+   "file": "yf-MXN-X-history-63ad70501c5df727.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:14:02+00:00"
+  },
+  "yf:MXN=X:history?period=5d": {
+   "file": "yf-MXN-X-history-08b8a883baeb6817.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:14:00+00:00"
+  },
+  "yf:NAFTRAC.MX:history?period=1y": {
+   "file": "yf-NAFTRAC.MX-history-ed7693d640cf9491.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:14:08+00:00"
+  },
+  "yf:NAFTRAC.MX:info": {
+   "file": "yf-NAFTRAC.MX-info-c8ff7904f638c060.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:14:10+00:00"
+  },
+  "yf:WALMEX.MX:history?period=1y": {
+   "file": "yf-WALMEX.MX-history-d43efa68ff54adcb.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T19:14:06+00:00"
+  },
+  "yf:ZZZNOTREAL:history?period=1y": {
+   "file": "yf-ZZZNOTREAL-history-aabb3a83a4a30b64.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T19:14:14+00:00"
+  }
+ },
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "created_at": "2026-09-22T19:14:00+00:00",
+ "yfinance_version": "1.7.0",
+ "layered_on": [
+  "2026-09-22"
+ ],
+ "lookup_order": [
+  "2026-09-22",
+  "2026-09-22-b2a"
+ ],
+ "summary": {
+  "keys_total": 7,
+  "keys_by_provider": {
+   "yf": 7
+  },
+  "exceptions_by_provider": {},
+  "empty_by_provider": {
+   "yf": 1
+  },
+  "symbols_with_failed_or_empty_calls": {
+   "ZZZNOTREAL": [
+    "history?period=1y"
+   ]
+  }
+ },
+ "updated_at": "2026-09-22T19:14:14+00:00"
+}
