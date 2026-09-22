@@ -379,11 +379,11 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance
 }
 
 /* ─── Marca (logo) ─────────────────────────────────────────────────────── */
-@keyframes kaizen-mark-float { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-3px) rotate(-2deg); } }
+@keyframes kaizen-mark-float { 0%, 100% { transform: scale(1.75) translateY(0); } 50% { transform: scale(1.75) translateY(-3px); } }
 .kaizen-mark { border-radius: 10px; display: inline-flex; flex-shrink: 0; overflow: hidden; }
 .kaizen-mark img { height: 100%; object-fit: cover; transform: scale(1.75); transition: transform 300ms ease; width: 100%; }
 .kaizen-mark-animated img { animation: kaizen-mark-float 5s ease-in-out infinite; }
-.kaizen-mark-animated:hover img { animation-play-state: paused; transform: scale(1.9) rotate(4deg); }
+.kaizen-mark-animated:hover img { animation-play-state: paused; transform: scale(1.9); }
 /* El JPG trae su propio fondo (blanco u negro) horneado. mix-blend-mode lo funde
    con el fondo real del contenedor en vez de mostrarse como una caja pegada. */
 .kaizen-mark-on-light img { mix-blend-mode: multiply; }

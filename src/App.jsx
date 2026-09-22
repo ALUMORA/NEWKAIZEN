@@ -84,10 +84,22 @@ function downloadEdgarCsv(edgar) {
   URL.revokeObjectURL(url);
 }
 
-async function fetchStock(ticker) {
-  const res = await fetch(`${BACKEND}/stock/${encodeURIComponent(ticker)}`);
-  const data = await res.json();
-  return data?.error ? null : data;
+async function fetchStock(ticker, timeoutMs = 30000) {
+  // Reintenta automáticamente en caso de fallo de red/respuesta no-JSON (Render cold start)
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(`${BACKEND}/stock/${encodeURIComponent(ticker)}`, { signal: AbortSignal.timeout(timeoutMs) });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      return data?.error ? null : data;
+    } catch (e) {
+      if (attempt < 2) {
+        await new Promise((r) => setTimeout(r, 8000 * (attempt + 1))); // 8s, 16s
+      } else {
+        throw e;
+      }
+    }
+  }
 }
 
 async function fetchChart(ticker, period = "5y", timeoutMs = 90000) {
@@ -2522,7 +2534,7 @@ export default function App() {
                         background: newTicker === '$MXN' ? "#2a1f00" : "var(--border)",
                         border: `1px solid ${newTicker === '$MXN' ? "var(--warning)" : "var(--border-strong)"}`,
                         borderRadius: 10,
-                        color: "var(--ink)", padding: "8px 14px", fontSize: 13, width: 160,
+                        color: newTicker === '$MXN' ? "#e0b768" : "var(--ink)", padding: "8px 14px", fontSize: 13, width: 160,
                         fontFamily: "var(--font-mono)", outline: "none"
                       }} />
                     <button
@@ -2690,7 +2702,7 @@ export default function App() {
 
                   {/* Pie + Rebalanceo */}
                   {(() => {
-                    const tSum    = paths.reduce((s, p) => s + (parseFloat(targetPcts[p.ticker]) || 0), 0);
+                    const tSum    = paths.reduce((s, p) => s + (parseFloat(targetPcts[p.ticker] ?? (p.pct * 100).toFixed(1)) || 0), 0);
                     const tSumOk  = Math.abs(tSum - 100) < 0.5;
                     const effTotal = parseFloat(customTotal) > 0 ? parseFloat(customTotal) : totalValue;
                     const fmt = (n) => n >= 1000 ? n.toFixed(1) : n >= 10 ? n.toFixed(2) : n >= 1 ? n.toFixed(3) : n.toFixed(4);
@@ -2744,8 +2756,8 @@ export default function App() {
                           {hoveredTicker ? (() => {
                             const hp = paths.find(x => x.ticker === hoveredTicker);
                             return hp ? <>
-                              <text x={CX} y={CY - 10} textAnchor="middle" fill={hp.color === accentColor ? accentColor : "#555555"} fontSize="13" fontFamily="monospace" fontWeight="bold">{hoveredTicker}</text>
-                              <text x={CX} y={CY + 12} textAnchor="middle" fill="var(--bg-deep)" fontSize="22" fontWeight="bold" fontFamily="monospace">{(hp.pct * 100).toFixed(1)}%</text>
+                              <text x={CX} y={CY - 10} textAnchor="middle" fill={hp.color === accentColor ? accentColor : "var(--muted)"} fontSize="13" fontFamily="monospace" fontWeight="bold">{hoveredTicker}</text>
+                              <text x={CX} y={CY + 12} textAnchor="middle" fill="var(--ink)" fontSize="22" fontWeight="bold" fontFamily="monospace">{(hp.pct * 100).toFixed(1)}%</text>
                             </> : null;
                           })() : <>
                             <text x={CX} y={CY - 10} textAnchor="middle" fill="var(--muted-2)" fontSize="10" fontFamily="monospace" letterSpacing="1">{isExperimental ? "PRESUPUESTO" : "TOTAL"}</text>
@@ -2919,7 +2931,7 @@ export default function App() {
                               onMouseLeave={() => setHoveredTicker(null)}
                               style={{
                                 padding: "14px 20px",
-                                background: isTop ? topBg : (isHovered ? "var(--surface-2)" : pi % 2 === 0 ? "var(--surface)" : "#0d1825"),
+                                background: isTop ? topBg : (isHovered ? "var(--surface-2)" : pi % 2 === 0 ? "var(--surface)" : "var(--surface-3)"),
                                 borderBottom: "1px solid var(--border)",
                                 transition: "background 0.15s",
                                 opacity: hoveredTicker && !isHovered ? 0.55 : 1,
@@ -2934,7 +2946,7 @@ export default function App() {
                                 <div style={{ display: "flex", alignItems: "center", gap: 5, overflow: "hidden" }}>
                                   <span style={{
                                     fontFamily: "var(--font-sans)",
-                                    color: "var(--ink)",
+                                    color: isTop ? "#ffffff" : "var(--ink)",
                                     fontSize: 13, fontWeight: 700,
                                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"
                                   }}>{p.ticker}</span>
@@ -2961,7 +2973,7 @@ export default function App() {
                                       style={{
                                         width: "100%", padding: "5px 20px 5px 8px",
                                         fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700,
-                                        color: isTop ? accentColor : "var(--ink)",
+                                        color: isTop ? (isExperimental ? "#c4b5fd" : "#7fe3a0") : "var(--ink)",
                                         background: isTop ? (isExperimental ? "#1a1040" : "#0a1f10") : "var(--surface-2)",
                                         border: `1.5px solid ${isTop ? accentColor : isHovered ? "var(--border-strong)" : "var(--border)"}`,
                                         borderRadius: 8, outline: "none", textAlign: "right",
@@ -3450,7 +3462,7 @@ export default function App() {
                         const diff = optW - currW;
                         const action = Math.abs(diff) < 0.02 ? "MANTENER" : diff > 0 ? "AUMENTAR" : "REDUCIR";
                         const actionColor = action === "AUMENTAR" ? "var(--positive)" : action === "REDUCIR" ? "var(--negative)" : "var(--muted)";
-                        const rowBg = i % 2 === 0 ? "var(--surface)" : "#0d1825";
+                        const rowBg = i % 2 === 0 ? "var(--surface)" : "var(--surface-2)";
                         return (
                           <tr key={t} style={{ background: rowBg }}>
                             <td style={{ fontFamily: "var(--font-mono)", color: "var(--ink)", fontWeight: 700 }}>{t}</td>
