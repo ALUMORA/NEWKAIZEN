@@ -1,0 +1,21 @@
+# Vercel solo publica el frontend. Todo lo de Python vive en Render, y si se le sube a Vercel,
+# este archivo .python-version lo hace elegir un runtime de Python y tumba el despliegue: la rama
+# analizavende venía en rojo desde que la fase 0 agregó ese archivo, mientras main seguía verde.
+.python-version
+pyproject.toml
+requirements.txt
+requirements-dev.txt
+backend.py
+Procfile
+render.yaml
+kaizen_api/
+tests/
+scripts/*.py
+
+# Pruebas y documentación: no hacen falta para construir el sitio y pesan.
+e2e/
+playwright.config.js
+vitest.config.js
+docs/
+.venv/
+.venv-golden/
