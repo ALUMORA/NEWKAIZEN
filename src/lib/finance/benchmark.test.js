@@ -66,6 +66,25 @@ describe('regress', () => {
   })
 })
 
+describe('el k de la regresión viene en el resultado', () => {
+  const x = [0.01, 0.02, -0.01, 0.03, 0]
+  const y = [0.02, 0.025, -0.02, 0.05, 0]
+
+  it('sin k no se anualiza nada y el resultado lo dice', () => {
+    const fit = regress(x, y)
+    expect(fit.k).toBe(1)
+    expect(fit.alphaAnnual).toBeCloseTo(fit.alpha, 12)
+    expect(fit.alphaAnnualArithmetic).toBeCloseTo(fit.alpha, 12)
+  })
+
+  it('con k la alfa anual sí compone, y el k queda auditable', () => {
+    const fit = regress(y, x, 52)
+    expect(fit.k).toBe(52)
+    expect(fit.alphaAnnual).toBeCloseTo((1 + fit.alpha) ** 52 - 1, 12)
+    expect(fit.alphaAnnualArithmetic).toBeCloseTo(fit.alpha * 52, 12)
+  })
+})
+
 describe('blumeBeta', () => {
   it('acerca la beta a 1', () => {
     expect(blumeBeta(1)).toBeCloseTo(1, 12)

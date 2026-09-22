@@ -222,11 +222,13 @@ export function historicalCVaR(returns, alpha) {
  * Supone rendimientos normales, cosa que los mercados no cumplen: subestima las colas.
  * @param {number} mu media por periodo
  * @param {number} sigma desviación estándar por periodo, positiva
- * @param {number} alpha nivel de confianza
- * @returns {number | null}
+ * @param {number} alpha nivel de confianza, en (0,1) abierto
+ * @returns {number | null} null si algún argumento no es un número finito, si sigma es negativa
+ *   o si alpha se sale de (0,1). Un alpha que llega como texto tampoco pasa
  */
 export function parametricVaR(mu, sigma, alpha) {
   if (!isNum(mu) || !isNum(sigma) || sigma < 0) return null
+  if (!isNum(alpha) || alpha <= 0 || alpha >= 1) return null
   const z = normalInvCdf(1 - alpha)
   if (z === null) return null
   return -(mu + sigma * z)
@@ -236,11 +238,12 @@ export function parametricVaR(mu, sigma, alpha) {
  * CVaR paramétrico normal: −(μ − σ·φ(z_{1−α})/(1−α)). Se devuelve como pérdida positiva.
  * @param {number} mu media por periodo
  * @param {number} sigma desviación estándar por periodo, positiva
- * @param {number} alpha nivel de confianza
- * @returns {number | null}
+ * @param {number} alpha nivel de confianza, en (0,1) abierto
+ * @returns {number | null} null con las mismas reglas que `parametricVaR`
  */
 export function parametricCVaR(mu, sigma, alpha) {
   if (!isNum(mu) || !isNum(sigma) || sigma < 0) return null
+  if (!isNum(alpha) || alpha <= 0 || alpha >= 1) return null
   const z = normalInvCdf(1 - alpha)
   const pdf = z === null ? null : normalPdf(z)
   if (z === null || pdf === null) return null
@@ -270,18 +273,31 @@ export function parametricCVaR(mu, sigma, alpha) {
  * (por ejemplo `calmar` cuando nunca hubo caída), para que la interfaz muestre "s/d" solo en ese
  * dato y no en todo el bloque. Mínimo 2 periodos.
  * @param {number[]} returns rendimientos simples por periodo, en una sola moneda
- * @param {{ k: number, rf?: number | number[] }} options `k` periodos por año, `rf` por periodo
- * @returns {PerformanceSummary | null}
+ * @param {{ k: number, rf?: number | number[] } | null} [options] `k` periodos por año (252, 52
+ *   o 12) y `rf` por periodo. `k` es obligatorio: sin él devuelve null, porque suponerlo sería
+ *   justo el 52 escondido que esta librería vino a quitar
+ * @returns {PerformanceSummary | null} null con menos de 2 periodos, con datos no finitos o sin
+ *   un `k` positivo
  */
-export function summary(returns, { k, rf = 0 } = { k: 252 }) {
+export function summary(returns, options) {
+  const { k, rf = 0 } = options ?? {}
   const r = numericArray(returns, 2)
   if (r === null || !isNum(k) || k <= 0) return null
   const values = cumulative(r)
   const dd = values === null ? null : drawdowns(values)
   const growth = cagrFromReturns(r, k)
   const maxDrawdown = dd === null ? null : dd.maxDrawdown
+  // Un solo recorrido, sin `Math.max(...r)`: el spread revienta el límite de argumentos del
+  // motor con series largas (RangeError arriba de unos 100 mil puntos) y esta librería promete
+  // null, no excepciones.
   let positives = 0
-  for (let i = 0; i < r.length; i++) if (r[i] > 0) positives++
+  let best = r[0]
+  let worst = r[0]
+  for (let i = 0; i < r.length; i++) {
+    if (r[i] > 0) positives++
+    if (r[i] > best) best = r[i]
+    if (r[i] < worst) worst = r[i]
+  }
   return {
     cagr: growth,
     vol: annualizedVol(r, k),
@@ -291,8 +307,8 @@ export function summary(returns, { k, rf = 0 } = { k: 252 }) {
     calmar: growth === null || maxDrawdown === null ? null : calmar(growth, maxDrawdown),
     var95: historicalVaR(r, 0.95),
     cvar95: historicalCVaR(r, 0.95),
-    best: Math.max(...r),
-    worst: Math.min(...r),
+    best,
+    worst,
     positivePct: positives / r.length,
     n: r.length,
     years: r.length / k,

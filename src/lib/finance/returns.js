@@ -13,8 +13,10 @@ import { EPS, daysBetween, isNum, numericArray, parseIsoDate } from './_util.js'
 /** @typedef {{ dates: string[], values: number[] }} Series */
 /** @typedef {{ dates: string[], values: Record<string, number[]>, dropped: string[] }} Panel */
 
+// Sin prototipo a propósito: con un objeto literal, PERIODS['toString'] devuelve una función
+// heredada en vez de undefined, y periodsPerYear acabaría regresando algo que no es un número.
 /** Periodos por año de cada intervalo. 252 días hábiles, 52 semanas, 12 meses. */
-const PERIODS = { '1d': 252, '1wk': 52, '1mo': 12, '3mo': 4, '1y': 1 }
+const PERIODS = Object.freeze(Object.assign(Object.create(null), { '1d': 252, '1wk': 52, '1mo': 12, '3mo': 4, '1y': 1 }))
 
 /**
  * Periodos por año de un intervalo. Se usa como `k` en todo lo que anualiza.
@@ -22,8 +24,9 @@ const PERIODS = { '1d': 252, '1wk': 52, '1mo': 12, '3mo': 4, '1y': 1 }
  * @returns {number | null} null si el intervalo no se reconoce
  */
 export function periodsPerYear(interval) {
+  if (typeof interval !== 'string') return null
   const k = PERIODS[interval]
-  return k === undefined ? null : k
+  return typeof k === 'number' ? k : null
 }
 
 /**
@@ -135,10 +138,12 @@ function cleanSeries(series) {
  * los empates se rompen por nombre, quitando el último alfabéticamente.
  *
  * @param {Record<string, Series>} seriesBySymbol
- * @param {{ minDates?: number }} [options] `minDates` por omisión 0, o sea que no descarta nada
+ * @param {{ minDates?: number } | null} [options] `minDates` por omisión 0, o sea que no descarta
+ *   nada
  * @returns {Panel} `dates` en orden ascendente y `values[símbolo]` del mismo largo que `dates`
  */
-export function alignPanel(seriesBySymbol, { minDates = 0 } = {}) {
+export function alignPanel(seriesBySymbol, options) {
+  const { minDates = 0 } = options ?? {}
   /** @type {string[]} */
   const dropped = []
   /** @type {Map<string, Series>} */
@@ -191,12 +196,13 @@ export function alignPanel(seriesBySymbol, { minDates = 0 } = {}) {
 /**
  * Rendimientos de un panel ya alineado. Se calculan después de la alineación, nunca antes.
  * @param {Panel | { dates: string[], values: Record<string, number[]> }} panel
- * @param {{ log?: boolean }} [options] `log` usa rendimientos logarítmicos
+ * @param {{ log?: boolean } | null} [options] `log` usa rendimientos logarítmicos
  * @returns {{ dates: string[], values: Record<string, number[]> } | null} `dates` son las fechas
  *   de llegada de cada periodo (las del panel sin la primera); null con menos de 2 fechas o si
  *   algún símbolo no se puede convertir
  */
-export function panelReturns(panel, { log = false } = {}) {
+export function panelReturns(panel, options) {
+  const { log = false } = options ?? {}
   if (!panel || !Array.isArray(panel.dates) || panel.dates.length < 2) return null
   if (!panel.values || typeof panel.values !== 'object') return null
   /** @type {Record<string, number[]>} */

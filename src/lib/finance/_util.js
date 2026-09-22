@@ -112,6 +112,29 @@ export function parseIsoDate(value) {
   return ms
 }
 
+/**
+ * Lista de fechas ISO `YYYY-MM-DD` estrictamente ascendentes y sin repetir, que es lo que
+ * garantiza `alignPanel` y lo que suponen los calendarios de la librería. Devuelve los
+ * milisegundos UTC de cada una para no volver a parsearlas.
+ * @param {unknown} dates
+ * @param {number} [minLength] largo mínimo aceptable
+ * @returns {number[] | null} null si no es arreglo, si es más corto que `minLength`, si alguna
+ *   no es una fecha ISO válida o si no vienen en orden ascendente estricto
+ */
+export function ascendingIsoDates(dates, minLength = 0) {
+  if (!Array.isArray(dates) || dates.length < minLength) return null
+  /** @type {number[]} */
+  const out = new Array(dates.length)
+  let previous = -Infinity
+  for (let i = 0; i < dates.length; i++) {
+    const ms = parseIsoDate(dates[i])
+    if (ms === null || ms <= previous) return null
+    out[i] = ms
+    previous = ms
+  }
+  return out
+}
+
 /** Milisegundos en un día. */
 const DAY_MS = 86400000
 

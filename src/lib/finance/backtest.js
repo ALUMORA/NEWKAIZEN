@@ -8,15 +8,34 @@
 //   estos números da .9975 y no rebalancear da .995: la diferencia no es ruido, es la estrategia.
 // - El resumen se calcula con performance.summary, o sea CAGR, no promedios por 52.
 
-import { EPS, isNum, normalizedWeights, numericArray, parseIsoDate, sumOf } from './_util.js'
+import { ascendingIsoDates, EPS, isNum, normalizedWeights, numericArray, parseIsoDate, sumOf } from './_util.js'
 import { simpleReturns } from './returns.js'
 import { informationRatio, trackingError } from './benchmark.js'
 
-/** @typedef {{ dates?: string[] | null, values: Record<string, number[]> }} PanelLike */
-
 /**
  * @typedef {{
+ *   dates?: string[] | null,
+ *   startDate?: string | null,
+ *   values: Record<string, number[]>,
+ * }} PanelLike
+ */
+
+/**
+ * Resultado de un backtest. Las dos funciones devuelven esta misma forma, con la MISMA
+ * correspondencia entre arreglos, para que una gráfica se arme igual venga de donde venga:
+ *
+ * - `values` es la trayectoria de 1 peso, empieza en 1 y su largo es siempre `returns.length + 1`.
+ * - `dates` va 1 a 1 con `returns`: es la fecha de LLEGADA de cada periodo.
+ * - `valueDates` va 1 a 1 con `values`: la fecha de arranque seguida de las de llegada.
+ *
+ * O sea que `dates.length === returns.length` y `valueDates.length === values.length`, siempre.
+ * Cualquiera de los dos puede venir en null cuando el panel no trajo calendario: `constantMix`
+ * solo puede armar `valueDates` si el panel incluye `startDate`, porque sus fechas son las de
+ * llegada y la del arranque no está en ningún lado.
+ *
+ * @typedef {{
  *   dates: string[] | null,
+ *   valueDates: string[] | null,
  *   values: number[],
  *   returns: number[],
  *   turnover: number,
@@ -49,21 +68,41 @@ function readPanel(panel, minLength) {
 }
 
 /**
+ * Calendario de un panel, ya validado. Un panel sin `dates` es legítimo (queda null); uno con
+ * `dates` que no cuadran es un dato malo y no debe seguir corriendo.
+ * @param {PanelLike} panel
+ * @param {number} expectedLength cuántas fechas debe traer
+ * @returns {string[] | null | undefined} el calendario, null si el panel no trae fechas, o
+ *   `undefined` para avisar que las fechas vienen mal y el llamador debe devolver null
+ */
+function panelDates(panel, expectedLength) {
+  const raw = panel.dates
+  if (raw === undefined || raw === null) return null
+  if (!Array.isArray(raw) || raw.length !== expectedLength) return undefined
+  if (ascendingIsoDates(raw) === null) return undefined
+  return [...raw]
+}
+
+/**
  * Compra inicial y nada más: las participaciones quedan fijas y los pesos se mueven con los
  * precios. Mínimo 2 fechas.
- * @param {{ dates?: string[] | null, values: Record<string, number[]> }} pricePanel precios YA
- *   alineados por fecha y en una sola moneda (ver returns.alignPanel)
+ * @param {PanelLike} pricePanel precios YA alineados por fecha y en una sola moneda (ver
+ *   returns.alignPanel); si trae `dates`, tiene que ser una fecha ISO por precio, ascendentes
+ *   y sin repetir
  * @param {Record<string, number>} initialWeights pesos iniciales por símbolo; se normalizan para
  *   que sumen 1
  * @returns {BacktestResult | null} `values` es la trayectoria de 1 peso y empieza en 1;
- *   `turnover` siempre 0. null si falta algún símbolo, si un precio inicial no es positivo o si
- *   el panel no cuadra
+ *   `valueDates` son las fechas del panel tal cual y `dates` las de llegada (una menos);
+ *   `turnover` siempre 0. null si falta algún símbolo, si un precio inicial no es positivo, si
+ *   el panel no cuadra o si `dates` no es un calendario ISO ascendente del largo de las series
  */
 export function buyAndHold(pricePanel, initialWeights) {
   const panel = readPanel(pricePanel, 2)
   if (panel === null) return null
   const w0 = normalizedWeights(initialWeights, panel.symbols)
   if (w0 === null) return null
+  const valueDates = panelDates(pricePanel, panel.length)
+  if (valueDates === undefined) return null
   /** @type {number[]} */
   const shares = new Array(panel.symbols.length)
   for (let i = 0; i < panel.symbols.length; i++) {
@@ -87,7 +126,8 @@ export function buyAndHold(pricePanel, initialWeights) {
     finalWeights[panel.symbols[i]] = Math.abs(last) < EPS ? 0 : (shares[i] * panel.series[i][panel.length - 1]) / last
   }
   return {
-    dates: Array.isArray(pricePanel.dates) ? pricePanel.dates.slice(0, panel.length) : null,
+    dates: valueDates === null ? null : valueDates.slice(1),
+    valueDates,
     values,
     returns,
     turnover: 0,
@@ -114,17 +154,20 @@ function calendarBucket(date, frequency) {
 /**
  * Mezcla constante: cada rebalanceo devuelve la cartera a los pesos objetivo, vendiendo lo que
  * subió y comprando lo que bajó. Mínimo 1 periodo.
- * @param {{ dates?: string[] | null, values: Record<string, number[]> }} returnPanel rendimientos
- *   por periodo YA alineados y en una sola moneda; `dates` son las fechas de llegada de cada
- *   periodo y hacen falta para las frecuencias de calendario
+ * @param {PanelLike} returnPanel rendimientos por periodo YA alineados y en una sola moneda;
+ *   `dates` son las fechas de LLEGADA de cada periodo (una por rendimiento) y hacen falta para
+ *   las frecuencias de calendario; `startDate` es opcional y sirve para armar `valueDates`, o sea
+ *   para poder graficar la trayectoria con su propio eje de fechas
  * @param {Record<string, number>} weights pesos objetivo por símbolo, se normalizan a 1
  * @param {'never' | 'monthly' | 'quarterly' | 'annual' | number} [rebalanceEvery] número de
  *   periodos entre rebalanceos (1 por omisión, o sea cada periodo), `'never'` para dejar correr,
  *   o una frecuencia de calendario
  * @returns {BacktestResult | null} `values` empieza en 1 y trae un elemento más que `returns`;
- *   `turnover` es la suma de Σ|w_objetivo − w_actual|/2 de cada rebalanceo, o sea la fracción de
- *   la cartera que se movió. null si el panel no cuadra, si la frecuencia no se entiende o si
- *   se pide calendario sin fechas
+ *   `dates` va 1 a 1 con `returns` y `valueDates` 1 a 1 con `values` (null si no hay
+ *   `startDate`); `turnover` es la suma de Σ|w_objetivo − w_actual|/2 de cada rebalanceo, o sea
+ *   la fracción de la cartera que se movió. null si el panel no cuadra, si `dates` no es un
+ *   calendario ISO ascendente del largo de los rendimientos, si `startDate` no es anterior a la
+ *   primera fecha de llegada, si la frecuencia no se entiende o si se pide calendario sin fechas
  */
 export function constantMix(returnPanel, weights, rebalanceEvery = 1) {
   const panel = readPanel(returnPanel, 1)
@@ -136,8 +179,20 @@ export function constantMix(returnPanel, weights, rebalanceEvery = 1) {
   const asNumber = typeof rebalanceEvery === 'number' ? rebalanceEvery : NaN
   const everyN = isNum(asNumber) && asNumber >= 1 ? Math.floor(asNumber) : null
   if (!calendar && everyN === null && rebalanceEvery !== 'never') return null
-  const dates = Array.isArray(returnPanel.dates) ? returnPanel.dates : null
-  if (calendar && (dates === null || dates.length !== panel.length)) return null
+  const dates = panelDates(returnPanel, panel.length)
+  if (dates === undefined) return null
+  if (calendar && dates === null) return null
+
+  // `values` arranca antes del primer periodo, así que su eje de fechas necesita la del arranque.
+  /** @type {string[] | null} */
+  let valueDates = null
+  const startDate = returnPanel.startDate
+  if (startDate !== undefined && startDate !== null) {
+    const startMs = parseIsoDate(startDate)
+    const firstMs = dates === null ? null : parseIsoDate(dates[0])
+    if (startMs === null || firstMs === null || startMs >= firstMs) return null
+    valueDates = [startDate, .../** @type {string[]} */ (dates)]
+  }
 
   let w = [...target]
   /** @type {number[]} */
@@ -182,7 +237,7 @@ export function constantMix(returnPanel, weights, rebalanceEvery = 1) {
   /** @type {Record<string, number>} */
   const finalWeights = {}
   for (let i = 0; i < panel.symbols.length; i++) finalWeights[panel.symbols[i]] = w[i]
-  return { dates, values, returns, turnover, weights: finalWeights, rebalances }
+  return { dates, valueDates, values, returns, turnover, weights: finalWeights, rebalances }
 }
 
 /**
@@ -195,19 +250,27 @@ export function constantMix(returnPanel, weights, rebalanceEvery = 1) {
  *   excess: number,
  *   trackingError: number | null,
  *   informationRatio: number | null,
+ *   k: number,
  *   n: number,
  * }} BenchmarkComparison
  */
 
 /**
  * Compara dos trayectorias de valor contra el mismo calendario. Mínimo 2 valores en cada una.
+ *
+ * Sin `k` el tracking error y el information ratio salen POR PERIODO (k = 1), no anuales: el
+ * `k` que se usó viene en el resultado justamente para que nadie etiquete como anual algo que
+ * no lo es. Pásalo (252, 52 o 12) si vas a presentarlos como cifras anuales.
+ *
  * @param {number[]} values trayectoria del portafolio
  * @param {number[]} benchValues trayectoria del índice, misma moneda y mismas fechas
- * @param {{ k: number }} options `k` periodos por año para anualizar el tracking error
- * @returns {BenchmarkComparison | null} null si los largos no coinciden o si hay ceros que
- *   impiden calcular rendimientos
+ * @param {{ k?: number } | null} [options] `k` periodos por año para anualizar el tracking
+ *   error; 1 por omisión, o sea sin anualizar
+ * @returns {BenchmarkComparison | null} null si los largos no coinciden, si `k` no es positivo o
+ *   si hay ceros que impiden calcular rendimientos
  */
-export function withBenchmark(values, benchValues, { k }) {
+export function withBenchmark(values, benchValues, options) {
+  const { k = 1 } = options ?? {}
   const v = numericArray(values, 2)
   const b = numericArray(benchValues, 2)
   if (v === null || b === null || v.length !== b.length || !isNum(k) || k <= 0) return null
@@ -227,6 +290,7 @@ export function withBenchmark(values, benchValues, { k }) {
     excess: totalPort - totalBench,
     trackingError: trackingError(active, k),
     informationRatio: informationRatio(active, k),
+    k,
     n: active.length,
   }
 }

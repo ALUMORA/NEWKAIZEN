@@ -17,6 +17,7 @@ import { mean, ols, stdev } from './stats.js'
  *   beta: number,
  *   r2: number,
  *   residualStd: number,
+ *   k: number,
  *   n: number,
  * }} BenchmarkRegression
  */
@@ -25,11 +26,17 @@ import { mean, ols, stdev } from './stats.js'
  * Regresión del exceso del portafolio contra el exceso del índice.
  * `alpha` es por periodo; `alphaAnnual` la compone ((1+α)^k − 1) y `alphaAnnualArithmetic` la
  * multiplica (α·k), que es como la reportan muchas fichas. Mínimo 3 periodos.
+ *
+ * Sin `k` no se anualiza nada (k = 1) y los dos campos "anuales" valen lo mismo que `alpha`, que
+ * es la alfa POR PERIODO. Por eso el `k` que se usó viene en el resultado: para que la pantalla
+ * no pueda etiquetar como anual una cifra que no lo es.
+ *
  * @param {number[]} portExcess rendimientos del portafolio menos rf, por periodo
  * @param {number[]} benchExcess rendimientos del índice menos rf, por periodo, misma moneda
- * @param {number} [k] periodos por año; con 1 (por omisión) las cifras anuales son las del periodo
- * @returns {BenchmarkRegression | null} null si los largos no coinciden, con n < 3 o si el
- *   índice no varía
+ * @param {number} [k] periodos por año (252, 52 o 12); con 1, que es lo que toma por omisión, las
+ *   cifras "anuales" son las del periodo
+ * @returns {BenchmarkRegression | null} null si los largos no coinciden, con n < 3, si `k` no es
+ *   positivo o si el índice no varía
  */
 export function regress(portExcess, benchExcess, k = 1) {
   if (!isNum(k) || k <= 0) return null
@@ -42,6 +49,7 @@ export function regress(portExcess, benchExcess, k = 1) {
     beta: fit.beta,
     r2: fit.r2,
     residualStd: fit.residualStd,
+    k,
     n: fit.n,
   }
 }

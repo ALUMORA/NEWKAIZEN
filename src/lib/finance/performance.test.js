@@ -148,6 +148,17 @@ describe('drawdowns y calmar', () => {
     expect(dd.series[2]).toBeCloseTo(-0.25, 12)
   })
 
+  // Con un `>` en vez de `>=` este caso reportaría recoveryIndex null y una duración más larga
+  // de la real: una cartera que vuelve EXACTAMENTE a su máximo ya se recuperó.
+  it('volver exactamente al pico anterior cuenta como recuperación', () => {
+    const dd = drawdowns([100, 120, 90, 120])
+    expect(dd.peakIndex).toBe(1)
+    expect(dd.troughIndex).toBe(2)
+    expect(dd.recoveryIndex).toBe(3)
+    expect(dd.durationPeriods).toBe(2)
+    expect(dd.maxDrawdown).toBeCloseTo(-0.25, 12)
+  })
+
   it('una caída que no se recupera deja recoveryIndex en null', () => {
     const dd = drawdowns([100, 120, 90, 95])
     expect(dd.recoveryIndex).toBeNull()
@@ -211,6 +222,24 @@ describe('VaR y CVaR', () => {
     expect(parametricCVaR(0.01, 0.05, 1)).toBeNull()
   })
 
+  // Las históricas ya rechazaban una alpha de texto; las paramétricas la convertían sola porque
+  // su único uso es `1 - alpha`, y devolvían un número con toda naturalidad.
+  it('una alpha que llega como texto devuelve null en las cuatro', () => {
+    expect(parametricVaR(0.045, 0.0591608, '0.95')).toBeNull()
+    expect(parametricCVaR(0.045, 0.0591608, '0.9')).toBeNull()
+    expect(historicalVaR(VEINTE, '0.95')).toBeNull()
+    expect(historicalCVaR(VEINTE, '0.95')).toBeNull()
+  })
+
+  it('una alpha fuera de (0,1) o ausente también devuelve null en las paramétricas', () => {
+    expect(parametricVaR(0.045, 0.0591608, 0)).toBeNull()
+    expect(parametricVaR(0.045, 0.0591608, 1)).toBeNull()
+    expect(parametricVaR(0.045, 0.0591608, 1.5)).toBeNull()
+    expect(parametricVaR(0.045, 0.0591608, NaN)).toBeNull()
+    expect(parametricVaR(0.045, 0.0591608)).toBeNull()
+    expect(parametricCVaR(0.045, 0.0591608, null)).toBeNull()
+  })
+
   it('con una sola observación la cola es esa misma observación', () => {
     expect(historicalVaR([-0.2], 0.95)).toBeCloseTo(0.2, 12)
     expect(historicalCVaR([-0.2], 0.95)).toBeCloseTo(0.2, 12)
@@ -246,6 +275,26 @@ describe('summary', () => {
     expect(summary([0.01, NaN], { k: 52 })).toBeNull()
     expect(summary([], { k: 52 })).toBeNull()
     expect(summary([0.01, 0.02], { k: 0 })).toBeNull()
+  })
+
+  it('sin k no se supone ninguno: devuelve null', () => {
+    expect(summary(r)).toBeNull()
+    expect(summary(r, null)).toBeNull()
+    expect(summary(r, {})).toBeNull()
+    expect(summary(r, { rf: 0 })).toBeNull()
+  })
+
+  // `Math.max(...r)` reventaba el límite de argumentos del motor arriba de unos 100 mil puntos.
+  // Una serie así sale de un Monte Carlo o de un walk-forward largo, no de un instrumento.
+  it('una serie larguísima no revienta el límite de argumentos', () => {
+    const larga = Array.from({ length: 200000 }, (_, i) => ((i % 7) - 3) / 100)
+    larga[123] = 0.5
+    larga[456] = -0.4
+    const s = summary(larga, { k: 252 })
+    expect(s).not.toBeNull()
+    expect(s.best).toBeCloseTo(0.5, 12)
+    expect(s.worst).toBeCloseTo(-0.4, 12)
+    expect(s.n).toBe(200000)
   })
 })
 

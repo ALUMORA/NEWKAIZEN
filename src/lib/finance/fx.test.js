@@ -68,6 +68,16 @@ describe('pnlDecomposition', () => {
     expect(pnlDecomposition({ quantity: NaN, price0: 150, price1: 180, fx0: 17, fx1: 19 })).toBeNull()
     expect(pnlDecomposition({ quantity: 10, price0: 150, price1: 180, fx0: 17 })).toBeNull()
   })
+
+  // El caso real: `pnlDecomposition(posicion)` donde `posicion` vino undefined de una búsqueda
+  // por símbolo. Una excepción en render es pantalla en blanco; la regla de la casa es null.
+  it('una posición ausente devuelve null en vez de tronar', () => {
+    expect(pnlDecomposition()).toBeNull()
+    expect(pnlDecomposition(null)).toBeNull()
+    expect(pnlDecomposition(undefined)).toBeNull()
+    expect(pnlDecomposition('10')).toBeNull()
+    expect(pnlDecomposition(42)).toBeNull()
+  })
 })
 
 describe('toCurrency', () => {
@@ -137,10 +147,24 @@ describe('convertSeries y returnInBaseCurrency', () => {
     expect(convertSeries([100, 200], [17, 19], 'MXN', 'MXN')).toEqual([100, 200])
   })
 
+  // El atajo `from === to` estaba antes de validar la moneda, así que una serie en euros pasaba
+  // de largo por la única puerta que revisa monedas en serie.
+  it('una moneda que no manejamos no pasa ni de sí misma a sí misma', () => {
+    expect(convertSeries([100, 200], null, 'EUR', 'EUR')).toBeNull()
+    expect(convertSeries([100], [1], 'BRL', 'BRL')).toBeNull()
+    expect(convertSeries([100], [17], 'EUR', 'MXN')).toBeNull()
+    expect(convertSeries([100], [17], 'MXN', 'JPY')).toBeNull()
+  })
+
   it('largos distintos o tipos de cambio faltantes devuelven null', () => {
     expect(convertSeries([100, 100], [17], 'USD', 'MXN')).toBeNull()
     expect(convertSeries([100, 100], [17, 0], 'USD', 'MXN')).toBeNull()
     expect(convertSeries([], [], 'USD', 'MXN')).toBeNull()
+  })
+
+  it('unas opciones en null no tumban fxAt', () => {
+    const serie = { dates: ['2026-01-05'], values: [17.2] }
+    expect(fxAt(serie, '2026-01-06', null)).toEqual(fxAt(serie, '2026-01-06'))
   })
 
   it('el rendimiento en pesos combina el local con el movimiento del peso', () => {

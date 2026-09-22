@@ -50,13 +50,16 @@ export function toCurrency(amount, from, to, usdmxn) {
  * Para una posición que ya está en la moneda de reporte, pasar `fx0` y `fx1` en 1: el efecto
  * cambiario sale 0, que es lo correcto.
  *
- * @param {{ quantity: number, price0: number, price1: number, fx0: number, fx1: number }} position
- *   `price0` y `price1` en la moneda del instrumento, `fx0` y `fx1` en moneda de reporte por
- *   unidad de la moneda del instrumento (pesos por dólar para algo cotizado en dólares)
- * @returns {PnlSplit | null} null si algún dato falta o no es finito. `cross` es siempre 0 y está
+ * @param {{ quantity: number, price0: number, price1: number, fx0: number, fx1: number } | null}
+ *   [position] `price0` y `price1` en la moneda del instrumento, `fx0` y `fx1` en moneda de
+ *   reporte por unidad de la moneda del instrumento (pesos por dólar para algo cotizado en
+ *   dólares). Una posición ausente devuelve null, no truena
+ * @returns {PnlSplit | null} null si la posición falta o si algún dato no es finito. `cross` es siempre 0 y está
  *   ahí para dejar claro que el término cruzado ya está dentro del efecto cambiario
  */
-export function pnlDecomposition({ quantity, price0, price1, fx0, fx1 }) {
+export function pnlDecomposition(position) {
+  if (!position || typeof position !== 'object') return null
+  const { quantity, price0, price1, fx0, fx1 } = position
   if (!isNum(quantity) || !isNum(price0) || !isNum(price1) || !isNum(fx0) || !isNum(fx1)) return null
   const priceEffect = quantity * (price1 - price0) * fx0
   const fxEffect = quantity * price1 * (fx1 - fx0)
@@ -73,10 +76,11 @@ export function pnlDecomposition({ quantity, price0, price1, fx0, fx1 }) {
  * pero solo hasta `maxStaleDays` días; más allá devuelve null en vez de usar uno viejo.
  * @param {FxSeries} fxSeries serie de pesos por dólar con su fecha
  * @param {string} date fecha ISO `YYYY-MM-DD`
- * @param {{ maxStaleDays?: number }} [options]
+ * @param {{ maxStaleDays?: number } | null} [options]
  * @returns {{ value: number, asOf: string, staleDays: number } | null}
  */
-export function fxAt(fxSeries, date, { maxStaleDays = MAX_FX_STALE_DAYS } = {}) {
+export function fxAt(fxSeries, date, options) {
+  const { maxStaleDays = MAX_FX_STALE_DAYS } = options ?? {}
   if (!fxSeries || !Array.isArray(fxSeries.dates)) return null
   const values = numericArray(fxSeries.values)
   if (values === null || values.length !== fxSeries.dates.length) return null
@@ -106,6 +110,9 @@ export function fxAt(fxSeries, date, { maxStaleDays = MAX_FX_STALE_DAYS } = {}) 
 export function convertSeries(values, usdmxn, from, to) {
   const v = numericArray(values, 1)
   if (v === null) return null
+  // Las monedas se revisan ANTES del atajo: una serie en euros no puede colarse por ser
+  // "de euros a euros" en una librería cuya primera regla es no mezclar monedas.
+  if (!CURRENCIES.includes(from) || !CURRENCIES.includes(to)) return null
   if (from === to) return v
   const fx = numericArray(usdmxn, 1)
   if (fx === null || fx.length !== v.length) return null

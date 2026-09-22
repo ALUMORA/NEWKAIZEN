@@ -76,9 +76,21 @@ describe('buyAndHold', () => {
     expect(conPesosCrudos.values).toEqual(conMitades.values)
   })
 
-  it('conserva las fechas del panel', () => {
-    expect(buyAndHold(PRICES, MITADES).dates).toEqual(PRICES.dates)
-    expect(buyAndHold({ values: PRICES.values }, MITADES).dates).toBeNull()
+  it('conserva las fechas del panel, con valueDates en los valores y dates en los rendimientos', () => {
+    const run = buyAndHold(PRICES, MITADES)
+    expect(run.valueDates).toEqual(PRICES.dates)
+    expect(run.dates).toEqual(['2026-01-12', '2026-01-19'])
+    const sinFechas = buyAndHold({ values: PRICES.values }, MITADES)
+    expect(sinFechas.dates).toBeNull()
+    expect(sinFechas.valueDates).toBeNull()
+  })
+
+  it('un calendario que no cuadra con las series devuelve null en vez de aparentar fechas', () => {
+    expect(buyAndHold({ dates: ['2026-01-05'], values: PRICES.values }, MITADES)).toBeNull()
+    expect(buyAndHold({ dates: ['no', 'es', 'fecha'], values: PRICES.values }, MITADES)).toBeNull()
+    expect(buyAndHold({ dates: ['2026-01-19', '2026-01-12', '2026-01-05'], values: PRICES.values }, MITADES)).toBeNull()
+    expect(buyAndHold({ dates: ['2026-01-05', '2026-01-05', '2026-01-19'], values: PRICES.values }, MITADES)).toBeNull()
+    expect(buyAndHold({ dates: ['2026-01-05', '2026-02-30', '2026-01-19'], values: PRICES.values }, MITADES)).toBeNull()
   })
 
   it('un precio inicial no positivo o un símbolo sin peso devuelven null', () => {
@@ -198,6 +210,87 @@ describe('annualTurnover y weightsSum', () => {
     expect(weightsSum({ A: 0.5, B: NaN })).toBeNull()
     expect(weightsSum(null)).toBeNull()
     expect(annualTurnover(1, 0, 52)).toBeNull()
+  })
+})
+
+describe('el calendario del resultado', () => {
+  // El defecto que esto cubre: las dos funciones devolvían la misma forma pero `dates` se
+  // correspondía con arreglos distintos, así que graficar con el zip natural dibujaba la mezcla
+  // constante un periodo antes y perdía el último valor.
+  it('en comprar y no mover, dates va con returns y valueDates con values', () => {
+    const run = buyAndHold(PRICES, MITADES)
+    expect(run.dates).toHaveLength(run.returns.length)
+    expect(run.valueDates).toHaveLength(run.values.length)
+    expect(run.values).toHaveLength(run.returns.length + 1)
+  })
+
+  it('en la mezcla constante, dates va con returns y valueDates con values', () => {
+    const run = constantMix({ ...RETURNS, startDate: '2026-01-05' }, MITADES, 1)
+    expect(run.dates).toHaveLength(run.returns.length)
+    expect(run.valueDates).toHaveLength(run.values.length)
+    expect(run.values).toHaveLength(run.returns.length + 1)
+    expect(run.valueDates).toEqual(PRICES.dates)
+  })
+
+  it('las dos curvas se grafican con el mismo zip y caen en la misma fecha', () => {
+    const zip = (fechas, serie) => fechas.map((d, i) => [d, serie[i]])
+    const mezcla = constantMix({ ...RETURNS, startDate: '2026-01-05' }, MITADES, 'never')
+    const quieto = buyAndHold(PRICES, MITADES)
+    const curvaMezcla = zip(mezcla.valueDates, mezcla.values)
+    const curvaQuieto = zip(quieto.valueDates, quieto.values)
+    expect(curvaMezcla).toHaveLength(curvaQuieto.length)
+    expect(curvaMezcla[curvaMezcla.length - 1][0]).toBe('2026-01-19')
+    expect(curvaMezcla[curvaMezcla.length - 1][1]).toBeCloseTo(0.995, 12)
+    expect(curvaQuieto[curvaQuieto.length - 1][1]).toBeCloseTo(0.995, 12)
+  })
+
+  it('sin fecha de arranque no se inventa valueDates', () => {
+    const run = constantMix(RETURNS, MITADES, 1)
+    expect(run.dates).toEqual(RETURNS.dates)
+    expect(run.valueDates).toBeNull()
+  })
+
+  it('una fecha de arranque que no es anterior a la primera llegada devuelve null', () => {
+    expect(constantMix({ ...RETURNS, startDate: '2026-01-12' }, MITADES, 1)).toBeNull()
+    expect(constantMix({ ...RETURNS, startDate: '2026-02-01' }, MITADES, 1)).toBeNull()
+    expect(constantMix({ ...RETURNS, startDate: 'no-es-fecha' }, MITADES, 1)).toBeNull()
+    expect(constantMix({ values: RETURNS.values, startDate: '2026-01-05' }, MITADES, 1)).toBeNull()
+  })
+
+  it('un calendario de llegadas que no cuadra devuelve null aunque no haya rebalanceo por calendario', () => {
+    expect(constantMix({ dates: ['2026-01-12'], values: RETURNS.values }, MITADES, 1)).toBeNull()
+    expect(constantMix({ dates: ['2026-01-19', '2026-01-12'], values: RETURNS.values }, MITADES, 1)).toBeNull()
+    expect(constantMix({ dates: ['2026-01-12', 'no-es-fecha'], values: RETURNS.values }, MITADES, 1)).toBeNull()
+  })
+})
+
+describe('withBenchmark con la firma del spec', () => {
+  const port = [100, 110, 121]
+  const bench = [100, 105, 110.25]
+
+  it('se puede llamar con dos argumentos, como dice el spec, sin tronar', () => {
+    const cmp = withBenchmark(port, bench)
+    expect(cmp).not.toBeNull()
+    expect(cmp.k).toBe(1)
+    expect(cmp.n).toBe(2)
+    expect(cmp.totalPort).toBeCloseTo(0.21, 12)
+  })
+
+  it('sin k el tracking error queda por periodo, no anual', () => {
+    const porPeriodo = withBenchmark(port, bench)
+    const anual = withBenchmark(port, bench, { k: 52 })
+    expect(anual.trackingError).toBeCloseTo(porPeriodo.trackingError * Math.sqrt(52), 12)
+    expect(anual.k).toBe(52)
+  })
+
+  it('unas opciones en null valen lo mismo que no pasarlas', () => {
+    expect(withBenchmark(port, bench, null)).toEqual(withBenchmark(port, bench))
+  })
+
+  it('un k que no sirve sigue devolviendo null', () => {
+    expect(withBenchmark(port, bench, { k: 0 })).toBeNull()
+    expect(withBenchmark(port, bench, { k: NaN })).toBeNull()
+    expect(withBenchmark(port, bench, { k: '52' })).toBeNull()
   })
 })
 

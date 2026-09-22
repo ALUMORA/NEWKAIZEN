@@ -130,9 +130,36 @@ describe('rfSeriesForDates', () => {
     expect(rfSeriesForDates(null, targetDates, '1wk')).toBeNull()
   })
 
-  it('con fechas objetivo repetidas cae al largo nominal del intervalo', () => {
-    const rf = rfSeriesForDates(rfSeries, ['2026-01-05', '2026-01-05'], '1wk')
-    expect(rf[0]).toBeCloseTo(cetesPerPeriod(0.111, 365 / 52), 14)
+  // Antes, cuando la fecha de cierre no servía, la función capitalizaba los días nominales del
+  // intervalo: con '1wk' salía .0021379 (365/52 = 7.019 días) en vez de .0021321 (7 días). Se
+  // parecía tanto a la buena que nadie la iba a pescar en pantalla, y de ahí contaminaba Sharpe,
+  // Sortino y Treynor. Un calendario que no sirve ahora devuelve null completo.
+  it('una fecha de cierre que no es fecha devuelve null, no una tasa inventada', () => {
+    expect(rfSeriesForDates(rfSeries, ['2026-01-05', 'no-es-fecha'], '1wk')).toBeNull()
+    expect(rfSeriesForDates(rfSeries, ['2026-01-05', 42], '1wk')).toBeNull()
+    expect(rfSeriesForDates(rfSeries, ['2026-01-05', null], '1wk')).toBeNull()
+  })
+
+  it('una fecha de cierre que no existe en el calendario devuelve null', () => {
+    expect(rfSeriesForDates(rfSeries, ['2026-01-05', '2026-02-30'], '1wk')).toBeNull()
+    expect(rfSeriesForDates(rfSeries, ['2026-01-05', '2026-13-01'], '1wk')).toBeNull()
+  })
+
+  it('fechas repetidas o en desorden devuelven null', () => {
+    expect(rfSeriesForDates(rfSeries, ['2026-01-05', '2026-01-05'], '1wk')).toBeNull()
+    expect(rfSeriesForDates(rfSeries, ['2026-01-12', '2026-01-05'], '1wk')).toBeNull()
+    expect(rfSeriesForDates(rfSeries, ['2026-01-05', '2026-01-19', '2026-01-12'], '1wk')).toBeNull()
+  })
+
+  it('el intervalo ya no cambia el resultado: los días salen del calendario real', () => {
+    const conIntervaloRaro = rfSeriesForDates(rfSeries, targetDates, 'no-es-intervalo')
+    expect(conIntervaloRaro).toEqual(rfSeriesForDates(rfSeries, targetDates, '1wk'))
+    expect(rfSeriesForDates(rfSeries, targetDates)).toEqual(conIntervaloRaro)
+    expect(conIntervaloRaro[0]).toBeCloseTo(cetesPerPeriod(0.111, 7), 14)
+  })
+
+  it('unas opciones en null valen lo mismo que no pasarlas', () => {
+    expect(rfSeriesForDates(rfSeries, targetDates, '1wk', null)).toEqual(rfSeriesForDates(rfSeries, targetDates, '1wk'))
   })
 })
 

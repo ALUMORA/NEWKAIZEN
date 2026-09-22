@@ -7,8 +7,7 @@
 // Los CETES se cotizan a descuento con base de 360 días. Convertir su tasa anual a un rendimiento
 // por periodo es capitalizar el rendimiento del plazo: (1 + y·plazo/360)^(días/plazo) − 1.
 
-import { daysBetween, isNum, numericArray, parseIsoDate } from './_util.js'
-import { periodsPerYear } from './returns.js'
+import { ascendingIsoDates, daysBetween, isNum, numericArray, parseIsoDate } from './_util.js'
 
 /** Días hábiles bancarios que se toleran sin dato nuevo antes de declarar la tasa vencida. */
 export const MAX_STALE_DAYS = 45
@@ -76,20 +75,30 @@ export function changeInBp(from, to) {
  * Se rellenan hacia adelante solo las tasas, hasta `maxStaleDays` días; más allá el periodo queda
  * en null en vez de inventar una tasa vieja.
  *
+ * Los días de cada periodo son los REALES entre dos fechas consecutivas. Si el calendario que se
+ * pasa no sirve (una fecha que no es ISO, una que no existe, repetidas o en desorden) la función
+ * devuelve null completo: antes se caía en los días nominales del intervalo y salía una tasa
+ * inventada que se parecía tanto a la buena (.0021379 contra .0021321) que nadie la iba a notar
+ * en pantalla, y de ahí se contaminaban Sharpe, Sortino y Treynor.
+ *
  * @param {YieldSeries} rfSeries tasas ANUALES como fracción, con su fecha de publicación
- * @param {string[]} targetDates fechas ISO de la serie de precios, ascendentes; los periodos son
- *   los huecos entre ellas, así que la salida trae un elemento menos
- * @param {string} interval intervalo nominal ('1d', '1wk', '1mo'), usado solo como respaldo
- *   cuando dos fechas consecutivas no dejan calcular los días reales
- * @param {{ maxStaleDays?: number, tenorDays?: number }} [options]
+ * @param {string[]} targetDates fechas ISO de la serie de precios, ascendentes y sin repetir
+ *   (lo que devuelve `alignPanel`); los periodos son los huecos entre ellas, así que la salida
+ *   trae un elemento menos
+ * @param {string} [interval] intervalo nominal ('1d', '1wk', '1mo'). Se conserva por la firma del
+ *   spec y NO se usa: los días salen del calendario real, nunca de un nominal
+ * @param {{ maxStaleDays?: number, tenorDays?: number } | null} [options]
  * @returns {(number | null)[] | null} largo `targetDates.length − 1`, con null en los periodos sin
  *   tasa vigente; null completo si las entradas no sirven. Ojo: `sharpe` y `sortino` piden una
  *   serie sin huecos, así que el llamador decide qué hacer con los nulos (recortar o mostrar s/d)
  */
-export function rfSeriesForDates(rfSeries, targetDates, interval, { maxStaleDays = MAX_STALE_DAYS, tenorDays = 28 } = {}) {
-  if (!rfSeries || !Array.isArray(rfSeries.dates) || !Array.isArray(targetDates) || targetDates.length < 2) return null
+export function rfSeriesForDates(rfSeries, targetDates, interval, options) {
+  const { maxStaleDays = MAX_STALE_DAYS, tenorDays = 28 } = options ?? {}
+  if (!rfSeries || !Array.isArray(rfSeries.dates)) return null
   const yields = numericArray(rfSeries.values)
   if (yields === null || yields.length !== rfSeries.dates.length) return null
+  // El calendario entero se valida antes de calcular nada: ascendente, ISO y sin repetir.
+  if (ascendingIsoDates(targetDates, 2) === null) return null
 
   /** @type {{ ms: number, value: number }[]} */
   const points = []
@@ -99,11 +108,6 @@ export function rfSeriesForDates(rfSeries, targetDates, interval, { maxStaleDays
     points.push({ ms, value: yields[i] })
   }
   points.sort((a, b) => a.ms - b.ms)
-
-  const fallbackDays = (() => {
-    const k = periodsPerYear(interval)
-    return k === null ? null : 365 / k
-  })()
 
   /** @type {(number | null)[]} */
   const out = []
@@ -119,9 +123,8 @@ export function rfSeriesForDates(rfSeries, targetDates, interval, { maxStaleDays
       out.push(null)
       continue
     }
-    const gap = daysBetween(targetDates[i], targetDates[i + 1])
-    const days = gap !== null && gap > 0 ? gap : fallbackDays
-    if (days === null) return null
+    const days = daysBetween(targetDates[i], targetDates[i + 1])
+    if (days === null || days <= 0) return null
     out.push(cetesPerPeriod(inForce.value, days, tenorDays))
   }
   return out

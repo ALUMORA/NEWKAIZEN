@@ -120,6 +120,21 @@ describe('periodsPerYear e inferInterval', () => {
     expect(isInterval('1min')).toBe(false)
   })
 
+  // Con un objeto literal, PERIODS['toString'] caía al prototipo y periodsPerYear devolvía una
+  // función: un `?interval=toString` de la URL se saltaba el guardia `k === null` del llamador.
+  it('un nombre heredado del prototipo tampoco es un intervalo', () => {
+    for (const nombre of ['constructor', 'toString', 'hasOwnProperty', '__proto__', 'valueOf']) {
+      expect(periodsPerYear(nombre)).toBeNull()
+      expect(isInterval(nombre)).toBe(false)
+    }
+  })
+
+  it('un intervalo que no es texto devuelve null', () => {
+    expect(periodsPerYear(252)).toBeNull()
+    expect(periodsPerYear(null)).toBeNull()
+    expect(periodsPerYear({})).toBeNull()
+  })
+
   it('deduce el intervalo por la mediana de los huecos', () => {
     expect(inferInterval(['2026-01-05', '2026-01-06', '2026-01-07', '2026-01-08'])).toBe('1d')
     expect(inferInterval(['2026-01-05', '2026-01-12', '2026-01-19'])).toBe('1wk')
@@ -182,6 +197,12 @@ describe('alignPanel', () => {
     expect(panel.dates).toEqual([])
     expect(panel.values.A).toEqual([])
     expect(panel.values.C).toEqual([])
+  })
+
+  it('unas opciones en null valen lo mismo que no pasarlas', () => {
+    expect(alignPanel({ A, B }, null)).toEqual(alignPanel({ A, B }))
+    const panel = alignPanel({ A, B })
+    expect(panelReturns(panel, null)).toEqual(panelReturns(panel))
   })
 
   it('con minDates se saca al símbolo de historia más corta hasta que alcance el traslape', () => {
