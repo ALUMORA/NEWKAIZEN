@@ -208,3 +208,47 @@ describe('golden de numpy', () => {
     expectClose(call[testCase.fn](testCase.input), testCase.expected, testCase.tol)
   })
 })
+
+// El barril no tiene archivo de prueba propio en scripts/ownership.json, así que su superficie
+// pública se revisa desde aquí: es la puerta por la que entran todas las features de la fase 3.
+describe('el barril index.js', () => {
+  it('exporta por nombre todo lo público de A1 y el derivePositions de A4', async () => {
+    const api = await import('./index.js')
+    const esperados = [
+      // returns
+      'simpleReturns', 'logReturns', 'cumulative', 'totalReturn', 'periodsPerYear', 'inferInterval', 'isInterval', 'alignPanel', 'panelReturns',
+      // stats
+      'mean', 'variance', 'stdev', 'covariance', 'correlation', 'quantile', 'ols', 'normalPdf', 'normalCdf', 'normalInvCdf',
+      // performance
+      'cagr', 'cagrFromReturns', 'annualizedVol', 'sharpe', 'sortino', 'drawdowns', 'calmar',
+      'historicalVaR', 'historicalCVaR', 'parametricVaR', 'parametricCVaR', 'percentile', 'summary',
+      // benchmark
+      'regress', 'blumeBeta', 'trackingError', 'informationRatio', 'treynor', 'jensenAlpha', 'captureRatios', 'activeReturns', 'averageActive',
+      // rates
+      'cetesPerPeriod', 'cetesEffectiveAnnual', 'annualToPerPeriod', 'changeInBp', 'rfSeriesForDates', 'MAX_STALE_DAYS',
+      // risk
+      'effectiveN', 'hhi', 'portfolioVol', 'riskContributions', 'exposureBy', 'foreignExposure',
+      // backtest
+      'buyAndHold', 'constantMix', 'withBenchmark', 'annualTurnover', 'weightsSum',
+      // fx
+      'toCurrency', 'pnlDecomposition', 'fxAt', 'convertSeries', 'returnInBaseCurrency', 'CURRENCIES', 'MAX_FX_STALE_DAYS',
+      // ledger (A4)
+      'derivePositions',
+    ]
+    for (const nombre of esperados) expect(api[nombre], nombre).toBeDefined()
+    expect(Object.keys(api).sort()).toEqual([...esperados].sort())
+  })
+
+  it('no filtra los ayudantes internos de _util.js', async () => {
+    const api = await import('./index.js')
+    for (const interno of ['numericArray', 'numericMatrix', 'perPeriodSeries', 'parseIsoDate', 'daysBetween', 'dot', 'matVec', 'sumOf', 'isNum', 'normalizedWeights', 'EPS']) {
+      expect(api[interno], interno).toBeUndefined()
+    }
+  })
+
+  it('la función que se importa del barril es la misma del módulo', async () => {
+    const api = await import('./index.js')
+    expect(api.simpleReturns).toBe(simpleReturns)
+    expect(api.simpleReturns([100, 110])[0]).toBeCloseTo(0.1, 12)
+  })
+})
