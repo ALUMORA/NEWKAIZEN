@@ -1,0 +1,25 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+markers = [
+    "live: necesita red (se salta salvo con KAIZEN_LIVE=1)",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning:yfinance.*",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+extend-exclude = ["backend.py", ".venv", ".venv-golden", "node_modules", "dist", "tests/fixtures", "tests/goldens_legacy"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = [
+    "E501",  # el formateador decide; líneas largas de datos en pruebas son legibles así
+    "B008",  # llamadas en argumentos por defecto (fixtures de pytest)
+    "B010",  # setattr con constante: se usa para parchear módulos a propósito
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["tests", "kaizen_api"]
