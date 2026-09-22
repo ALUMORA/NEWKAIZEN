@@ -1,0 +1,40 @@
+{
+  "_comment": "Calendario de la Bolsa Mexicana de Valores para marketStatus de /v2/markets/overview. Dato curado a mano por el stream B2a a partir del calendario de días inhábiles bancarios de la CNBV y de los días de descanso obligatorio de la Ley Federal del Trabajo. Si el año pedido no está aquí, el API lo dice en meta.notes en vez de inventar un calendario.",
+  "exchange": "bmv",
+  "label": "Bolsa Mexicana de Valores",
+  "timezone": "America/Mexico_City",
+  "source": "curated",
+  "updatedAt": "2026-09-22",
+  "tradingDays": [1, 2, 3, 4, 5],
+  "regularHours": { "open": "08:30", "close": "15:00" },
+  "years": [2026, 2027],
+  "holidays": {
+    "2026-01-01": "Año Nuevo",
+    "2026-02-02": "Día de la Constitución",
+    "2026-03-16": "Natalicio de Benito Juárez",
+    "2026-04-02": "Jueves Santo",
+    "2026-04-03": "Viernes Santo",
+    "2026-05-01": "Día del Trabajo",
+    "2026-09-16": "Independencia de México",
+    "2026-11-02": "Día de Muertos",
+    "2026-11-16": "Aniversario de la Revolución Mexicana",
+    "2026-12-12": "Día de la Virgen de Guadalupe",
+    "2026-12-25": "Navidad",
+    "2027-01-01": "Año Nuevo",
+    "2027-02-01": "Día de la Constitución",
+    "2027-03-15": "Natalicio de Benito Juárez",
+    "2027-03-25": "Jueves Santo",
+    "2027-03-26": "Viernes Santo",
+    "2027-05-01": "Día del Trabajo",
+    "2027-09-16": "Independencia de México",
+    "2027-11-02": "Día de Muertos",
+    "2027-11-15": "Aniversario de la Revolución Mexicana",
+    "2027-12-12": "Día de la Virgen de Guadalupe",
+    "2027-12-25": "Navidad"
+  },
+  "earlyCloses": {},
+  "notes": [
+    "La BMV no publica un calendario fijo de jornadas recortadas, así que aquí no hay ninguna. Si algún día opera con horario corto por aviso, este calendario no lo refleja.",
+    "México no aplica horario de verano desde 2022, así que America/Mexico_City está en UTC-6 todo el año."
+  ]
+}

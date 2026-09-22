@@ -1,0 +1,439 @@
+{
+  "_comment": "Lista curada de emisoras, FIBRAs, ETF e índices que se operan en México (BMV y SIC), con alias en español para /v2/search. No necesita red: se lee de disco. Los símbolos son los de Yahoo Finance (sufijo .MX). Mantenida a mano por el stream B2a; revisada el 22 de septiembre de 2026.",
+  "updatedAt": "2026-09-22",
+  "source": "curated",
+  "symbols": [
+    {
+      "symbol": "^MXX",
+      "name": "S&P/BMV IPC",
+      "exchange": "BMV",
+      "type": "index",
+      "currency": "MXN",
+      "aliases": ["ipc", "indice de precios y cotizaciones", "bolsa mexicana", "bmv", "indice mexicano", "s&p bmv ipc"]
+    },
+    {
+      "symbol": "NAFTRAC.MX",
+      "name": "iShares NAFTRAC (ETF del S&P/BMV IPC)",
+      "exchange": "BMV",
+      "type": "etf",
+      "currency": "MXN",
+      "aliases": ["naftrac", "etf del ipc", "etf ipc", "indice mexicano etf", "naftrac isthrc"]
+    },
+    {
+      "symbol": "AMXB.MX",
+      "name": "América Móvil",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["america movil", "amx", "telcel", "claro", "telefonia"]
+    },
+    {
+      "symbol": "WALMEX.MX",
+      "name": "Wal-Mart de México",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["walmart", "walmex", "walmart de mexico", "bodega aurrera", "sams club"]
+    },
+    {
+      "symbol": "FEMSAUBD.MX",
+      "name": "Fomento Económico Mexicano",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["femsa", "oxxo", "fomento economico mexicano"]
+    },
+    {
+      "symbol": "GFNORTEO.MX",
+      "name": "Grupo Financiero Banorte",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["banorte", "gfnorte", "grupo financiero banorte", "banco banorte"]
+    },
+    {
+      "symbol": "GMEXICOB.MX",
+      "name": "Grupo México",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["grupo mexico", "gmexico", "cobre", "mineria", "ferromex"]
+    },
+    {
+      "symbol": "CEMEXCPO.MX",
+      "name": "CEMEX",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["cemex", "cemento", "cementos mexicanos"]
+    },
+    {
+      "symbol": "BIMBOA.MX",
+      "name": "Grupo Bimbo",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["bimbo", "grupo bimbo", "pan bimbo", "marinela", "barcel"]
+    },
+    {
+      "symbol": "TLEVISACPO.MX",
+      "name": "Grupo Televisa",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["televisa", "grupo televisa", "izzi", "sky"]
+    },
+    {
+      "symbol": "ALFAA.MX",
+      "name": "Alfa",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["alfa", "grupo alfa", "sigma alimentos"]
+    },
+    {
+      "symbol": "ALSEA.MX",
+      "name": "Alsea",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["alsea", "starbucks mexico", "dominos pizza", "vips", "burger king mexico"]
+    },
+    {
+      "symbol": "GAPB.MX",
+      "name": "Grupo Aeroportuario del Pacífico",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["gap", "grupo aeroportuario del pacifico", "aeropuerto guadalajara", "aeropuertos"]
+    },
+    {
+      "symbol": "ASURB.MX",
+      "name": "Grupo Aeroportuario del Sureste",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["asur", "grupo aeroportuario del sureste", "aeropuerto de cancun"]
+    },
+    {
+      "symbol": "OMAB.MX",
+      "name": "Grupo Aeroportuario del Centro Norte",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["oma", "grupo aeroportuario del centro norte", "aeropuerto monterrey"]
+    },
+    {
+      "symbol": "KOFUBL.MX",
+      "name": "Coca-Cola FEMSA",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["coca cola femsa", "kof", "coca cola mexico", "refrescos"]
+    },
+    {
+      "symbol": "AC.MX",
+      "name": "Arca Continental",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["arca continental", "arca", "coca cola arca", "topo chico"]
+    },
+    {
+      "symbol": "ORBIA.MX",
+      "name": "Orbia Advance Corporation",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["orbia", "mexichem", "pvc"]
+    },
+    {
+      "symbol": "KIMBERA.MX",
+      "name": "Kimberly-Clark de México",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["kimberly clark", "kimberly", "kleenex", "huggies", "kimber"]
+    },
+    {
+      "symbol": "ELEKTRA.MX",
+      "name": "Grupo Elektra",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["elektra", "grupo elektra", "banco azteca"]
+    },
+    {
+      "symbol": "LIVEPOLC-1.MX",
+      "name": "El Puerto de Liverpool",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["liverpool", "el puerto de liverpool", "suburbia"]
+    },
+    {
+      "symbol": "GCARSOA1.MX",
+      "name": "Grupo Carso",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["carso", "grupo carso", "sanborns", "slim"]
+    },
+    {
+      "symbol": "CUERVO.MX",
+      "name": "Becle (José Cuervo)",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["cuervo", "jose cuervo", "becle", "tequila"]
+    },
+    {
+      "symbol": "GRUMAB.MX",
+      "name": "Gruma",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["gruma", "maseca", "tortillas", "harina de maiz"]
+    },
+    {
+      "symbol": "VESTA.MX",
+      "name": "Corporación Inmobiliaria Vesta",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["vesta", "corporacion inmobiliaria vesta", "naves industriales"]
+    },
+    {
+      "symbol": "BBAJIOO.MX",
+      "name": "Banco del Bajío",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["banco del bajio", "bajio", "bbajio"]
+    },
+    {
+      "symbol": "Q.MX",
+      "name": "Quálitas Controladora",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["qualitas", "seguros qualitas", "aseguradora"]
+    },
+    {
+      "symbol": "RA.MX",
+      "name": "Regional (Banregio)",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["banregio", "regional", "hey banco"]
+    },
+    {
+      "symbol": "CHDRAUIB.MX",
+      "name": "Grupo Comercial Chedraui",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["chedraui", "grupo comercial chedraui", "smart and final"]
+    },
+    {
+      "symbol": "SORIANAB.MX",
+      "name": "Organización Soriana",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["soriana", "organizacion soriana"]
+    },
+    {
+      "symbol": "LACOMERUBC.MX",
+      "name": "La Comer",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["la comer", "city market", "fresko", "sumesa"]
+    },
+    {
+      "symbol": "PINFRA.MX",
+      "name": "Promotora y Operadora de Infraestructura",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["pinfra", "promotora y operadora de infraestructura", "casetas", "autopistas"]
+    },
+    {
+      "symbol": "GCC.MX",
+      "name": "GCC (Grupo Cementos de Chihuahua)",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["gcc", "cementos de chihuahua", "grupo cementos de chihuahua"]
+    },
+    {
+      "symbol": "MEGACPO.MX",
+      "name": "Megacable Holdings",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["megacable", "internet", "television por cable"]
+    },
+    {
+      "symbol": "LABB.MX",
+      "name": "Genomma Lab Internacional",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["genomma", "genomma lab", "laboratorios"]
+    },
+    {
+      "symbol": "VOLARA.MX",
+      "name": "Controladora Vuela (Volaris)",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["volaris", "vuela", "aerolinea"]
+    },
+    {
+      "symbol": "BOLSAA.MX",
+      "name": "Bolsa Mexicana de Valores",
+      "exchange": "BMV",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["bolsa mexicana de valores", "bolsa", "bmv la emisora"]
+    },
+    {
+      "symbol": "FUNO11.MX",
+      "name": "Fibra Uno Administración",
+      "exchange": "BMV",
+      "type": "fibra",
+      "currency": "MXN",
+      "aliases": ["fibra uno", "funo", "fibra", "bienes raices"]
+    },
+    {
+      "symbol": "FIBRAMQ12.MX",
+      "name": "Fibra Macquarie México",
+      "exchange": "BMV",
+      "type": "fibra",
+      "currency": "MXN",
+      "aliases": ["fibra macquarie", "macquarie", "fibramq"]
+    },
+    {
+      "symbol": "FIBRAPL14.MX",
+      "name": "Fibra Prologis",
+      "exchange": "BMV",
+      "type": "fibra",
+      "currency": "MXN",
+      "aliases": ["fibra prologis", "prologis", "fibrapl", "naves industriales"]
+    },
+    {
+      "symbol": "DANHOS13.MX",
+      "name": "Fibra Danhos",
+      "exchange": "BMV",
+      "type": "fibra",
+      "currency": "MXN",
+      "aliases": ["fibra danhos", "danhos", "parque delta", "reforma 222"]
+    },
+    {
+      "symbol": "FMTY14.MX",
+      "name": "Fibra Monterrey",
+      "exchange": "BMV",
+      "type": "fibra",
+      "currency": "MXN",
+      "aliases": ["fibra monterrey", "fibra mty", "fmty"]
+    },
+    {
+      "symbol": "FINN13.MX",
+      "name": "Fibra Inn",
+      "exchange": "BMV",
+      "type": "fibra",
+      "currency": "MXN",
+      "aliases": ["fibra inn", "finn", "hoteles"]
+    },
+    {
+      "symbol": "FHIPO14.MX",
+      "name": "Fibra Hipotecaria (FHipo)",
+      "exchange": "BMV",
+      "type": "fibra",
+      "currency": "MXN",
+      "aliases": ["fhipo", "fibra hipotecaria", "hipotecas"]
+    },
+    {
+      "symbol": "STORAGE18.MX",
+      "name": "Fibra Storage",
+      "exchange": "BMV",
+      "type": "fibra",
+      "currency": "MXN",
+      "aliases": ["fibra storage", "storage", "autoalmacenamiento"]
+    },
+    {
+      "symbol": "FSHOP13.MX",
+      "name": "Fibra Shop",
+      "exchange": "BMV",
+      "type": "fibra",
+      "currency": "MXN",
+      "aliases": ["fibra shop", "fshop", "centros comerciales"]
+    },
+    {
+      "symbol": "FNOVA17.MX",
+      "name": "Fibra Nova",
+      "exchange": "BMV",
+      "type": "fibra",
+      "currency": "MXN",
+      "aliases": ["fibra nova", "fnova"]
+    },
+    {
+      "symbol": "AAPL.MX",
+      "name": "Apple (SIC)",
+      "exchange": "SIC",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["apple", "apple en pesos", "iphone", "manzanita"]
+    },
+    {
+      "symbol": "MSFT.MX",
+      "name": "Microsoft (SIC)",
+      "exchange": "SIC",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["microsoft", "microsoft en pesos", "windows", "azure"]
+    },
+    {
+      "symbol": "AMZN.MX",
+      "name": "Amazon (SIC)",
+      "exchange": "SIC",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["amazon", "amazon en pesos"]
+    },
+    {
+      "symbol": "GOOGL.MX",
+      "name": "Alphabet (SIC)",
+      "exchange": "SIC",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["google", "alphabet", "google en pesos"]
+    },
+    {
+      "symbol": "TSLA.MX",
+      "name": "Tesla (SIC)",
+      "exchange": "SIC",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["tesla", "tesla en pesos"]
+    },
+    {
+      "symbol": "NVDA.MX",
+      "name": "NVIDIA (SIC)",
+      "exchange": "SIC",
+      "type": "equity",
+      "currency": "MXN",
+      "aliases": ["nvidia", "nvidia en pesos"]
+    },
+    {
+      "symbol": "MXN=X",
+      "name": "Dólar estadounidense frente al peso mexicano",
+      "exchange": "FX",
+      "type": "fx",
+      "currency": "MXN",
+      "aliases": ["dolar", "tipo de cambio", "usdmxn", "peso dolar", "dolar peso", "usd mxn"]
+    }
+  ]
+}
