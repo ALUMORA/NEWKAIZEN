@@ -1,10 +1,10 @@
 ﻿
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useTheme } from './theme.js';
-import { Badge, Button, IconButton, Card, KpiTile, Mark, ThemeToggle } from './ui.jsx';
-import { cn } from './cn.js';
+import { useTheme } from '../theme.js';
+import { Badge, Button, IconButton, Card, KpiTile, Mark, ThemeToggle } from '../ui.jsx';
+import { cn } from '../cn.js';
 import {
-  ArrowRight, Eye, EyeOff, ShieldCheck, Menu, X,
+  Menu, X,
   Newspaper, Briefcase, Gauge, ListFilter, LineChart as LineChartIcon,
   Landmark, Sparkles, ChartNoAxesCombined, Download, FileText, LogOut,
 } from 'lucide-react';
@@ -34,8 +34,8 @@ const BACKEND_CANDIDATES = import.meta.env.DEV && import.meta.env.VITE_API_URL
       "http://localhost:8002",                // Local dev
     ];
 
-async function detectBackend() {
-  for (const url of BACKEND_CANDIDATES) {
+async function detectBackend(candidates = BACKEND_CANDIDATES) {
+  for (const url of candidates) {
     try {
       const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(60000) });
       const data = await res.json();
@@ -46,18 +46,6 @@ async function detectBackend() {
 }
 
 let BACKEND = null;
-
-// Sesión recordada en el navegador para no pedir la contraseña en cada recarga.
-// VITE_SKIP_LOGIN solo actúa en `npm run dev`: import.meta.env.DEV es false en el build de producción.
-const AUTH_KEY = "kaizen_authed";
-const SKIP_LOGIN = import.meta.env.DEV && import.meta.env.VITE_SKIP_LOGIN === "true";
-function readAuthed() {
-  if (SKIP_LOGIN) return true;
-  try { return localStorage.getItem(AUTH_KEY) === "1"; } catch { return false; }
-}
-function writeAuthed(on) {
-  try { on ? localStorage.setItem(AUTH_KEY, "1") : localStorage.removeItem(AUTH_KEY); } catch { /* storage bloqueado: la sesión dura lo que la pestaña */ }
-}
 
 const DEFAULT_PORTFOLIO = [
   { ticker: "AAPL", shares: 10, cost: 150 },
@@ -909,110 +897,23 @@ function MonteCarloChart({ portStats, spyStats, weeks }) {
 }
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
-const AUTH_QUOTES = [
-  "La disciplina de inversión mejora cuando sus supuestos permanecen visibles.",
-  "El riesgo no se elimina, se administra con datos y con proceso.",
-  "Diversificar no es diluir convicción — es controlar lo que no puedes predecir.",
-  "El mejor portafolio es el que puedes sostener cuando el mercado se pone difícil.",
-  "Cada decisión de inversión debería poder explicarse en una frase.",
-];
-
-function LoginScreen({ onAuth }) {
-  const [pw, setPw]       = useState("");
-  const [showPw, setShowPw] = useState(false);
-  const [error, setError] = useState(false);
-  const [shake, setShake] = useState(false);
-  const [quoteIdx, setQuoteIdx] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => setQuoteIdx(i => (i + 1) % AUTH_QUOTES.length), 5000);
-    return () => clearInterval(id);
-  }, []);
-
-  function handleSubmit(e) {
-    e.preventDefault();
-    if (pw === "Investments") {
-      onAuth();
-    } else {
-      setError(true);
-      setShake(true);
-      setTimeout(() => setShake(false), 500);
-    }
-  }
-
-  return (
-    <main className="auth-shell">
-      <section className="auth-panel">
-        <div className="auth-content" style={{ animation: shake ? "kz-shake 0.4s ease" : "none" }}>
-          <div className="brand" style={{ marginBottom: 28 }}>
-            <Mark size={76} />
-            <span className="brand-wordmark">KAIZEN<small>Investment Group</small></span>
-          </div>
-          <Badge>Acceso privado</Badge>
-          <h1 className="stat-shimmer" style={{ marginTop: 14 }}>Bienvenido de vuelta.</h1>
-          <p>Ingresa la contraseña del equipo para entrar al workspace.</p>
-          <form className="auth-form" onSubmit={handleSubmit}>
-            <label>
-              Contraseña
-              <div className="password-field">
-                <input
-                  autoFocus
-                  onChange={e => { setPw(e.target.value); setError(false); }}
-                  placeholder="Tu contraseña"
-                  type={showPw ? "text" : "password"}
-                  value={pw}
-                />
-                <button aria-label={showPw ? "Ocultar contraseña" : "Mostrar contraseña"} onClick={() => setShowPw(v => !v)} type="button">
-                  {showPw ? <EyeOff aria-hidden="true" size={17} /> : <Eye aria-hidden="true" size={17} />}
-                </button>
-              </div>
-            </label>
-            {error && <p className="form-error">Contraseña incorrecta.</p>}
-            <Button size="lg" type="submit">Entrar <ArrowRight aria-hidden="true" size={16} /></Button>
-          </form>
-        </div>
-      </section>
-      <aside className="auth-aside">
-        <div aria-hidden="true" className="auth-aside-orbit" />
-        <span className="glow-pulse" style={{ background: "var(--accent)", color: "var(--on-accent)", fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.08em", width: "fit-content" }}>LIVE</span>
-        <blockquote className="quote-cycle" key={quoteIdx} style={{ marginTop: 14 }}>"{AUTH_QUOTES[quoteIdx]}"</blockquote>
-        <div className="quote-dots">
-          {AUTH_QUOTES.map((_, i) => <i className={i === quoteIdx ? "is-active" : ""} key={i} />)}
-        </div>
-        <div className="auth-aside-proof">
-          <span>
-            <ShieldCheck aria-hidden="true" size={18} />
-            <span><strong>Datos en vivo</strong>Portafolio, screener y noticias conectados al backend real de KAIZEN.</span>
-          </span>
-        </div>
-      </aside>
-      <style>{`
-        @keyframes kz-shake {
-          0%,100% { transform: translateX(0); }
-          20%      { transform: translateX(-10px); }
-          40%      { transform: translateX(10px); }
-          60%      { transform: translateX(-6px); }
-          80%      { transform: translateX(6px); }
-        }
-      `}</style>
-    </main>
-  );
-}
-
-// Workspace se monta solo cuando BACKEND ya está resuelto y la sesión está abierta:
-// sus efectos de montaje piden datos al backend y antes corrían contra "null/...".
-export default function App() {
-  const [authed, setAuthed] = useState(readAuthed);
+// La app nueva (src/app/LegacyPage.jsx) monta el Workspace legado dentro de sus rutas privadas:
+// la sesión ya la resolvió RequireAuth, así que aquí solo queda detectar el backend y abrir la
+// tab que pide la ruta. `apiBase` fija el backend (el API_BASE de src/lib/api/client.js); sin
+// él se prueban los candidatos de siempre.
+// Workspace se monta solo cuando BACKEND ya está resuelto: sus efectos de montaje piden datos
+// al backend y antes corrían contra "null/...".
+export function LegacyWorkspaceHost({ tab = "news", apiBase, onLogout }) {
   const [backendUrl, setBackendUrl] = useState(null);
   const [backendSearching, setBackendSearching] = useState(true);
 
   useEffect(() => {
-    detectBackend().then(url => {
+    detectBackend(apiBase ? [apiBase] : BACKEND_CANDIDATES).then(url => {
       BACKEND = url;
       setBackendUrl(url);
       setBackendSearching(false);
     });
-  }, []);
+  }, [apiBase]);
 
   if (backendSearching) return (
     <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
@@ -1030,20 +931,21 @@ export default function App() {
       <div style={{ fontSize:12, color:"var(--muted)", letterSpacing:1, textAlign:"center", maxWidth:340 }}>
         Ningún backend respondió. Asegúrate de que Railway o Render estén activos, o corre <span style={{color:"var(--accent)",fontFamily:"var(--font-mono)"}}>python backend.py</span> localmente.
       </div>
-      <Button onClick={() => { setBackendSearching(true); detectBackend().then(url => { BACKEND=url; setBackendUrl(url); setBackendSearching(false); }); }} size="lg">
+      <Button onClick={() => { setBackendSearching(true); detectBackend(apiBase ? [apiBase] : BACKEND_CANDIDATES).then(url => { BACKEND=url; setBackendUrl(url); setBackendSearching(false); }); }} size="lg">
         REINTENTAR
       </Button>
     </div>
   );
 
-  if (!authed) return <LoginScreen onAuth={() => { writeAuthed(true); setAuthed(true); }} />;
-
-  return <Workspace backendUrl={backendUrl} onLogout={() => { writeAuthed(false); setAuthed(false); }} />;
+  return <Workspace backendUrl={backendUrl} initialTab={tab} onLogout={onLogout} />;
 }
 
-function Workspace({ backendUrl, onLogout }) {
+function Workspace({ backendUrl, initialTab = "news", onLogout }) {
   const { dark, toggle: toggleTheme } = useTheme();
-  const [tab, setTab] = useState("news");
+  const [tab, setTab] = useState(initialTab);
+  // Si la ruta cambia con el Workspace montado, se abre la tab nueva (ajuste de estado en render).
+  const [routeTab, setRouteTab] = useState(initialTab);
+  if (routeTab !== initialTab) { setRouteTab(initialTab); setTab(initialTab); }
   const [rfRate, setRfRate] = useState(null);
   const [rfLabel, setRfLabel] = useState("MX 5Y");
   const [backendOk, setBackendOk] = useState(null);

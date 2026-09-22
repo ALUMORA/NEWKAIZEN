@@ -1,0 +1,95 @@
+/* Estilos del esqueleto de la app (avisos del servidor, páginas de mensaje, carga). Solo tokens
+   de src/theme.css: nada de colores sueltos, así funcionan en los dos temas. C1/C3 pueden
+   reemplazar estas clases cuando lleguen las primitivas nuevas. */
+
+/* ─── Aviso del servidor (no bloquea: flota arriba y deja usar la página) ─── */
+.kz-banner {
+  align-items: center;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  color: var(--ink);
+  display: flex;
+  font-size: 0.78rem;
+  gap: 10px;
+  left: 50%;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 10px 12px 10px 14px;
+  position: fixed;
+  top: 12px;
+  transform: translateX(-50%);
+  width: max-content;
+  z-index: 1000;
+}
+.kz-banner[data-tone="warning"] { background: var(--warning-soft); border-color: var(--warning); }
+.kz-banner[data-tone="danger"] { background: var(--negative-soft); border-color: var(--negative); }
+.kz-banner-text { flex: 1; line-height: 1.4; }
+.kz-banner-text strong { display: block; }
+.kz-banner-dot {
+  animation: kz-pulse 1.4s ease-in-out infinite;
+  background: var(--accent);
+  border-radius: 50%;
+  flex-shrink: 0;
+  height: 8px;
+  width: 8px;
+}
+.kz-banner .button { min-height: 32px; }
+@keyframes kz-pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .kz-banner-dot { animation: none; }
+}
+
+/* ─── Páginas de mensaje (No encontrada, Próximamente, error) ─── */
+.kz-message-page {
+  align-items: center;
+  background: var(--bg);
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 32px 16px;
+}
+.kz-message {
+  display: grid;
+  gap: 12px;
+  max-width: 520px;
+  padding: clamp(24px, 5vw, 40px);
+  width: 100%;
+}
+.kz-message h1 { font-size: clamp(1.5rem, 4vw, 2rem); }
+.kz-message p { color: var(--muted); font-size: 0.85rem; line-height: 1.55; }
+.kz-message code { background: var(--surface-2); border-radius: 6px; color: var(--ink); font-size: 0.8rem; padding: 1px 6px; word-break: break-all; }
+.kz-message .badge { justify-self: start; }
+.kz-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.kz-stack {
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  max-height: 280px;
+  overflow: auto;
+  padding: 12px;
+  white-space: pre-wrap;
+}
+
+/* ─── Carga de una ruta (chunk diferido) ─── */
+.kz-route-loading {
+  align-items: center;
+  color: var(--muted);
+  display: flex;
+  font-size: 0.8rem;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+/* ─── Login: detalles que theme.css no trae ─── */
+.kz-field { display: grid; gap: 7px; }
+.kz-login-note {
+  background: var(--info-soft);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: 0.75rem;
+  padding: 10px 12px;
+}
+.kz-login-brand-sub { color: var(--muted); display: block; font-size: 0.7rem; font-weight: 600; margin-top: 4px; }

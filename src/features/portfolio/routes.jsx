@@ -1,0 +1,33 @@
+// Mi portafolio (F1). /portafolio monta la tab "Portfolio" de la app legada hasta que exista la
+// página nueva. Los datos locales ya viven en src/lib/storage.js (usePortfolios).
+import ComingSoon from '../../app/ComingSoon.jsx'
+import LegacyPage from '../../app/LegacyPage.jsx'
+import { PATHS, route } from '../../app/paths.js'
+
+export const routes = [
+  {
+    path: route(PATHS.portfolio),
+    element: <LegacyPage tab="portfolio" />,
+    handle: { title: 'Mi portafolio', legacy: true },
+  },
+  {
+    path: route(PATHS.portfolioTransactions),
+    element: <ComingSoon />,
+    handle: { title: 'Movimientos', description: 'Compras, ventas, dividendos, depósitos y retiros de tu portafolio, con importación y exportación en CSV.' },
+  },
+  {
+    path: route(PATHS.portfolioPerformance),
+    element: <ComingSoon />,
+    handle: { title: 'Rendimiento', description: 'Rendimiento de tu portafolio en pesos contra su referencia, ponderado por tiempo y por dinero.' },
+  },
+  {
+    path: route(PATHS.portfolioRisk),
+    element: <ComingSoon />,
+    handle: { title: 'Riesgo', description: 'Volatilidad, caídas máximas, concentración y exposición al tipo de cambio de tu portafolio.' },
+  },
+  {
+    path: route(PATHS.portfolioRebalance),
+    element: <ComingSoon />,
+    handle: { title: 'Rebalanceo', description: 'Qué tan lejos está tu portafolio de los pesos objetivo que definiste.' },
+  },
+]
