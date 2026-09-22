@@ -987,7 +987,7 @@ export default function App() {
   // Portafolio activo derivado
   const activePortfolioObj = portfolios.find(p => p.id === activePortfolioId);
   const portfolio = activePortfolioObj?.positions ?? [];
-  const isExperimental = activePortfolioObj?.experimental ?? false;
+  const isExperimental = false; // Modo experimental eliminado; se deja en false para no tocar cada referencia.
   const expTotal = activePortfolioObj?.experimentalTotal ?? 0;
   const allocatedExpPct = portfolio.reduce((s, p) => s + (p.expPct ?? 0), 0);
   const remainingExpPct = Math.max(0, parseFloat((100 - allocatedExpPct).toFixed(2)));
@@ -999,14 +999,6 @@ export default function App() {
           ? { ...p, positions: typeof updater === "function" ? updater(p.positions) : updater }
           : p
       );
-      savePortfolios(next);
-      return next;
-    });
-  };
-
-  const toggleExperimental = () => {
-    setPortfolios(prev => {
-      const next = prev.map(p => p.id === activePortfolioId ? { ...p, experimental: !p.experimental } : p);
       savePortfolios(next);
       return next;
     });
@@ -1024,6 +1016,8 @@ export default function App() {
   const [newCost, setNewCost] = useState("");
   const [addError, setAddError] = useState("");
   const addingRef = useRef(false);
+  const loadingTickersRef = useRef(new Set());
+  const sharpeLoadingRef = useRef(false);
   const [stockData, setStockData] = useState({});
   const [usdMxn, setUsdMxn] = useState(17.5);
 
@@ -1210,11 +1204,19 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    // Carga secuencial con delay para evitar rate limiting
+    // Carga secuencial con delay para evitar rate limiting.
+    // loadingTickersRef evita que este efecto (que se re-dispara cada vez que
+    // cambia el arreglo `portfolio`, incluso por ediciones ajenas al precio)
+    // dispare fetches duplicados para un ticker que ya está en curso.
     const loadAll = async () => {
       for (const p of portfolio) {
-        if (!stockData[p.ticker]) {
-          await loadStockData(p.ticker);
+        if (!stockData[p.ticker] && !loadingTickersRef.current.has(p.ticker)) {
+          loadingTickersRef.current.add(p.ticker);
+          try {
+            await loadStockData(p.ticker);
+          } finally {
+            loadingTickersRef.current.delete(p.ticker);
+          }
           await sleep(400);
         }
       }
@@ -1724,6 +1726,12 @@ export default function App() {
   };
 
   const loadSharpeData = async (period = "1y") => {
+    // Evita corridas superpuestas: este cálculo se dispara cada vez que cambia
+    // portfolio.length, y sin este guard, varios cambios rápidos (agregar/quitar
+    // seguido) disparaban fetches duplicados del mismo ticker en simultáneo.
+    if (sharpeLoadingRef.current) return;
+    sharpeLoadingRef.current = true;
+    try {
     const result = {};
     const returnsMap = {};
     const lastPriceMap = {}; // último cierre del historial → no depende de stockData
@@ -1765,6 +1773,9 @@ export default function App() {
       setPortfolioSharpeExact(isFinite(exact) ? +exact.toFixed(2) : null);
     } else if (tickers.length === 1) {
       setPortfolioSharpeExact(result[tickers[0]] ?? null);
+    }
+    } finally {
+      sharpeLoadingRef.current = false;
     }
   };
 
@@ -1898,78 +1909,56 @@ export default function App() {
     if (addingRef.current) return;
     addingRef.current = true;
     setAddError("");
-    if (!newTicker) { addingRef.current = false; return; }
-    const t = newTicker.toUpperCase().trim();
-    const cost = parseFloat(newCost);
-    let shares;
+    try {
+      if (!newTicker) return;
+      const t = newTicker.toUpperCase().trim();
+      const cost = parseFloat(newCost);
+      let shares;
 
-    if (isExperimental) {
-      const pct = parseFloat(newPct);
-      if (!pct || pct <= 0) { setAddError("Ingresa un porcentaje válido (> 0)."); addingRef.current = false; return; }
-      // Usar targetPcts como fuente de verdad para calcular el % ya asignado
-      const existingPct = parseFloat(targetPcts[t]) || portfolio.find(p => p.ticker === t)?.expPct || 0;
-      const currentAllocated = portfolio.reduce((s, p) => s + (parseFloat(targetPcts[p.ticker]) || p.expPct || 0), 0);
-      const available = Math.max(0, 100 - currentAllocated + existingPct);
-      if (pct > available + 0.01) { setAddError(`Solo quedan ${available.toFixed(1)}% disponibles.`); addingRef.current = false; return; }
-      if (!expTotal || expTotal <= 0) { setAddError("Define el Monto Total antes de agregar posiciones."); addingRef.current = false; return; }
-      let price = stockData[t]?.price;
-      if (!price) {
-        if (t === '$MXN') {
-          price = 1;
-          setStockData(prev => ({ ...prev, '$MXN': { price: 1, name: 'Efectivo MXN' } }));
-        } else {
-          const sd = await fetchStock(t);
-          if (sd?.price) { price = sd.price; setStockData(prev => ({ ...prev, [t]: sd })); }
+      if (inputMode === "pct") {
+        const pct = parseFloat(newPct);
+        if (!pct || pct <= 0 || pct > 100) { setAddError("Porcentaje inválido (debe ser > 0 y ≤ 100)."); return; }
+        let price = stockData[t]?.price;
+        if (!price) {
+          if (t === '$MXN') {
+            price = 1;
+            setStockData(prev => ({ ...prev, '$MXN': { price: 1, name: 'Efectivo MXN' } }));
+          } else {
+            let sd;
+            try {
+              sd = await fetchStock(t);
+            } catch {
+              setAddError(`No se pudo obtener el precio de ${t}. El servidor puede estar despertando — intenta de nuevo en unos segundos.`);
+              return;
+            }
+            if (sd?.price) { price = sd.price; setStockData((prev) => ({ ...prev, [t]: sd })); }
+          }
         }
-      }
-      if (!price) { setAddError("No se pudo obtener el precio actual."); addingRef.current = false; return; }
-      // Convertir precio a MXN: si es USD se multiplica por el tipo de cambio
-      const priceMXNVal = toMXN(t, price);
-      shares = (pct / 100 * expTotal) / priceMXNVal;
-      if (portfolio.find(p => p.ticker === t)) {
-        setPortfolio(prev => prev.map(p => p.ticker === t ? { ...p, shares, cost: t === '$MXN' ? 1 : isNaN(cost) ? p.cost : cost, expPct: pct } : p));
+        if (!price) { setAddError("No se pudo obtener el precio actual. Intenta en modo Acciones."); return; }
+        const totalValue = portfolio.reduce((s, p) => s + posVal(p), 0);
+        const basis = expTotal > 0 ? expTotal : totalValue;
+        if (basis <= 0) { setAddError("Define un presupuesto (MXN) o agrega antes una posición con precio."); return; }
+        shares = (pct / 100 * basis) / toMXN(t, price);
       } else {
-        setPortfolio(prev => [...prev, { ticker: t, shares, cost: t === '$MXN' ? 1 : isNaN(cost) ? 0 : cost, expPct: pct }]);
+        shares = parseFloat(newShares);
+        if (!shares || shares <= 0) { setAddError(t === '$MXN' ? "Ingresa el monto en MXN (> 0)." : "Ingresa un número de acciones válido (> 0)."); return; }
       }
-      // targetPcts es la fuente de verdad — sincronizar siempre
-      setTargetPcts(prev => ({ ...prev, [t]: String(pct) }));
-      setNewTicker(""); setNewPct("");
+
+      if (portfolio.find((p) => p.ticker === t)) {
+        setPortfolio((prev) => prev.map((p) =>
+          p.ticker === t ? { ...p, shares, cost: t === '$MXN' ? 1 : isNaN(cost) ? p.cost : cost } : p
+        ));
+        loadStockData(t);
+      } else {
+        setPortfolio((prev) => [...prev, { ticker: t, shares, cost: t === '$MXN' ? 1 : isNaN(cost) ? 0 : cost }]);
+      }
+      setNewTicker(""); setNewShares(""); setNewCost(""); setNewPct("");
+    } catch (e) {
+      setAddError("Ocurrió un error inesperado. Intenta de nuevo.");
+      console.error("addStock", e);
+    } finally {
       addingRef.current = false;
-      return;
     }
-
-    if (inputMode === "pct") {
-      const pct = parseFloat(newPct);
-      if (!pct || pct <= 0 || pct > 100) { setAddError("Porcentaje inválido (debe ser > 0 y ≤ 100)."); return; }
-      let price = stockData[t]?.price;
-      if (!price) {
-        if (t === '$MXN') {
-          price = 1;
-          setStockData(prev => ({ ...prev, '$MXN': { price: 1, name: 'Efectivo MXN' } }));
-        } else {
-          const sd = await fetchStock(t);
-          if (sd?.price) { price = sd.price; setStockData((prev) => ({ ...prev, [t]: sd })); }
-        }
-      }
-      if (!price) { setAddError("No se pudo obtener el precio actual. Intenta en modo Acciones."); return; }
-      const totalValue = portfolio.reduce((s, p) => s + posVal(p), 0);
-      if (totalValue <= 0) { setAddError("El portafolio tiene valor $0. Agrega otras posiciones con precio primero."); return; }
-      shares = (pct / 100 * totalValue) / toMXN(t, price);
-    } else {
-      shares = parseFloat(newShares);
-      if (!shares || shares <= 0) { setAddError(t === '$MXN' ? "Ingresa el monto en MXN (> 0)." : "Ingresa un número de acciones válido (> 0)."); return; }
-    }
-
-    if (portfolio.find((p) => p.ticker === t)) {
-      setPortfolio((prev) => prev.map((p) =>
-        p.ticker === t ? { ...p, shares, cost: t === '$MXN' ? 1 : isNaN(cost) ? p.cost : cost } : p
-      ));
-      loadStockData(t);
-    } else {
-      setPortfolio((prev) => [...prev, { ticker: t, shares, cost: t === '$MXN' ? 1 : isNaN(cost) ? 0 : cost }]);
-    }
-    setNewTicker(""); setNewShares(""); setNewCost(""); setNewPct("");
-    addingRef.current = false;
   };
   const removeStock = (t) => {
     setPortfolio((prev) => prev.filter((p) => p.ticker !== t));
@@ -2295,21 +2284,19 @@ export default function App() {
                       onDoubleClick={() => { setRenamingId(p.id); setRenameValue(p.name); }}
                       title="Doble clic para renombrar"
                       style={{
-                        background: activePortfolioId === p.id
-                          ? (p.experimental ? "#8b5cf6" : "var(--bg-deep)")
-                          : "#f2f2f2",
-                        color: activePortfolioId === p.id ? "#ffffff" : (p.experimental ? "#8b5cf6" : "#555555"),
-                        border: p.experimental && activePortfolioId !== p.id ? "1.5px solid #c4b5fd" : "none",
+                        background: activePortfolioId === p.id ? "var(--bg-deep)" : "#f2f2f2",
+                        color: activePortfolioId === p.id ? "#ffffff" : "#555555",
+                        border: "none",
                         borderRadius: 999, padding: "5px 14px",
                         fontSize: 13, fontWeight: activePortfolioId === p.id ? 700 : 500,
                         cursor: "pointer", transition: "all 0.15s"
                       }}
-                    >{p.name}{p.experimental ? " ⚗" : ""}</button>
+                    >{p.name}</button>
                   )}
                   <button
                     onClick={() => {
                       const id = "p" + Date.now();
-                      const copy = { id, name: `Copia de ${p.name}`, positions: p.positions.map(x => ({ ...x })), experimental: p.experimental };
+                      const copy = { id, name: `Copia de ${p.name}`, positions: p.positions.map(x => ({ ...x })) };
                       const next = [...portfolios, copy];
                       setPortfolios(next); savePortfolios(next);
                       setActivePortfolioId(id);
@@ -2346,23 +2333,12 @@ export default function App() {
               >+ Nuevo</button>
 
               <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
-                <button
-                  onClick={toggleExperimental}
-                  title={isExperimental ? "Desactivar modo experimental" : "Activar modo experimental: construye tu portafolio con monto + porcentajes"}
-                  style={{
-                    background: isExperimental ? "#8b5cf6" : "transparent",
-                    border: `1.5px solid ${isExperimental ? "#8b5cf6" : "#e0d7ff"}`,
-                    borderRadius: 999, color: isExperimental ? "#ffffff" : "#a78bfa",
-                    cursor: "pointer", padding: "4px 16px", fontSize: 12, fontWeight: 600,
-                    transition: "all 0.2s", letterSpacing: "0.02em"
-                  }}
-                >⚗ Experimental</button>
                 <span style={{ fontSize: 10, color: "var(--border-strong)", fontStyle: "italic" }}>doble clic para renombrar</span>
               </div>
             </div>
 
-            {/* Add stock form — Modo Experimental */}
-            {isExperimental ? (
+            {/* Add stock form — Modo Experimental (eliminado) */}
+            {false ? (
               <div className="dark-panel" style={{
                 background: "linear-gradient(135deg, #140d2e 0%, #1a1040 100%)",
                 border: "1.5px solid #c4b5fd",
@@ -2584,15 +2560,33 @@ export default function App() {
                         const ticker = newTicker.toUpperCase().trim();
                         const price = stockData[ticker]?.price;
                         const totalValue = portfolio.reduce((s, p) => s + posVal(p), 0);
-                        if (pct > 0 && price && totalValue > 0) {
-                          const sharesCalc = (pct / 100 * totalValue) / toMXN(ticker, price);
+                        const basis = expTotal > 0 ? expTotal : totalValue;
+                        if (pct > 0 && price && basis > 0) {
+                          const sharesCalc = (pct / 100 * basis) / toMXN(ticker, price);
                           return <div style={{ fontSize: 10, color: "var(--positive)", marginTop: 4 }}>≈ {sharesCalc.toFixed(4)} acciones</div>;
                         }
+                        if (basis <= 0) return <div style={{ fontSize: 10, color: "var(--warning)", marginTop: 4 }}>Define un presupuesto o agrega una posición con precio</div>;
                         return <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 4 }}>Carga el ticker primero</div>;
                       })()}
                     </div>
                   )}
                 </div>
+                {inputMode === "pct" && (
+                  <div>
+                    <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.08em", marginBottom: 6 }}>PRESUPUESTO (OPCIONAL)</div>
+                    <div style={{ position: "relative" }}>
+                      <span style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "var(--muted)", fontWeight: 700, pointerEvents: "none" }}>$</span>
+                      <input
+                        value={expTotal > 0 ? expTotal : ""}
+                        onChange={(e) => setExpTotalVal(e.target.value)}
+                        placeholder="200000"
+                        type="number"
+                        style={{ background: "var(--surface-2)", border: "1px solid var(--border-strong)", borderRadius: 10, color: "var(--ink)", padding: "8px 14px 8px 22px", fontSize: 13, width: 130, outline: "none", boxSizing: "border-box" }}
+                      />
+                    </div>
+                    <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 4 }}>Úsalo para armar el % desde cero (MXN)</div>
+                  </div>
+                )}
                 <div>
                   <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.08em", marginBottom: 6 }}>COSTO PROMEDIO</div>
                   <input value={newCost} onChange={(e) => setNewCost(e.target.value)}
