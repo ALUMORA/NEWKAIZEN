@@ -1,4 +1,5 @@
-// Una función por endpoint del contrato v2 (docs/api-v2.md). Todas aceptan `{ signal }` al
+// Una función async por endpoint del contrato v2 (docs/api-v2.md): los errores, incluso los de
+// validación local (símbolo inválido), siempre llegan como promesa rechazada. Todas aceptan `{ signal }` al
 // final para que TanStack Query pueda cancelar, y devuelven el JSON tal cual lo manda el API.
 //
 //   import { getQuotes } from '../lib/api/endpoints.js'
@@ -91,12 +92,12 @@ async function v2Get(path, query, { signal } = {}) {
 // ─── Plataforma ─────────────────────────────────────────────────────────────
 
 /** @param {CallOptions} [options] @returns {Promise<import('./types.js').HealthResponse>} */
-export function getHealth({ signal } = {}) {
+export async function getHealth({ signal } = {}) {
   return apiFetch('/health', { signal, auth: false })
 }
 
 /** @param {CallOptions} [options] @returns {Promise<import('./types.js').MeResponse>} */
-export function getMe({ signal } = {}) {
+export async function getMe({ signal } = {}) {
   return v2Get('/auth/me', undefined, { signal })
 }
 
@@ -121,7 +122,7 @@ export async function getQuotes(symbols, { signal } = {}) {
  * @param {{ limit?: number } & CallOptions} [options]
  * @returns {Promise<import('./types.js').SearchResponse>}
  */
-export function search(q, { limit = 10, signal } = {}) {
+export async function search(q, { limit = 10, signal } = {}) {
   return v2Get('/v2/search', { q: String(q ?? '').trim(), limit }, { signal })
 }
 
@@ -148,7 +149,7 @@ export async function getHistory(symbol, { range = '1y', interval = '1d', ccy = 
  * @param {CallOptions} [options]
  * @returns {Promise<import('./types.js').PanelResponse>}
  */
-export function getPanel(symbols, { range = '5y', interval = '1wk', ccy = 'MXN' } = {}, { signal } = {}) {
+export async function getPanel(symbols, { range = '5y', interval = '1wk', ccy = 'MXN' } = {}, { signal } = {}) {
   return v2Get('/v2/panel', { symbols: normalizeSymbols(symbols), range, interval, ccy }, { signal })
 }
 
@@ -170,14 +171,14 @@ export async function getFx(pair = 'USDMXN', { signal } = {}) {
  * @param {CallOptions} [options]
  * @returns {Promise<import('./types.js').FxHistoryResponse>}
  */
-export function getFxHistory({ pair = 'USDMXN', start, end } = {}, { signal } = {}) {
+export async function getFxHistory({ pair = 'USDMXN', start, end } = {}, { signal } = {}) {
   return v2Get('/v2/fx/history', { pair, start, end }, { signal })
 }
 
 // ─── Tasas y macro ──────────────────────────────────────────────────────────
 
 /** @param {CallOptions} [options] @returns {Promise<import('./types.js').RatesMxResponse>} */
-export function getRatesMx({ signal } = {}) {
+export async function getRatesMx({ signal } = {}) {
   return v2Get('/v2/rates/mx', undefined, { signal })
 }
 
@@ -196,19 +197,19 @@ export async function getRiskFree({ start, end, tenorDays = 28 } = {}, { signal 
 }
 
 /** @param {CallOptions} [options] @returns {Promise<import('./types.js').MacroUsResponse>} */
-export function getMacroUs({ signal } = {}) {
+export async function getMacroUs({ signal } = {}) {
   return v2Get('/v2/macro/us', undefined, { signal })
 }
 
 // ─── Mercados y noticias ────────────────────────────────────────────────────
 
 /** @param {CallOptions} [options] @returns {Promise<import('./types.js').MarketsOverviewResponse>} */
-export function getMarketsOverview({ signal } = {}) {
+export async function getMarketsOverview({ signal } = {}) {
   return v2Get('/v2/markets/overview', undefined, { signal })
 }
 
 /** @param {CallOptions} [options] @returns {Promise<import('./types.js').MarketsWorldResponse>} */
-export function getMarketsWorld({ signal } = {}) {
+export async function getMarketsWorld({ signal } = {}) {
   return v2Get('/v2/markets/world', undefined, { signal })
 }
 
@@ -217,7 +218,7 @@ export function getMarketsWorld({ signal } = {}) {
  * @param {CallOptions} [options]
  * @returns {Promise<import('./types.js').NewsResponse>}
  */
-export function getNews({ symbol, lang = 'all', limit = 30 } = {}, { signal } = {}) {
+export async function getNews({ symbol, lang = 'all', limit = 30 } = {}, { signal } = {}) {
   return v2Get('/v2/news', { symbol: symbol ? normalizeSymbol(symbol) : undefined, lang, limit }, { signal })
 }
 
@@ -226,14 +227,14 @@ export function getNews({ symbol, lang = 'all', limit = 30 } = {}, { signal } = 
  * @param {CallOptions} [options]
  * @returns {Promise<import('./types.js').EventsResponse>}
  */
-export function getEvents(symbols, { signal } = {}) {
+export async function getEvents(symbols, { signal } = {}) {
   return v2Get('/v2/events', { symbols: normalizeSymbols(symbols) }, { signal })
 }
 
 // ─── Investigación ──────────────────────────────────────────────────────────
 
 /** @param {string} symbol @param {CallOptions} [options] @returns {Promise<import('./types.js').InstrumentResponse>} */
-export function getInstrument(symbol, { signal } = {}) {
+export async function getInstrument(symbol, { signal } = {}) {
   return v2Get(`/v2/instrument/${seg(normalizeSymbol(symbol))}`, undefined, { signal })
 }
 
@@ -243,12 +244,12 @@ export function getInstrument(symbol, { signal } = {}) {
  * @param {CallOptions} [options]
  * @returns {Promise<import('./types.js').StatementsResponse>}
  */
-export function getStatements(symbol, { freq = 'annual' } = {}, { signal } = {}) {
+export async function getStatements(symbol, { freq = 'annual' } = {}, { signal } = {}) {
   return v2Get(`/v2/instrument/${seg(normalizeSymbol(symbol))}/statements`, { freq }, { signal })
 }
 
 /** @param {string} symbol @param {CallOptions} [options] @returns {Promise<import('./types.js').DividendsResponse>} */
-export function getDividends(symbol, { signal } = {}) {
+export async function getDividends(symbol, { signal } = {}) {
   return v2Get(`/v2/instrument/${seg(normalizeSymbol(symbol))}/dividends`, undefined, { signal })
 }
 
@@ -259,13 +260,13 @@ export function getDividends(symbol, { signal } = {}) {
  * @param {CallOptions} [options]
  * @returns {Promise<import('./types.js').ValuationResponse>}
  */
-export function getValuation(symbol, params = {}, { signal } = {}) {
+export async function getValuation(symbol, params = {}, { signal } = {}) {
   const { erp, crp, terminalGrowth, years, growth } = params
   return v2Get(`/v2/valuation/${seg(normalizeSymbol(symbol))}`, { erp, crp, terminalGrowth, years, growth }, { signal })
 }
 
 /** @param {string} symbol @param {CallOptions} [options] @returns {Promise<import('./types.js').MomentumResponse>} */
-export function getMomentum(symbol, { signal } = {}) {
+export async function getMomentum(symbol, { signal } = {}) {
   return v2Get(`/v2/momentum/${seg(normalizeSymbol(symbol))}`, undefined, { signal })
 }
 
@@ -276,7 +277,7 @@ export function getMomentum(symbol, { signal } = {}) {
  * @param {CallOptions} [options]
  * @returns {Promise<import('./types.js').FactorScreenerResponse>}
  */
-export function getFactorScreener({ universe = 'mx', symbols } = {}, { signal } = {}) {
+export async function getFactorScreener({ universe = 'mx', symbols } = {}, { signal } = {}) {
   const list = universe === 'custom' ? normalizeSymbols(symbols ?? []) : undefined
   return v2Get('/v2/screeners/factors', { universe, symbols: list }, { signal })
 }
@@ -286,7 +287,7 @@ export function getFactorScreener({ universe = 'mx', symbols } = {}, { signal } 
  * @param {CallOptions} [options]
  * @returns {Promise<import('./types.js').MagicScreenerResponse>}
  */
-export function getMagicScreener({ universe = 'us' } = {}, { signal } = {}) {
+export async function getMagicScreener({ universe = 'us' } = {}, { signal } = {}) {
   return v2Get('/v2/screeners/magic', { universe }, { signal })
 }
 
@@ -295,12 +296,12 @@ export function getMagicScreener({ universe = 'us' } = {}, { signal } = {}) {
  * @param {CallOptions} [options]
  * @returns {Promise<import('./types.js').FibrasScreenerResponse>}
  */
-export function getFibrasScreener({ extra } = {}, { signal } = {}) {
+export async function getFibrasScreener({ extra } = {}, { signal } = {}) {
   const list = extra && extra.length ? normalizeSymbols(extra) : undefined
   return v2Get('/v2/screeners/fibras', { extra: list }, { signal })
 }
 
 /** @param {string} symbol @param {CallOptions} [options] @returns {Promise<import('./types.js').InsidersResponse>} */
-export function getInsiders(symbol, { signal } = {}) {
+export async function getInsiders(symbol, { signal } = {}) {
   return v2Get(`/v2/insiders/${seg(normalizeSymbol(symbol))}`, undefined, { signal })
 }
