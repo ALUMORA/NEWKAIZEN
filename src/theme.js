@@ -39,7 +39,7 @@ export function useTheme() {
     setMode(next);
     try {
       localStorage.setItem(STORAGE_KEY, next);
-    } catch {}
+    } catch { /* storage bloqueado: el tema no se recuerda */ }
   };
 
   const toggle = () => setTheme(dark ? "light" : "dark");

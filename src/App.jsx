@@ -1,11 +1,12 @@
 ﻿
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTheme } from './theme.js';
-import { Badge, Button, IconButton, Card, KpiTile, Mark, ThemeToggle, cn } from './ui.jsx';
+import { Badge, Button, IconButton, Card, KpiTile, Mark, ThemeToggle } from './ui.jsx';
+import { cn } from './cn.js';
 import {
   ArrowRight, Eye, EyeOff, ShieldCheck, Menu, X,
   Newspaper, Briefcase, Gauge, ListFilter, LineChart as LineChartIcon,
-  Landmark, Sparkles, ChartNoAxesCombined, Download, FileText,
+  Landmark, Sparkles, ChartNoAxesCombined, Download, FileText, LogOut,
 } from 'lucide-react';
 
 // ─── CURRENCY UTILS (fuera del componente — sin closure) ─────────────────────
@@ -23,10 +24,15 @@ function posCostMXN(p, usdMxn) {
 }
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
-const BACKEND_CANDIDATES = [
-  "https://app-4-everyone.onrender.com",  // Render (primario)
-  "http://localhost:8002",                // Local dev
-];
+// VITE_API_URL (en .env.local) fija un solo backend; sin él se prueban Render y luego local.
+// Solo en dev, igual que VITE_SKIP_LOGIN: Vite lee .env.local también al hacer build, y un
+// dist/ armado en local apuntaría producción a localhost.
+const BACKEND_CANDIDATES = import.meta.env.DEV && import.meta.env.VITE_API_URL
+  ? [import.meta.env.VITE_API_URL]
+  : [
+      "https://app-4-everyone.onrender.com",  // Render (primario)
+      "http://localhost:8002",                // Local dev
+    ];
 
 async function detectBackend() {
   for (const url of BACKEND_CANDIDATES) {
@@ -34,12 +40,24 @@ async function detectBackend() {
       const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(60000) });
       const data = await res.json();
       if (data?.status === "ok") return url;
-    } catch {}
+    } catch { /* sin dato: se conserva el valor previo */ }
   }
   return null;
 }
 
 let BACKEND = null;
+
+// Sesión recordada en el navegador para no pedir la contraseña en cada recarga.
+// VITE_SKIP_LOGIN solo actúa en `npm run dev`: import.meta.env.DEV es false en el build de producción.
+const AUTH_KEY = "kaizen_authed";
+const SKIP_LOGIN = import.meta.env.DEV && import.meta.env.VITE_SKIP_LOGIN === "true";
+function readAuthed() {
+  if (SKIP_LOGIN) return true;
+  try { return localStorage.getItem(AUTH_KEY) === "1"; } catch { return false; }
+}
+function writeAuthed(on) {
+  try { on ? localStorage.setItem(AUTH_KEY, "1") : localStorage.removeItem(AUTH_KEY); } catch { /* storage bloqueado: la sesión dura lo que la pestaña */ }
+}
 
 const DEFAULT_PORTFOLIO = [
   { ticker: "AAPL", shares: 10, cost: 150 },
@@ -102,11 +120,13 @@ async function fetchStock(ticker, timeoutMs = 30000) {
   }
 }
 
+// Siempre en MXN: todo lo que usa fetchChart (Sharpe, optimizador, backtest, Monte Carlo,
+// screener) resta la tasa libre de riesgo mexicana, así que los retornos deben ser en pesos.
 async function fetchChart(ticker, period = "5y", timeoutMs = 90000) {
   // Reintenta automáticamente en caso de fallo de red (Render cold start)
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const res = await fetch(`${BACKEND}/chart/${encodeURIComponent(ticker)}?period=${period}`,
+      const res = await fetch(`${BACKEND}/chart/${encodeURIComponent(ticker)}?period=${period}&ccy=MXN`,
         { signal: AbortSignal.timeout(timeoutMs) });
       const data = await res.json();
       return data?.closes ?? [];
@@ -123,10 +143,13 @@ async function fetchChart(ticker, period = "5y", timeoutMs = 90000) {
 async function fetchRiskFreeRate() {
   try {
     const res = await fetch(`${BACKEND}/rf`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    return { rate: data?.rate ?? 0.0860, label: data?.label ?? "Bono M 5Y" };
+    if (data?.rate == null) throw new Error("respuesta sin rate");
+    return { rate: data.rate, label: data.label ?? "Bono M", ok: true };
   } catch {
-    return { rate: 0.0860, label: "Bono M 5Y" };
+    // ok:false para que la UI no muestre "Backend OK" sobre un valor que no vino del backend
+    return { rate: 0.0860, label: "Bono M 10Y (ref. fija, sin backend)", ok: false };
   }
 }
 
@@ -172,12 +195,14 @@ function buildCovMatrix(returnsMatrix) {
 
 // Monte Carlo portfolio optimization — 100k sims, restricciones 2%-35% por activo
 const W_MIN = 0.02;
-const W_MAX = 0.35;
+const W_MAX_DEFAULT = 0.35;
 
 function optimizeSharpe(returnsMatrix, rf, iterations = 100_000) {
   const n = returnsMatrix.length;
+  // Con n·W_MAX < 1 (2 activos a 35%) ningún vector cumple y se devolvía Sharpe -Infinity
+  const W_MAX = n * W_MAX_DEFAULT >= 1 ? W_MAX_DEFAULT : 1;
   const { cov, means } = buildCovMatrix(returnsMatrix);
-  let best = { sharpe: -Infinity, weights: Array(n).fill(1 / n) };
+  let best = { sharpe: -Infinity, weights: Array(n).fill(1 / n), wMax: W_MAX };
 
   for (let iter = 0; iter < iterations; iter++) {
     // Generar pesos con restricciones min/max usando proyección iterativa
@@ -189,11 +214,9 @@ function optimizeSharpe(returnsMatrix, rf, iterations = 100_000) {
     // 2) Proyección iterativa hasta satisfacer [W_MIN, W_MAX] y suma=1
     for (let pass = 0; pass < 20; pass++) {
       let excess = 0;
-      let free = 0;
       w = w.map((v) => {
         if (v < W_MIN) { excess += W_MIN - v; return W_MIN; }
         if (v > W_MAX) { excess += W_MAX - v; return W_MAX; } // excess negativo
-        free++;
         return v;
       });
       if (Math.abs(excess) < 1e-9) break;
@@ -212,7 +235,7 @@ function optimizeSharpe(returnsMatrix, rf, iterations = 100_000) {
     if (w.some((v) => v < W_MIN - 1e-6 || v > W_MAX + 1e-6)) continue;
 
     const s = calcPortfolioSharpe(w, cov, means, rf);
-    if (s > best.sharpe) best = { sharpe: s, weights: w };
+    if (s > best.sharpe) best = { sharpe: s, weights: w, wMax: W_MAX };
   }
   return best;
 }
@@ -225,6 +248,18 @@ function calcTrackingError(portReturns, benchReturns) {
   const mean = diffs.reduce((a, b) => a + b, 0) / n;
   const variance = diffs.reduce((s, d) => s + (d - mean) ** 2, 0) / (n - 1);
   return Math.sqrt(variance * 52);
+}
+
+// Retornos semanales del portafolio, alineados por el final (la semana más reciente).
+// weights va índice a índice con positions; la caja ($MXN) pesa en el total pero rinde 0.
+function weightedReturns(positions, weights, returnsMap, n) {
+  return Array.from({ length: n }, (_, i) =>
+    positions.reduce((s, p, wi) => {
+      if (p.ticker === "$MXN") return s;
+      const r = returnsMap[p.ticker];
+      return s + weights[wi] * (r?.[r.length - n + i] ?? 0);
+    }, 0)
+  );
 }
 
 function calcPortfolioBeta(portReturns, benchReturns) {
@@ -288,6 +323,7 @@ function mlScoreStock(_ticker, f) {
   if (pegy != null) val += pegy < 1 ? 1 : pegy < 2 ? 0.3 : -0.5;
   if (evEbitda != null) val += evEbitda < 8 ? 1.5 : evEbitda < 12 ? 0.7 : evEbitda < 18 ? 0 : evEbitda < 25 ? -0.7 : -1.5;
   if (pb != null) val += pb < 1 ? 1 : pb < 2.5 ? 0.3 : pb > 6 ? -0.8 : 0;
+  if (pcf != null && pcf > 0) val += pcf < 15 ? 1 : pcf < 25 ? 0.3 : pcf > 40 ? -0.8 : 0;
   const valuation_score = clamp(val);
 
   // ── MOMENTUM (52w change, beta) ───────────────────────────────────────────
@@ -360,7 +396,7 @@ function ScoreBar({ value, label }) {
       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "var(--muted-2)", marginBottom: 3 }}>
         <span>{label}</span><span style={{ color, fontWeight: 600 }}>{value}/10</span>
       </div>
-      <div style={{ background: "#0d1825", borderRadius: 4, height: 4, overflow: "hidden" }}>
+      <div style={{ background: "var(--surface-2)", borderRadius: 4, height: 4, overflow: "hidden" }}>
         <div style={{ width: `${pct}%`, height: "100%", background: color, borderRadius: 4, transition: "width 0.8s ease" }} />
       </div>
     </div>
@@ -495,11 +531,11 @@ function GlobalMarketsTable({ data, loading }) {
 
   return (
     <div className="resp-grid-3" style={{ gap:"1px 4px" }}>
-      {rows.map(({ id, flag, name, etf, d }) => {
+      {rows.map(({ id, name, etf, d }) => {
         const p = d?.change_pct;
         const up = p != null && p >= 0;
         const color = p == null ? "var(--muted-2)" : up ? "var(--positive)" : "var(--negative)";
-        const bgBadge = p == null ? "var(--border)" : up ? "#0a2a1a" : "#2a0a0a";
+        const bgBadge = p == null ? "var(--border)" : up ? "var(--positive-soft)" : "var(--negative-soft)";
         return (
           <div key={id} style={{
             display:"flex", alignItems:"center", gap:5,
@@ -511,7 +547,7 @@ function GlobalMarketsTable({ data, loading }) {
           >
             <div style={{ flex:1, minWidth:0 }}>
               <span style={{ fontFamily:"var(--font-sans)", fontSize:12, fontWeight:700, color:"var(--muted)" }}>{name}</span>
-              <span style={{ fontSize:9, color:"var(--border-strong)", marginLeft:5 }}>{etf}</span>
+              <span style={{ fontSize:9, color:"var(--muted-2)", marginLeft:5 }}>{etf}</span>
             </div>
             <div style={{
               fontFamily:"var(--font-mono)", fontSize:10, fontWeight:700,
@@ -552,8 +588,6 @@ function MktCard({ label, value, pct, absChange, sub, large, icon, showAbs }) {
   const up = !isNeutral && pct >= 0;
   const accentColor = isNeutral ? "var(--muted)" : up ? "var(--positive)" : "var(--negative)";
   const hoverClass  = isNeutral ? "mkt-card" : up ? "mkt-card mkt-card-up" : "mkt-card mkt-card-down";
-  const changeBg    = up ? "#0a2a1a" : "#2a0a0a";
-  const changeColor = up ? "var(--positive)" : "var(--negative)";
   const changeLabel = showAbs && absChange !== undefined && absChange !== null
     ? (absChange >= 0 ? "+" : "") + absChange.toFixed(2)
     : Math.abs(pct ?? 0).toFixed(2) + "%";
@@ -577,7 +611,7 @@ function MktCard({ label, value, pct, absChange, sub, large, icon, showAbs }) {
         {label}
       </div>
       <div style={{ fontFamily: "var(--font-mono)", fontSize: large ? 26 : 17, fontWeight: 700, color: "var(--ink)", lineHeight: 1.1, marginBottom: 8 }}>
-        {value ?? <span style={{ color: "var(--border-strong)" }}>—</span>}
+        {value ?? <span style={{ color: "var(--muted-2)" }}>—</span>}
       </div>
       {!isNeutral && (
         <span style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "3px 9px", borderRadius: 8, background: `color-mix(in srgb, ${accentColor} 15%, transparent)`, color: accentColor, fontSize: 11, fontWeight: 700, border: `1px solid color-mix(in srgb, ${accentColor} 35%, transparent)` }}>
@@ -617,37 +651,37 @@ function ResumenManero({ md, macroData }) {
   }
   if (macroData?.vix?.value != null) {
     const v = macroData.vix.value;
-    const c = v > 30 ? "var(--negative)" : v > 20 ? "#fbbf24" : "var(--positive)";
+    const c = v > 30 ? "var(--negative)" : v > 20 ? "var(--warning)" : "var(--positive)";
     insights.push({ icon: "", cat: "Volatilidad", color: c,
       text: `VIX ${v.toFixed(2)} — ${v > 30 ? "alta tensión en mercados, risk-off" : v > 20 ? "volatilidad elevada, cautela recomendada" : "ambiente de calma, risk-on"}` });
   }
   if (macroData?.t10y?.value != null) {
     const r = macroData.t10y.value;
     const sp = macroData?.spread;
-    insights.push({ icon: "", cat: "Tasas EUA", color: r > 5 ? "var(--negative)" : "#fbbf24",
-      text: `Tasa 10Y Treasury ${r.toFixed(2)}%${sp?.value != null ? ` · Spread ${sp.value >= 0 ? "+" : ""}${sp.value.toFixed(2)} bps${sp.inverted ? " ⚠ curva invertida" : ""}` : ""}` });
+    insights.push({ icon: "", cat: "Tasas EUA", color: r > 5 ? "var(--negative)" : "var(--warning)",
+      text: `Tasa 10Y Treasury ${r.toFixed(2)}%${sp?.value != null ? ` · Spread ${sp.value >= 0 ? "+" : ""}${Math.round(sp.value * 100)} pb${sp.inverted ? " ⚠ curva invertida" : ""}` : ""}` });
   }
   if (md?.gold?.change_pct != null) {
     const up = md.gold.change_pct >= 0;
-    insights.push({ icon: "", cat: "Oro", color: up ? "#fbbf24" : "var(--muted)",
+    insights.push({ icon: "", cat: "Oro", color: up ? "var(--warning)" : "var(--muted)",
       text: `Oro ${up ? "avanza" : "retrocede"} ${Math.abs(md.gold.change_pct).toFixed(2)}% a $${md.gold.value.toLocaleString("en-US", { maximumFractionDigits: 2 })}/oz — ${up ? "demanda de refugio activa" : "menor apetito por safe-haven"}` });
   }
   if (md?.wti?.change_pct != null) {
     const up = md.wti.change_pct >= 0;
-    insights.push({ icon: "", cat: "Petróleo WTI", color: up ? "#fbbf24" : "var(--negative)",
+    insights.push({ icon: "", cat: "Petróleo WTI", color: up ? "var(--warning)" : "var(--negative)",
       text: `WTI ${up ? "+" : ""}${md.wti.change_pct.toFixed(2)}% a $${md.wti.value.toFixed(2)}/bbl — ${up ? "presión inflacionaria en energía" : "alivio en precios de energía"}` });
   }
   if (md?.btc?.change_pct != null) {
     const up = md.btc.change_pct >= 0;
-    insights.push({ icon: "BTC", cat: "Bitcoin", color: up ? "#fbbf24" : "var(--negative)",
+    insights.push({ icon: "BTC", cat: "Bitcoin", color: up ? "var(--warning)" : "var(--negative)",
       text: `Bitcoin ${up ? "+" : ""}${md.btc.change_pct.toFixed(2)}% a $${Math.round(md.btc.value).toLocaleString()} USD — cripto ${up ? "en verde" : "bajo presión"}` });
   }
 
   const hasData = insights.length > 0;
-  const positive = insights.filter(i => i.color === "var(--positive)" || i.color === "#fbbf24").length;
+  const positive = insights.filter(i => i.color === "var(--positive)" || i.color === "var(--warning)").length;
   const negative = insights.filter(i => i.color === "var(--negative)").length;
   const mood = negative > positive ? "Cauteloso" : positive > negative ? "Positivo" : "Mixto";
-  const moodColor = mood === "Positivo" ? "var(--positive)" : mood === "Cauteloso" ? "var(--negative)" : "#fbbf24";
+  const moodColor = mood === "Positivo" ? "var(--positive)" : mood === "Cauteloso" ? "var(--negative)" : "var(--warning)";
 
   return (
     <div className="dark-panel" style={{
@@ -665,7 +699,7 @@ function ResumenManero({ md, macroData }) {
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
               <span style={{ fontSize: 18 }}></span>
               <span style={{ fontWeight: 700, fontSize: 17, letterSpacing: "-0.01em" }}>Resumen Mañanero</span>
-              <span className="glow-pulse" style={{ background: "var(--accent)", color: "#fff", fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.08em" }}>LIVE</span>
+              <span className="glow-pulse" style={{ background: "var(--accent)", color: "var(--on-accent)", fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.08em" }}>LIVE</span>
             </div>
             <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "capitalize" }}>{today}</div>
           </div>
@@ -678,7 +712,7 @@ function ResumenManero({ md, macroData }) {
         </div>
         <button onClick={() => setCollapsed(!collapsed)} style={{
           background: "#ffffff12", border: "1px solid #ffffff18", borderRadius: 8,
-          color: "var(--border-strong)", padding: "6px 16px", cursor: "pointer", fontSize: 12, fontWeight: 600,
+          color: "var(--muted-2)", padding: "6px 16px", cursor: "pointer", fontSize: 12, fontWeight: 600,
           transition: "all 0.15s",
         }}>
           {collapsed ? "Ver resumen " : "Colapsar "}
@@ -706,7 +740,7 @@ function ResumenManero({ md, macroData }) {
             >
               <div>
                 <div style={{ fontSize: 9, color: "var(--accent)", fontWeight: 800, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 3 }}>{ins.cat}</div>
-                <div style={{ fontSize: 12, color: "var(--border-strong)", lineHeight: 1.45 }}>{ins.text}</div>
+                <div style={{ fontSize: 12, color: "var(--muted-2)", lineHeight: 1.45 }}>{ins.text}</div>
               </div>
             </div>
           ))}
@@ -718,11 +752,11 @@ function ResumenManero({ md, macroData }) {
 
 // ─── MARKET NEWS ITEM ─────────────────────────────────────────────────────────
 function MarketNewsItem({ item, index }) {
-  const sentColor = item.sentiment === "positive" ? "var(--positive)" : item.sentiment === "negative" ? "var(--negative)" : "#ca8a04";
-  const sentIcon  = item.sentiment === "positive" ? "" : item.sentiment === "negative" ? "" : "";
+  const sentColor = item.sentiment === "positive" ? "var(--positive)" : item.sentiment === "negative" ? "var(--negative)" : "var(--warning)";
   const sentLabel = item.sentiment === "positive" ? "Positiva" : item.sentiment === "negative" ? "Negativa" : "Neutral";
+  const [nowSec] = useState(() => Math.floor(Date.now() / 1000));
   const timeAgo   = item.time ? (() => {
-    const s = Math.floor(Date.now() / 1000) - item.time;
+    const s = nowSec - item.time;
     if (s < 3600)  return `${Math.floor(s / 60)}m`;
     if (s < 86400) return `${Math.floor(s / 3600)}h`;
     return `${Math.floor(s / 86400)}d`;
@@ -766,7 +800,7 @@ function loadPortfolios() {
       const positions = JSON.parse(legacy);
       return [{ id: "p1", name: "Principal", positions }];
     }
-  } catch {}
+  } catch { /* sin dato: se conserva el valor previo */ }
   return DEFAULT_PORTFOLIOS;
 }
 
@@ -934,7 +968,7 @@ function LoginScreen({ onAuth }) {
       </section>
       <aside className="auth-aside">
         <div aria-hidden="true" className="auth-aside-orbit" />
-        <span className="glow-pulse" style={{ background: "var(--accent)", color: "#07120b", fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.08em", width: "fit-content" }}>LIVE</span>
+        <span className="glow-pulse" style={{ background: "var(--accent)", color: "var(--on-accent)", fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.08em", width: "fit-content" }}>LIVE</span>
         <blockquote className="quote-cycle" key={quoteIdx} style={{ marginTop: 14 }}>"{AUTH_QUOTES[quoteIdx]}"</blockquote>
         <div className="quote-dots">
           {AUTH_QUOTES.map((_, i) => <i className={i === quoteIdx ? "is-active" : ""} key={i} />)}
@@ -959,8 +993,10 @@ function LoginScreen({ onAuth }) {
   );
 }
 
+// Workspace se monta solo cuando BACKEND ya está resuelto y la sesión está abierta:
+// sus efectos de montaje piden datos al backend y antes corrían contra "null/...".
 export default function App() {
-  const [authed, setAuthed] = useState(false);
+  const [authed, setAuthed] = useState(readAuthed);
   const [backendUrl, setBackendUrl] = useState(null);
   const [backendSearching, setBackendSearching] = useState(true);
 
@@ -972,6 +1008,34 @@ export default function App() {
     });
   }, []);
 
+  if (backendSearching) return (
+    <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
+      <div style={{ fontSize:13, color:"var(--muted)", letterSpacing:3 }}>CONECTANDO AL SERVIDOR…</div>
+      <div style={{ marginTop:16, width:180, height:3, background:"var(--surface-3)", borderRadius:4, overflow:"hidden" }}>
+        <div style={{ height:"100%", background:"var(--accent)", borderRadius:4, animation:"loadbar 1.5s ease-in-out infinite" }} />
+      </div>
+      <style>{`@keyframes loadbar { 0%{width:0%} 60%{width:100%} 100%{width:100%} }`}</style>
+    </div>
+  );
+
+  if (!backendUrl) return (
+    <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:12 }}>
+      <div style={{ fontSize:20, color:"var(--negative)", fontWeight:800 }}>SIN CONEXIÓN AL SERVIDOR</div>
+      <div style={{ fontSize:12, color:"var(--muted)", letterSpacing:1, textAlign:"center", maxWidth:340 }}>
+        Ningún backend respondió. Asegúrate de que Railway o Render estén activos, o corre <span style={{color:"var(--accent)",fontFamily:"var(--font-mono)"}}>python backend.py</span> localmente.
+      </div>
+      <Button onClick={() => { setBackendSearching(true); detectBackend().then(url => { BACKEND=url; setBackendUrl(url); setBackendSearching(false); }); }} size="lg">
+        REINTENTAR
+      </Button>
+    </div>
+  );
+
+  if (!authed) return <LoginScreen onAuth={() => { writeAuthed(true); setAuthed(true); }} />;
+
+  return <Workspace backendUrl={backendUrl} onLogout={() => { writeAuthed(false); setAuthed(false); }} />;
+}
+
+function Workspace({ backendUrl, onLogout }) {
   const { dark, toggle: toggleTheme } = useTheme();
   const [tab, setTab] = useState("news");
   const [rfRate, setRfRate] = useState(null);
@@ -989,8 +1053,6 @@ export default function App() {
   const portfolio = activePortfolioObj?.positions ?? [];
   const isExperimental = false; // Modo experimental eliminado; se deja en false para no tocar cada referencia.
   const expTotal = activePortfolioObj?.experimentalTotal ?? 0;
-  const allocatedExpPct = portfolio.reduce((s, p) => s + (p.expPct ?? 0), 0);
-  const remainingExpPct = Math.max(0, parseFloat((100 - allocatedExpPct).toFixed(2)));
 
   const setPortfolio = (updater) => {
     setPortfolios(prev => {
@@ -1017,7 +1079,7 @@ export default function App() {
   const [addError, setAddError] = useState("");
   const addingRef = useRef(false);
   const loadingTickersRef = useRef(new Set());
-  const sharpeLoadingRef = useRef(false);
+  const sharpeLoadingRef = useRef(0); // contador de corridas de loadSharpeData
   const [stockData, setStockData] = useState({});
   const [usdMxn, setUsdMxn] = useState(17.5);
 
@@ -1031,6 +1093,7 @@ export default function App() {
   const [optimLoading, setOptimLoading] = useState(false);
   const [optimPeriod, setOptimPeriod] = useState("5y");
   const [optimLoadingMsg, setOptimLoadingMsg] = useState("");
+  const [optimError, setOptimError] = useState(null);
   const [screenerTickers, setScreenerTickers] = useState(() => {
     try {
       return localStorage.getItem("momentum_screener") ?? SCREEN_TICKERS.join(", ");
@@ -1047,22 +1110,16 @@ export default function App() {
   const [marketDataLoading, setMarketDataLoading] = useState(false);
   const [marketNews, setMarketNews] = useState([]);
   const [marketNewsLoading, setMarketNewsLoading] = useState(false);
-  const [showAbsChange, setShowAbsChange] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [newsFilter, setNewsFilter] = useState("all");
-  const [autoRefresh, setAutoRefresh] = useState(true);
-  const [countdown, setCountdown] = useState(60);
+  const autoRefresh = true;
   const refreshTimerRef = useRef(null);
-  const countdownTimerRef = useRef(null);
   const [backtestResult, setBacktestResult] = useState(null);
   const [backtestLoading, setBacktestLoading] = useState(false);
   const [backtestError, setBacktestError] = useState(null);
   const [newsTicker, setNewsTicker] = useState("");
-  const [newsSentimentFilter, setNewsSentimentFilter] = useState("all");
   const [macroData, setMacroData] = useState(null);
   const [dcfData, setDcfData] = useState({});       // { ticker: {...} }
-  const [momentumData, setMomentumData] = useState({}); // { ticker: {...} }
-  const [corrMatrix, setCorrMatrix] = useState(null);
   const [fibrasData, setFibrasData] = useState(() => {
     try { const saved = localStorage.getItem("kaizen_fibras_data"); return saved ? JSON.parse(saved) : null; } catch { return null; }
   });
@@ -1168,7 +1225,7 @@ export default function App() {
   // Fetch RF rate + macro on mount
   useEffect(() => {
     fetchRiskFreeRate()
-      .then((r) => { setRfRate(r.rate); setRfLabel(r.label); setBackendOk(true); })
+      .then((r) => { setRfRate(r.rate); setRfLabel(r.label); setBackendOk(r.ok); })
       .catch(() => setBackendOk(false));
     fetch(`${BACKEND}/macro`).then(r => r.json()).then(setMacroData).catch(() => {});
     fetch(`${BACKEND}/fx`).then(r => r.json()).then(d => { if (d?.USDMXN) setUsdMxn(d.USDMXN); }).catch(() => {});
@@ -1253,14 +1310,24 @@ export default function App() {
   const runOptimization = async () => {
     setOptimLoading(true);
     setOptimResult(null);
+    setOptimError(null);
     setOptimLoadingMsg("Descargando histórico del portafolio...");
+    try {
 
     const tickers = portfolio.map((p) => p.ticker).filter(t => t !== '$MXN');
+    if (tickers.length < 2) {
+      setOptimError("Se necesitan al menos 2 activos (sin contar efectivo) para optimizar.");
+      return;
+    }
     const returnsAll = [];
     const lastClosesOptim = []; // último precio del historial por ticker
     for (const t of tickers) {
       const closes = await fetchChart(t, optimPeriod);
       const returns = closes.slice(1).map((v, i) => (v - closes[i]) / closes[i]).filter(isFinite);
+      if (returns.length < 10) {
+        setOptimError(`No hay suficiente historial para ${t} en el periodo elegido.`);
+        return;
+      }
       returnsAll.push(returns);
       lastClosesOptim.push(closes.length > 0 ? closes[closes.length - 1] : 0);
       await sleep(100);
@@ -1281,16 +1348,11 @@ export default function App() {
       })
     );
 
-    // Pesos actuales por valor de mercado — usando último cierre del historial descargado
-    const totalVal = tickers.reduce((s, t, i) => {
-      const pos = portfolio.find(p => p.ticker === t);
-      return s + (pos?.shares ?? 0) * lastClosesOptim[i];
-    }, 0);
-    const actualWeights = tickers.map((t, i) => {
-      const pos = portfolio.find(p => p.ticker === t);
-      const val = (pos?.shares ?? 0) * lastClosesOptim[i];
-      return totalVal > 0 ? val / totalVal : 1 / tickers.length;
-    });
+    // Pesos actuales por valor de mercado — fetchChart ya devuelve cierres en MXN,
+    // así que USD y MXN se suman en la misma moneda sin volver a convertir
+    const valOf = (t, i) => (portfolio.find(p => p.ticker === t)?.shares ?? 0) * lastClosesOptim[i];
+    const totalVal = tickers.reduce((s, t, i) => s + valOf(t, i), 0);
+    const actualWeights = tickers.map((t, i) => totalVal > 0 ? valOf(t, i) / totalVal : 1 / tickers.length);
     const actualSharpe = calcPortfolioSharpe(actualWeights, covMatrix, means, rf);
 
     // Sharpe con pesos óptimos
@@ -1357,8 +1419,13 @@ export default function App() {
       optimalSharpe: +currentSharpe.toFixed(4),
       actualStats, optimalStats,
     });
-    setOptimLoadingMsg("");
-    setOptimLoading(false);
+    } catch (e) {
+      console.error("Optimización:", e);
+      setOptimError(`Error al optimizar: ${e?.message ?? e}. Verifica que el backend esté activo.`);
+    } finally {
+      setOptimLoadingMsg("");
+      setOptimLoading(false);
+    }
   };
 
   // Asegura que el servicio Python de Render esté COMPLETAMENTE despierto.
@@ -1372,7 +1439,7 @@ export default function App() {
         const r = await fetch(`${BACKEND}/fx`, { signal: AbortSignal.timeout(15000) });
         const d = await r.json();
         if (d?.USDMXN || d?.usdmxn) return true; // respuesta real del servicio
-      } catch {}
+      } catch { /* sin dato: se conserva el valor previo */ }
       await sleep(6000);
     }
     return false;
@@ -1401,7 +1468,12 @@ export default function App() {
       const spyCloses = await fetchChart("SPY", "5y", 60000);
       const spyReturnsRaw = spyCloses.slice(1).map((v, i) => (v - spyCloses[i]) / spyCloses[i]).filter(isFinite);
 
-      const tickers = portfolio.map((p) => p.ticker);
+      const tickers = portfolio.map((p) => p.ticker).filter(t => t !== '$MXN');
+      if (!tickers.length) {
+        setBacktestError("El portafolio solo tiene efectivo; agrega al menos un activo para el backtest.");
+        setBacktestLoading(false);
+        return;
+      }
       const returnsMap = {};
       for (const t of tickers) {
         await sleep(200);
@@ -1440,10 +1512,8 @@ export default function App() {
       }
 
       const limitingTickerBack = tickerLensBack.reduce((a, b) => a.len <= b.len ? a : b).t;
-      const spyReturns = spyReturnsRaw.slice(0, minLen);
-      const portReturns = Array.from({ length: minLen }, (_, i) =>
-        tickers.reduce((s, t, wi) => s + weights[wi] * (returnsMap[t]?.[i] ?? 0), 0)
-      );
+      const spyReturns = spyReturnsRaw.slice(-minLen);
+      const portReturns = weightedReturns(portfolio, weights, returnsMap, minLen);
 
       // Generar etiquetas de semanas hacia atrás desde hoy
       const today = new Date();
@@ -1467,8 +1537,8 @@ export default function App() {
       // Matriz de correlación entre activos del portafolio
       const corrMatrix = tickers.map((ti) =>
         tickers.map((tj) => {
-          const ri = returnsMap[ti]?.slice(0, minLen) ?? [];
-          const rj = returnsMap[tj]?.slice(0, minLen) ?? [];
+          const ri = returnsMap[ti]?.slice(-minLen) ?? [];
+          const rj = returnsMap[tj]?.slice(-minLen) ?? [];
           if (!ri.length || !rj.length) return 0;
           const mi = ri.reduce((a, b) => a + b, 0) / ri.length;
           const mj = rj.reduce((a, b) => a + b, 0) / rj.length;
@@ -1518,6 +1588,11 @@ export default function App() {
       const spyRet = spyCloses.slice(1).map((v, i) => (v - spyCloses[i]) / spyCloses[i]).filter(isFinite);
 
       const tickers = portfolio.map(p => p.ticker).filter(t => t !== '$MXN');
+      if (!tickers.length) {
+        setMonteCarloError("El portafolio solo tiene efectivo; agrega al menos un activo para simular.");
+        setMonteCarloLoading(false);
+        return;
+      }
       const returnsMap = {};
       for (const t of tickers) {
         await sleep(200);
@@ -1555,15 +1630,14 @@ export default function App() {
       }
 
       const limitingTicker = tickerLens.reduce((a, b) => a.len <= b.len ? a : b).t;
-      const portRet = Array.from({ length: minLen }, (_, i) =>
-        tickers.reduce((s, t, wi) => s + weights[wi] * (returnsMap[t]?.[i] ?? 0), 0)
-      );
+      const portRet = weightedReturns(portfolio, weights, returnsMap, minLen);
+      const spyWin  = spyRet.slice(-minLen);  // misma ventana que el portafolio
 
       const mean = arr => arr.reduce((a, b) => a + b, 0) / (arr.length || 1);
       const std  = arr => { const m = mean(arr); return Math.sqrt(arr.reduce((s, v) => s + (v - m) ** 2, 0) / (arr.length || 1)); };
 
       const muPort  = mean(portRet);  const sigPort = std(portRet);
-      const muSpy   = mean(spyRet);   const sigSpy  = std(spyRet);
+      const muSpy   = mean(spyWin);   const sigSpy  = std(spyWin);
 
       // Box-Muller para números normales
       const randn = () => Math.sqrt(-2 * Math.log(Math.random() + 1e-12)) * Math.cos(2 * Math.PI * Math.random());
@@ -1571,14 +1645,21 @@ export default function App() {
       const H = 52;    // semanas
       const N = 10000; // simulaciones (reducido de 50k para evitar freeze del browser)
 
-      const simPaths = (mu, sig) => Array.from({ length: N }, () => {
-        const path = [1];
-        for (let t = 0; t < H; t++) path.push(path[path.length - 1] * (1 + mu + sig * randn()));
-        return path;
-      });
-
-      const portPaths = simPaths(muPort, sigPort);
-      const spyPaths  = simPaths(muSpy,  sigSpy);
+      // Choques correlacionados: portafolio y SPY se mueven juntos según su correlación histórica.
+      // Con sorteos independientes la probabilidad de superar al SPY salía inflada.
+      const covPS = portRet.reduce((s, r, i) => s + (r - muPort) * (spyWin[i] - muSpy), 0) / (portRet.length || 1);
+      const rho = sigPort && sigSpy ? Math.max(-1, Math.min(1, covPS / (sigPort * sigSpy))) : 0;
+      const rhoC = Math.sqrt(1 - rho * rho);
+      const portPaths = [], spyPaths = [];
+      for (let k = 0; k < N; k++) {
+        const pp = [1], sp = [1];
+        for (let t = 0; t < H; t++) {
+          const z1 = randn(), z2 = rho * z1 + rhoC * randn();
+          pp.push(pp[t] * (1 + muPort + sigPort * z1));
+          sp.push(sp[t] * (1 + muSpy + sigSpy * z2));
+        }
+        portPaths.push(pp); spyPaths.push(sp);
+      }
 
       // Ordenar UNA vez por paso de tiempo para calcular todos los percentiles (5x más rápido)
       const buildStats = (paths) => Array.from({ length: H + 1 }, (_, t) => {
@@ -1627,7 +1708,7 @@ export default function App() {
         try {
           sd = await fetchStock(t);
           if (sd) setStockData((prev) => ({ ...prev, [t]: sd }));
-        } catch {}
+        } catch { /* sin dato: se conserva el valor previo */ }
         await sleep(150);
       }
       const scores = mlScoreStock(t, sd ?? {});
@@ -1640,7 +1721,7 @@ export default function App() {
           const rets = closes.slice(1).map((v, k) => (v - closes[k]) / closes[k]).filter(isFinite);
           sharpe1y = +calcSharpe(rets, rf).toFixed(3);
         }
-      } catch {}
+      } catch { /* sin dato: se conserva el valor previo */ }
 
       // DCF + Momentum en paralelo
       let dcf = null, mom = null;
@@ -1649,7 +1730,7 @@ export default function App() {
           fetch(`${BACKEND}/dcf/${encodeURIComponent(t)}`).then(r => r.json()).catch(() => null),
           fetch(`${BACKEND}/momentum/${encodeURIComponent(t)}`).then(r => r.json()).catch(() => null),
         ]);
-      } catch {}
+      } catch { /* sin dato: se conserva el valor previo */ }
       results.push({ ticker: t, ...sd, scores, dcf, momentum: mom, sharpe1y });
       setScreenerData([...results]);
       await sleep(150);
@@ -1689,7 +1770,7 @@ export default function App() {
         const magicRes = await fetch(`${BACKEND}/magic_one/${encodeURIComponent(ticker)}`).then(r => r.json()).catch(() => null);
         if (!magicRes || magicRes.skip) { await sleep(80); continue; }
         candidates.push(magicRes);
-      } catch {}
+      } catch { /* sin dato: se conserva el valor previo */ }
       await sleep(80);
     }
 
@@ -1720,18 +1801,16 @@ export default function App() {
       try {
         localStorage.setItem("kaizen_fibras_data", JSON.stringify(data));
         localStorage.setItem("kaizen_fibras_extra", extra);
-      } catch {}
-    } catch {}
+      } catch { /* sin dato: se conserva el valor previo */ }
+    } catch { /* sin dato: se conserva el valor previo */ }
     setFibrasLoading(false);
   };
 
   const loadSharpeData = async (period = "1y") => {
-    // Evita corridas superpuestas: este cálculo se dispara cada vez que cambia
-    // portfolio.length, y sin este guard, varios cambios rápidos (agregar/quitar
-    // seguido) disparaban fetches duplicados del mismo ticker en simultáneo.
-    if (sharpeLoadingRef.current) return;
-    sharpeLoadingRef.current = true;
-    try {
+    // Gana la corrida más reciente: antes una corrida en curso bloqueaba la nueva y el
+    // Sharpe se quedaba con el portafolio anterior. Las corridas viejas ya no escriben estado.
+    const run = ++sharpeLoadingRef.current;
+    const isStale = () => run !== sharpeLoadingRef.current;
     const result = {};
     const returnsMap = {};
     const lastPriceMap = {}; // último cierre del historial → no depende de stockData
@@ -1748,7 +1827,9 @@ export default function App() {
         lastPriceMap[p.ticker] = closes[closes.length - 1]; // precio más reciente del historial
         await sleep(150);
       } catch { /* skip */ }
+      if (isStale()) return;
     }
+    if (isStale()) return;
     setSharpeData(result);
 
     // Sharpe exacto del portafolio con matriz de covarianza (incluye correlaciones)
@@ -1757,32 +1838,28 @@ export default function App() {
       const returnsMatrix = tickers.map(t => returnsMap[t]);
       const { cov, means } = buildCovMatrix(returnsMatrix);
 
-      // Pesos por valor de mercado en MXN usando el último cierre del historial
-      const _fx = usdMxn;
-      const totalVal = tickers.reduce((s, t) => {
-        const pos = portfolio.find(p => p.ticker === t);
-        return s + (pos?.shares ?? 0) * priceMXN(t, lastPriceMap[t] ?? 0, _fx);
-      }, 0);
-      const weights = tickers.map(t => {
-        const pos = portfolio.find(p => p.ticker === t);
-        const val = (pos?.shares ?? 0) * priceMXN(t, lastPriceMap[t] ?? 0, _fx);
-        return totalVal > 0 ? val / totalVal : 1 / tickers.length;
-      });
+      // Pesos por valor de mercado usando el último cierre del historial (ya en MXN)
+      const valOf = t => (portfolio.find(p => p.ticker === t)?.shares ?? 0) * (lastPriceMap[t] ?? 0);
+      const totalVal = tickers.reduce((s, t) => s + valOf(t), 0);
+      const weights = tickers.map(t => totalVal > 0 ? valOf(t) / totalVal : 1 / tickers.length);
 
       const exact = calcPortfolioSharpe(weights, cov, means, rf);
       setPortfolioSharpeExact(isFinite(exact) ? +exact.toFixed(2) : null);
     } else if (tickers.length === 1) {
       setPortfolioSharpeExact(result[tickers[0]] ?? null);
-    }
-    } finally {
-      sharpeLoadingRef.current = false;
+    } else {
+      setPortfolioSharpeExact(null);
     }
   };
 
   // Cargar Sharpe individual al montar o cuando cambia portafolio/rf
+  // La firma cubre cambio de portafolio activo, tickers y número de acciones; antes solo
+  // portfolio.length, así que cambiar a otro portafolio del mismo tamaño dejaba cifras viejas.
+  const sharpeKey = `${activePortfolioId}|${portfolio.map(p => `${p.ticker}:${p.shares}`).join(",")}`;
   useEffect(() => {
     if (rfRate !== null && portfolio.length > 0) loadSharpeData("1y");
-  }, [rfRate, portfolio.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadSharpeData se recrea cada render; sharpeKey resume lo que importa
+  }, [rfRate, sharpeKey]);
 
   const loadNews = async (ticker) => {
     if (!ticker.trim()) return;
@@ -1847,7 +1924,7 @@ export default function App() {
     try {
       const cd = await fetch(`${BACKEND}/chart/${t}?period=${period}`).then(r => r.ok ? r.json() : null);
       setAnalisisChart(cd);
-    } catch {}
+    } catch { /* sin dato: se conserva el valor previo */ }
   }, [analisisTicker]);
 
   const loadMarketData = useCallback(async () => {
@@ -1856,7 +1933,7 @@ export default function App() {
       const data = await fetch(`${BACKEND}/market`).then(r => r.json());
       setMarketData(data);
       setLastUpdated(new Date());
-    } catch {}
+    } catch { /* sin dato: se conserva el valor previo */ }
     setMarketDataLoading(false);
   }, []);
 
@@ -1865,7 +1942,7 @@ export default function App() {
     try {
       const data = await fetch(`${BACKEND}/news/market`).then(r => r.json());
       setMarketNews(data.news ?? []);
-    } catch {}
+    } catch { /* sin dato: se conserva el valor previo */ }
     setMarketNewsLoading(false);
   }, []);
 
@@ -1875,7 +1952,7 @@ export default function App() {
     try {
       const data = await fetch(`${BACKEND}/worldmap`).then(r => r.json());
       setWorldMapData(data);
-    } catch {}
+    } catch { /* sin dato: se conserva el valor previo */ }
     setWorldMapLoading(false);
   }, []);
 
@@ -1889,20 +1966,9 @@ export default function App() {
 
   useEffect(() => {
     clearInterval(refreshTimerRef.current);
-    clearInterval(countdownTimerRef.current);
     if (tab !== "news" || !autoRefresh) return;
-    setCountdown(60);
-    refreshTimerRef.current = setInterval(() => {
-      loadMarketData();
-      setCountdown(60);
-    }, 60_000);
-    countdownTimerRef.current = setInterval(() => {
-      setCountdown(prev => Math.max(0, prev - 1));
-    }, 1_000);
-    return () => {
-      clearInterval(refreshTimerRef.current);
-      clearInterval(countdownTimerRef.current);
-    };
+    refreshTimerRef.current = setInterval(loadMarketData, 60_000);
+    return () => clearInterval(refreshTimerRef.current);
   }, [tab, autoRefresh, loadMarketData]);
 
   const addStock = async () => {
@@ -1971,29 +2037,6 @@ export default function App() {
   };
 
   // ── RENDER ──────────────────────────────────────────────────────────────────
-  if (backendSearching) return (
-    <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
-      <div style={{ fontSize:13, color:"var(--muted)", letterSpacing:3 }}>CONECTANDO AL SERVIDOR…</div>
-      <div style={{ marginTop:16, width:180, height:3, background:"var(--surface-3)", borderRadius:4, overflow:"hidden" }}>
-        <div style={{ height:"100%", background:"var(--accent)", borderRadius:4, animation:"loadbar 1.5s ease-in-out infinite" }} />
-      </div>
-      <style>{`@keyframes loadbar { 0%{width:0%} 60%{width:100%} 100%{width:100%} }`}</style>
-    </div>
-  );
-
-  if (!backendUrl) return (
-    <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:12 }}>
-      <div style={{ fontSize:20, color:"var(--negative)", fontWeight:800 }}>SIN CONEXIÓN AL SERVIDOR</div>
-      <div style={{ fontSize:12, color:"var(--muted)", letterSpacing:1, textAlign:"center", maxWidth:340 }}>
-        Ningún backend respondió. Asegúrate de que Railway o Render estén activos, o corre <span style={{color:"var(--accent)",fontFamily:"var(--font-mono)"}}>python backend.py</span> localmente.
-      </div>
-      <Button onClick={() => { setBackendSearching(true); detectBackend().then(url => { BACKEND=url; setBackendUrl(url); setBackendSearching(false); }); }} size="lg">
-        REINTENTAR
-      </Button>
-    </div>
-  );
-
-  if (!authed) return <LoginScreen onAuth={() => setAuthed(true)} />;
 
   return (
     <div className="app-shell">
@@ -2160,6 +2203,9 @@ export default function App() {
               <strong style={{ marginLeft: "auto", fontFamily: "var(--font-mono)" }}>{(rfRate * 100).toFixed(2)}%</strong>
             </div>
           )}
+          <Button onClick={onLogout} size="sm" variant="ghost">
+            <LogOut aria-hidden="true" size={15} /> Cerrar sesión
+          </Button>
         </div>
       </aside>
 
@@ -2171,7 +2217,7 @@ export default function App() {
           {/* Breadcrumb + tab móvil */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--muted)", flexShrink: 0 }}>
             <span style={{ fontSize: 11 }}>Dashboard</span>
-            <span style={{ color: "var(--border-strong)" }}>/</span>
+            <span style={{ color: "var(--muted-2)" }}>/</span>
             <span style={{ color: "var(--ink)", fontWeight: 600, fontSize: 13 }}>
               {[
                 {id:"portfolio",label:"Portfolio"},{id:"news",label:"Noticias"},
@@ -2257,7 +2303,7 @@ export default function App() {
               {portfolios.map(p => (
                 <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 0 }}>
                   {renamingId === p.id ? (
-                    <input
+                    <input aria-label="Nuevo nombre del portafolio"
                       autoFocus
                       value={renameValue}
                       onChange={e => setRenameValue(e.target.value)}
@@ -2312,6 +2358,7 @@ export default function App() {
                         if (activePortfolioId === p.id) setActivePortfolioId(next[0].id);
                       }}
                       title="Eliminar portafolio"
+                      aria-label={`Eliminar portafolio ${p.name}`}
                       style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 14, padding: "0 2px", lineHeight: 1 }}
                     >×</button>
                   )}
@@ -2333,177 +2380,19 @@ export default function App() {
               >+ Nuevo</button>
 
               <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
-                <span style={{ fontSize: 10, color: "var(--border-strong)", fontStyle: "italic" }}>doble clic para renombrar</span>
+                <span style={{ fontSize: 10, color: "var(--muted-2)", fontStyle: "italic" }}>doble clic para renombrar</span>
               </div>
             </div>
 
             {/* Add stock form — Modo Experimental (eliminado) */}
-            {false ? (
-              <div className="dark-panel" style={{
-                background: "linear-gradient(135deg, #140d2e 0%, #1a1040 100%)",
-                border: "1.5px solid #c4b5fd",
-                borderRadius: 24, boxShadow: "0 4px 24px rgba(139,92,246,0.13)",
-                padding: "20px 24px", marginBottom: 28
-              }}>
-                {/* Header: label + monto total + barra de % */}
-                {(() => {
-                  // % libre calculado SIEMPRE desde targetPcts (fuente de verdad en vivo)
-                  const liveAllocated = portfolio.reduce((s, p) => s + (parseFloat(targetPcts[p.ticker]) || p.expPct || 0), 0);
-                  const liveRemaining = Math.max(0, parseFloat((100 - liveAllocated).toFixed(2)));
-                  return (
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18, flexWrap: "wrap" }}>
-                  <span style={{ fontSize: 10, letterSpacing: "0.14em", fontWeight: 700, color: "#8b5cf6" }}>⚗ MODO EXPERIMENTAL</span>
-                  <div style={{ flex: 1 }} />
-                  <span style={{ fontSize: 10, color: "#a78bfa", letterSpacing: "0.06em", fontWeight: 600 }}>MONTO TOTAL</span>
-                  <div style={{ position: "relative" }}>
-                    <span style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "#8b5cf6", fontWeight: 700, pointerEvents: "none" }}>$</span>
-                    <input
-                      value={expTotal > 0 ? expTotal : ""}
-                      onChange={e => setExpTotalVal(e.target.value)}
-                      placeholder="200000"
-                      type="number"
-                      style={{
-                        width: 150, padding: "7px 10px 7px 24px",
-                        fontFamily: "var(--font-mono)", fontSize: 15, fontWeight: 700,
-                        color: "#6d28d9", background: "#ede9fe",
-                        border: "1.5px solid #c4b5fd", borderRadius: 10, outline: "none", boxSizing: "border-box"
-                      }}
-                    />
-                  </div>
-                  <div style={{
-                    fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700,
-                    padding: "6px 14px", borderRadius: 999,
-                    background: liveRemaining > 0.01 ? "#1a1040" : "#2a0a0a",
-                    color: liveRemaining > 0.01 ? "#7c3aed" : "var(--negative)",
-                    border: `1.5px solid ${liveRemaining > 0.01 ? "#6d28d9" : "#7f1d1d"}`,
-                    transition: "all 0.2s"
-                  }}>
-                    {liveRemaining.toFixed(1)}% libre
-                  </div>
-                  {/* Barra de progreso */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                    <div style={{ width: 140, height: 7, background: "#1a1040", borderRadius: 99, overflow: "hidden" }}>
-                      <div style={{
-                        width: `${Math.min(100, liveAllocated)}%`, height: "100%",
-                        background: liveAllocated >= 99.5 ? "var(--positive)" : liveAllocated > 90 ? "var(--accent)" : "#8b5cf6",
-                        borderRadius: 99, transition: "width 0.35s ease"
-                      }} />
-                    </div>
-                    <div style={{ fontSize: 9, color: "#a78bfa", textAlign: "right", fontFamily: "var(--font-mono)" }}>
-                      {liveAllocated.toFixed(1)}% asignado
-                    </div>
-                  </div>
-                </div>
-                  );
-                })()}
-
-                {/* Form row */}
-                {(() => {
-                  const liveAllocatedForm = portfolio.reduce((s, p) => s + (parseFloat(targetPcts[p.ticker]) || p.expPct || 0), 0);
-                  const liveRemainingForm = Math.max(0, parseFloat((100 - liveAllocatedForm).toFixed(2)));
-                  return (
-                <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
-                  <div>
-                    <div style={{ fontSize: 10, color: "#a78bfa", letterSpacing: "0.08em", marginBottom: 6, fontWeight: 600 }}>TICKER</div>
-                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                      <input value={newTicker} onChange={e => setNewTicker(e.target.value.toUpperCase())}
-                        placeholder="AAPL / WALMEX.MX"
-                        onKeyDown={e => e.key === "Enter" && addStock()}
-                        style={{
-                          background: newTicker === '$MXN' ? "#1a1200" : "#1a1040",
-                          border: `1.5px solid ${newTicker === '$MXN' ? "var(--warning)" : "#6d28d9"}`,
-                          borderRadius: 10,
-                          color: newTicker === '$MXN' ? "#92400e" : "#6d28d9",
-                          padding: "8px 14px", fontSize: 13, width: 160,
-                          fontFamily: "var(--font-mono)", outline: "none"
-                        }} />
-                      <button
-                        onClick={() => setNewTicker('$MXN')}
-                        title="Agregar efectivo en MXN"
-                        style={{
-                          background: newTicker === '$MXN' ? "var(--warning)" : "#1a1200",
-                          border: "1px solid var(--warning)", borderRadius: 8,
-                          color: newTicker === '$MXN' ? "#fff" : "#92400e",
-                          fontSize: 11, fontWeight: 700, padding: "6px 10px",
-                          cursor: "pointer", whiteSpace: "nowrap"
-                        }}
-                      >💵 Efectivo</button>
-                    </div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 10, color: "#a78bfa", letterSpacing: "0.08em", marginBottom: 6, fontWeight: 600 }}>% ASIGNACIÓN</div>
-                    <div style={{ position: "relative" }}>
-                      <input value={newPct} onChange={e => setNewPct(e.target.value)}
-                        placeholder={`máx ${liveRemainingForm.toFixed(1)}`}
-                        type="number" step="any" min="0.01" max={liveRemainingForm}
-                        onKeyDown={e => e.key === "Enter" && addStock()}
-                        style={{
-                          background: "#1a1040", border: "1.5px solid #4c1d95", borderRadius: 10,
-                          color: "#6d28d9", padding: "8px 34px 8px 14px", fontSize: 13, width: 150, outline: "none",
-                          boxSizing: "border-box"
-                        }} />
-                      <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "#8b5cf6", fontWeight: 700, fontSize: 14 }}>%</span>
-                    </div>
-                    {(() => {
-                      const pct = parseFloat(newPct);
-                      const ticker = newTicker.toUpperCase().trim();
-                      const price = stockData[ticker]?.price;
-                      if (pct > 0 && expTotal > 0 && price) {
-                        const priceMXN_ = toMXN(ticker, price);
-                        const sharesCalc = (pct / 100 * expTotal) / priceMXN_;
-                        const val = pct / 100 * expTotal;
-                        const cur = ticker.endsWith('.MX') ? 'MXN' : 'USD';
-                        return <div style={{ fontSize: 10, color: "#8b5cf6", marginTop: 4, fontFamily: "var(--font-mono)" }}>≈ {sharesCalc.toFixed(4)} acc · ${val.toLocaleString("en-US", { maximumFractionDigits: 0 })} MXN · precio ${cur === 'USD' ? price.toFixed(2) + ' USD' : price.toFixed(2) + ' MXN'}</div>;
-                      }
-                      if (pct > 0 && !expTotal) return <div style={{ fontSize: 10, color: "var(--negative)", marginTop: 4 }}>Define el monto total primero</div>;
-                      return null;
-                    })()}
-                  </div>
-                  <button onClick={addStock}
-                    disabled={liveRemainingForm <= 0.01}
-                    style={{
-                      background: liveRemainingForm > 0.01 ? "#8b5cf6" : "#1a1040",
-                      border: "none", borderRadius: 999,
-                      color: liveRemainingForm > 0.01 ? "#fff" : "#c4b5fd",
-                      padding: "9px 26px", cursor: liveRemainingForm > 0.01 ? "pointer" : "not-allowed",
-                      fontSize: 13, fontWeight: 700, letterSpacing: "0.04em", transition: "all 0.15s"
-                    }}>+ Agregar</button>
-                  <button onClick={async () => {
-                      // Recalcular shares desde targetPcts + expTotal al actualizar precios
-                      for (const p of portfolio) { await loadStockData(p.ticker); await sleep(400); }
-                      if (expTotal > 0) {
-                        setPortfolio(prev => prev.map(pos => {
-                          const pct = parseFloat(targetPcts[pos.ticker]) || pos.expPct || 0;
-                          const price = stockData[pos.ticker]?.price;
-                          if (!price || pct <= 0) return pos;
-                          const pMXN = toMXN(pos.ticker, price);
-                          return { ...pos, shares: +((pct / 100 * expTotal / pMXN).toFixed(6)), expPct: pct };
-                        }));
-                      }
-                    }}
-                    style={{
-                      background: "#1a1040", border: "1px solid #4c1d95", borderRadius: 999,
-                      color: "#8b5cf6", padding: "9px 20px", cursor: "pointer", fontSize: 13, fontWeight: 600
-                    }}>↻ Recalcular</button>
-                </div>
-                  );
-                })()}
-                {addError && (
-                  <div style={{ marginTop: 12, fontSize: 12, color: "var(--negative)", display: "flex", alignItems: "center", gap: 6 }}>
-                    ⚠ {addError}
-                  </div>
-                )}
-              </div>
-            ) : (
-              /* Add stock form — Modo Normal */
-              <div style={{
+            {<div style={{
                 background: "var(--surface)", borderRadius: 24, boxShadow: "none", border: "1.5px solid var(--border)",
                 padding: 20, marginBottom: 28, display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap"
               }}>
                 <div>
                   <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.08em", marginBottom: 6 }}>TICKER</div>
                   <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    <input value={newTicker} onChange={(e) => setNewTicker(e.target.value.toUpperCase())}
+                    <input aria-label="Ticker a agregar" value={newTicker} onChange={(e) => setNewTicker(e.target.value.toUpperCase())}
                       placeholder="AAPL / WALMEX.MX"
                       onKeyDown={e => e.key === "Enter" && addStock()}
                       style={{
@@ -2517,9 +2406,9 @@ export default function App() {
                       onClick={() => { setNewTicker('$MXN'); setInputMode('shares'); }}
                       title="Agregar efectivo en MXN"
                       style={{
-                        background: newTicker === '$MXN' ? "var(--warning)" : "#1a1200",
+                        background: newTicker === '$MXN' ? "var(--warning)" : "var(--warning-soft)",
                         border: "1px solid var(--warning)", borderRadius: 8,
-                        color: newTicker === '$MXN' ? "#fff" : "#92400e",
+                        color: newTicker === '$MXN' ? "#fff" : "var(--warning)",
                         fontSize: 11, fontWeight: 700, padding: "6px 10px",
                         cursor: "pointer", whiteSpace: "nowrap", letterSpacing: "0.02em"
                       }}
@@ -2544,16 +2433,16 @@ export default function App() {
                     </div>
                   </div>
                   {inputMode === "shares" ? (
-                    <input value={newShares} onChange={(e) => setNewShares(e.target.value)}
+                    <input aria-label="Número de acciones" value={newShares} onChange={(e) => setNewShares(e.target.value)}
                       placeholder="0 (decimal OK)" type="number" step="any"
                       onKeyDown={e => e.key === "Enter" && addStock()}
                       style={{ background: "var(--surface-2)", border: "1px solid var(--border-strong)", borderRadius: 10, color: "var(--ink)", padding: "8px 14px", fontSize: 13, width: 130, outline: "none" }} />
                   ) : (
                     <div style={{ position: "relative" }}>
-                      <input value={newPct} onChange={(e) => setNewPct(e.target.value)}
+                      <input aria-label="Porcentaje del portafolio" value={newPct} onChange={(e) => setNewPct(e.target.value)}
                         placeholder="20.5" type="number" step="any" min="0.01" max="100"
                         onKeyDown={e => e.key === "Enter" && addStock()}
-                        style={{ background: "#0a1f10", border: "1px solid #7fe3a0", borderRadius: 10, color: "#7fe3a0", padding: "8px 32px 8px 14px", fontSize: 13, width: 130, outline: "none" }} />
+                        style={{ background: "var(--accent-soft)", border: "1px solid var(--accent)", borderRadius: 10, color: "var(--accent)", padding: "8px 32px 8px 14px", fontSize: 13, width: 130, outline: "none" }} />
                       <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", color: "var(--positive)", fontWeight: 700, fontSize: 14 }}>%</span>
                       {(() => {
                         const pct = parseFloat(newPct);
@@ -2576,7 +2465,7 @@ export default function App() {
                     <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.08em", marginBottom: 6 }}>PRESUPUESTO (OPCIONAL)</div>
                     <div style={{ position: "relative" }}>
                       <span style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "var(--muted)", fontWeight: 700, pointerEvents: "none" }}>$</span>
-                      <input
+                      <input aria-label="Presupuesto total en MXN"
                         value={expTotal > 0 ? expTotal : ""}
                         onChange={(e) => setExpTotalVal(e.target.value)}
                         placeholder="200000"
@@ -2589,7 +2478,7 @@ export default function App() {
                 )}
                 <div>
                   <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.08em", marginBottom: 6 }}>COSTO PROMEDIO</div>
-                  <input value={newCost} onChange={(e) => setNewCost(e.target.value)}
+                  <input aria-label="Costo promedio por acción" value={newCost} onChange={(e) => setNewCost(e.target.value)}
                     placeholder="0.00" type="number"
                     style={{ background: "var(--surface-2)", border: "1px solid var(--border-strong)", borderRadius: 10, color: "var(--ink)", padding: "8px 14px", fontSize: 13, width: 120, outline: "none" }} />
                 </div>
@@ -2609,8 +2498,7 @@ export default function App() {
                     ⚠ {addError}
                   </div>
                 )}
-              </div>
-            )}
+              </div>}
 
             {/* Portfolio Summary + Pie Chart — arriba */}
             {Object.keys(stockData).length > 0 && (() => {
@@ -2634,37 +2522,14 @@ export default function App() {
               const totalPnl = totalValue - totalCost;
               const totalPnlPct = totalCost ? (totalPnl / totalCost) * 100 : 0;
 
-              // Métricas ponderadas por valor de posición
-              const wMetric = (key) => {
-                let sum = 0, wSum = 0;
-                portfolio.forEach((p) => {
-                  const sd = stockData[p.ticker];
-                  const val = posVal(p);
-                  const v = sd?.[key];
-                  if (v != null && isFinite(v) && val > 0) { sum += v * val; wSum += val; }
-                });
-                return wSum > 0 ? +(sum / wSum).toFixed(2) : null;
-              };
-              const wPE   = wMetric("pe");
-              const wPEG  = wMetric("peg");
-              const wPEGY = wMetric("pegy");
-              const wEVEB = wMetric("evEbitda");
-              const wPB   = wMetric("pb");
-              const wROE  = wMetric("roe");
-              const wMgn  = wMetric("profitMargin");
-              const wDE   = wMetric("debtEquity");
-              const wBeta = wMetric("beta");
-              const wRevG = wMetric("revenueGrowth");
 
               const approxSharpe = portfolioSharpeExact;
-              const sharpeColor = approxSharpe === null ? "var(--muted)"
-                : approxSharpe >= 1 ? "var(--positive)" : approxSharpe >= 0.5 ? "var(--warning)" : "var(--negative)";
 
               const StatRow = ({ label, value, color, sub }) => (
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid #f2f2f2" }}>
                   <div>
                     <div style={{ fontSize: 11, color: "var(--muted)", letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500 }}>{label}</div>
-                    {sub && <div style={{ fontSize: 10, color: "var(--border-strong)", marginTop: 2 }}>{sub}</div>}
+                    {sub && <div style={{ fontSize: 10, color: "var(--muted-2)", marginTop: 2 }}>{sub}</div>}
                   </div>
                   <div style={{ fontFamily: "var(--font-mono)", fontSize: 18, fontWeight: 700, color: color || "var(--bg-deep)" }}>{value ?? "—"}</div>
                 </div>
@@ -2710,7 +2575,6 @@ export default function App() {
                         {/* Tooltip hover */}
                         {hoveredTicker && (() => {
                           const hp = paths.find(x => x.ticker === hoveredTicker);
-                          const sd = stockData[hoveredTicker];
                           const pos = portfolio.find(x => x.ticker === hoveredTicker);
                           const val = pos ? posVal(pos) : null;
                           if (!hp) return null;
@@ -2767,7 +2631,7 @@ export default function App() {
                               style={{
                                 display: "flex", alignItems: "center", gap: 7,
                                 padding: "6px 10px", borderRadius: 8, cursor: "pointer",
-                                background: hoveredTicker === p.ticker ? (p.color === accentColor ? (isExperimental ? "#2d1f5e" : "#0a2a1a") : "var(--border)") : "transparent",
+                                background: hoveredTicker === p.ticker ? (p.color === accentColor ? (isExperimental ? "#2d1f5e" : "var(--positive-soft)") : "var(--border)") : "transparent",
                                 opacity: hoveredTicker && hoveredTicker !== p.ticker ? 0.35 : 1,
                                 transition: "all 0.15s"
                               }}
@@ -2786,7 +2650,7 @@ export default function App() {
                         <div style={{ marginTop: 20, borderTop: "1px solid var(--border)", paddingTop: 16 }}>
                           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
                             <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.12em", fontWeight: 600 }}>SHARPE INDIVIDUAL · 1A</div>
-                            <div style={{ fontSize: 9, color: "var(--border-strong)" }}>≥1.0 exc · 0.5–1.0 bueno</div>
+                            <div style={{ fontSize: 9, color: "var(--muted-2)" }}>≥1.0 exc · 0.5–1.0 bueno</div>
                           </div>
                           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                             {portfolio
@@ -2802,7 +2666,7 @@ export default function App() {
                                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
                                       <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                                         <span style={{ fontFamily: "var(--font-mono)", fontSize: 11.5, fontWeight: 700, color: "var(--ink)" }}>{p.ticker}</span>
-                                        <span style={{ fontSize: 10, color: "#bbb", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>{sd?.name ?? ""}</span>
+                                        <span style={{ fontSize: 10, color: "var(--muted-2)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 140 }}>{sd?.name ?? ""}</span>
                                       </div>
                                       <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, fontWeight: 700, color }}>{s >= 0 ? "+" : ""}{s}</span>
                                     </div>
@@ -2828,29 +2692,29 @@ export default function App() {
                         <div style={{ flex: 1 }} />
                         {/* Monto total */}
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontSize: 10, color: "#aaa", whiteSpace: "nowrap" }}>MONTO TOTAL</span>
+                          <span style={{ fontSize: 10, color: "var(--muted-2)", whiteSpace: "nowrap" }}>MONTO TOTAL</span>
                           <div style={{ position: "relative" }}>
                             <span style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", fontSize: 12, color: "#888", pointerEvents: "none" }}>$</span>
-                            <input value={customTotal} onChange={e => setCustomTotal(e.target.value)}
+                            <input aria-label="Monto total a rebalancear en MXN" value={customTotal} onChange={e => setCustomTotal(e.target.value)}
                               placeholder={totalValue.toFixed(0)} type="number" step="1000" min="0"
                               style={{
                                 width: 120, padding: "6px 8px 6px 20px",
                                 fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700,
                                 color: parseFloat(customTotal) > 0 ? "var(--accent)" : "var(--muted)",
-                                background: parseFloat(customTotal) > 0 ? "#0a1f10" : "var(--border)",
+                                background: parseFloat(customTotal) > 0 ? "var(--accent-soft)" : "var(--border)",
                                 border: `1.5px solid ${parseFloat(customTotal) > 0 ? "var(--accent)" : "var(--border-strong)"}`,
                                 borderRadius: 8, outline: "none", boxSizing: "border-box"
                               }} />
                           </div>
                           {parseFloat(customTotal) > 0 && (
-                            <button onClick={() => setCustomTotal("")} style={{ background: "none", border: "none", color: "#ccc", cursor: "pointer", fontSize: 16, padding: 0 }}>×</button>
+                            <button aria-label="Borrar monto personalizado" onClick={() => setCustomTotal("")} style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 16, padding: 0 }}>×</button>
                           )}
                         </div>
                         {/* Σ badge */}
                         <div style={{
                           fontFamily: "var(--font-mono)", fontSize: 11, fontWeight: 700,
                           color: tSumOk ? "var(--positive)" : "var(--negative)",
-                          background: tSumOk ? "#0a2a1a" : "#2a0a0a",
+                          background: tSumOk ? "var(--positive-soft)" : "var(--negative-soft)",
                           padding: "4px 10px", borderRadius: 999, whiteSpace: "nowrap"
                         }}>Σ {tSum.toFixed(1)}% {tSumOk ? "✓" : "✗"}</div>
                       </div>
@@ -2868,7 +2732,7 @@ export default function App() {
                           { label: "P&L (%)",      value: `${totalPnlPct >= 0 ? "+" : ""}${totalPnlPct.toFixed(2)}%`, color: totalPnl >= 0 ? "var(--positive)" : "var(--negative)",
                             sub: totalPnl >= 0 ? "Rentabilidad positiva" : "Por debajo del costo" },
                           { label: "Sharpe · 1y",  value: approxSharpe != null ? approxSharpe : "—",
-                            color: approxSharpe == null ? "var(--muted-2)" : approxSharpe >= 1 ? "var(--positive)" : approxSharpe >= 0.5 ? "#fbbf24" : "var(--negative)",
+                            color: approxSharpe == null ? "var(--muted-2)" : approxSharpe >= 1 ? "var(--positive)" : approxSharpe >= 0.5 ? "var(--warning)" : "var(--negative)",
                             sub: approxSharpe == null ? "calculando…" : approxSharpe >= 1 ? "Excelente" : approxSharpe >= 0.5 ? "Aceptable" : "Bajo" },
                         ].map((m) => (
                           <div key={m.label} style={{
@@ -2915,9 +2779,7 @@ export default function App() {
                           const delta = tShares !== null ? tShares - currentShares : null;
                           const isTop = p.color === accentColor;
                           const isHovered = hoveredTicker === p.ticker;
-                          const currentPct = p.pct * 100;
-                          const topBg = isExperimental ? "#1a1430" : "#0a1f10";
-                          const topBgHover = isExperimental ? "#231a40" : "#0d2614";
+                          const topBg = isExperimental ? "#1a1430" : "var(--accent-soft)";
                           return (
                             <div
                               key={p.ticker}
@@ -2940,21 +2802,21 @@ export default function App() {
                                 <div style={{ display: "flex", alignItems: "center", gap: 5, overflow: "hidden" }}>
                                   <span style={{
                                     fontFamily: "var(--font-sans)",
-                                    color: isTop ? "#ffffff" : "var(--ink)",
+                                    color: "var(--ink)",  // la fila top ahora va sobre --accent-soft (claro en tema claro)
                                     fontSize: 13, fontWeight: 700,
                                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap"
                                   }}>{p.ticker}</span>
                                   {(() => {
-                                    if (p.ticker === '$MXN') return <span style={{ fontSize: 9, color: 'var(--warning)', background: '#1a1200', borderRadius: 999, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>EFECTIVO</span>;
+                                    if (p.ticker === '$MXN') return <span style={{ fontSize: 9, color: 'var(--warning)', background: 'var(--warning-soft)', borderRadius: 999, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>EFECTIVO</span>;
                                     const cur = p.ticker.endsWith('.MX') ? 'MXN' : 'USD';
-                                    return <span style={{ fontSize: 9, color: cur === 'USD' ? '#60a5fa' : 'var(--positive)', background: cur === 'USD' ? '#0a1628' : '#0a2a1a', borderRadius: 999, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>{cur}</span>;
+                                    return <span style={{ fontSize: 9, color: cur === 'USD' ? 'var(--info)' : 'var(--positive)', background: cur === 'USD' ? 'var(--info-soft)' : 'var(--positive-soft)', borderRadius: 999, padding: '1px 5px', fontWeight: 700, flexShrink: 0 }}>{cur}</span>;
                                   })()}
                                 </div>
 
                                 {/* Input % + slider */}
                                 <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                                   <div style={{ position: "relative" }}>
-                                    <input
+                                    <input aria-label={`Porcentaje objetivo de ${p.ticker}`}
                                       value={rawVal}
                                       onChange={e => setTargetPcts(prev => ({ ...prev, [p.ticker]: e.target.value }))}
                                       onBlur={e => {
@@ -2967,18 +2829,18 @@ export default function App() {
                                       style={{
                                         width: "100%", padding: "5px 20px 5px 8px",
                                         fontFamily: "var(--font-mono)", fontSize: 13, fontWeight: 700,
-                                        color: isTop ? (isExperimental ? "#c4b5fd" : "#7fe3a0") : "var(--ink)",
-                                        background: isTop ? (isExperimental ? "#1a1040" : "#0a1f10") : "var(--surface-2)",
+                                        color: isTop ? "var(--accent-strong)" : "var(--ink)",
+                                        background: isTop ? (isExperimental ? "#1a1040" : "var(--accent-soft)") : "var(--surface-2)",
                                         border: `1.5px solid ${isTop ? accentColor : isHovered ? "var(--border-strong)" : "var(--border)"}`,
                                         borderRadius: 8, outline: "none", textAlign: "right",
                                         boxSizing: "border-box", transition: "border-color 0.15s"
                                       }}
                                     />
-                                    <span style={{ position: "absolute", right: 7, top: "50%", transform: "translateY(-50%)", fontSize: 10, color: "#bbb", pointerEvents: "none" }}>%</span>
+                                    <span style={{ position: "absolute", right: 7, top: "50%", transform: "translateY(-50%)", fontSize: 10, color: "var(--muted-2)", pointerEvents: "none" }}>%</span>
                                   </div>
                                   {/* Slider */}
                                   <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1 }}>
-                                    <input
+                                    <input aria-label={`Deslizador del porcentaje objetivo de ${p.ticker}`}
                                       type="range"
                                       min={0} max={100} step={0.1}
                                       value={tPct}
@@ -3131,7 +2993,6 @@ export default function App() {
                 const pnlPct = pnl !== null ? (pnl / cost_total) * 100 : null;
 
                 const pnlColor = pnl === null ? "var(--muted)" : pnl >= 0 ? "var(--accent)" : "var(--negative)";
-                const cardBorderTop = pnl === null ? "var(--border-strong)" : pnl >= 0 ? "#22c55e55" : "#ef444455";
 
                 return (
                   <div key={pos.ticker} className={`fade-up kpi-hover stagger-${(posIdx % 6) + 1}`} style={{
@@ -3182,7 +3043,7 @@ export default function App() {
                         { l: "P&L ($)", v: pnl != null ? `${pnl >= 0 ? "+" : ""}$${pnl.toFixed(2)}` : "—", mono: true, color: pnlColor },
                         { l: "P&L (%)", v: pnlPct != null ? `${pnlPct >= 0 ? "+" : ""}${pnlPct.toFixed(2)}%` : "—", mono: true, color: pnlColor },
                       ].map((item) => (
-                        <div key={item.l} style={{ background: "#0d1825", borderRadius: 12, padding: "9px 12px" }}>
+                        <div key={item.l} style={{ background: "var(--surface-2)", borderRadius: 12, padding: "9px 12px" }}>
                           <div style={{ fontSize: 10, color: "var(--muted)", letterSpacing: "0.06em", textTransform: "uppercase", marginBottom: 4, fontWeight: 500 }}>{item.l}</div>
                           <div style={{ fontSize: 14, fontFamily: item.mono ? "var(--font-mono)" : undefined, color: item.color, fontWeight: 700 }}>{item.v}</div>
                         </div>
@@ -3287,7 +3148,7 @@ export default function App() {
                           </div>
 
                           {d.sectorNote && (
-                            <div style={{ fontSize: 9, color: "#8b5cf6", marginTop: 8 }}>
+                            <div style={{ fontSize: 9, color: "var(--info)", marginTop: 8 }}>
                               ★ {d.sectorNote} (clasificación Yahoo ajustada)
                             </div>
                           )}
@@ -3370,6 +3231,7 @@ export default function App() {
                 {optimLoading ? (optimLoadingMsg || "Optimizando...") : " Ejecutar Optimización"}
               </button>
             </div>
+            {optimError && <p className="form-error" role="alert">{optimError}</p>}
 
             {optimResult && (
               <div style={{ animation: "fadeIn 0.5s ease" }}>
@@ -3427,12 +3289,22 @@ export default function App() {
                       </div>
                       <div>
                         <div style={{ fontSize: 9, color: "var(--muted)", marginBottom: 3 }}>MEJORA SHARPE</div>
-                        <div style={{ fontFamily: "var(--font-mono)", fontSize: 15, color: "var(--positive)", fontWeight: 700 }}>
-                          +{((optimResult.optimalSharpe ?? optimResult.sharpe) - (optimResult.actualSharpe ?? 0)).toFixed(4)}
-                        </div>
+                        {(() => {
+                          const delta = (optimResult.optimalSharpe ?? optimResult.sharpe) - (optimResult.actualSharpe ?? 0);
+                          return (
+                            <div style={{ fontFamily: "var(--font-mono)", fontSize: 15, color: delta >= 0 ? "var(--positive)" : "var(--negative)", fontWeight: 700 }}>
+                              {delta >= 0 ? "+" : ""}{delta.toFixed(4)}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
-                    <div style={{ marginTop: 12, fontSize: 10, color: "var(--muted)" }}>100,000 simulaciones · mín 2% · máx 35% · {optimPeriod} · rf {rfLabel} {rfRate ? `${(rfRate*100).toFixed(2)}%` : ""}</div>
+                    {optimResult.actualWeights?.some(w => w > optimResult.wMax + 1e-6 || w < W_MIN - 1e-6) && (
+                      <p style={{ marginTop: 12, fontSize: 11, color: "var(--muted)" }}>
+                        Tu portafolio actual tiene posiciones fuera del rango 2%–{Math.round(optimResult.wMax * 100)}% que usa el optimizador, así que puede tener un Sharpe mayor que el óptimo restringido.
+                      </p>
+                    )}
+                    <div style={{ marginTop: 12, fontSize: 10, color: "var(--muted)" }}>100,000 simulaciones · mín 2% · máx {Math.round((optimResult.wMax ?? W_MAX_DEFAULT) * 100)}% · {optimPeriod} · rf {rfLabel} {rfRate ? `${(rfRate*100).toFixed(2)}%` : ""}</div>
                   </div>
                 </div>
 
@@ -3455,7 +3327,6 @@ export default function App() {
                         const currW = optimResult.actualWeights?.[i] ?? 0;
                         const diff = optW - currW;
                         const action = Math.abs(diff) < 0.02 ? "MANTENER" : diff > 0 ? "AUMENTAR" : "REDUCIR";
-                        const actionColor = action === "AUMENTAR" ? "var(--positive)" : action === "REDUCIR" ? "var(--negative)" : "var(--muted)";
                         const rowBg = i % 2 === 0 ? "var(--surface)" : "var(--surface-2)";
                         return (
                           <tr key={t} style={{ background: rowBg }}>
@@ -3627,7 +3498,7 @@ export default function App() {
               borderRadius: 24, padding: 20, marginBottom: 28
             }}>
               <div style={{ fontSize: 12, color: "var(--muted)", letterSpacing: "0.07em", fontWeight: 500, marginBottom: 8 }}>TICKERS A ANALIZAR (separados por coma, incluye .MX para México)</div>
-              <textarea value={screenerTickers} onChange={(e) => setScreenerTickers(e.target.value)}
+              <textarea aria-label="Tickers para el screener, separados por coma" value={screenerTickers} onChange={(e) => setScreenerTickers(e.target.value)}
                 style={{
                   width: "100%", background: "var(--surface-2)", border: "1px solid var(--border)",
                   borderRadius: 8, color: "var(--ink)", padding: "10px 14px", fontSize: 13,
@@ -3694,9 +3565,9 @@ export default function App() {
                       {stock.sharpe1y != null && (
                         <div style={{
                           display: "flex", alignItems: "center", gap: 10,
-                          background: stock.sharpe1y >= 1 ? "#0a2a1a" : stock.sharpe1y >= 0.5 ? "#1a1200" : "#2a0a0a",
+                          background: stock.sharpe1y >= 1 ? "var(--positive-soft)" : stock.sharpe1y >= 0.5 ? "var(--warning-soft)" : "var(--negative-soft)",
                           borderRadius: 10, padding: "8px 12px", marginBottom: 12,
-                          borderLeft: `3px solid ${stock.sharpe1y >= 1 ? "var(--positive)" : stock.sharpe1y >= 0.5 ? "#fbbf24" : "var(--negative)"}`
+                          borderLeft: `3px solid ${stock.sharpe1y >= 1 ? "var(--positive)" : stock.sharpe1y >= 0.5 ? "var(--warning)" : "var(--negative)"}`
                         }}>
                           <div>
                             <div style={{ fontSize: 9, color: "var(--muted)", letterSpacing: "0.1em", fontWeight: 600 }}>SHARPE 1A · {rfLabel}</div>
@@ -3817,17 +3688,18 @@ export default function App() {
 
                       {/* Botón análisis detallado */}
                       <button
+                        className="dark-panel"  // fondo oscuro fijo: toma los tokens oscuros, --accent claro incluido
                         onClick={() => runAnalisis(stock.ticker)}
                         style={{
                           marginTop: 14, width: "100%",
-                          background: "var(--bg-deep)", color: "#7fe3a0",
+                          background: "var(--bg-deep)", color: "var(--accent)",
                           border: "none", borderRadius: 10,
                           padding: "10px 0", cursor: "pointer",
                           fontWeight: 800, fontSize: 12,
                           letterSpacing: "0.06em", transition: "all 0.15s",
                         }}
                         onMouseEnter={e => { e.currentTarget.style.background = "var(--accent-strong)"; e.currentTarget.style.color = "var(--on-accent)"; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = "var(--bg-deep)"; e.currentTarget.style.color = "#7fe3a0"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "var(--bg-deep)"; e.currentTarget.style.color = "var(--accent)"; }}
                       >
                         VER ANÁLISIS COMPLETO →
                       </button>
@@ -3849,13 +3721,13 @@ export default function App() {
           };
 
           const MX_REF = [
-            { label: "Inflación INPC",  value: "4.53%",   period: "1a Q Abr 2026",   color: "#ea580c", icon: "" },
+            { label: "Inflación INPC",  value: "4.53%",   period: "1a Q Abr 2026",   color: "var(--warning)", icon: "" },
             { label: "PIB Q1 2026",     value: "+0.2%",   period: "Trim. INEGI",     color: "var(--positive)", icon: "" },
-            { label: "TIIE Fondeo 1D",  value: "6.76%",   period: "Banxico May 2026", color: "#7c3aed", icon: "" },
-            { label: "TIIE 28D",        value: "7.02%",   period: "Banxico May 2026", color: "#6d28d9", icon: "" },
+            { label: "TIIE Fondeo 1D",  value: "6.76%",   period: "Banxico May 2026", color: "var(--info)", icon: "" },
+            { label: "TIIE 28D",        value: "7.02%",   period: "Banxico May 2026", color: "var(--info)", icon: "" },
             { label: "Desempleo",       value: "2.4%",    period: "Mar 2026",        color: "var(--positive)", icon: "" },
-            { label: "Deuda / PIB",     value: "50.4%",   period: "Q1 2026",         color: "#ea580c", icon: "" },
-            { label: "Reservas Intl.",  value: "$256.5B", period: "24 Abr 2026",     color: "#0284c7", icon: "" },
+            { label: "Deuda / PIB",     value: "50.4%",   period: "Q1 2026",         color: "var(--warning)", icon: "" },
+            { label: "Reservas Intl.",  value: "$256.5B", period: "24 Abr 2026",     color: "var(--info)", icon: "" },
           ];
 
           const filteredNews = marketNews.filter(n => newsFilter === "all" || n.sentiment === newsFilter);
@@ -3865,15 +3737,14 @@ export default function App() {
 
           // VIX color
           const vixVal = macroData?.vix?.value;
-          const vixColor = vixVal > 30 ? "var(--negative)" : vixVal > 20 ? "#ca8a04" : "var(--positive)";
+          const vixColor = vixVal > 30 ? "var(--negative)" : vixVal > 20 ? "var(--warning)" : "var(--positive)";
 
           // ── Componentes de panel tipo terminal financiero ──
-          const DataRow = ({ label, icon, value, pct, sub, hero }) => {
+          const DataRow = ({ label, value, pct, sub, hero }) => {
             const isN = pct == null;
             const up  = !isN && pct >= 0;
             const cc  = up ? "var(--positive)" : "var(--negative)";
-            const bg  = up ? "#0a2a1a" : "#2a0a0a";
-            const bdr = up ? "#166534" : "#7f1d1d";
+            const bg  = up ? "var(--positive-soft)" : "var(--negative-soft)";
             return (
               <div style={{
                 display: "flex", alignItems: "center", gap: 10,
@@ -3903,7 +3774,7 @@ export default function App() {
             );
           };
 
-          const Panel = ({ title, color = "#3b82f6", children, style = {} }) => (
+          const Panel = ({ title, children, style = {} }) => (
             <div style={{
               background: "var(--surface)", borderRadius: 16, overflow: "hidden",
               border: "1px solid var(--border)",
@@ -3935,7 +3806,7 @@ export default function App() {
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <button onClick={() => { loadMarketData(); setCountdown(60); }} disabled={marketDataLoading} style={{
+                  <button onClick={() => loadMarketData()} disabled={marketDataLoading} style={{
                     background: "#135936", border: "none", borderRadius: 8, color: "#ffffff",
                     padding: "8px 16px", cursor: marketDataLoading ? "not-allowed" : "pointer",
                     fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
@@ -3971,13 +3842,14 @@ export default function App() {
                     const up = d?.change_pct >= 0;
                     const isDark = fg === "#ffffff";
                     const badgeBg = isDark ? (up ? "#79df9b" : "var(--negative)") : (up ? "#11251c" : "var(--negative)");
-                    const badgeFg = isDark ? "#11251c" : "#ffffff";
+                    // En baja el fondo es var(--negative), que cambia con el tema: --on-accent contrasta en ambos
+                    const badgeFg = !up ? "var(--on-accent)" : isDark ? "#11251c" : "#ffffff";
                     return (
                       <div key={key} style={{
                         background: bg, borderRadius: 16, padding: 16,
                         display: "flex", flexDirection: "column", gap: 8,
                       }}>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: isDark ? "var(--muted)" : "var(--muted)", textTransform: "uppercase", letterSpacing: "0.1em" }}>{label}</div>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: `color-mix(in srgb, ${fg} 80%, ${bg})`, textTransform: "uppercase", letterSpacing: "0.1em" }}>{label}</div>
                         <div className="bento-val" style={{ fontFamily: "var(--font-mono)", fontSize: 32, fontWeight: 500, color: fg, lineHeight: 1, letterSpacing: "-0.02em" }}>
                           {d ? fv(d.value, dec) + (unit ? " " + unit : "") : "—"}
                         </div>
@@ -4002,7 +3874,7 @@ export default function App() {
 
               {/* ── INDICADORES PRINCIPALES ── */}
               <div style={{ border: "1.5px solid var(--border)", borderRadius: 16, overflow: "hidden" }}>
-                <div style={{ padding: "8px 16px", borderBottom: "1px solid var(--border)", background: "#0d1825" }}>
+                <div style={{ padding: "8px 16px", borderBottom: "1px solid var(--border)", background: "var(--surface-2)" }}>
                   <span style={{ fontSize: 9, fontWeight: 700, color: "var(--muted-2)", textTransform: "uppercase", letterSpacing: "0.2em", fontFamily: "var(--font-sans)" }}>Indicadores Principales</span>
                 </div>
                 <div className="ind-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)" }}>
@@ -4019,7 +3891,7 @@ export default function App() {
                     const d = C(key, dec, macro);
                     const isN = d.pct == null;
                     const up  = !isN && d.pct >= 0;
-                    const cc  = up ? "#15803d" : "#b91c1c";
+                    const cc  = up ? "var(--positive)" : "var(--negative)";
                     const col = idx % 4;
                     const row = Math.floor(idx / 4);
                     return (
@@ -4058,10 +3930,10 @@ export default function App() {
                   const d = md?.[key];
                   const p = d?.change_pct;
                   const intensity = p == null ? 0 : Math.min(Math.abs(p) / 2, 1);
-                  const bg = p == null ? "#f5f5f0"
-                    : p >= 0 ? `rgba(21,128,61,${0.14 + intensity * 0.60})`
-                             : `rgba(185,28,28,${0.14 + intensity * 0.60})`;
-                  const fg = p == null ? "var(--muted)" : p >= 0 ? "#14532d" : "#7f1d1d";
+                  const pct = Math.round((0.14 + intensity * 0.5) * 100);
+                  const bg = p == null ? "var(--surface-2)"
+                    : `color-mix(in srgb, ${p >= 0 ? "var(--positive)" : "var(--negative)"} ${pct}%, transparent)`;
+                  const fg = p == null ? "var(--muted)" : "var(--ink)";
                   return { p, bg, fg };
                 };
                 return (
@@ -4109,7 +3981,7 @@ export default function App() {
                         const score = Math.max(0, Math.min(100, Math.round(100 - ((vixVal - 10) / 30) * 100)));
                         const zone = score >= 75 ? { label: "Codicia Extrema", color: "var(--positive)" }
                           : score >= 55 ? { label: "Codicia",       color: "var(--positive)" }
-                          : score >= 45 ? { label: "Neutral",        color: "#ca8a04" }
+                          : score >= 45 ? { label: "Neutral",        color: "var(--warning)" }
                           : score >= 25 ? { label: "Miedo",          color: "#f97316" }
                           :               { label: "Miedo Extremo",  color: "var(--negative)" };
                         const BAR_W = 240;
@@ -4128,7 +4000,7 @@ export default function App() {
                                 <linearGradient id="fg-grad" x1="0" x2="1" y1="0" y2="0">
                                   <stop offset="0%"   stopColor="var(--negative)" />
                                   <stop offset="25%"  stopColor="#f97316" />
-                                  <stop offset="50%"  stopColor="#ca8a04" />
+                                  <stop offset="50%"  stopColor="var(--warning)" />
                                   <stop offset="75%"  stopColor="var(--positive)" />
                                   <stop offset="100%" stopColor="var(--positive)" />
                                 </linearGradient>
@@ -4262,7 +4134,7 @@ export default function App() {
                       {[
                         { key: "all",      label: "Todas",    color: "var(--muted)" },
                         { key: "positive", label: " Buenas", color: "var(--positive)" },
-                        { key: "neutral",  label: " Neutras",color: "#ca8a04" },
+                        { key: "neutral",  label: " Neutras",color: "var(--warning)" },
                         { key: "negative", label: " Malas",  color: "var(--negative)" },
                       ].map((f) => {
                         const cnt = f.key === "all" ? marketNews.length : marketNews.filter(n => n.sentiment === f.key).length;
@@ -4272,7 +4144,7 @@ export default function App() {
                             border: `1px solid ${newsFilter === f.key ? f.color : "var(--border)"}`,
                             borderRadius: 999, color: newsFilter === f.key ? f.color : "var(--muted)",
                             padding: "3px 10px", cursor: "pointer", fontSize: 11, fontWeight: 600,
-                          }}>{f.label} <span style={{ opacity: 0.6 }}>({cnt})</span></button>
+                          }}>{f.label} <span style={{ color: "var(--muted-2)" }}>({cnt})</span></button>
                         );
                       })}
                     </div>
@@ -4313,7 +4185,7 @@ export default function App() {
                 <SectionLabel>Buscar Noticias por Ticker</SectionLabel>
                 <div style={{ background: "var(--surface)", borderRadius: 24, boxShadow: "none", border: "1.5px solid var(--border)", padding: 20 }}>
                   <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
-                    <input value={newsTicker}
+                    <input aria-label="Ticker para buscar noticias" value={newsTicker}
                       onChange={(e) => setNewsTicker(e.target.value.toUpperCase())}
                       onKeyDown={(e) => e.key === "Enter" && loadNews(newsTicker)}
                       placeholder="AAPL / WALMEX.MX / AMZN.MX"
@@ -4334,7 +4206,7 @@ export default function App() {
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                       {portfolio.map((p) => (
                         <button key={p.ticker} onClick={() => { setNewsTicker(p.ticker); loadNews(p.ticker); }} style={{
-                          background: newsTicker === p.ticker ? "#0a1f10" : "var(--surface-2)",
+                          background: newsTicker === p.ticker ? "var(--accent-soft)" : "var(--surface-2)",
                           border: `1px solid ${newsTicker === p.ticker ? "var(--accent)" : "var(--border)"}`,
                           borderRadius: 999, color: newsTicker === p.ticker ? "var(--accent)" : "var(--muted-2)",
                           padding: "5px 12px", cursor: "pointer", fontSize: 11,
@@ -4383,7 +4255,7 @@ export default function App() {
                 Backtesting de <b style={{ color: "var(--ink)" }}>5 años</b> con datos semanales comparado contra{" "}
                 <b style={{ color: "var(--muted)" }}>SPY (S&P 500)</b>.{" "}
                 {isExperimental
-                  ? <span style={{ color: "#8b5cf6" }}>Pesos: % objetivo del portafolio experimental.</span>
+                  ? <span style={{ color: "var(--info)" }}>Pesos: % objetivo del portafolio experimental.</span>
                   : "Los pesos se calculan con los valores de mercado actuales."
                 }
               </div>
@@ -4397,7 +4269,7 @@ export default function App() {
                 {backtestLoading ? "Calculando backtest... (puede tardar 1–2 min con 5 años)" : " Ejecutar Backtest vs SPY"}
               </button>
               {backtestError && (
-                <div style={{ marginTop: 12, padding: "10px 16px", background: "#2a0a0a", border: "1px solid #7f1d1d", borderRadius: 10, fontSize: 13, color: "var(--negative)", lineHeight: 1.5 }}>
+                <div style={{ marginTop: 12, padding: "10px 16px", background: "var(--negative-soft)", border: "1px solid var(--negative)", borderRadius: 10, fontSize: 13, color: "var(--negative)", lineHeight: 1.5 }}>
                   ⚠️ {backtestError}
                 </div>
               )}
@@ -4406,13 +4278,13 @@ export default function App() {
             {backtestResult && (() => {
               const { portCum, spyCum, dates, beta, trackingError, treynor, alpha, infoRatio, sharpe, annPortReturn, annSpyReturn, yearsBacktest, limitingTickerBack, tickerYearsBack } = backtestResult;
               if (!portCum?.length || portCum.length < 5) return (
-                <div style={{ padding: "20px", background: "#1a1200", border: "1px solid #78611a", borderRadius: 12, margin: "12px 0", color: "#fbbf24", fontSize: 13 }}>
+                <div style={{ padding: "20px", background: "var(--warning-soft)", border: "1px solid var(--warning)", borderRadius: 12, margin: "12px 0", color: "var(--warning)", fontSize: 13 }}>
                   ⚠️ No hay suficientes datos para mostrar el backtest. Puede que algunos tickers del portafolio no tengan historial en yfinance. Revisa la consola del navegador para más detalles.
                 </div>
               );
               const outperforms = annPortReturn > annSpyReturn;
 
-              const statCard = (label, value, unit, _hint) => (
+              const statCard = (label, value, unit) => (
                 <div className="dark-panel" style={{
                   background: "var(--bg-deep)", borderRadius: 20, boxShadow: "none", border: "none",
                   padding: "16px 20px", minWidth: 140, flex: 1
@@ -4432,7 +4304,7 @@ export default function App() {
                         RETORNOS ACUMULADOS — PORTAFOLIO vs SPY ({yearsBacktest ?? "5"} AÑOS SEMANAL)
                       </div>
                       {yearsBacktest && parseFloat(yearsBacktest) < 4.5 && (
-                        <div style={{ fontSize: 11, color: "#92400e", background: "#1a1200", border: "1px solid #78611a", borderRadius: 6, padding: "2px 8px" }}>
+                        <div style={{ fontSize: 11, color: "var(--warning)", background: "var(--warning-soft)", border: "1px solid var(--warning)", borderRadius: 6, padding: "2px 8px" }}>
                           ⚠️ Limitado a {yearsBacktest}a por {limitingTickerBack}
                         </div>
                       )}
@@ -4514,10 +4386,11 @@ export default function App() {
                                   {row.map((val, j) => {
                                     let bg, fg;
                                     if (i === j) { bg = "var(--bg-deep)"; fg = "#ffffff"; }
-                                    else if (val >= 0.7)  { bg = `rgba(220,38,38,${0.15 + val * 0.4})`; fg = "#991b1b"; }
-                                    else if (val >= 0.4)  { bg = `rgba(234,179,8,${0.15 + val * 0.3})`; fg = "#92400e"; }
-                                    else if (val >= 0)    { bg = `rgba(22,163,74,${0.1 + val * 0.3})`; fg = "#14532d"; }
-                                    else                  { bg = `rgba(249,115,22,${0.1 + Math.abs(val) * 0.4})`; fg = "#9a3412"; }
+                                    // Tintes de los tokens con texto --ink: los colores fijos anteriores perdían contraste en tema oscuro
+                                    else if (val >= 0.7)  { bg = `color-mix(in srgb, var(--negative) ${Math.round((0.15 + val * 0.4) * 100)}%, transparent)`; fg = "var(--ink)"; }
+                                    else if (val >= 0.4)  { bg = `color-mix(in srgb, var(--warning) ${Math.round((0.15 + val * 0.3) * 100)}%, transparent)`; fg = "var(--ink)"; }
+                                    else if (val >= 0)    { bg = `color-mix(in srgb, var(--positive) ${Math.round((0.1 + val * 0.3) * 100)}%, transparent)`; fg = "var(--ink)"; }
+                                    else                  { bg = `color-mix(in srgb, var(--info) ${Math.round((0.1 + Math.abs(val) * 0.4) * 100)}%, transparent)`; fg = "var(--ink)"; }
                                     return (
                                       <td key={j} style={{ padding: "6px 10px", background: bg, borderRadius: 6, textAlign: "center", fontSize: 11, fontFamily: "var(--font-mono)", fontWeight: 700, color: fg, cursor: "default", minWidth: 52 }}>
                                         {val.toFixed(2)}
@@ -4586,7 +4459,7 @@ export default function App() {
                 {monteCarloLoading ? "Simulando... (puede tardar 1–2 min)" : " Ejecutar Monte Carlo (5 años)"}
               </button>
               {monteCarloError && (
-                <div style={{ marginTop: 12, padding: "10px 16px", background: "#2a0a0a", border: "1px solid #7f1d1d", borderRadius: 10, fontSize: 13, color: "var(--negative)", lineHeight: 1.5 }}>
+                <div style={{ marginTop: 12, padding: "10px 16px", background: "var(--negative-soft)", border: "1px solid var(--negative)", borderRadius: 10, fontSize: 13, color: "var(--negative)", lineHeight: 1.5 }}>
                   ⚠️ {monteCarloError}
                 </div>
               )}
@@ -4629,7 +4502,7 @@ export default function App() {
                       "var(--accent)", "p5 – p95 al final del período")}
                   </div>
 
-                  <div className="dark-panel" style={{ background: "#0d1825", borderRadius: 24, padding: "14px 20px", display: "flex", flexWrap: "wrap", gap: 24 }}>
+                  <div className="dark-panel" style={{ background: "var(--surface-2)", borderRadius: 24, padding: "14px 20px", display: "flex", flexWrap: "wrap", gap: 24 }}>
                     {[
                       ["Retorno med. semanal (port.)", `${(muPort * 100).toFixed(3)}%`],
                       ["Vol. semanal (port.)",          `${(sigPort * 100).toFixed(3)}%`],
@@ -4645,7 +4518,7 @@ export default function App() {
                     ))}
                   </div>
                   {limitingTicker && parseFloat(yearsData) < 4.5 && (
-                    <div style={{ marginTop: 12, padding: "10px 14px", background: "#1a1200", border: "1px solid #78611a", borderRadius: 10, fontSize: 12, color: "#fbbf24" }}>
+                    <div style={{ marginTop: 12, padding: "10px 14px", background: "var(--warning-soft)", border: "1px solid var(--warning)", borderRadius: 10, fontSize: 12, color: "var(--warning)" }}>
                       ⚠️ El historial está limitado a <b>{yearsData} años</b> por <b style={{ fontFamily: "var(--font-mono)" }}>{limitingTicker}</b> (el ticker con menos datos disponibles en yfinance).
                       Los demás activos sí tienen más historial pero se recortan al mínimo común para mantener consistencia estadística.
                       {tickerYears && (
@@ -4683,7 +4556,7 @@ export default function App() {
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8, alignItems: "flex-end" }}>
                   <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <input
+                    <input aria-label="Tickers de FIBRAs adicionales"
                       value={fibrasExtra}
                       onChange={e => setFibrasExtra(e.target.value)}
                       onKeyDown={e => e.key === "Enter" && !fibrasLoading && runFibrasScreener()}
@@ -4799,7 +4672,7 @@ export default function App() {
                             <span>1.5x</span>
                           </div>
                           <div style={{ background: "var(--border)", borderRadius: 4, height: 6, position: "relative" }}>
-                            <div style={{ position: "absolute", left: "35%", width: "30%", height: "100%", background: "#0a2a1a", borderRadius: 4 }} />
+                            <div style={{ position: "absolute", left: "35%", width: "30%", height: "100%", background: "var(--positive-soft)", borderRadius: 4 }} />
                             <div style={{
                               position: "absolute",
                               left: `${Math.min(Math.max((f.pNAV - 0.5) / 1.0 * 100, 2), 98)}%`,
@@ -4964,7 +4837,7 @@ export default function App() {
                     <span style={{ fontSize: 10, color: "var(--muted)", fontWeight: 600, letterSpacing: "0.1em" }}>FILTROS</span>
 
                     {/* Sector */}
-                    <select value={magicSector} onChange={e => setMagicSector(e.target.value)} style={{
+                    <select aria-label="Filtrar por sector" value={magicSector} onChange={e => setMagicSector(e.target.value)} style={{
                       background: "var(--surface-2)", border: "1px solid var(--border-strong)", borderRadius: 8,
                       padding: "5px 10px", fontSize: 12, color: "var(--ink)", cursor: "pointer"
                     }}>
@@ -4974,7 +4847,7 @@ export default function App() {
                     {/* Min EY */}
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ fontSize: 11, color: "var(--muted)" }}>EY mín</span>
-                      <input type="number" placeholder="0%" value={magicMinEY}
+                      <input aria-label="Earnings yield mínimo en porcentaje" type="number" placeholder="0%" value={magicMinEY}
                         onChange={e => setMagicMinEY(e.target.value)}
                         style={{ width: 64, background: "var(--surface-2)", border: "1px solid var(--border-strong)", borderRadius: 8, padding: "5px 8px", fontSize: 12, color: "var(--ink)" }} />
                     </div>
@@ -4982,7 +4855,7 @@ export default function App() {
                     {/* Min ROC */}
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ fontSize: 11, color: "var(--muted)" }}>ROC mín</span>
-                      <input type="number" placeholder="0%" value={magicMinROC}
+                      <input aria-label="ROC mínimo en porcentaje" type="number" placeholder="0%" value={magicMinROC}
                         onChange={e => setMagicMinROC(e.target.value)}
                         style={{ width: 64, background: "var(--surface-2)", border: "1px solid var(--border-strong)", borderRadius: 8, padding: "5px 8px", fontSize: 12, color: "var(--ink)" }} />
                     </div>
@@ -5003,10 +4876,14 @@ export default function App() {
                   {/* ── Tabla ── */}
                   <div style={{ background: "var(--surface)", boxShadow: "none", border: "1.5px solid var(--border)", borderRadius: 24, overflow: "hidden" }}>
                     {/* Header con click para ordenar */}
-                    <div className="dark-panel" style={{ display: "grid", gridTemplateColumns: gridCols, padding: "10px 20px", background: "#0d1825", borderBottom: "1px solid var(--border)" }}>
+                    <div className="dark-panel" style={{ display: "grid", gridTemplateColumns: gridCols, padding: "10px 20px", background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}>
                       {cols.map((c, i) => (
                         <div key={i}
                           onClick={() => c.key && toggleSort(c.key)}
+                          {...(c.key ? {
+                            role: "button", tabIndex: 0,
+                            onKeyDown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleSort(c.key); } },
+                          } : {})}
                           style={{
                             fontSize: 9, fontWeight: 600, letterSpacing: "0.1em",
                             textAlign: c.right ? "right" : "left",
@@ -5029,7 +4906,7 @@ export default function App() {
                       const rocColor = s.roc > 25 ? "var(--positive)" : s.roc > 12 ? "var(--warning)" : "var(--negative)";
                       const isTop = magicSort.col === "magic_rank" && magicSector === "Todos" && !magicMinEY && !magicMinROC;
                       const medalBg    = isTop && idx === 0 ? "#1a1600" : isTop && idx === 1 ? "#181c20" : isTop && idx === 2 ? "#1a0e00" : "transparent";
-                      const medalColor = isTop && idx === 0 ? "#fbbf24" : isTop && idx === 1 ? "var(--muted)" : isTop && idx === 2 ? "#fb923c" : "var(--muted-2)";
+                      const medalColor = isTop && idx === 0 ? "var(--warning)" : isTop && idx === 1 ? "var(--muted)" : isTop && idx === 2 ? "#fb923c" : "var(--muted-2)";
                       return (
                         <div key={s.ticker} style={{
                           display: "grid", gridTemplateColumns: gridCols,
@@ -5127,7 +5004,6 @@ export default function App() {
 
           // ── Financials (approximated from stock fields) ──
           const toB = v => v != null ? (v / 1e9).toFixed(2) : null;
-          const toM = v => v != null ? (v / 1e6).toFixed(1) : null;
           const rev  = f.totalRevenue;
           const netInc = f.netIncomeToCommon;
           const assets = f.totalAssets;
@@ -5236,7 +5112,7 @@ export default function App() {
 
               {/* ── BUSCADOR ── */}
               <div className="dark-panel" style={{ background: "var(--bg-deep)", borderRadius: 16, padding: "20px 24px", position: "relative" }}>
-                <input
+                <input aria-label="Ticker a analizar"
                   value={analisisTicker}
                   onChange={e => setAnalisisTicker(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && runAnalisis()}
@@ -5254,7 +5130,7 @@ export default function App() {
                   disabled={analisisLoading}
                   style={{
                     position: "absolute", right: 24, top: "50%", transform: "translateY(-50%)",
-                    background: "var(--bg-deep)", color: "#7fe3a0",
+                    background: "var(--bg-deep)", color: "var(--accent)",
                     border: "1.5px solid #7fe3a0", borderRadius: 10,
                     padding: "10px 24px", cursor: "pointer",
                     fontWeight: 800, fontSize: 13,
@@ -5541,7 +5417,7 @@ export default function App() {
                       <>
                         <div style={{ fontSize: 11, color: "#8fa3b8", marginBottom: 14 }}>
                           {analisisEdgar.name} · CIK {analisisEdgar.cik} · reportes 10-K anuales, directo de{" "}
-                          <a href={analisisEdgar.source} rel="noreferrer" style={{ color: "#7fe3a0", fontWeight: 600 }} target="_blank">data.sec.gov</a>
+                          <a href={analisisEdgar.source} rel="noreferrer" style={{ color: "var(--accent)", fontWeight: 600 }} target="_blank">data.sec.gov</a>
                         </div>
                         <div className="table-scroll">
                           <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -5587,14 +5463,18 @@ export default function App() {
                     {analisisNews.length > 0 ? (
                       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                         {analisisNews.slice(0, 5).map((item, i) => {
-                          const sentColor = item.sentiment === "positive" ? "var(--positive)" : item.sentiment === "negative" ? "var(--negative)" : "#fbbf24";
+                          const sentColor = item.sentiment === "positive" ? "var(--positive)" : item.sentiment === "negative" ? "var(--negative)" : "var(--warning)";
                           return (
                             <div key={i} style={{
                               background: "var(--bg-deep)", borderRadius: 12, padding: "14px 16px",
                               borderLeft: `3px solid ${sentColor}`,
                               cursor: item.url ? "pointer" : "default",
                             }}
-                              onClick={() => item.url && window.open(item.url, "_blank")}
+                              onClick={() => item.url && window.open(item.url, "_blank", "noopener,noreferrer")}
+                              {...(item.url ? {
+                                role: "link", tabIndex: 0,
+                                onKeyDown: (e) => { if (e.key === "Enter") window.open(item.url, "_blank", "noopener,noreferrer"); },
+                              } : {})}
                             >
                               <div style={{ fontWeight: 700, fontSize: 13, color: "#ffffff", marginBottom: 5, lineHeight: 1.4 }}>{item.title}</div>
                               <div style={{ display: "flex", gap: 10, alignItems: "center" }}>

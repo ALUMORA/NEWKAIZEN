@@ -1,10 +1,8 @@
 import { Moon, Sun } from "lucide-react";
 import markBlack from "./assets/kaizen-mark-black.jpg";
 import markWhite from "./assets/kaizen-mark-white.jpg";
+import { cn } from "./cn.js";
 
-export function cn(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
 
 // Marca sin texto de KAIZEN. `onDark` elige la variante clara para fondos oscuros
 // (siempre oscuros por diseño, como el sidebar) y la oscura para superficies claras.

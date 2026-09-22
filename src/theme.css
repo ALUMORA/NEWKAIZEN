@@ -11,8 +11,8 @@
   --surface-3: #e2e7e0;
   --ink: #17251f;
   --ink-soft: #34473f;
-  --muted: #58675f;
-  --muted-2: #627068;
+  --muted: #4f5c55;   /* 5.1:1 sobre --border, antes 4.3 */
+  --muted-2: #56635c; /* 4.6:1 sobre --border, antes 3.8 */
   --border: #d7ddd6;
   --border-strong: #bcc8bf;
   --accent: #176b43;
@@ -20,7 +20,7 @@
   --accent-soft: #dcefe3;
   --accent-faint: #eff8f2;
   --on-accent: #ffffff;
-  --positive: #137a4a;
+  --positive: #106e42; /* 5.3:1 sobre --positive-soft, antes 4.48 */
   --positive-soft: #dcefe4;
   --negative: #9f352f;
   --negative-soft: #f7e3df;
@@ -55,8 +55,8 @@
   --surface-3: #223027;
   --ink: #f0f3ed;
   --ink-soft: #cbd4cf;
-  --muted: #98a69f;
-  --muted-2: #73827a;
+  --muted: #a6b3ad;
+  --muted-2: #95a39b; /* 4.8:1 sobre --border, antes 3.1 */
   --border: #29362f;
   --border-strong: #3a4b42;
   --accent: #79df9b;
@@ -370,12 +370,20 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance
 .dark-panel {
   --bg: #0a110d; --bg-deep: #07100b; --surface: #101a14; --surface-raised: #142019;
   --surface-2: #19251e; --surface-3: #223027;
-  --ink: #f0f3ed; --ink-soft: #cbd4cf; --muted: #98a69f; --muted-2: #73827a;
+  --ink: #f0f3ed; --ink-soft: #cbd4cf; --muted: #a6b3ad; --muted-2: #95a39b;
   --border: #29362f; --border-strong: #3a4b42;
   --accent: #79df9b; --accent-strong: #94e8ae; --accent-soft: #173b27; --accent-faint: #10291b; --on-accent: #07120b;
   --positive: #70d996; --positive-soft: #173724; --negative: #ef8076; --negative-soft: #3e211f;
   --warning: #e0b768; --warning-soft: #392d17; --info: #88b7d9; --info-soft: #193145;
   color: var(--ink);
+}
+
+/* La barra lateral es oscura en los dos temas. Solo toma los tokens de texto de .dark-panel
+   (no los de fondo, para conservar su --bg-deep): el "Cerrar sesión" y demás textos en
+   var(--muted) daban 2.69:1 sobre ella en tema claro. */
+.app-sidebar {
+  --ink: #f0f3ed; --ink-soft: #cbd4cf; --muted: #a6b3ad; --muted-2: #95a39b;
+  --surface-2: #19251e; --border: #29362f;
 }
 
 /* ─── Marca (logo) ─────────────────────────────────────────────────────── */

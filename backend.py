@@ -7,40 +7,89 @@ Instalar dependencias: pip install yfinance
 Correr: python backend.py
 """
 
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import json, math, time, requests, threading, os
+from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
+import json, math, time, requests, threading, os, sys, re, hmac
 from concurrent.futures import ThreadPoolExecutor
 import yfinance as yf
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse, parse_qs, unquote
 
-# Sesión con headers de navegador para evitar bloqueos de Yahoo Finance en cloud
+# Sesión con headers de navegador para CBOE, Stooq y RSS.
+# Sin "br": el paquete brotli no está instalado y requests no podría decodificar la respuesta.
 _session = requests.Session()
 _session.headers.update({
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Encoding": "gzip, deflate",
 })
 
+# yfinance 1.x trae su propia sesión curl_cffi que imita la huella TLS de Chrome, que es
+# lo que Yahoo deja pasar desde cloud. Pasarle una requests.Session la reemplaza en el
+# singleton de yfinance para todos los hilos. YF_SESSION=requests restaura el modo anterior.
+_YF_USE_REQUESTS = os.environ.get("YF_SESSION", "").lower() == "requests"
+
 def yft(ticker: str):
-    """Crea un Ticker con sesión custom para evitar bloqueos de Yahoo en cloud."""
-    return yf.Ticker(ticker, session=_session)
+    """Crea un Ticker de yfinance (sesión curl_cffi por defecto, requests si YF_SESSION=requests)."""
+    if _YF_USE_REQUESTS:
+        return yf.Ticker(ticker, session=_session)
+    return yf.Ticker(ticker)
+
+def _log(msg: str):
+    """Errores que cambian el dato devuelto: a stderr para que salgan en los logs de Render."""
+    print(f"  [warn] {msg}", file=sys.stderr, flush=True)
 
 # ─── Cache en memoria con TTL ─────────────────────────────────────────────────
-_cache: dict = {}
+# Acotado a _CACHE_MAX entradas: con tickers arbitrarios en la URL crecería sin límite.
+_CACHE_MAX = 500
+_cache: dict = {}          # key -> (valor, timestamp, ttl); orden de inserción = antigüedad
 _cache_lock = threading.Lock()
+_key_locks: dict = {}      # un lock por key para single-flight
 
-def _cached(key: str, fn, ttl: int = 300):
-    now = time.time()
+def _cache_get(key: str):
     with _cache_lock:
-        if key in _cache:
-            val, ts = _cache[key]
-            if now - ts < ttl:
-                return val
-    result = fn()
+        entry = _cache.get(key)
+        if entry and time.time() - entry[1] < entry[2]:
+            return True, entry[0]
+    return False, None
+
+def _cache_put(key: str, val, ttl: int):
     with _cache_lock:
-        _cache[key] = (result, now)
-    return result
+        _cache.pop(key, None)
+        _cache[key] = (val, time.time(), ttl)
+        if len(_cache) > _CACHE_MAX:
+            now = time.time()
+            for k in [k for k, (_, ts, t) in _cache.items() if now - ts >= t]:
+                del _cache[k]
+            while len(_cache) > _CACHE_MAX:
+                del _cache[next(iter(_cache))]   # el más viejo
+        if len(_key_locks) > _CACHE_MAX:
+            for k in [k for k, lk in _key_locks.items() if k not in _cache and not lk.locked()]:
+                del _key_locks[k]
+
+def _cached(key: str, fn, ttl: int = 300, ok=None, fail_ttl: int = 60):
+    """
+    Cache con TTL y single-flight: si dos hilos piden la misma key, solo uno calcula
+    y el otro espera el resultado. Si ok(resultado) es falso, se guarda solo fail_ttl
+    segundos para no servir un fallo durante horas.
+    """
+    hit, val = _cache_get(key)
+    if hit:
+        return val
+    with _cache_lock:
+        lock = _key_locks.setdefault(key, threading.Lock())
+    with lock:
+        hit, val = _cache_get(key)   # otro hilo pudo calcularlo mientras esperábamos
+        if hit:
+            return val
+        result = fn()
+        good = True
+        if ok is not None:
+            try:
+                good = bool(ok(result))
+            except Exception:
+                good = False
+        _cache_put(key, result, ttl if good else fail_ttl)
+        return result
 
 # ─── Helper robusto para histórico ───────────────────────────────────────────
 def _fetch_hist(sym: str, period: str = "5d", interval: str = "1d"):
@@ -97,11 +146,29 @@ def r2(v):
     s = safe(v)
     return round(s, 2) if s is not None else None
 
-def _debt_to_assets(info):
-    de = safe(info.get("debtToEquity"))
-    if not de: return None
-    r = de / 100.0
-    return round(r / (1 + r) * 100, 1)
+def _debt_to_assets(total_debt, total_assets):
+    """Deuda total / activos totales en %. Antes se derivaba de D/E y daba D/(D+E), otro ratio."""
+    d, a = safe(total_debt), safe(total_assets)
+    if d is None or not a or a <= 0: return None
+    return round(d / a * 100, 1)
+
+def _div_yield_pct(info):
+    """
+    Rendimiento por dividendo en % (2.4 = 2.4%).
+    yfinance >= 0.2.5x entrega dividendYield ya en % (KO -> 2.4), pero
+    trailingAnnualDividendYield sigue como fracción (KO -> 0.0236). Se prefiere
+    dividendYield (es el que muestra Yahoo) y se contrasta con el trailing para
+    detectar la unidad: si dividendYield×100 queda más cerca del trailing en %,
+    venía como fracción y se escala. Sin dividendYield se usa el trailing×100.
+    """
+    d = safe(info.get("dividendYield"))
+    t = safe(info.get("trailingAnnualDividendYield"))
+    t_pct = t * 100 if t and t > 0 else None
+    if d is not None and d > 0:
+        if t_pct is not None and abs(d * 100 - t_pct) < abs(d - t_pct):
+            d = d * 100
+        return round(d, 2)
+    return round(t_pct, 2) if t_pct is not None else None
 
 def _leverage_ratio(info):
     de = safe(info.get("debtToEquity"))
@@ -200,8 +267,8 @@ def get_stock(ticker: str) -> dict:
                 if row in cf.index and free_cashflow is None:
                     free_cashflow = safe(float(cf.loc[row].iloc[0]))
                     break
-    except Exception:
-        pass
+    except Exception as e:
+        _log(f"stock {ticker}: estados financieros incompletos ({e})")
 
     # Obtener shares para cálculos
     shares_out = safe(info.get("sharesOutstanding"))
@@ -284,9 +351,20 @@ def get_stock(ticker: str) -> dict:
             h_stock = _fetch_hist(ticker, period="1y", interval="1wk")
             h_spy   = _fetch_hist("SPY",  period="1y", interval="1wk")
             if h_stock is not None and h_spy is not None and not h_stock.empty and not h_spy.empty:
-                sc = h_stock["Close"].dropna().tolist()
-                mc = h_spy["Close"].dropna().tolist()
-                n  = min(len(sc), len(mc)) - 1
+                # Emparejar por fecha, no por posición: si a una serie le falta una semana
+                # las posiciones se desfasan. Se quita la zona horaria porque .MX y SPY
+                # vienen en husos distintos y el join por timestamp exacto quedaría vacío.
+                def _by_date(h):
+                    s = h["Close"].dropna()
+                    idx = s.index
+                    if getattr(idx, "tz", None) is not None:
+                        idx = idx.tz_localize(None)
+                    s.index = idx.normalize()
+                    return s[~s.index.duplicated(keep="last")]
+                pair = _by_date(h_stock).to_frame("s").join(_by_date(h_spy).to_frame("m"), how="inner").dropna()
+                sc = pair["s"].tolist()
+                mc = pair["m"].tolist()
+                n  = len(sc) - 1
                 if n >= 12:
                     sr = [sc[i] / sc[i-1] - 1 for i in range(1, n+1)]
                     mr = [mc[i] / mc[i-1] - 1 for i in range(1, n+1)]
@@ -311,10 +389,16 @@ def get_stock(ticker: str) -> dict:
         except Exception:
             pass
 
-    growth_raw = safe(info.get("earningsGrowth") or info.get("earningsQuarterlyGrowth"))
-    div_raw    = safe(info.get("dividendYield"))
-    growth     = growth_raw * 100 if growth_raw else None
-    div_pct    = div_raw  * 100 if div_raw  else None
+    # PEG: Yahoo publica trailingPegRatio con el crecimiento esperado a 5 años de analistas.
+    # earningsGrowth es el YoY de UN trimestre (GOOGL 294% por una ganancia única) y daba
+    # PEG de 0.06; solo se usa de respaldo cuando es creíble (0-50%).
+    div_pct    = _div_yield_pct(info)   # ya en %, ver _div_yield_pct
+    peg_yahoo  = safe(info.get("trailingPegRatio"))
+    if pe and peg_yahoo and peg_yahoo > 0:
+        growth = pe / peg_yahoo          # crecimiento implícito, en %
+    else:
+        growth_raw = safe(info.get("earningsGrowth") or info.get("earningsQuarterlyGrowth"))
+        growth = growth_raw * 100 if growth_raw and 0 < growth_raw <= 0.5 else None
     peg        = round(pe / growth,             2) if (pe and growth and growth > 0) else None
     pegy       = round(pe / (growth + div_pct), 2) if (pe and growth and growth > 0 and div_pct) else None
 
@@ -334,9 +418,9 @@ def get_stock(ticker: str) -> dict:
         "priceChange52w":     round(price52chg * 100, 2) if price52chg is not None else None,
         "beta":               beta_val,
         "marketCap":          market_cap,
-        "dividendYield":      div_raw,
+        "dividendYield":      div_pct,   # en % (2.4 = 2.4%), igual que lo entrega yfinance 1.x
         "pcf":                r2(safe(info.get("priceToFreeCashflow"))),
-        "debtToAssets":       _debt_to_assets(info),
+        "debtToAssets":       _debt_to_assets(total_debt, total_assets),
         "leverageRatio":      _leverage_ratio(info),
         "sector":             info.get("sector"),
         "totalRevenue":       total_revenue,
@@ -360,9 +444,10 @@ def get_fx() -> dict:
         hist = yft("USDMXN=X").history(period="2d")
         if not hist.empty:
             return {"USDMXN": round(float(hist["Close"].iloc[-1]), 4)}
-    except Exception:
-        pass
-    return {"USDMXN": 17.5}
+    except Exception as e:
+        _log(f"fx: USDMXN=X falló ({e}), se devuelve la referencia fija")
+    # Referencia fija: el flag avisa que no es cotización en vivo
+    return {"USDMXN": 17.5, "fallback": True}
 
 
 def get_returns(ticker: str) -> dict:
@@ -376,8 +461,9 @@ def get_returns(ticker: str) -> dict:
         period_weeks = [("1mo", 4), ("3mo", 13), ("6mo", 26), ("1y", 52), ("2y", 104), ("5y", 260)]
         result = {}
         for pid, weeks in period_weeks:
-            if last and n >= weeks:
-                first = float(closes.iloc[-weeks])
+            # N períodos atrás es la barra -(N+1): iloc[-N] solo cubría N-1 semanas
+            if last and n >= weeks + 1:
+                first = float(closes.iloc[-(weeks + 1)])
                 result[pid] = round((last / first - 1) * 100, 2) if first > 0 else None
             else:
                 result[pid] = None
@@ -386,7 +472,14 @@ def get_returns(ticker: str) -> dict:
         return {pid: None for pid in ["1mo", "3mo", "6mo", "1y", "2y", "5y"]}
 
 
-def get_chart(ticker: str, period: str = "5y") -> dict:
+def _is_mxn(ticker: str) -> bool:
+    return ticker.upper().endswith(".MX") or ticker == "$MXN"
+
+
+def get_chart(ticker: str, period: str = "5y", ccy: str = "") -> dict:
+    """Cierres por periodo. Con ccy=MXN los activos en USD se convierten con el USD/MXN
+    de la misma fecha, para que Sharpe, backtest y Monte Carlo midan en pesos contra la
+    tasa libre de riesgo mexicana (antes se restaba la tasa MX a retornos en dólares)."""
     period_interval = {
         "1mo": ("1mo", "1d"),
         "3mo": ("3mo", "1d"),
@@ -398,14 +491,34 @@ def get_chart(ticker: str, period: str = "5y") -> dict:
     }
     yf_period, interval = period_interval.get(period, ("1y", "1wk"))
     hist = yft(ticker).history(period=yf_period, interval=interval)
-    closes = [round(float(v), 4) for v in hist["Close"].tolist() if not math.isnan(float(v))]
-    return {"closes": closes, "period": period, "bars": len(closes)}
+    close = hist["Close"].dropna()
+    currency = "MXN" if _is_mxn(ticker) else "USD"
+    if ccy.upper() == "MXN" and currency == "USD" and not close.empty:
+        # El FX se cachea por periodo: sin esto cada gráfica en USD pedía a Yahoo dos series
+        fx = _cached(f"fx_hist:{yf_period}:{interval}",
+                     lambda: yft("MXN=X").history(period=yf_period, interval=interval)["Close"].dropna(),
+                     ttl=3600, ok=lambda v: not v.empty)
+        if fx.empty:
+            return {"error": "Sin histórico USD/MXN para convertir", "closes": [], "period": period, "bars": 0}
+        # Las zonas horarias difieren entre series; se alinea por fecha con el último FX disponible
+        close.index = close.index.tz_localize(None).normalize()
+        fx = fx.copy()   # la serie cacheada es compartida entre hilos: no se muta
+        fx.index = fx.index.tz_localize(None).normalize()
+        fx = fx[~fx.index.duplicated(keep="last")]
+        close = close[~close.index.duplicated(keep="last")]
+        fx_aligned = fx.reindex(close.index, method="ffill").bfill()
+        close = (close * fx_aligned).dropna()
+        currency = "MXN"
+    closes = [round(float(v), 4) for v in close.tolist()]
+    return {"closes": closes, "period": period, "bars": len(closes), "currency": currency}
 
 
 def _fred_rate(series_id: str):
     """Obtiene la tasa más reciente de FRED (API pública de la Reserva Federal)."""
     try:
-        resp = _session.get(
+        # Sin _session y con el User-Agent default de requests: FRED deja colgada la conexión
+        # con uno que imita a un navegador, y también con uno propio no reconocido.
+        resp = requests.get(
             f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}",
             timeout=8
         )
@@ -479,7 +592,7 @@ def _get_macro_fresh() -> dict:
     missing = {}
     if "vix"  not in results: missing["^VIX"]    = "vix"
     if "t10y" not in results: missing["^TNX"]    = "t10y"
-    if "t2y"  not in results: missing["^IRX"]    = "t2y"
+    # Sin fallback para t2y: ^IRX es el bono de 13 semanas, no el de 2 años, y daba un spread falso.
     if "dxy"  not in results: missing["DX-Y.NYB"] = "dxy"
     if missing:
         bulk = _bulk_download(missing)
@@ -501,7 +614,7 @@ def _get_macro_fresh() -> dict:
         t10 = results.get("t10y") or {}
         t2  = results.get("t2y")  or {}
         if t10.get("value") and t2.get("value"):
-            spread = round(t10["value"] - t2["value"] / 10, 2)
+            spread = round(t10["value"] - t2["value"], 2)  # ambos vienen de FRED en puntos porcentuales
             results["spread"] = {"value": spread, "inverted": spread < 0}
     except Exception:
         results["spread"] = None
@@ -510,7 +623,7 @@ def _get_macro_fresh() -> dict:
 
 def get_macro() -> dict:
     """VIX, spread 10Y-2Y, DXY — indicadores macro clave. Cacheado 5 min."""
-    return _cached("macro", _get_macro_fresh, ttl=300)
+    return _cached("macro", _get_macro_fresh, ttl=300, ok=bool)  # vacío = todas las fuentes fallaron
 
 
 _MARKET_SYMS = {
@@ -588,7 +701,7 @@ def _get_market_fresh() -> dict:
 
 def get_market() -> dict:
     """Mercados globales: índices, divisas, commodities, crypto. Cacheado 2 min."""
-    return _cached("market", _get_market_fresh, ttl=120)
+    return _cached("market", _get_market_fresh, ttl=120, ok=bool)
 
 
 _WORLDMAP_SYMS = {
@@ -609,7 +722,7 @@ def _get_worldmap_fresh() -> dict:
 
 def get_worldmap() -> dict:
     """ETFs de países para el mapa mundial de desempeño. Cacheado 5 min."""
-    return _cached("worldmap", _get_worldmap_fresh, ttl=300)
+    return _cached("worldmap", _get_worldmap_fresh, ttl=300, ok=bool)
 
 
 def _rss_news(url: str) -> list:
@@ -751,17 +864,24 @@ def get_dcf(ticker: str) -> dict:
         financial_currency = info.get("financialCurrency", "USD") or "USD"
         fx_rate = 1.0   # multiplicador: 1 financial_currency = fx_rate price_currency
         fx_note = None
+        fx_ok   = True  # False si hace falta convertir y no hubo tipo de cambio
 
         if price_currency != financial_currency:
+            fx_ok = False
             pair = f"{financial_currency}{price_currency}=X"
             try:
                 fx_hist = yft(pair).history(period="2d")
                 if not fx_hist.empty:
                     fx_rate = float(fx_hist["Close"].iloc[-1])
+                    fx_ok = True
                     fx_note = (f"Financieros en {financial_currency} → {price_currency} "
                                f"(1 {financial_currency} = {fx_rate:.2f} {price_currency})")
-            except Exception:
-                pass
+            except Exception as e:
+                _log(f"dcf {ticker}: sin tipo de cambio {pair} ({e})")
+            if not fx_ok:
+                # Sin FX, los agregados quedarían en la moneda equivocada con fx_rate = 1:
+                # se omiten P/FCF y EV/EBITDA en vez de dar objetivos falsos.
+                fx_note = f"Sin tipo de cambio {financial_currency}→{price_currency}: se omiten P/FCF y EV/EBITDA"
 
         # ── Precio en moneda de cotización (sin convertir) ────────────────────
         price  = price_raw
@@ -787,7 +907,16 @@ def get_dcf(ticker: str) -> dict:
         ticker_upper = ticker.upper()
         sector = SECTOR_OVERRIDE.get(ticker_upper) or info.get("sector") or ""
         sector_note = f"Sector ajustado a '{sector}'" if ticker_upper in SECTOR_OVERRIDE else None
-        shares = safe(info.get("sharesOutstanding")) or 1
+        # Sin acciones en circulación no hay cifras por acción: None, nunca 1
+        # (con 1 el FCF total se volvía "FCF por acción" y el objetivo salía absurdo).
+        shares = safe(info.get("sharesOutstanding"))
+        if not shares or shares <= 0:
+            try:
+                shares = safe(getattr(t.fast_info, "shares", None))
+            except Exception:
+                shares = None
+        if not shares or shares <= 0:
+            shares = None
 
         # ── Datos por acción ──────────────────────────────────────────────────
         # Yahoo ya devuelve trailingEps y bookValue en la moneda de cotización
@@ -800,14 +929,16 @@ def get_dcf(ticker: str) -> dict:
         # financialCurrency → multiplicar por fx_rate para llevarlas a price_currency.
         fcf_fin = safe(info.get("freeCashflow"))
         fcf     = (fcf_fin * fx_rate) if (fcf_fin is not None and fx_rate != 1.0) else fcf_fin
-        fcf_ps  = (fcf / shares) if (fcf and shares > 0) else None
+        fcf_ps  = (fcf / shares) if (fcf and shares and fx_ok) else None
 
         ev_fin = safe(info.get("enterpriseValue"))
         ev     = (ev_fin * fx_rate) if (ev_fin is not None and fx_rate != 1.0) else ev_fin
+        if not fx_ok:
+            ev = None
         cash_l = (safe(info.get("totalCash")) or 0) * fx_rate
         debt_l = (safe(info.get("totalDebt")) or 0) * fx_rate
         ev_eb  = safe(info.get("enterpriseToEbitda"))  # ratio puro, sin conversión
-        net_cash_ps = (cash_l - debt_l) / shares if shares else 0
+        net_cash_ps = (cash_l - debt_l) / shares if shares else None
 
         pe_fair   = SECTOR_PE.get(sector, 18)
         pb_fair   = SECTOR_PB.get(sector, 3)
@@ -837,7 +968,7 @@ def get_dcf(ticker: str) -> dict:
                             "fair": pfcf_fair, "target": pt,
                             "signal": "barato" if price < pt * 0.85 else ("caro" if price > pt * 1.15 else "justo")})
 
-        if ev_eb and 0 < ev_eb < 80 and ev and shares > 0:
+        if ev_eb and 0 < ev_eb < 80 and ev and shares:
             ebitda_total = ev / ev_eb
             ebitda_ps    = ebitda_total / shares
             pt = round(ebitda_ps * eveb_fair + net_cash_ps, 2)
@@ -920,6 +1051,8 @@ _edgar_session.headers.update({
     "Accept-Encoding": "gzip, deflate",
 })
 _edgar_ticker_cache = {"data": None, "ts": 0}
+_EDGAR_ERR_CONN = "No se pudo conectar con SEC EDGAR."
+_EDGAR_ERR_BAD  = "Respuesta inválida de SEC EDGAR."
 
 def _edgar_ticker_map() -> dict:
     """Mapa TICKER -> CIK (10 dígitos), desde el índice oficial de la SEC. Cache 24h."""
@@ -957,24 +1090,50 @@ def get_edgar_financials(ticker: str) -> dict:
     def _fetch():
         base = ticker.split(".")[0].upper()  # tickers .MX (BMV) no aplican, EDGAR es solo EE. UU.
         mapping = _edgar_ticker_map()
+        if not mapping:
+            # El índice de la SEC no bajó: no es que el ticker no exista
+            return {"available": False, "error": _EDGAR_ERR_CONN}
         cik = mapping.get(base)
         if not cik:
             return {"available": False, "error": f'"{ticker}" no está registrado ante la SEC — EDGAR solo cubre emisores que reportan en EE. UU.'}
         try:
             resp = _edgar_session.get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json", timeout=15)
         except Exception:
-            return {"available": False, "error": "No se pudo conectar con SEC EDGAR."}
-        if resp.status_code != 200:
+            return {"available": False, "error": _EDGAR_ERR_CONN}
+        if resp.status_code == 404:
             return {"available": False, "error": "SEC EDGAR no tiene expediente XBRL para este emisor."}
+        if resp.status_code != 200:
+            # 429/5xx son pasajeros (límite de tasa de la SEC), no "no hay expediente"
+            return {"available": False, "error": _EDGAR_ERR_CONN}
         try:
             data = resp.json()
         except Exception:
-            return {"available": False, "error": "Respuesta inválida de SEC EDGAR."}
+            return {"available": False, "error": _EDGAR_ERR_BAD}
         gaap = data.get("facts", {}).get("us-gaap", {})
-        series, seen_labels = [], set()
+        from datetime import date as _date
+
+        def _period_fy(end: str) -> int:
+            # Año fiscal del PERIODO, no del 10-K: un 10-K trae comparativos de años previos
+            # con el mismo "fy" del reporte. Cierres en la primera semana de enero (años de
+            # 52-53 semanas) pertenecen al ejercicio anterior.
+            y, m, d = int(end[:4]), int(end[5:7]), int(end[8:10])
+            return y - 1 if (m == 1 and d <= 7) else y
+
+        def _is_annual(v) -> bool:
+            # Conceptos de flujo traen start: exigir ~un año para descartar trimestres
+            # que también aparecen dentro del 10-K. Los de saldo (sin start) pasan.
+            if not v.get("start"):
+                return True
+            try:
+                days = (_date.fromisoformat(v["end"]) - _date.fromisoformat(v["start"])).days
+            except Exception:
+                return False
+            return 350 <= days <= 380
+
+        # Por etiqueta se queda el concepto con el dato más reciente: Apple, por ejemplo,
+        # dejó "Revenues" en 2018 y siguió con RevenueFromContractWithCustomer...
+        best_by_label = {}
         for concept, label in EDGAR_CONCEPTS:
-            if label in seen_labels:
-                continue
             node = gaap.get(concept)
             if not node:
                 continue
@@ -982,15 +1141,25 @@ def get_edgar_financials(ticker: str) -> dict:
             unit_key = "USD/shares" if "USD/shares" in units else ("USD" if "USD" in units else next(iter(units), None))
             if not unit_key:
                 continue
-            annual = [v for v in units[unit_key] if v.get("form") == "10-K" and v.get("fp") == "FY" and v.get("end")]
+            annual = [v for v in units[unit_key]
+                      if v.get("form") == "10-K" and v.get("fp") == "FY" and v.get("end") and _is_annual(v)]
             by_year = {}
             for v in annual:
-                fy = v.get("fy") or int(v["end"][:4])
+                fy = _period_fy(v["end"])
+                # Si hay varias cifras para el mismo periodo, gana la presentada más tarde (reexpresiones)
                 if fy not in by_year or v.get("filed", "") > by_year[fy].get("filed", ""):
                     by_year[fy] = v
             values = sorted(({"fy": fy, "end": v["end"], "val": v["val"]} for fy, v in by_year.items()), key=lambda x: x["fy"])[-6:]
-            if values:
-                series.append({"concept": concept, "label": label, "unit": unit_key, "values": values})
+            if not values:
+                continue
+            prev = best_by_label.get(label)
+            if prev is None or values[-1]["end"] > prev["values"][-1]["end"]:
+                best_by_label[label] = {"concept": concept, "label": label, "unit": unit_key, "values": values}
+        # Mismo orden de EDGAR_CONCEPTS
+        series, seen_labels = [], set()
+        for _, label in EDGAR_CONCEPTS:
+            if label in best_by_label and label not in seen_labels:
+                series.append(best_by_label[label])
                 seen_labels.add(label)
         if not series:
             return {"available": False, "error": "La SEC no reporta series anuales (10-K) para este emisor."}
@@ -1002,7 +1171,9 @@ def get_edgar_financials(ticker: str) -> dict:
             "series": series,
             "source": f"https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK={cik}&type=10-K",
         }
-    return _cached(f"edgar:{ticker.upper()}", _fetch, ttl=6 * 3600)
+    # Errores de red se guardan solo 60 s; "no registrado" o "sin 10-K" sí duran 6 h
+    return _cached(f"edgar:{ticker.upper()}", _fetch, ttl=6 * 3600,
+                   ok=lambda r: r.get("error") not in (_EDGAR_ERR_CONN, _EDGAR_ERR_BAD))
 
 
 def _fetch_magic_ticker(ticker: str):
@@ -1104,7 +1275,7 @@ def _fetch_magic_ticker(ticker: str):
 
         return {
             "ticker":    ticker,
-            "name":      info.get("shortName") or info.get("longName") or ticker,
+            "name":      info.get("longName") or info.get("shortName") or ticker,  # shortName de una FIBRA es su fiduciario
             "sector":    sector,
             "marketCap": market_cap,
             "price":     round(price, 2) if price else None,
@@ -1120,21 +1291,31 @@ def _fetch_magic_ticker(ticker: str):
 
 
 def _get_magic_formula_fresh() -> dict:
-    from concurrent.futures import as_completed
+    from concurrent.futures import as_completed, TimeoutError as FutTimeout
     universe = list(dict.fromkeys(MAGIC_UNIVERSE))
     candidates = []
-    with ThreadPoolExecutor(max_workers=12) as pool:
-        futures = {pool.submit(_fetch_magic_ticker, t): t for t in universe}
+    # Sin "with": su salida espera a todos los hilos y anulaba el timeout de 25 s
+    pool = ThreadPoolExecutor(max_workers=12)
+    partial = False
+    futures = {pool.submit(_fetch_magic_ticker, t): t for t in universe}
+    try:
         for fut in as_completed(futures, timeout=25):
             try:
-                r = fut.result(timeout=8)
+                r = fut.result()
                 if r is not None:
                     candidates.append(r)
             except Exception:
                 pass
+    except FutTimeout:
+        # El timeout salta fuera del for: conservar lo que ya llegó en vez de perderlo todo
+        partial = True
+        pending = sum(1 for f in futures if not f.done())
+        _log(f"magic: timeout de 25 s, {pending} tickers sin respuesta; se usan {len(candidates)} parciales")
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
 
     if not candidates:
-        return {"stocks": [], "count": 0, "universe": len(universe)}
+        return {"stocks": [], "count": 0, "universe": len(universe), "partial": partial}
 
     sorted_ey  = sorted(candidates, key=lambda x: x["ey"],  reverse=True)
     sorted_roc = sorted(candidates, key=lambda x: x["roc"], reverse=True)
@@ -1147,12 +1328,14 @@ def _get_magic_formula_fresh() -> dict:
         c["magic_rank"] = c["rank_ey"] + c["rank_roc"]
 
     candidates.sort(key=lambda x: x["magic_rank"])
-    return {"stocks": candidates[:30], "count": len(candidates), "universe": len(universe)}
+    return {"stocks": candidates[:30], "count": len(candidates), "universe": len(universe), "partial": partial}
 
 
 def get_magic_formula() -> dict:
     """Fórmula Mágica de Greenblatt — cacheada 12h (no cambia intradía)."""
-    return _cached("magic", _get_magic_formula_fresh, ttl=43200)
+    # Un screener vacío o parcial (timeout) no se guarda 12h: solo 5 min y se reintenta
+    return _cached("magic", _get_magic_formula_fresh, ttl=43200, fail_ttl=300,
+                   ok=lambda r: r.get("count", 0) > 0 and not r.get("partial"))
 
 
 def get_magic_one(ticker: str) -> dict:
@@ -1259,7 +1442,7 @@ def get_magic_one(ticker: str) -> dict:
         price = safe(info.get("currentPrice") or info.get("regularMarketPrice"))
         return {
             "ticker":    ticker,
-            "name":      info.get("shortName") or info.get("longName") or ticker,
+            "name":      info.get("longName") or info.get("shortName") or ticker,  # shortName de una FIBRA es su fiduciario
             "sector":    sector,
             "marketCap": market_cap,
             "price":     round(price, 2) if price else None,
@@ -1273,9 +1456,11 @@ def get_magic_one(ticker: str) -> dict:
 
 
 FIBRAS_LIST = [
-    "FUNO11.MX", "FIBRAMQ.MX", "FIBRAPL14.MX", "TERRA13.MX",
-    "FINN13.MX",  "DANHOS13.MX", "FMTY14.MX",   "FHIPO14.MX",
-    "STORAGE.MX", "LFPE.MX",
+    # FIBRAMQ y Storage cambiaron de símbolo; Terrafina (TERRA13) la absorbió Fibra Prologis
+    # y LFPE ya no cotiza en Yahoo, así que se sustituyen por FNOVA y FSHOP.
+    "FUNO11.MX", "FIBRAMQ12.MX", "FIBRAPL14.MX", "FNOVA17.MX",
+    "FINN13.MX",  "DANHOS13.MX", "FMTY14.MX",    "FHIPO14.MX",
+    "STORAGE18.MX", "FSHOP13.MX",
 ]
 
 def get_fibras(extra: str = "") -> dict:
@@ -1295,6 +1480,8 @@ def get_fibras(extra: str = "") -> dict:
       CARA         si P/NAV > 1.15
     """
     extra_tickers = [t.strip().upper() for t in extra.split(",") if t.strip()] if extra else []
+    # Solo tickers válidos y máximo _FIBRAS_EXTRA_MAX: cada uno cuesta varias llamadas a Yahoo
+    extra_tickers = [t for t in extra_tickers if _TICKER_RE.match(t)][:_FIBRAS_EXTRA_MAX]
     extra_tickers = [t if "." in t else t + ".MX" for t in extra_tickers]
     tickers = FIBRAS_LIST + [t for t in extra_tickers if t not in FIBRAS_LIST]
     results = []
@@ -1332,7 +1519,7 @@ def get_fibras(extra: str = "") -> dict:
             ev          = safe(info.get("enterpriseValue"))
             nav_ps      = safe(info.get("bookValue"))          # NAV/acción en MXN
             p_nav       = safe(info.get("priceToBook"))        # P/NAV directo
-            div_yield   = safe(info.get("dividendYield"))
+            div_yield   = _div_yield_pct(info)                # ya en %
             total_debt  = safe(info.get("totalDebt"))  or 0
             total_cash  = safe(info.get("totalCash"))  or 0
             fcf         = safe(info.get("freeCashflow"))
@@ -1399,15 +1586,19 @@ def get_fibras(extra: str = "") -> dict:
             price_cur = info.get("currency", "MXN") or "MXN"
             fin_cur   = info.get("financialCurrency", "MXN") or "MXN"
             fx = 1.0
+            fx_ok = True
             if price_cur != fin_cur:
+                fx_ok = False
                 try:
                     fxh = yft(f"{fin_cur}{price_cur}=X").history(period="2d")
                     if not fxh.empty:
                         fx = float(fxh["Close"].iloc[-1])
-                except Exception:
-                    pass
+                        fx_ok = True
+                except Exception as e:
+                    _log(f"fibras {ticker}: sin tipo de cambio {fin_cur}{price_cur} ({e})")
 
-            fcf_local = (fcf * fx) if (fcf is not None and fx != 1.0) else fcf
+            # Sin FX, FCF y deuda quedarían en otra moneda que el market cap: mejor None que un % falso
+            fcf_local = None if not fx_ok else ((fcf * fx) if (fcf is not None and fx != 1.0) else fcf)
             ffo_yield = None
             if fcf_local and market_cap and market_cap > 0:
                 ffo_yield = round((fcf_local / (market_cap * fx if fx != 1.0 else market_cap)) * 100, 2)
@@ -1417,7 +1608,7 @@ def get_fibras(extra: str = "") -> dict:
 
             # LTV = deuda / (deuda + equity market value)
             ltv = None
-            debt_local = total_debt * fx
+            debt_local = total_debt * fx if fx_ok else None
             if debt_local and market_cap and market_cap > 0:
                 ltv = round(debt_local / (debt_local + market_cap) * 100, 1)
 
@@ -1435,14 +1626,14 @@ def get_fibras(extra: str = "") -> dict:
 
             results.append({
                 "ticker":      ticker,
-                "name":        info.get("shortName") or info.get("longName") or ticker,
+                "name":        info.get("longName") or info.get("shortName") or ticker,  # shortName es el fiduciario
                 "price":       round(price, 2),
                 "currency":    price_cur,
                 "capRate":     cap_rate,
                 "pNAV":        r2(p_nav),
                 "navPS":       r2(nav_ps),
                 "navDiscount": nav_discount,
-                "divYield":    round(div_yield * 100, 2) if div_yield else None,
+                "divYield":    div_yield,   # en %; antes ×100 sobre un valor que yfinance 1.x ya da en %
                 "ffoYield":    ffo_yield,
                 "ltv":         ltv,
                 "marketCap":   market_cap,
@@ -1477,7 +1668,11 @@ def get_insiders(ticker: str) -> dict:
                         date_str = str(date_raw)[:10]
                     except Exception:
                         date_str = ""
-                    action = "BUY" if ("purchase" in str(text).lower() or "buy" in str(text).lower() or (safe(shares_val) or 0) > 0) else "SELL"
+                    # Yahoo da Shares siempre positivo, así que "shares > 0" marcaba toda venta como BUY.
+                    # El sentido sale del texto; premios, grants y ejercicios son adquisiciones.
+                    tl = str(text).lower()
+                    action = ("SELL" if ("sale" in tl or "sell" in tl or "disposition" in tl)
+                              else "GIFT" if "gift" in tl else "BUY")
                     result["transactions"].append({
                         "name":   str(name),
                         "action": action,
@@ -1521,14 +1716,18 @@ def get_momentum(ticker: str) -> dict:
         sector = info.get("sector")
         etf    = SECTOR_ETF.get(sector, "SPY")
 
-        hist_stock = yft(ticker).history(period="1y", interval="1wk")
-        hist_etf   = yft(etf).history(period="1y", interval="1wk")
+        # 2y y no 1y: el retorno de 12m necesita 53 barras semanales y 1y a veces trae 52
+        hist_stock = yft(ticker).history(period="2y", interval="1wk")
+        hist_etf   = yft(etf).history(period="2y", interval="1wk")
 
         def ret(hist, weeks):
-            if hist.empty or len(hist) < weeks:
+            # N semanas atrás es closes[-(N+1)]; closes[-N] solo cubría N-1
+            if hist is None or hist.empty:
                 return None
-            closes = hist["Close"].tolist()
-            return round((closes[-1] / closes[-weeks] - 1) * 100, 2)
+            closes = hist["Close"].dropna().tolist()
+            if len(closes) < weeks + 1 or not closes[-(weeks + 1)]:
+                return None
+            return round((closes[-1] / closes[-(weeks + 1)] - 1) * 100, 2)
 
         stock_3m  = ret(hist_stock, 13)
         stock_6m  = ret(hist_stock, 26)
@@ -1614,29 +1813,32 @@ def get_news(ticker: str) -> dict:
 
 def get_rf() -> dict:
     """
-    Tasa libre de riesgo: Bono M México 5 años.
-    Yahoo Finance no expone directamente los bonos gubernamentales mexicanos,
-    por lo que intentamos varios proxies y caemos en el valor de referencia actual.
+    Tasa libre de riesgo: rendimiento del bono de gobierno mexicano a 10 años.
+    Fuente: serie mensual de la OCDE publicada en FRED (IRLTLT01MXM156N). Yahoo no tiene
+    ningún símbolo de Bonos M; los cuatro que se probaban antes no existen.
     """
-    # Intentar proxies en Yahoo Finance para tasas MX
-    mx_proxies = [
-        ("MXN10YT=RR", "Bono M 10Y"),
-        ("MXN5YT=RR",  "Bono M 5Y"),
-        ("MX5Y=X",     "Bono M 5Y"),
-        ("^MX5Y",      "Bono M 5Y"),
-    ]
-    for sym, label in mx_proxies:
-        try:
-            hist = yft(sym).history(period="5d")
-            if not hist.empty:
-                val = float(hist["Close"].iloc[-1])
-                rate = val / 100 if val > 1 else val
+    hit, cached = _cache_get("rf")
+    if hit:
+        return cached
+    try:
+        resp = requests.get(
+            "https://fred.stlouisfed.org/graph/fredgraph.csv?id=IRLTLT01MXM156N", timeout=8
+        )
+        for line in reversed(resp.text.strip().split("\n")[1:]):
+            date, _, val = line.partition(",")
+            if val.strip() not in (".", ""):
+                rate = float(val) / 100
                 if 0.03 < rate < 0.20:   # sanity: 3%-20%
-                    return {"rate": round(rate, 6), "label": label}
-        except Exception:
-            pass
-    # Fallback: Bono M México 10 años — mayo 2026
-    return {"rate": 0.0860, "label": "Bono M 10Y"}
+                    y, m = date.split("-")[:2]
+                    mes = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"][int(m) - 1]
+                    result = {"rate": round(rate, 6), "label": f"Bono M 10Y ({mes} {y})", "asOf": date}
+                    _cache_put("rf", result, 6 * 3600)
+                    return result
+                break
+    except Exception as e:
+        _log(f"get_rf: FRED falló: {e}")
+    # La etiqueta lo dice para que la UI no presente la referencia fija como dato en vivo.
+    return {"rate": 0.0860, "label": "Bono M 10Y (ref. fija may 2026)", "fallback": True}
 
 
 # ─── Autenticación ────────────────────────────────────────────────────────────
@@ -1651,11 +1853,22 @@ def _get_users() -> dict:
         return {}
 
 def check_login(username: str, password: str) -> bool:
-    users = _get_users()
-    return bool(username and password and users.get(username.strip().lower()) == password.strip())
+    # compare_digest: tiempo constante. La contraseña va tal cual, sin strip.
+    if not username or not password:
+        return False
+    expected = _get_users().get(username.strip().lower())
+    if not isinstance(expected, str):
+        return False
+    return hmac.compare_digest(expected.encode("utf-8"), password.encode("utf-8"))
 
 
 # ─── HTTP Handler ─────────────────────────────────────────────────────────────
+_TICKER_RE = re.compile(r"^[A-Za-z0-9.\-\^=$]{1,20}$")
+_FIBRAS_EXTRA_MAX = 20
+_POST_MAX_BYTES = 10 * 1024
+# Rutas cuyo segundo segmento es un ticker
+_TICKER_ROUTES = {"stock", "chart", "news", "dcf", "edgar", "magic_one", "insiders", "momentum", "returns"}
+
 class Handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200)
@@ -1664,13 +1877,16 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
-        parts  = parsed.path.strip("/").split("/")
+        parts  = [unquote(p) for p in parsed.path.strip("/").split("/")]
         params = parse_qs(parsed.query)
         try:
-            if   parts[0] == "stock"    and len(parts) > 1: result = get_stock(parts[1])
+            is_market_news = parts[0] == "news" and len(parts) > 1 and parts[1] == "market"
+            if parts[0] in _TICKER_ROUTES and len(parts) > 1 and not is_market_news and not _TICKER_RE.match(parts[1]):
+                result = {"error": "Ticker inválido"}
+            elif parts[0] == "stock"    and len(parts) > 1: result = get_stock(parts[1])
             elif parts[0] == "chart"    and len(parts) > 1:
                 period = params.get("period", ["5y"])[0]
-                result = get_chart(parts[1], period)
+                result = get_chart(parts[1], period, params.get("ccy", [""])[0])
             elif parts[0] == "rf":                           result = get_rf()
             elif parts[0] == "news" and len(parts) > 1 and parts[1] == "market": result = get_market_news()
             elif parts[0] == "news"     and len(parts) > 1: result = get_news(parts[1])
@@ -1711,16 +1927,29 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         parsed = urlparse(self.path)
         parts  = parsed.path.strip("/").split("/")
-        length = int(self.headers.get("Content-Length", 0))
-        body_raw = self.rfile.read(length) if length > 0 else b"{}"
         try:
-            body = json.loads(body_raw)
-        except Exception:
-            body = {}
+            length = int(self.headers.get("Content-Length", 0))
+        except (TypeError, ValueError):
+            length = -1
+        too_big = length > _POST_MAX_BYTES
+        if length < 0 or too_big:
+            # No se lee el cuerpo; se cierra la conexión para no dejar bytes colgados
+            body = None
+            self.close_connection = True
+        else:
+            body_raw = self.rfile.read(length) if length > 0 else b"{}"
+            try:
+                body = json.loads(body_raw)
+            except Exception:
+                body = {}
+            if not isinstance(body, dict):
+                body = {}
         try:
-            if parts[0] == "login":
+            if body is None:
+                result = {"error": "Cuerpo demasiado grande" if too_big else "Content-Length inválido"}
+            elif parts[0] == "login":
                 username = str(body.get("username", "")).strip()
-                password = str(body.get("password", "")).strip()
+                password = str(body.get("password", ""))
                 if check_login(username, password):
                     result = {"ok": True}
                 else:
@@ -1759,7 +1988,13 @@ if __name__ == "__main__":
     import os
     host = "0.0.0.0"
     port = int(os.environ.get("PORT", PORT))
-    server = HTTPServer((host, port), Handler)
+    # Un hilo por request: una consulta lenta a Yahoo ya no bloquea /health ni al resto.
+    # request_queue_size default es 5: la app abre ~10 requests al cargar y con varias pestañas
+    # la cola de listen() se llenaba y el sistema reseteaba conexiones (85 de 280 en una ráfaga).
+    class _Server(ThreadingHTTPServer):
+        daemon_threads = True
+        request_queue_size = 128
+    server = _Server((host, port), Handler)
     print(f"\n  KAIZEN Backend  →  http://{host}:{port}")
     print("  Endpoints: /stock /chart /rf /news /macro /dcf /momentum /health")
     print("  Ctrl+C para detener\n")
