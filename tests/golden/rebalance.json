@@ -1,0 +1,340 @@
+{
+  "cases": [
+    {
+      "expected": {
+        "cash": 0,
+        "deviation": {
+          "after": 0.020000000000000018,
+          "before": 1.0
+        },
+        "holdings": {
+          "A": 17,
+          "B": 7
+        },
+        "matchesOptimal": true,
+        "optimal": {
+          "deviation": 0.020000000000000018,
+          "holdings": {
+            "A": 17,
+            "B": 7
+          }
+        },
+        "value": 10000,
+        "weights": {
+          "A": 0.51,
+          "B": 0.49
+        }
+      },
+      "input": {
+        "allowSell": true,
+        "cash": 10000,
+        "holdings": {},
+        "prices": {
+          "A": 300,
+          "B": 700
+        },
+        "targets": {
+          "A": 0.5,
+          "B": 0.5
+        }
+      },
+      "name": "caso-conocido-50-50-precios-300-700",
+      "tol": 1e-09
+    },
+    {
+      "expected": {
+        "cash": 43.19999999999709,
+        "deviation": {
+          "after": 0.0009440000000000004,
+          "before": 1.0
+        },
+        "holdings": {
+          "AAPL": 146,
+          "FUNO11.MX": 534,
+          "WALMEX.MX": 341
+        },
+        "value": 50000.0,
+        "weights": {
+          "AAPL": 0.40004,
+          "FUNO11.MX": 0.24991199999999997,
+          "WALMEX.MX": 0.349184
+        }
+      },
+      "input": {
+        "allowSell": true,
+        "cash": 50000,
+        "holdings": {},
+        "prices": {
+          "AAPL": 137,
+          "FUNO11.MX": 23.4,
+          "WALMEX.MX": 51.2
+        },
+        "targets": {
+          "AAPL": 0.4,
+          "FUNO11.MX": 0.25,
+          "WALMEX.MX": 0.35
+        }
+      },
+      "name": "tres-activos-con-efectivo",
+      "tol": 1e-09
+    },
+    {
+      "expected": {
+        "cash": 380,
+        "deviation": {
+          "after": 0.04285714285714287,
+          "before": 0.05102040816326531
+        },
+        "holdings": {
+          "A": 41,
+          "B": 5
+        },
+        "matchesOptimal": true,
+        "optimal": {
+          "deviation": 0.04285714285714287,
+          "holdings": {
+            "A": 41,
+            "B": 5
+          }
+        },
+        "value": 9800,
+        "weights": {
+          "A": 0.5020408163265306,
+          "B": 0.45918367346938777
+        }
+      },
+      "input": {
+        "allowSell": true,
+        "cash": 500,
+        "holdings": {
+          "A": 40,
+          "B": 5
+        },
+        "prices": {
+          "A": 120,
+          "B": 900
+        },
+        "targets": {
+          "A": 0.5,
+          "B": 0.5
+        }
+      },
+      "name": "ya-tiene-posiciones-y-hay-que-vender",
+      "tol": 1e-09
+    },
+    {
+      "expected": {
+        "cash": 400,
+        "deviation": {
+          "after": 0.030075187969924866,
+          "before": 0.30075187969924816
+        },
+        "holdings": {
+          "A": 55,
+          "B": 7
+        },
+        "matchesOptimal": true,
+        "optimal": {
+          "deviation": 0.030075187969924866,
+          "holdings": {
+            "A": 55,
+            "B": 7
+          }
+        },
+        "value": 13300,
+        "weights": {
+          "A": 0.49624060150375937,
+          "B": 0.47368421052631576
+        }
+      },
+      "input": {
+        "allowSell": false,
+        "cash": 4000,
+        "holdings": {
+          "A": 40,
+          "B": 5
+        },
+        "prices": {
+          "A": 120,
+          "B": 900
+        },
+        "targets": {
+          "A": 0.5,
+          "B": 0.5
+        }
+      },
+      "name": "sin-vender-solo-invierte-el-efectivo",
+      "tol": 1e-09
+    },
+    {
+      "expected": {
+        "cash": 0,
+        "deviation": {
+          "after": 0.0,
+          "before": 1.0
+        },
+        "holdings": {
+          "A": 24,
+          "B": 0
+        },
+        "matchesOptimal": true,
+        "optimal": {
+          "deviation": 0.0,
+          "holdings": {
+            "A": 24,
+            "B": 0
+          }
+        },
+        "value": 6000,
+        "weights": {
+          "A": 1.0,
+          "B": 0.0
+        }
+      },
+      "input": {
+        "allowSell": true,
+        "cash": 0,
+        "holdings": {
+          "A": 12,
+          "B": 3
+        },
+        "prices": {
+          "A": 250,
+          "B": 1000
+        },
+        "targets": {
+          "A": 1.0,
+          "B": 0.0
+        }
+      },
+      "name": "objetivo-cero-vende-todo",
+      "tol": 1e-09
+    },
+    {
+      "expected": {
+        "cash": 65,
+        "deviation": {
+          "after": 0.0032499999999999196,
+          "before": 1.0
+        },
+        "holdings": {
+          "A": 63,
+          "B": 45
+        },
+        "matchesOptimal": true,
+        "optimal": {
+          "deviation": 0.0032499999999999196,
+          "holdings": {
+            "A": 63,
+            "B": 45
+          }
+        },
+        "value": 20000,
+        "weights": {
+          "A": 0.29925,
+          "B": 0.6975
+        }
+      },
+      "input": {
+        "allowSell": true,
+        "cash": 20000,
+        "holdings": {},
+        "prices": {
+          "A": 95,
+          "B": 310
+        },
+        "targets": {
+          "A": 30,
+          "B": 70
+        }
+      },
+      "name": "objetivos-que-no-suman-uno",
+      "tol": 1e-09
+    },
+    {
+      "expected": {
+        "cash": 1200,
+        "deviation": {
+          "after": 0.17910447761194034,
+          "before": 0.27462686567164174
+        },
+        "holdings": {
+          "A": 16,
+          "B": 1
+        },
+        "matchesOptimal": false,
+        "optimal": {
+          "deviation": 0.12537313432835823,
+          "holdings": {
+            "A": 14,
+            "B": 2
+          }
+        },
+        "value": 6700,
+        "weights": {
+          "A": 0.5970149253731343,
+          "B": 0.22388059701492538
+        }
+      },
+      "input": {
+        "allowSell": true,
+        "cash": 1200,
+        "holdings": {
+          "A": 10,
+          "B": 2
+        },
+        "prices": {
+          "A": 250,
+          "B": 1500
+        },
+        "targets": {
+          "A": 0.6,
+          "B": 0.4
+        }
+      },
+      "name": "greedy-vs-optimo",
+      "tol": 1e-09
+    },
+    {
+      "expected": {
+        "cash": 2520,
+        "deviation": {
+          "after": 0.504,
+          "before": 1.0
+        },
+        "holdings": {
+          "A": 0,
+          "B": 62
+        },
+        "matchesOptimal": true,
+        "optimal": {
+          "deviation": 0.504,
+          "holdings": {
+            "A": 0,
+            "B": 62
+          }
+        },
+        "value": 5000,
+        "weights": {
+          "A": 0.0,
+          "B": 0.496
+        }
+      },
+      "input": {
+        "allowSell": true,
+        "cash": 5000,
+        "holdings": {},
+        "prices": {
+          "A": 9000,
+          "B": 40
+        },
+        "targets": {
+          "A": 0.5,
+          "B": 0.5
+        }
+      },
+      "name": "precio-caro-que-no-alcanza",
+      "tol": 1e-09
+    }
+  ]
+}
