@@ -643,7 +643,13 @@ def get_instrument(symbol: str) -> dict:
         "sharesOutstanding": safe(shares),
     }
     if fundamentals["earningsYield"] is None and pe:
+        # Respaldo: 1/(P/U). El P/U de Yahoo ya viene por listado, así que no mezcla monedas, pero
+        # no sale de los estados que convertimos aquí. Se dice, porque si no la nota de arriba
+        # ("las razones que mezclan precio con estados quedan vacías") se contradice sola.
         fundamentals["earningsYield"] = _round(1.0 / pe)
+        notes.append(
+            "El rendimiento de la utilidad se sacó del P/U que publica Yahoo, no de los estados financieros."
+        )
 
     fallback = False
     beta = compute_beta(symbol, price_currency, notes)
@@ -714,11 +720,21 @@ def get_dividends(symbol: str) -> dict:
             notes.append("No hubo pagos en los últimos 12 meses.")
     else:
         notes.append("Yahoo no publica historia de dividendos para este símbolo.")
+    computed_yield = _round(_ratio(ttm, price)) if ttm else (0.0 if ttm == 0.0 else None)
+    # El rendimiento de /instrument es el que PUBLICA Yahoo y este es el que sale de los pagos que
+    # de veras ocurrieron en 12 meses. Los dos son defendibles y no dan lo mismo (WALMEX: 4.45 %
+    # contra 3.75 %). Si alguien ve las dos pantallas sin esta nota, parece que una está mal.
+    published = div_yield_fraction(info)
+    if computed_yield and published and abs(computed_yield - published) > 0.1 * published:
+        notes.append(
+            "Este rendimiento sale de los dividendos pagados en los últimos 12 meses. "
+            f"Yahoo publica {published * 100:.2f} % por su propia cuenta, que puede ir por delante."
+        )
     return {
         "symbol": symbol,
         "currency": price_currency,
         "ttm": ttm,
-        "yield": _round(_ratio(ttm, price)) if ttm else (0.0 if ttm == 0.0 else None),
+        "yield": computed_yield,
         "history": history[-60:],
         "notes": notes,
         "as_of": history[-1]["date"] if history else None,

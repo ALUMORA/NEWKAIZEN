@@ -31,6 +31,26 @@ def test_yield_is_ttm_over_price_as_a_fraction(replay_b3a):
     assert data["yield"] == pytest.approx(data["ttm"] / info["regularMarketPrice"], rel=1e-4)
 
 
+def test_when_it_disagrees_with_yahoo_the_response_says_so(replay_b3a):
+    """WALMEX: 1.69 pagados sobre 45.02 son 3.75 %, y Yahoo publica 4.45 %.
+
+    Las dos cifras son defendibles, pero salen en pantallas distintas de la misma app, así que la
+    diferencia se explica en vez de dejar al usuario pensando que una de las dos está mal.
+    """
+    data = mod.get_dividends("WALMEX.MX")
+    info = mod._yahoo.get_info("WALMEX.MX")
+    published = mod.div_yield_fraction(info)
+    assert data["yield"] == pytest.approx(0.037539, rel=1e-3)
+    assert published == pytest.approx(0.0445, abs=1e-6)
+    assert any("Yahoo publica 4.45 %" in note for note in data["notes"])
+
+
+def test_when_it_agrees_with_yahoo_it_keeps_quiet(replay_b3a):
+    """AAPL: 0.3104 % contra 0.32 % es la misma cifra, y ahí la nota sobraría."""
+    data = mod.get_dividends("AAPL")
+    assert not any("Yahoo publica" in note for note in data["notes"])
+
+
 def test_a_fibra_pays_in_pesos_and_yields_a_lot_more(replay_b3a):
     data = mod.get_dividends("FUNO11.MX")
     assert data["currency"] == "MXN"

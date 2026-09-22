@@ -75,6 +75,25 @@ def test_aapl_mx_never_mixes_pesos_with_dollars(replay_b3a):
     assert f["ps"] != pytest.approx(AAPLMX_MARKET_CAP / AAPLMX_REVENUE_USD, rel=1e-3)
 
 
+def test_the_earnings_yield_fallback_says_where_it_came_from(replay_b3a):
+    """Sin estados convertidos el rendimiento sale de 1/(P/U), y la respuesta tiene que decirlo.
+
+    Si no lo dijera, contradiría a la nota de arriba, que promete que las razones que mezclan
+    precio con estados quedan vacías.
+    """
+    data = mod.get_instrument("AAPL.MX")
+    f = data["fundamentals"]
+    assert f["fcfYield"] is None, "el flujo libre no tiene respaldo y se queda vacío"
+    assert f["earningsYield"] == pytest.approx(1.0 / f["pe"], rel=1e-4)
+    assert any("P/U que publica Yahoo" in note for note in data["notes"])
+
+
+def test_the_earnings_yield_from_the_statements_does_not_claim_the_fallback(replay_b3a):
+    """WALMEX sí lo saca de los estados: ahí la nota del respaldo estaría de más."""
+    data = mod.get_instrument("WALMEX.MX")
+    assert not any("P/U que publica Yahoo" in note for note in data["notes"])
+
+
 def test_aapl_mx_converts_the_statements_when_there_is_an_fx(replay_b3a, monkeypatch):
     """Con la costura de B2a disponible, P/S es capitalización en pesos entre ingresos EN PESOS."""
     monkeypatch.setattr(currency_mod, "fx_convert", lambda amount, f, t, on=None: amount * 18.5)
