@@ -61,6 +61,38 @@ def format_sets(spec: SetSpec) -> str:
     return SET_SEPARATOR.join(parse_sets(spec))
 
 
+def check_record_spec(spec: SetSpec) -> list[str]:
+    """Layers of a spec that is about to RECORD, refusing a comma that collapsed into one layer.
+
+    ``parse_sets`` drops empty entries on purpose, so ``--set "2026-09-22,$CAPA"`` with ``$CAPA``
+    undefined would quietly become the single set ``2026-09-22`` and, since recording always writes
+    to the LAST layer, write into the shared base set. Whoever asked for layers gets an error
+    instead (in Spanish). Reading (replay) stays tolerant: it never writes anything.
+    """
+    names = parse_sets(spec)
+    if isinstance(spec, str) and SET_SEPARATOR in spec and len(names) < 2:
+        raise FixtureSetError(
+            f"El spec {spec!r} trae coma pero se quedó en una sola capa ({names[0]!r}): grabar así escribiría "
+            f"en ese set, no en tu capa. Revisa que el nombre de la capa esté definido, por ejemplo "
+            f"--set {DEFAULT_SET}{SET_SEPARATOR}{DEFAULT_SET}-b2a."
+        )
+    return names
+
+
+def check_base_write(top_name: str, *, allow_base: bool = False) -> None:
+    """Cinturón y tirantes: grabar en el set base compartido solo a propósito.
+
+    ``DEFAULT_SET`` es el set revisado que comparten todos los streams. Escribir ahí se pide
+    explícitamente (``allow_base=True``, ``--permitir-base`` en las herramientas).
+    """
+    if top_name == DEFAULT_SET and not allow_base:
+        raise FixtureSetError(
+            f"Grabar escribiría en el set base {DEFAULT_SET!r}, que es común a todos los streams. "
+            f"Graba en tu propia capa (--set {DEFAULT_SET}{SET_SEPARATOR}{DEFAULT_SET}-b2a) o, si de "
+            f"verdad quieres tocar la base, pásalo a propósito con --permitir-base."
+        )
+
+
 def available_sets(root: Path | None = None) -> list[str]:
     """Recorded sets (folders with an ``index.json``) under ``root``."""
     base = Path(root) if root else FIXTURES_ROOT

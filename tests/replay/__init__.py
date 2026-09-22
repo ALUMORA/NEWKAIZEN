@@ -27,6 +27,9 @@ Layers: every entry point takes an ordered comma-separated list of sets::
         ...
     with recording("2026-09-22,2026-09-22-b2a"):   # new calls go ONLY to 2026-09-22-b2a
         ...
+
+Recording guards the shared base set: a comma that collapsed into one layer is refused, writing
+into ``DEFAULT_SET`` needs ``allow_base=True`` and a layer that records nothing is never created.
 """
 
 from .golden import (
@@ -61,6 +64,8 @@ from .store import (
     FixtureStore,
     LayeredStore,
     available_sets,
+    check_base_write,
+    check_record_spec,
     format_sets,
     open_sets,
     parse_sets,
@@ -81,6 +86,8 @@ __all__ = [
     "available_sets",
     "block_network",
     "call_captured",
+    "check_base_write",
+    "check_record_spec",
     "compare",
     "decode",
     "encode",

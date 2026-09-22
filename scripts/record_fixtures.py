@@ -30,6 +30,11 @@ graba en su carpeta sin chocar con los demás en un mismo ``index.json``:
     # lo mismo sin red: solo comprueba que esas rutas se reproducen completas desde las capas
     python scripts/record_fixtures.py --set 2026-09-22,2026-09-22-b2a --get '/v2/quotes?symbols=AAPL' --goldens-only
 
+Tres guardas para que nadie escriba en el set base por accidente: un ``--set`` con coma que se
+quedó en una sola capa (``"2026-09-22,$CAPA"`` con ``$CAPA`` sin definir) sale con error en vez de
+grabar en la base; grabar con el set base como última capa pide ``--permitir-base``; y la capa nueva
+solo se crea en disco si de verdad grabó alguna llamada.
+
 Con ``--get`` no se tocan los goldens del legado. Sin ``--get`` y con varias capas hay que pasar
 ``--goldens-dir``: los goldens de ``tests/goldens_legacy`` quedan fijos en el set base. Al terminar
 se revisa que ningún token del entorno (BANXICO_TOKEN, FRED_API_KEY, EODHD_API_TOKEN) haya quedado
@@ -57,6 +62,7 @@ from tests.replay import (  # noqa: E402
     FixtureSetError,
     FixtureStore,
     call_captured,
+    check_record_spec,
     compare,
     find_volatile_paths,
     format_sets,
@@ -64,7 +70,6 @@ from tests.replay import (  # noqa: E402
     load_golden,
     load_module,
     open_sets,
-    parse_sets,
     recording,
     replaying,
     reset_backend_state,
@@ -170,7 +175,9 @@ def summarize(store: FixtureStore) -> dict:
 
 def phase_record(args: argparse.Namespace, specs: list[tuple[str, list, dict]]) -> dict[str, dict]:
     live: dict[str, dict] = {}
-    with recording(args.set, root=args.root, throttle=args.throttle, refresh=args.refresh, log=_log) as rec:
+    with recording(
+        args.set, root=args.root, throttle=args.throttle, refresh=args.refresh, allow_base=args.permitir_base, log=_log
+    ) as rec:
         package = load_module(args.module)
         _log(f"[record] set={args.set} frozen_at={rec.store.frozen_at} run={rec.run_id}")
         for i, (fn_name, fargs, fkwargs) in enumerate(specs, 1):
@@ -200,7 +207,8 @@ def phase_record(args: argparse.Namespace, specs: list[tuple[str, list, dict]]) 
 def phase_goldens(args: argparse.Namespace, specs: list[tuple[str, list, dict]], live: dict[str, dict]) -> int:
     problems = 0
     FixtureStore.forget()
-    with replaying(args.set, root=args.root) as rp:
+    spec = replay_spec(args)
+    with replaying(spec, root=args.root) as rp:
         package = load_module(args.module)
         for fn_name, fargs, fkwargs in specs:
             name = golden_name(fn_name, fargs, fkwargs)
@@ -218,7 +226,7 @@ def phase_goldens(args: argparse.Namespace, specs: list[tuple[str, list, dict]],
                 "args": fargs,
                 "kwargs": fkwargs,
                 "module": args.module,
-                "fixture_set": args.set,
+                "fixture_set": spec,
                 "frozen_at": rp.store.frozen_at,
                 "volatile_paths": find_volatile_paths(result.get("output")),
                 **result,
@@ -240,6 +248,20 @@ def phase_goldens(args: argparse.Namespace, specs: list[tuple[str, list, dict]],
             write_golden(path, golden)
         _log(f"[golden] {len(specs)} goldens escritos en {args.goldens_dir}")
     return problems
+
+
+def replay_spec(args: argparse.Namespace) -> str:
+    """El spec para reproducir, sin las capas que no existen porque no grabaron ninguna llamada.
+
+    Al grabar, una capa que se quedó vacía no se crea (así nadie commitea una carpeta con un
+    ``index.json`` sin entradas), y el paso de verificación tiene que reproducir sin ella.
+    """
+    stack = open_sets(args.set, args.root)
+    names = [layer.name for layer in stack.layers if layer.exists]
+    for layer in stack.layers:
+        if not layer.exists:
+            _log(f"[replay] la capa {layer.name!r} no existe (no grabó ninguna llamada): se reproduce sin ella")
+    return ",".join(names) or args.set
 
 
 def leaked_secrets(directory: Path) -> list[str]:
@@ -297,7 +319,14 @@ def run_routes(args: argparse.Namespace) -> int:
     paths = [p if p.startswith("/") else "/" + p for p in args.get]
     recorded: dict[str, dict] = {}
     if not args.goldens_only:
-        with recording(args.set, root=args.root, throttle=args.throttle, refresh=args.refresh, log=_log) as rec:
+        with recording(
+            args.set,
+            root=args.root,
+            throttle=args.throttle,
+            refresh=args.refresh,
+            allow_base=args.permitir_base,
+            log=_log,
+        ) as rec:
             _log(
                 f"[record] capas={rec.set_name} graba en={rec.store.top.name} "
                 f"frozen_at={rec.store.frozen_at} run={rec.run_id}"
@@ -312,7 +341,7 @@ def run_routes(args: argparse.Namespace) -> int:
                 _log(f"    con error o vacía: {key}: {err[:140]}")
     problems = 0
     FixtureStore.forget()
-    with replaying(args.set, root=args.root) as rp:
+    with replaying(replay_spec(args), root=args.root) as rp:
         replayed = _get_routes(rp, paths, "replay")
         if rp.misses:
             problems += 1
@@ -336,7 +365,10 @@ def run_routes(args: argparse.Namespace) -> int:
         for hit in leaks:
             _log(f"    {hit}")
     for layer in open_sets(args.set, args.root).layers:
-        _log(f"[resumen] {layer.name}: {len(layer.keys())} llamadas grabadas")
+        if layer.exists:
+            _log(f"[resumen] {layer.name}: {len(layer.keys())} llamadas grabadas")
+        else:
+            _log(f"[resumen] {layer.name}: no grabó ninguna llamada, la capa no se creó ({layer.dir})")
     _log("[resultado] " + ("con problemas" if problems else "todas las rutas se reproducen completas desde las capas"))
     return 1 if problems else 0
 
@@ -385,6 +417,11 @@ def main() -> int:
     parser.add_argument("--throttle", type=float, default=1.0, help="segundos mínimos entre llamadas en vivo")
     parser.add_argument("--refresh", action="store_true", help="volver a pedir lo ya grabado")
     parser.add_argument(
+        "--permitir-base",
+        action="store_true",
+        help=f"permitir grabar en el set base {DEFAULT_SET} (por omisión solo se graba en una capa propia)",
+    )
+    parser.add_argument(
         "--goldens-only",
         action="store_true",
         help="no grabar (sin red): regenera los goldens del legado o, con --get, solo verifica las rutas en replay",
@@ -397,7 +434,7 @@ def main() -> int:
     )
     args = parser.parse_args()
     try:
-        layers = parse_sets(args.set)
+        layers = check_record_spec(args.set)
     except FixtureSetError as exc:
         _log(f"[error] {exc}")
         return 2
@@ -412,7 +449,7 @@ def main() -> int:
             )
             return 2
         return run_legacy(args)
-    except FileNotFoundError as exc:
+    except (FileNotFoundError, FixtureSetError) as exc:
         _log(f"[error] {exc}")
         return 2
 

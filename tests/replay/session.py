@@ -4,6 +4,10 @@ A session takes one recorded set or several stacked layers (``"2026-09-22,2026-0
 replay looks each key up layer by layer (first hit wins, a miss only after every layer); recording
 serves keys found in earlier layers from those layers as they are and writes new calls ONLY to the
 last layer. The clock is the first layer's ``frozen_at`` and a new top layer inherits it.
+
+Recording never touches the shared base set by accident: a spec whose comma collapsed into a single
+layer is refused (``check_record_spec``), writing into ``DEFAULT_SET`` needs ``allow_base=True``
+(``check_base_write``) and the top layer is only created on disk when something is actually written.
 """
 
 from __future__ import annotations
@@ -30,7 +34,17 @@ from .proxies import (
     make_ticker_class,
 )
 from .serialize import SerializationError, decode, encode
-from .store import DEFAULT_SET, FIXTURES_ROOT, FixtureStore, LayeredStore, SetSpec, available_sets, parse_sets
+from .store import (
+    DEFAULT_SET,
+    FIXTURES_ROOT,
+    FixtureStore,
+    LayeredStore,
+    SetSpec,
+    available_sets,
+    check_base_write,
+    check_record_spec,
+    parse_sets,
+)
 
 _real_sleep = time.sleep
 _RATE_LIMIT_MARKERS = ("too many requests", "rate limited", "yfratelimiterror")
@@ -125,12 +139,12 @@ def _is_empty(value: Any) -> bool:
     return False
 
 
-def _missing_sets_message(missing: list[FixtureStore], root: Path | None, *, what: str) -> str:
+def _missing_sets_message(missing: list[FixtureStore], root: Path | None, *, what: str, hint: str = "") -> str:
     base = Path(root) if root else FIXTURES_ROOT
     names = ", ".join(repr(layer.name) for layer in missing)
     known = ", ".join(available_sets(root)) or "ninguno"
     where = ", ".join(str(layer.dir) for layer in missing)
-    return f"No existe el set grabado {names} ({where}){what}. Sets disponibles en {base}: {known}."
+    return f"No existe el set grabado {names} ({where}){what}. Sets disponibles en {base}: {known}.{hint}"
 
 
 def _rank(rec: dict | None) -> int:
@@ -199,19 +213,27 @@ class ReplaySession:
         deterministic_futures: bool = True,
         throttle: float = 1.0,
         refresh: bool = False,
+        allow_base: bool = False,
         max_retries: int = 4,
         backoff: float = 20.0,
         log: Callable[[str], None] | None = None,
     ):
         if mode not in ("replay", "record"):
             raise ValueError(f"modo inválido: {mode}")
-        self.set_names = parse_sets(set_name)
+        # Al grabar, una coma que se quedó en una sola capa es un error: escribiría en esa capa.
+        self.set_names = check_record_spec(set_name) if mode == "record" else parse_sets(set_name)
         self.set_name = ",".join(self.set_names)
         self.mode = mode
         self.store = LayeredStore.open(self.set_names, root)
         if mode == "replay" and self.store.missing():
-            raise FileNotFoundError(_missing_sets_message(self.store.missing(), root, what=""))
+            hint = (
+                " Una capa que no grabó ninguna llamada no se crea: quítala del spec o graba algo en ella."
+                if len(self.store.layers) > 1
+                else ""
+            )
+            raise FileNotFoundError(_missing_sets_message(self.store.missing(), root, what="", hint=hint))
         if mode == "record":
+            check_base_write(self.store.top.name, allow_base=allow_base)
             missing_bases = [layer for layer in self.store.bases if not layer.exists]
             if missing_bases:
                 raise FileNotFoundError(
@@ -228,6 +250,7 @@ class ReplaySession:
         self.deterministic_futures = deterministic_futures
         self.throttle = throttle
         self.refresh = refresh
+        self.allow_base = allow_base
         self.max_retries = max_retries
         self.backoff = backoff
         self.log = log or (lambda msg: None)
@@ -288,6 +311,8 @@ class ReplaySession:
         if self.mode == "record" and not top.frozen_at:
             # A new layer inherits the clock of the layers under it, so keys that depend on "now"
             # (date ranges in URLs) are the same when recording and when replaying the stack.
+            # Only in memory: the folder and its index.json are written by the first put(), so a
+            # layer that records nothing (everything served by the base) is never materialized.
             now = self.real_now().replace(microsecond=0)
             fields: dict[str, Any] = {
                 "set": top.name,
@@ -298,7 +323,6 @@ class ReplaySession:
             if self.store.bases:
                 fields["layered_on"] = [layer.name for layer in self.store.bases]
             top.set_meta(**fields)
-            top.save_index()
 
         ticker_cls = make_ticker_class(self)
         download = make_download(self)
@@ -343,8 +367,14 @@ class ReplaySession:
         concurrent.futures.as_completed = self.orig["as_completed"]
         time.sleep = self.orig["sleep"]
         if self.mode == "record":
-            self.store.set_meta(updated_at=self.real_now().replace(microsecond=0).isoformat())
-            self.store.save_index()
+            top = self.store.top
+            if top.index["entries"] or top.exists:
+                self.store.set_meta(updated_at=self.real_now().replace(microsecond=0).isoformat())
+                self.store.save_index()
+            else:
+                # Nada nuevo que guardar: la capa no se crea vacía (si no, cada stream commitearía
+                # una carpeta con un index.json sin entradas).
+                self.log(f"[record] la capa {top.name!r} no grabó ninguna llamada: no se crea {top.dir}")
         self._installed = False
         with _active_lock:
             _active = None
@@ -506,7 +536,10 @@ def recording(set_name: SetSpec = DEFAULT_SET, **kwargs: Any) -> Iterator[Replay
     """Serve recorded calls from fixtures and fetch (throttled) + store everything else.
 
     With several layers, keys found in earlier layers come from them untouched and every new call
-    is written to the LAST layer only (created with its own ``index.json`` if needed).
+    is written to the LAST layer only (created with its own ``index.json`` at the first write; a
+    layer that records nothing is not created). Two guards protect the shared base set: a spec with
+    a comma that collapsed into one layer is refused, and writing into ``DEFAULT_SET`` needs
+    ``allow_base=True``.
     """
     session = ReplaySession(set_name, mode="record", **kwargs)
     with session:

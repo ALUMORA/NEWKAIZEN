@@ -9,7 +9,9 @@ Sirve para grabar fixtures deterministas del navegador y para probar el frontend
     USERS='{"demo":"demo"}' python scripts/run_replay_backend.py  # con un usuario de prueba
 
 ``--set`` acepta uno o varios sets separados por coma, en orden de búsqueda (el mismo formato que
-``KAIZEN_REPLAY_SET``, que es el valor por omisión si está definido). Todos tienen que existir.
+``KAIZEN_REPLAY_SET``, que es el valor por omisión si está definido). Todos tienen que existir; una
+capa que no grabó ninguna llamada no se crea, así que no se pone en el spec. ``--root`` sirve para
+servir sets de borrador fuera de ``tests/fixtures/recorded``.
 
 El módulo se importa DESPUÉS de instalar el replay y debe exponer una app ASGI ``app`` (el paquete la
 arma con ``create_app()`` al pedirla). La configuración sale del entorno igual que en producción
@@ -156,13 +158,19 @@ def main() -> int:
         help="set grabado en tests/fixtures/recorded/, o varios separados por coma en orden de búsqueda "
         "(p. ej. 2026-09-22,2026-09-22-b2a); por omisión KAIZEN_REPLAY_SET o " + DEFAULT_SET,
     )
+    parser.add_argument(
+        "--root",
+        type=Path,
+        default=None,
+        help="carpeta que contiene los sets (por omisión tests/fixtures/recorded); sirve para servir un borrador",
+    )
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8190)
     parser.add_argument("--no-freeze", action="store_true", help="no congelar el reloj")
     args = parser.parse_args()
 
     try:
-        session, module = start(args.module, args.set, freeze_time=not args.no_freeze)
+        session, module = start(args.module, args.set, freeze_time=not args.no_freeze, root=args.root)
     except (FileNotFoundError, FixtureSetError) as exc:
         print(f"[replay] {exc}", file=sys.stderr)
         return 2

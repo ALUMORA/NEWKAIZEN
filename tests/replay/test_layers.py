@@ -31,6 +31,7 @@ from tests.replay import (
     LayeredStore,
     ReplayMiss,
     active_session,
+    check_record_spec,
     compare,
     format_sets,
     golden_name,
@@ -299,6 +300,62 @@ def test_recording_over_the_real_committed_set_never_writes_it(tmp_path, upstrea
     assert rp.misses == []
 
 
+# ─── el set base no se toca por accidente ────────────────────────────────────
+
+
+def test_a_comma_that_collapsed_into_one_layer_refuses_to_record(base, upstream):
+    """``--set "base,$CAPA"`` con ``$CAPA`` sin definir escribiría en la base: mejor un error."""
+    before = _hashes(base / "base")
+    for spec in ("base,", " base , ", ",base"):
+        with pytest.raises(FixtureSetError, match="trae coma pero se quedó en una sola capa"):
+            recording(spec, root=base).__enter__()
+    assert active_session() is None
+    assert upstream.calls == [] and _hashes(base / "base") == before
+
+    # parse_sets y format_sets siguen tolerantes (leer nunca escribe), y el replay también.
+    assert parse_sets("base,") == ["base"] and format_sets(" base , ") == "base"
+    with replaying("base,", root=base) as rp:
+        assert _info("AAPL")["version"] == "v1"
+    assert rp.misses == []
+    # Sin coma no hay nada que reclamar, ni con lista.
+    assert check_record_spec("base") == ["base"] and check_record_spec(["base"]) == ["base"]
+    with recording("base,otra-capa", root=base, throttle=0) as rec:
+        assert rec.store.top.name == "otra-capa"
+
+
+def test_writing_into_the_shared_base_set_has_to_be_explicit(tmp_path, upstream):
+    """La última capa es a donde se graba: si es el set base compartido, se pide a propósito."""
+    with pytest.raises(FixtureSetError, match="Graba en tu propia capa"):
+        recording(DEFAULT_SET, root=tmp_path).__enter__()
+    with pytest.raises(FixtureSetError, match="Graba en tu propia capa"):
+        recording(f"otra,{DEFAULT_SET}", root=tmp_path).__enter__()
+    assert active_session() is None
+    assert not (tmp_path / DEFAULT_SET).exists() and upstream.calls == []
+
+    with recording(DEFAULT_SET, root=tmp_path, throttle=0, allow_base=True):
+        _info("AAPL")
+    assert list(_index(tmp_path, DEFAULT_SET)["entries"]) == ["yf:AAPL:info"]
+
+
+def test_a_layer_that_records_nothing_is_not_created(base, upstream):
+    """Hoy las rutas de fase 2 responden 501: la primera corrida de cada stream no graba nada."""
+    with recording("base,vacia", root=base, throttle=0) as rec:
+        assert _info("AAPL")["version"] == "v1"  # todo sale de la base
+    assert rec.stats["base_hits"] == 1 and upstream.calls == []
+    assert not (base / "vacia").exists()
+
+    # Y el error de replay dice qué pasó, en vez de dejar a alguien buscando la carpeta.
+    with pytest.raises(FileNotFoundError, match="no grabó ninguna llamada no se crea"):
+        replaying("base,vacia", root=base).__enter__()
+    assert active_session() is None
+
+    # En cuanto graba algo, la capa se crea con su índice completo.
+    with recording("base,vacia", root=base, throttle=0):
+        _info("MSFT")
+    assert list(_index(base, "vacia")["entries"]) == ["yf:MSFT:info"]
+    assert _index(base, "vacia")["layered_on"] == ["base"]
+
+
 # ─── sets que no existen o no cuadran ────────────────────────────────────────
 
 
@@ -408,9 +465,16 @@ def test_record_fixtures_layers_entry_point(tmp_path, monkeypatch, capsys):
     )
     out = capsys.readouterr().out
     assert f"graba en={DEFAULT_SET}-rec" in out and "todas las rutas se reproducen completas" in out
+    # Todo salió de la base (y la guarda de red del conftest falla si algo hubiera salido a la red),
+    # así que la capa no grabó nada y NO se creó: nadie commitea una carpeta con un index vacío.
+    assert not (tmp_path / f"{DEFAULT_SET}-rec").exists()
+    assert "no grabó ninguna llamada, la capa no se creó" in out
+
+    # Con algo grabado sí se crea, con su propio index.json y el reloj de la base.
+    with _fake_upstream(), recording(spec, root=tmp_path, throttle=0):
+        _info("ZZZREC")
     top = _index(tmp_path, f"{DEFAULT_SET}-rec")
-    # Todo salió de la base (y la guarda de red del conftest falla si algo hubiera salido a la red).
-    assert top["entries"] == {} and top["layered_on"] == [DEFAULT_SET]
+    assert list(top["entries"]) == ["yf:ZZZREC:info"] and top["layered_on"] == [DEFAULT_SET]
     assert top["frozen_at"] == "2026-09-22T14:51:31+00:00"
     # Sin red: solo verificar.
     assert run("--root", str(tmp_path), "--set", spec, "--get", "/stock/AAPL", "--goldens-only") == 0
@@ -421,6 +485,12 @@ def test_record_fixtures_layers_entry_point(tmp_path, monkeypatch, capsys):
     assert "los de tests/goldens_legacy quedan fijos en el set base" in capsys.readouterr().out
     assert run("--set", " , ") == 2
     assert "No se indicó ningún set" in capsys.readouterr().out
+    # Una coma que se quedó en una sola capa (--set "2026-09-22,$CAPA" con $CAPA vacía) no graba.
+    assert run("--root", str(tmp_path), "--set", f"{DEFAULT_SET},", "--get", "/health") == 2
+    assert "trae coma pero se quedó en una sola capa" in capsys.readouterr().out
+    # Y grabar en el set base se pide a propósito.
+    assert run("--root", str(tmp_path), "--set", DEFAULT_SET, "--throttle", "0", "--get", "/health") == 2
+    assert "Graba en tu propia capa" in capsys.readouterr().out
     assert run("--root", str(tmp_path), "--set", f"{DEFAULT_SET},falta,{DEFAULT_SET}-rec", "--get", "/health") == 2
     assert "No existe el set grabado 'falta'" in capsys.readouterr().out
 
