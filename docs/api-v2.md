@@ -44,6 +44,9 @@ anuncia en `capabilities` solo lo que ya funciona.
 - Con `AUTH_REQUIRED=true` todas las rutas exigen `Authorization: Bearer <token>` salvo
   `GET /health`, `POST /auth/login` y los `OPTIONS` de CORS. Con `AUTH_REQUIRED=false` (desarrollo)
   las rutas quedan abiertas; `GET /auth/me` siempre exige token.
+- `SECRET_KEY` es obligatoria, de 32 caracteres o más y distinta de la llave de desarrollo (que
+  está publicada en el repo) en producción y siempre que `AUTH_REQUIRED=true`, en cualquier
+  entorno. Si no, el servidor no arranca. La llave de desarrollo solo se usa sin `AUTH_REQUIRED`.
 - El token es un JWT HS256 firmado con `SECRET_KEY`, con `sub` (usuario en minúsculas), `iat`,
   `exp` (`TOKEN_TTL_HOURS`, 12 por omisión) y `ver` (`TOKEN_VERSION`). Subir `TOKEN_VERSION`
   revoca todos los tokens; quitar a alguien de `USERS` revoca los suyos.
@@ -226,8 +229,10 @@ PORT=8101 .venv/bin/python backend.py
 ```
 
 Variables de entorno: ver el docstring de `kaizen_api/settings.py`. En producción
-(`KAIZEN_ENV=production`) el servidor no arranca sin `SECRET_KEY` de 32 caracteres o más, ni con
-contraseñas en texto plano en `USERS`; además se apagan `/docs`, `/openapi.json` y las rutas v1.
+(`KAIZEN_ENV=production`) el servidor no arranca sin `SECRET_KEY` propia de 32 caracteres o más, ni
+con contraseñas en texto plano en `USERS`; además se apagan `/docs`, `/openapi.json` y las rutas v1.
+Con `AUTH_REQUIRED=true` la regla de `SECRET_KEY` aplica también en desarrollo: para probar la
+sesión en local, define una (por ejemplo `SECRET_KEY=$(openssl rand -hex 32)`).
 
 ## Referencia de modelos
 

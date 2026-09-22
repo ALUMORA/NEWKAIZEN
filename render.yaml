@@ -1,6 +1,9 @@
 services:
   # Servicio actual de la UI vieja: mismo arranque, ahora con FastAPI y las rutas v1 (KAIZEN_ENV
-  # sin definir = development). No se toca hasta cortar la UI vieja.
+  # sin definir = development). No se toca hasta cortar la UI vieja. Si algún día se le enciende
+  # AUTH_REQUIRED, necesita SECRET_KEY propia de 32+ caracteres o no arranca (la de desarrollo es
+  # pública). Su CORS ya no es '*': si la UI vieja vive fuera de newkaizen*.vercel.app, agrega su
+  # origen en ALLOWED_ORIGINS antes de desplegar.
   - type: web
     name: kaizen-backend
     runtime: python

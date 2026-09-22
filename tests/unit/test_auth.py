@@ -20,7 +20,7 @@ from kaizen_api.security.auth import (
     verify_token,
 )
 from kaizen_api.security.ratelimit import LoginRateLimiter, TokenBucket
-from kaizen_api.settings import Settings, SettingsError
+from kaizen_api.settings import DEV_SECRET_KEY, Settings, SettingsError
 from tests.replay import GOLDENS_DIR, compare, load_golden, replaying
 
 SECRET = "prueba-secreta-de-32-caracteres-o-mas-0123"
@@ -81,8 +81,47 @@ def test_production_refuses_to_start_without_secret_key():
         Settings.from_env({"KAIZEN_ENV": "production"})
     with pytest.raises(SettingsError, match="SECRET_KEY"):
         Settings.from_env({"KAIZEN_ENV": "production", "SECRET_KEY": "corta"})
+    with pytest.raises(SettingsError, match="llave de desarrollo"):
+        Settings.from_env({"KAIZEN_ENV": "production", "SECRET_KEY": DEV_SECRET_KEY})
     prod = Settings.from_env({"KAIZEN_ENV": "production", "SECRET_KEY": SECRET})
     assert prod.is_production and not prod.legacy_routes and "localhost" not in prod.cors_origin_regex
+
+
+@pytest.mark.parametrize("kaizen_env", ["development", "production"])
+@pytest.mark.parametrize("secret", [None, DEV_SECRET_KEY, "corta"], ids=["sin-llave", "llave-dev", "corta"])
+def test_auth_required_needs_its_own_strong_secret_in_any_env(kaizen_env, secret):
+    # DEV_SECRET_KEY está en el repo público: con ella cualquiera firma tokens válidos.
+    env = {"KAIZEN_ENV": kaizen_env, "AUTH_REQUIRED": "true"}
+    if secret is not None:
+        env["SECRET_KEY"] = secret
+    with pytest.raises(SettingsError, match="SECRET_KEY"):
+        Settings.from_env(env)
+
+
+def test_dev_key_only_without_auth_required_and_never_by_hand():
+    dev = Settings.from_env({"SECRET_KEY": DEV_SECRET_KEY})
+    assert dev.secret_key == DEV_SECRET_KEY and any("llave de desarrollo" in w for w in dev.warnings)
+    assert Settings.from_env({}).secret_key == DEV_SECRET_KEY
+    assert Settings.from_env({"AUTH_REQUIRED": "true", "SECRET_KEY": SECRET}).auth_required
+    with pytest.raises(SettingsError, match="llave de desarrollo"):
+        Settings(auth_required=True)
+    with pytest.raises(SettingsError, match="llave de desarrollo"):
+        Settings(env="production")
+
+
+def test_token_forged_with_dev_key_is_rejected_when_auth_required(ana_hash):
+    import time
+
+    import jwt
+
+    settings = make_settings(ana_hash, AUTH_REQUIRED="true", KAIZEN_LEGACY_ROUTES="1")
+    now = int(time.time())
+    forged = jwt.encode({"sub": "ana", "iat": now, "exp": now + 3600, "ver": 1}, DEV_SECRET_KEY, algorithm="HS256")
+    client = client_for(settings)
+    auth = {"Authorization": f"Bearer {forged}"}
+    for path in ("/auth/me", "/stock/AAPL", "/v2/quotes?symbols=AAPL"):
+        r = client.get(path, headers=auth)
+        assert r.status_code == 401 and r.json()["error"]["details"] == {"reason": "token_invalid"}, path
 
 
 # ─── tokens ──────────────────────────────────────────────────────────────────

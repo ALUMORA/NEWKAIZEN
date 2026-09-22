@@ -6,7 +6,8 @@ Variables (todas opcionales en desarrollo):
 PORT                   Puerto HTTP. Default 8002 (Render lo define solo).
 KAIZEN_ENV             ``development`` (default) o ``production``.
 AUTH_REQUIRED          ``true`` exige ``Authorization: Bearer`` en todo salvo /health y /auth/login.
-SECRET_KEY             Llave HS256 de los JWT, 32 caracteres o más. En producción es obligatoria.
+SECRET_KEY             Llave HS256 de los JWT, 32 caracteres o más. Es obligatoria en producción y
+                       siempre que AUTH_REQUIRED esté activo, en cualquier entorno.
 USERS                  JSON ``{"usuario": "scrypt$n$r$p$salt_hex$hash_hex"}`` (scripts/hash_password.py).
                        Fuera de producción también acepta contraseñas en texto plano, con aviso.
 TOKEN_TTL_HOURS        Vigencia del token. Default 12.
@@ -24,6 +25,11 @@ RENDER_GIT_COMMIT      Commit que reporta /health (Render lo define solo).
 
 Una configuración de producción inválida (sin SECRET_KEY, con contraseñas en texto plano o con
 USERS mal formado) lanza ``SettingsError`` y el servidor no arranca.
+
+``DEV_SECRET_KEY`` está en el repo, que es público: cualquiera puede firmar tokens con ella. Por eso
+solo sirve en desarrollo con AUTH_REQUIRED apagado. Con AUTH_REQUIRED activo (en cualquier entorno)
+o en producción, SECRET_KEY tiene que ser propia, de 32 caracteres o más y distinta de la de
+desarrollo; si no, el servidor no arranca.
 """
 
 from __future__ import annotations
@@ -72,6 +78,32 @@ def _int(env: Mapping[str, str], name: str, default: int, lo: int, hi: int) -> i
     if not lo <= value <= hi:
         raise SettingsError(f"{name} debe estar entre {lo} y {hi}")
     return value
+
+
+_DEV_KEY_MSG = (
+    "SECRET_KEY no puede ser la llave de desarrollo (está publicada en el repo) en producción ni con "
+    "AUTH_REQUIRED activo"
+)
+
+
+def _resolve_secret(secret: str, production: bool, auth_required: bool, warnings: list[str]) -> str:
+    """La llave de los JWT. Sin llave propia y fuerte solo se arranca en desarrollo sin AUTH_REQUIRED."""
+    strict = production or auth_required
+    why = "en producción" if production else "con AUTH_REQUIRED activo"
+    if not secret:
+        if strict:
+            raise SettingsError(f"SECRET_KEY es obligatoria {why}")
+        warnings.append("SECRET_KEY no está definida: se usa la llave de desarrollo")
+        return DEV_SECRET_KEY
+    if secret == DEV_SECRET_KEY:
+        if strict:
+            raise SettingsError(_DEV_KEY_MSG)
+        warnings.append("SECRET_KEY es la llave de desarrollo")
+    elif len(secret) < MIN_SECRET_LENGTH:
+        if strict:
+            raise SettingsError(f"SECRET_KEY debe tener al menos {MIN_SECRET_LENGTH} caracteres {why}")
+        warnings.append(f"SECRET_KEY tiene menos de {MIN_SECRET_LENGTH} caracteres")
+    return secret
 
 
 def _parse_users(raw: str | None, production: bool, warnings: list[str]) -> dict[str, str]:
@@ -135,6 +167,12 @@ class Settings:
     commit: str | None = None
     warnings: tuple[str, ...] = ()
 
+    def __post_init__(self) -> None:
+        # Respaldo para quien arme Settings a mano sin pasar por from_env: la llave pública de
+        # desarrollo nunca firma sesiones que protegen algo.
+        if self.secret_key == DEV_SECRET_KEY and (self.auth_required or self.is_production):
+            raise SettingsError(_DEV_KEY_MSG)
+
     @property
     def is_production(self) -> bool:
         return self.env == "production"
@@ -157,16 +195,8 @@ class Settings:
             raise SettingsError(f"KAIZEN_ENV debe ser development o production, no {kaizen_env!r}")
         production = kaizen_env == "production"
 
-        secret = env.get("SECRET_KEY") or ""
-        if not secret:
-            if production:
-                raise SettingsError("SECRET_KEY es obligatoria en producción")
-            secret = DEV_SECRET_KEY
-            warnings.append("SECRET_KEY no está definida: se usa la llave de desarrollo")
-        elif len(secret) < MIN_SECRET_LENGTH:
-            if production:
-                raise SettingsError(f"SECRET_KEY debe tener al menos {MIN_SECRET_LENGTH} caracteres")
-            warnings.append(f"SECRET_KEY tiene menos de {MIN_SECRET_LENGTH} caracteres")
+        auth_required = _flag(env, "AUTH_REQUIRED", False)
+        secret = _resolve_secret(env.get("SECRET_KEY") or "", production, auth_required, warnings)
 
         origin_regex = env.get("ALLOWED_ORIGIN_REGEX") or DEFAULT_ORIGIN_REGEX
         try:
@@ -177,7 +207,6 @@ class Settings:
         if "*" in origins:
             raise SettingsError("ALLOWED_ORIGINS no acepta '*': lista los orígenes exactos")
 
-        auth_required = _flag(env, "AUTH_REQUIRED", False)
         users = _parse_users(env.get("USERS"), production, warnings)
         if auth_required and not users:
             warnings.append("AUTH_REQUIRED está activo pero USERS está vacío: nadie podrá entrar")
