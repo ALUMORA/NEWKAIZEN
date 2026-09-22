@@ -1,0 +1,396 @@
+{
+  "cases": [
+    {
+      "name": "aportación requerida = 5,000 (respuesta conocida del caso sigma=0)",
+      "kind": "requiredContribution",
+      "input": {
+        "target": 176729.14322984172,
+        "years": 1,
+        "initial": 100000,
+        "mu": 0.12682503013196977,
+        "sigma": 0,
+        "inflation": 0,
+        "contributionGrowth": 0,
+        "stepsPerYear": 12,
+        "contributionFrequency": "monthly",
+        "probability": 0.5,
+        "paths": 1,
+        "seed": "golden-goals",
+        "tolerance": 1e-07,
+        "maxIterations": 300
+      },
+      "expected": {
+        "contribution": 5000.000000000003
+      },
+      "tol": 1e-08
+    },
+    {
+      "name": "meta a 15 años con aportación indexada a la inflación",
+      "kind": "requiredContribution",
+      "input": {
+        "target": 3000000,
+        "years": 15,
+        "initial": 200000,
+        "mu": 0.09,
+        "sigma": 0,
+        "inflation": 0.04,
+        "contributionGrowth": null,
+        "stepsPerYear": 12,
+        "contributionFrequency": "monthly",
+        "probability": 0.5,
+        "paths": 1,
+        "seed": "golden-goals",
+        "tolerance": 1e-06,
+        "maxIterations": 300
+      },
+      "expected": {
+        "contribution": 4817.281268898776
+      },
+      "tol": 1e-08
+    },
+    {
+      "name": "meta en pesos de hoy (real) con aportación anual",
+      "kind": "requiredContribution",
+      "input": {
+        "target": 1500000,
+        "years": 20,
+        "initial": 0,
+        "mu": 0.085,
+        "sigma": 0,
+        "inflation": 0.045,
+        "contributionGrowth": 0.03,
+        "stepsPerYear": 12,
+        "contributionFrequency": "annual",
+        "probability": 0.5,
+        "paths": 1,
+        "real": true,
+        "seed": "golden-goals",
+        "tolerance": 1e-06,
+        "maxIterations": 300
+      },
+      "expected": {
+        "contribution": 55469.68803315946
+      },
+      "tol": 1e-08
+    },
+    {
+      "name": "meta ya alcanzada con el saldo inicial: aportación 0",
+      "kind": "requiredContribution",
+      "input": {
+        "target": 100000,
+        "years": 5,
+        "initial": 500000,
+        "mu": 0.06,
+        "sigma": 0,
+        "inflation": 0,
+        "contributionGrowth": 0,
+        "stepsPerYear": 12,
+        "contributionFrequency": "monthly",
+        "probability": 0.5,
+        "paths": 1,
+        "seed": "golden-goals",
+        "tolerance": 1e-06,
+        "maxIterations": 300
+      },
+      "expected": {
+        "contribution": 0.0
+      },
+      "tol": 1e-08
+    },
+    {
+      "name": "retiro 4 % indexado, rendimiento 5 %, inflación 3 %, 3 años",
+      "kind": "retirementIncome",
+      "input": {
+        "balance": 1000000,
+        "withdrawalRate": 0.04,
+        "nominalReturn": 0.05,
+        "inflation": 0.03,
+        "years": 3
+      },
+      "expected": {
+        "firstYearWithdrawal": 40000.0,
+        "firstMonthWithdrawal": 3333.3333333333335,
+        "withdrawals": [
+          40000.0,
+          41200.0,
+          42436.0
+        ],
+        "balances": [
+          1000000,
+          1008000.0,
+          1015140.0,
+          1021339.2000000001
+        ],
+        "depletedYear": null,
+        "totalWithdrawn": 123636.0,
+        "finalBalance": 1021339.2000000001,
+        "finalBalanceReal": 934670.0502504286
+      },
+      "tol": 1e-12
+    },
+    {
+      "name": "retiro 4 % indexado, 30 años, rendimiento real cero",
+      "kind": "retirementIncome",
+      "input": {
+        "balance": 2500000,
+        "withdrawalRate": 0.04,
+        "nominalReturn": 0.04,
+        "inflation": 0.04,
+        "years": 30
+      },
+      "expected": {
+        "firstYearWithdrawal": 100000.0,
+        "firstMonthWithdrawal": 8333.333333333334,
+        "withdrawals": [
+          100000.0,
+          104000.0,
+          108160.0,
+          112486.40000000001,
+          116985.85600000001,
+          121665.29024000002,
+          126531.90184960002,
+          131593.17792358404,
+          136856.9050405274,
+          142331.1812421485,
+          148024.42849183446,
+          153945.40563150783,
+          160103.22185676816,
+          166507.3507310389,
+          173167.64476028047,
+          180094.35055069168,
+          187298.12457271936,
+          194790.04955562815,
+          202581.6515378533,
+          210684.91759936744,
+          219112.31430334214,
+          227876.80687547583,
+          236991.87915049487,
+          246471.55431651467,
+          256330.41648917436,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "balances": [
+          2500000,
+          2496000.0,
+          2487680.0,
+          2474700.8000000003,
+          2456702.9760000003,
+          2433305.8048,
+          2404106.1351424,
+          2368677.202624512,
+          2326567.385688965,
+          2277298.8998743757,
+          2220366.4273775164,
+          2155235.6788411094,
+          2081341.8841379858,
+          1998088.2087724663,
+          1904844.0923630844,
+          1800943.5055069162,
+          1685683.1211544736,
+          1558320.3964450243,
+          1418071.5607649721,
+          1264109.5055962037,
+          1095561.5715167099,
+          911507.2275019025,
+          710975.6374514838,
+          492943.10863302846,
+          256330.41648917436,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "depletedYear": 25,
+        "totalWithdrawn": 4164590.8287185514,
+        "finalBalance": 0.0,
+        "finalBalanceReal": 0.0
+      },
+      "tol": 1e-12
+    },
+    {
+      "name": "el saldo se agota: retiro 20 % sin rendimiento",
+      "kind": "retirementIncome",
+      "input": {
+        "balance": 100000,
+        "withdrawalRate": 0.2,
+        "nominalReturn": 0.0,
+        "inflation": 0.0,
+        "years": 8
+      },
+      "expected": {
+        "firstYearWithdrawal": 20000.0,
+        "firstMonthWithdrawal": 1666.6666666666667,
+        "withdrawals": [
+          20000.0,
+          20000.0,
+          20000.0,
+          20000.0,
+          20000.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "balances": [
+          100000,
+          80000.0,
+          60000.0,
+          40000.0,
+          20000.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "depletedYear": 5,
+        "totalWithdrawn": 100000.0,
+        "finalBalance": 0.0,
+        "finalBalanceReal": 0.0
+      },
+      "tol": 1e-12
+    },
+    {
+      "name": "probabilityOfGoal nominal meta=176000.0",
+      "kind": "probabilityOfGoal",
+      "input": {
+        "sim": {
+          "initial": 100000,
+          "contribution": 5000,
+          "contributionFrequency": "monthly",
+          "contributionGrowth": 0,
+          "years": 1,
+          "stepsPerYear": 12,
+          "mu": 0.12682503013196977,
+          "sigma": 0,
+          "inflation": 0,
+          "paths": 9,
+          "seed": "golden-goals"
+        },
+        "target": 176000.0,
+        "real": false
+      },
+      "expected": 1.0,
+      "tol": 0.0
+    },
+    {
+      "name": "probabilityOfGoal nominal meta=176729.0",
+      "kind": "probabilityOfGoal",
+      "input": {
+        "sim": {
+          "initial": 100000,
+          "contribution": 5000,
+          "contributionFrequency": "monthly",
+          "contributionGrowth": 0,
+          "years": 1,
+          "stepsPerYear": 12,
+          "mu": 0.12682503013196977,
+          "sigma": 0,
+          "inflation": 0,
+          "paths": 9,
+          "seed": "golden-goals"
+        },
+        "target": 176729.0,
+        "real": false
+      },
+      "expected": 1.0,
+      "tol": 0.0
+    },
+    {
+      "name": "probabilityOfGoal nominal meta=176730.0",
+      "kind": "probabilityOfGoal",
+      "input": {
+        "sim": {
+          "initial": 100000,
+          "contribution": 5000,
+          "contributionFrequency": "monthly",
+          "contributionGrowth": 0,
+          "years": 1,
+          "stepsPerYear": 12,
+          "mu": 0.12682503013196977,
+          "sigma": 0,
+          "inflation": 0,
+          "paths": 9,
+          "seed": "golden-goals"
+        },
+        "target": 176730.0,
+        "real": false
+      },
+      "expected": 0.0,
+      "tol": 0.0
+    },
+    {
+      "name": "probabilityOfGoal nominal meta=177000.0",
+      "kind": "probabilityOfGoal",
+      "input": {
+        "sim": {
+          "initial": 100000,
+          "contribution": 5000,
+          "contributionFrequency": "monthly",
+          "contributionGrowth": 0,
+          "years": 1,
+          "stepsPerYear": 12,
+          "mu": 0.12682503013196977,
+          "sigma": 0,
+          "inflation": 0,
+          "paths": 9,
+          "seed": "golden-goals"
+        },
+        "target": 177000.0,
+        "real": false
+      },
+      "expected": 0.0,
+      "tol": 0.0
+    },
+    {
+      "name": "probabilityOfGoal real meta=168312.4697427064",
+      "kind": "probabilityOfGoal",
+      "input": {
+        "sim": {
+          "initial": 100000,
+          "contribution": 5000,
+          "contributionFrequency": "monthly",
+          "contributionGrowth": 0,
+          "years": 1,
+          "stepsPerYear": 12,
+          "mu": 0.12682503013196977,
+          "sigma": 0,
+          "inflation": 0.05,
+          "paths": 9,
+          "seed": "golden-goals"
+        },
+        "target": 168312.4697427064,
+        "real": true
+      },
+      "expected": 1.0,
+      "tol": 0.0
+    },
+    {
+      "name": "probabilityOfGoal real meta=168314.4697427064",
+      "kind": "probabilityOfGoal",
+      "input": {
+        "sim": {
+          "initial": 100000,
+          "contribution": 5000,
+          "contributionFrequency": "monthly",
+          "contributionGrowth": 0,
+          "years": 1,
+          "stepsPerYear": 12,
+          "mu": 0.12682503013196977,
+          "sigma": 0,
+          "inflation": 0.05,
+          "paths": 9,
+          "seed": "golden-goals"
+        },
+        "target": 168314.4697427064,
+        "real": true
+      },
+      "expected": 0.0,
+      "tol": 0.0
+    }
+  ]
+}
