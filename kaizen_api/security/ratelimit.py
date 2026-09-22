@@ -61,6 +61,19 @@ class TokenBucket:
         with self._lock:
             return self._level(key, self.clock())
 
+    def refund(self, key: str, tokens: float = 1.0) -> None:
+        """Devuelve fichas a ``key``, sin pasarse de ``capacity``. Una llave llena no cambia."""
+        with self._lock:
+            entry = self._buckets.get(key)
+            if entry is None:
+                return
+            now = self.clock()
+            level = min(self.capacity, self._level(key, now) + tokens)
+            if level >= self.capacity:
+                del self._buckets[key]  # llena otra vez: guardarla solo gasta memoria
+            else:
+                self._buckets[key] = (level, now)
+
     def reset(self) -> None:
         with self._lock:
             self._buckets.clear()
@@ -83,7 +96,15 @@ def retry_after_header(seconds: float) -> str:
 
 
 class LoginRateLimiter:
-    """Límites del login: 5 por minuto por IP y 10 por hora por usuario (se cuentan todos los intentos)."""
+    """Límites del login: por IP y por minuto, y por usuario y por hora **solo intentos fallidos**.
+
+    Los defaults son los de la spec v2: 5 por minuto por IP y 10 por hora por usuario.
+
+    La cubeta por usuario se gasta al empezar el intento y se **devuelve** con ``refund_user`` cuando
+    las credenciales resultaron buenas. Así la cubeta cuenta fallas, no logins: nadie puede dejar a
+    una persona fuera de su cuenta a punta de contraseñas malas mientras ella sí sabe la suya, y una
+    suite e2e que entra muchas veces seguidas tampoco se auto bloquea.
+    """
 
     def __init__(
         self,
@@ -95,31 +116,57 @@ class LoginRateLimiter:
         self.by_ip = TokenBucket.per_period(*per_ip, clock=clock)
         self.by_user = TokenBucket.per_period(*per_user, clock=clock)
 
+    @classmethod
+    def from_settings(cls, settings, *, clock: Callable[[], float] = time.monotonic) -> LoginRateLimiter:
+        """Arma el limitador con ``LOGIN_RATE_LIMIT_*`` de la configuración."""
+        return cls(
+            per_ip=(settings.login_ip_per_minute, 60.0),
+            per_user=(settings.login_user_per_hour, 3600.0),
+            clock=clock,
+        )
+
+    @staticmethod
+    def user_key(username: str) -> str:
+        # Acotado: el POST /login v1 acepta cuerpos de hasta 10 KB y cada llave vive en memoria.
+        return f"user:{(username or '').strip().lower()[:64]}"
+
     def check(self, ip: str, username: str) -> float | None:
         """Gasta un intento. Devuelve ``None`` si pasa o los segundos a esperar si no."""
         allowed, wait = self.by_ip.take(f"ip:{ip}")
         if not allowed:
             return wait
-        # Acotado: el POST /login v1 acepta cuerpos de hasta 10 KB y cada llave vive en memoria.
-        allowed, wait = self.by_user.take(f"user:{username.strip().lower()[:64]}")
+        allowed, wait = self.by_user.take(self.user_key(username))
         if not allowed:
             return wait
         return None
+
+    def refund_user(self, username: str) -> None:
+        """Devuelve el intento de ``username``: se llama cuando el login SÍ fue correcto."""
+        self.by_user.refund(self.user_key(username))
 
     def reset(self) -> None:
         self.by_ip.reset()
         self.by_user.reset()
 
 
-def client_ip(headers, client_host: str | None) -> str:
-    """IP del cliente: primer salto de ``X-Forwarded-For`` si existe, si no el host de la conexión.
+def client_ip(headers, client_host: str | None, trusted_hops: int = 1) -> str:
+    """Llave por IP del cliente, tomando ``X-Forwarded-For`` solo hasta donde es confiable.
 
-    Ojo: el primer salto lo escribe el cliente y se puede falsificar; por eso el login también
-    limita por usuario.
+    ``X-Forwarded-For`` se lee de derecha a izquierda: cada proxy le **agrega** la IP del par que le
+    habló, así que los ``trusted_hops`` saltos finales los escribió infraestructura nuestra y todo
+    lo que está a su izquierda lo escribió el cliente y se puede inventar. Con ``trusted_hops=1``
+    (Render pone un balanceador enfrente) la IP real del cliente es el **último** elemento.
+
+    Tomar el primero, como hacía S1, deja pasar ``X-Forwarded-For: <lo que sea>``: el atacante se
+    cambia de llave en cada intento y el límite por IP no existe. Con 0 saltos la cabecera se ignora
+    por completo y manda la IP del socket, que es lo correcto cuando el API se expone directo.
     """
-    forwarded = headers.get("x-forwarded-for") if headers is not None else None
+    hops = max(0, int(trusted_hops))
+    forwarded = headers.get("x-forwarded-for") if (headers is not None and hops) else None
     if forwarded:
-        first = forwarded.split(",")[0].strip()
-        if first:
-            return first[:64]
+        chain = [h.strip() for h in forwarded.split(",") if h.strip()]
+        if len(chain) >= hops:
+            return chain[-hops][:64]
+        # Cadena más corta que los saltos configurados: no cuadra con la infraestructura declarada,
+        # así que no se confía en ella y manda el socket.
     return client_host or "desconocido"
