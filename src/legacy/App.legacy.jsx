@@ -1,10 +1,13 @@
 ﻿
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useTheme } from './theme.js';
-import { Badge, Button, IconButton, Card, KpiTile, Mark, ThemeToggle } from './ui.jsx';
-import { cn } from './cn.js';
+import { useTheme } from '../theme.js';
+import { Badge, Button, IconButton, Card, KpiTile, Mark, ThemeToggle } from '../ui.jsx';
+import { cn } from '../cn.js';
+// Todo request al backend pasa por authorizedFetch: lleva el token de la sesión (el API v2 exige
+// sesión también en sus rutas v1) y un 401 cierra la sesión y manda a /login. Nunca fetch directo.
+import { authorizedFetch } from '../lib/api/client.js';
 import {
-  ArrowRight, Eye, EyeOff, ShieldCheck, Menu, X,
+  Menu, X,
   Newspaper, Briefcase, Gauge, ListFilter, LineChart as LineChartIcon,
   Landmark, Sparkles, ChartNoAxesCombined, Download, FileText, LogOut,
 } from 'lucide-react';
@@ -34,10 +37,10 @@ const BACKEND_CANDIDATES = import.meta.env.DEV && import.meta.env.VITE_API_URL
       "http://localhost:8002",                // Local dev
     ];
 
-async function detectBackend() {
-  for (const url of BACKEND_CANDIDATES) {
+async function detectBackend(candidates = BACKEND_CANDIDATES) {
+  for (const url of candidates) {
     try {
-      const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(60000) });
+      const res = await authorizedFetch(`${url}/health`, { signal: AbortSignal.timeout(60000) });
       const data = await res.json();
       if (data?.status === "ok") return url;
     } catch { /* sin dato: se conserva el valor previo */ }
@@ -46,18 +49,6 @@ async function detectBackend() {
 }
 
 let BACKEND = null;
-
-// Sesión recordada en el navegador para no pedir la contraseña en cada recarga.
-// VITE_SKIP_LOGIN solo actúa en `npm run dev`: import.meta.env.DEV es false en el build de producción.
-const AUTH_KEY = "kaizen_authed";
-const SKIP_LOGIN = import.meta.env.DEV && import.meta.env.VITE_SKIP_LOGIN === "true";
-function readAuthed() {
-  if (SKIP_LOGIN) return true;
-  try { return localStorage.getItem(AUTH_KEY) === "1"; } catch { return false; }
-}
-function writeAuthed(on) {
-  try { on ? localStorage.setItem(AUTH_KEY, "1") : localStorage.removeItem(AUTH_KEY); } catch { /* storage bloqueado: la sesión dura lo que la pestaña */ }
-}
 
 const DEFAULT_PORTFOLIO = [
   { ticker: "AAPL", shares: 10, cost: 150 },
@@ -106,7 +97,7 @@ async function fetchStock(ticker, timeoutMs = 30000) {
   // Reintenta automáticamente en caso de fallo de red/respuesta no-JSON (Render cold start)
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const res = await fetch(`${BACKEND}/stock/${encodeURIComponent(ticker)}`, { signal: AbortSignal.timeout(timeoutMs) });
+      const res = await authorizedFetch(`${BACKEND}/stock/${encodeURIComponent(ticker)}`, { signal: AbortSignal.timeout(timeoutMs) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       return data?.error ? null : data;
@@ -130,7 +121,7 @@ async function fetchChart(ticker, period = "5y", timeoutMs = 90000) {
   // Reintenta automáticamente en caso de fallo de red (Render cold start)
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const res = await fetch(`${BACKEND}/chart/${encodeURIComponent(ticker)}?period=${period}&ccy=MXN`,
+      const res = await authorizedFetch(`${BACKEND}/chart/${encodeURIComponent(ticker)}?period=${period}&ccy=MXN`,
         { signal: AbortSignal.timeout(timeoutMs) });
       const data = await res.json();
       const closes = data?.closes ?? [];
@@ -148,7 +139,7 @@ async function fetchChart(ticker, period = "5y", timeoutMs = 90000) {
 
 async function fetchRiskFreeRate() {
   try {
-    const res = await fetch(`${BACKEND}/rf`);
+    const res = await authorizedFetch(`${BACKEND}/rf`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     if (data?.rate == null) throw new Error("respuesta sin rate");
@@ -909,110 +900,24 @@ function MonteCarloChart({ portStats, spyStats, weeks }) {
 }
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
-const AUTH_QUOTES = [
-  "La disciplina de inversión mejora cuando sus supuestos permanecen visibles.",
-  "El riesgo no se elimina, se administra con datos y con proceso.",
-  "Diversificar no es diluir convicción — es controlar lo que no puedes predecir.",
-  "El mejor portafolio es el que puedes sostener cuando el mercado se pone difícil.",
-  "Cada decisión de inversión debería poder explicarse en una frase.",
-];
-
-function LoginScreen({ onAuth }) {
-  const [pw, setPw]       = useState("");
-  const [showPw, setShowPw] = useState(false);
-  const [error, setError] = useState(false);
-  const [shake, setShake] = useState(false);
-  const [quoteIdx, setQuoteIdx] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => setQuoteIdx(i => (i + 1) % AUTH_QUOTES.length), 5000);
-    return () => clearInterval(id);
-  }, []);
-
-  function handleSubmit(e) {
-    e.preventDefault();
-    if (pw === "Investments") {
-      onAuth();
-    } else {
-      setError(true);
-      setShake(true);
-      setTimeout(() => setShake(false), 500);
-    }
-  }
-
-  return (
-    <main className="auth-shell">
-      <section className="auth-panel">
-        <div className="auth-content" style={{ animation: shake ? "kz-shake 0.4s ease" : "none" }}>
-          <div className="brand" style={{ marginBottom: 28 }}>
-            <Mark size={76} />
-            <span className="brand-wordmark">KAIZEN<small>Investment Group</small></span>
-          </div>
-          <Badge>Acceso privado</Badge>
-          <h1 className="stat-shimmer" style={{ marginTop: 14 }}>Bienvenido de vuelta.</h1>
-          <p>Ingresa la contraseña del equipo para entrar al workspace.</p>
-          <form className="auth-form" onSubmit={handleSubmit}>
-            <label>
-              Contraseña
-              <div className="password-field">
-                <input
-                  autoFocus
-                  onChange={e => { setPw(e.target.value); setError(false); }}
-                  placeholder="Tu contraseña"
-                  type={showPw ? "text" : "password"}
-                  value={pw}
-                />
-                <button aria-label={showPw ? "Ocultar contraseña" : "Mostrar contraseña"} onClick={() => setShowPw(v => !v)} type="button">
-                  {showPw ? <EyeOff aria-hidden="true" size={17} /> : <Eye aria-hidden="true" size={17} />}
-                </button>
-              </div>
-            </label>
-            {error && <p className="form-error">Contraseña incorrecta.</p>}
-            <Button size="lg" type="submit">Entrar <ArrowRight aria-hidden="true" size={16} /></Button>
-          </form>
-        </div>
-      </section>
-      <aside className="auth-aside">
-        <div aria-hidden="true" className="auth-aside-orbit" />
-        <span className="glow-pulse" style={{ background: "var(--accent)", color: "var(--on-accent)", fontSize: 9, fontWeight: 800, padding: "2px 7px", borderRadius: 4, letterSpacing: "0.08em", width: "fit-content" }}>LIVE</span>
-        <blockquote className="quote-cycle" key={quoteIdx} style={{ marginTop: 14 }}>"{AUTH_QUOTES[quoteIdx]}"</blockquote>
-        <div className="quote-dots">
-          {AUTH_QUOTES.map((_, i) => <i className={i === quoteIdx ? "is-active" : ""} key={i} />)}
-        </div>
-        <div className="auth-aside-proof">
-          <span>
-            <ShieldCheck aria-hidden="true" size={18} />
-            <span><strong>Datos en vivo</strong>Portafolio, screener y noticias conectados al backend real de KAIZEN.</span>
-          </span>
-        </div>
-      </aside>
-      <style>{`
-        @keyframes kz-shake {
-          0%,100% { transform: translateX(0); }
-          20%      { transform: translateX(-10px); }
-          40%      { transform: translateX(10px); }
-          60%      { transform: translateX(-6px); }
-          80%      { transform: translateX(6px); }
-        }
-      `}</style>
-    </main>
-  );
-}
-
-// Workspace se monta solo cuando BACKEND ya está resuelto y la sesión está abierta:
-// sus efectos de montaje piden datos al backend y antes corrían contra "null/...".
-export default function App() {
-  const [authed, setAuthed] = useState(readAuthed);
+// La app nueva (src/app/LegacyPage.jsx) monta el Workspace legado dentro de sus rutas privadas:
+// la sesión ya la resolvió RequireAuth, así que aquí solo queda detectar el backend y abrir la
+// tab que pide la ruta. `apiBase` fija el backend (el API_BASE de src/lib/api/client.js); sin
+// él se prueban los candidatos de siempre. `onTabChange(tab)` avisa cada cambio de tab para que
+// la URL la siga.
+// Workspace se monta solo cuando BACKEND ya está resuelto: sus efectos de montaje piden datos
+// al backend y antes corrían contra "null/...".
+export function LegacyWorkspaceHost({ tab = "news", apiBase, onLogout, onTabChange }) {
   const [backendUrl, setBackendUrl] = useState(null);
   const [backendSearching, setBackendSearching] = useState(true);
 
   useEffect(() => {
-    detectBackend().then(url => {
+    detectBackend(apiBase ? [apiBase] : BACKEND_CANDIDATES).then(url => {
       BACKEND = url;
       setBackendUrl(url);
       setBackendSearching(false);
     });
-  }, []);
+  }, [apiBase]);
 
   if (backendSearching) return (
     <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
@@ -1030,20 +935,23 @@ export default function App() {
       <div style={{ fontSize:12, color:"var(--muted)", letterSpacing:1, textAlign:"center", maxWidth:340 }}>
         Ningún backend respondió. Asegúrate de que Railway o Render estén activos, o corre <span style={{color:"var(--accent)",fontFamily:"var(--font-mono)"}}>python backend.py</span> localmente.
       </div>
-      <Button onClick={() => { setBackendSearching(true); detectBackend().then(url => { BACKEND=url; setBackendUrl(url); setBackendSearching(false); }); }} size="lg">
+      <Button onClick={() => { setBackendSearching(true); detectBackend(apiBase ? [apiBase] : BACKEND_CANDIDATES).then(url => { BACKEND=url; setBackendUrl(url); setBackendSearching(false); }); }} size="lg">
         REINTENTAR
       </Button>
     </div>
   );
 
-  if (!authed) return <LoginScreen onAuth={() => { writeAuthed(true); setAuthed(true); }} />;
-
-  return <Workspace backendUrl={backendUrl} onLogout={() => { writeAuthed(false); setAuthed(false); }} />;
+  return <Workspace backendUrl={backendUrl} initialTab={tab} onLogout={onLogout} onTabChange={onTabChange} />;
 }
 
-function Workspace({ backendUrl, onLogout }) {
+function Workspace({ backendUrl, initialTab = "news", onLogout, onTabChange }) {
   const { dark, toggle: toggleTheme } = useTheme();
-  const [tab, setTab] = useState("news");
+  const [tab, setTab] = useState(initialTab);
+  // Si la ruta cambia con el Workspace montado, se abre la tab nueva (ajuste de estado en render).
+  const [routeTab, setRouteTab] = useState(initialTab);
+  if (routeTab !== initialTab) { setRouteTab(initialTab); setTab(initialTab); }
+  // Y al revés: cada cambio de tab se avisa para que la URL lo siga (src/app/LegacyPage.jsx).
+  useEffect(() => { onTabChange?.(tab); }, [tab, onTabChange]);
   const [rfRate, setRfRate] = useState(null);
   const [rfLabel, setRfLabel] = useState("MX 5Y");
   const [backendOk, setBackendOk] = useState(null);
@@ -1233,8 +1141,8 @@ function Workspace({ backendUrl, onLogout }) {
     fetchRiskFreeRate()
       .then((r) => { setRfRate(r.rate); setRfLabel(r.label); setBackendOk(r.ok); })
       .catch(() => setBackendOk(false));
-    fetch(`${BACKEND}/macro`).then(r => r.json()).then(setMacroData).catch(() => {});
-    fetch(`${BACKEND}/fx`).then(r => r.json()).then(d => { if (d?.USDMXN) { USDMXN_SPOT = d.USDMXN; setUsdMxn(d.USDMXN); } }).catch(() => {});
+    authorizedFetch(`${BACKEND}/macro`).then(r => r.json()).then(setMacroData).catch(() => {});
+    authorizedFetch(`${BACKEND}/fx`).then(r => r.json()).then(d => { if (d?.USDMXN) { USDMXN_SPOT = d.USDMXN; setUsdMxn(d.USDMXN); } }).catch(() => {});
   }, []);
 
   // Keep-alive: ping cada 9 min para evitar que Render (free tier) duerma
@@ -1242,7 +1150,7 @@ function Workspace({ backendUrl, onLogout }) {
   useEffect(() => {
     if (!backendUrl) return;
     const id = setInterval(() => {
-      fetch(`${backendUrl}/fx`, { signal: AbortSignal.timeout(10000) }).catch(() => {});
+      authorizedFetch(`${backendUrl}/fx`, { signal: AbortSignal.timeout(10000) }).catch(() => {});
     }, 9 * 60 * 1000);
     return () => clearInterval(id);
   }, [backendUrl]);
@@ -1258,7 +1166,7 @@ function Workspace({ backendUrl, onLogout }) {
       const sd = await fetchStock(ticker);
       if (sd) setStockData((prev) => ({ ...prev, [ticker]: sd }));
       // DCF en paralelo
-      fetch(`${BACKEND}/dcf/${encodeURIComponent(ticker)}`).then(r => r.json())
+      authorizedFetch(`${BACKEND}/dcf/${encodeURIComponent(ticker)}`).then(r => r.json())
         .then(d => setDcfData(prev => ({ ...prev, [ticker]: d }))).catch(() => {});
     } catch (e) {
       console.error(ticker, e);
@@ -1442,7 +1350,7 @@ function Workspace({ backendUrl, onLogout }) {
     const deadline = Date.now() + 120000; // hasta 2 minutos
     while (Date.now() < deadline) {
       try {
-        const r = await fetch(`${BACKEND}/fx`, { signal: AbortSignal.timeout(15000) });
+        const r = await authorizedFetch(`${BACKEND}/fx`, { signal: AbortSignal.timeout(15000) });
         const d = await r.json();
         if (d?.USDMXN || d?.usdmxn) return true; // respuesta real del servicio
       } catch { /* sin dato: se conserva el valor previo */ }
@@ -1733,8 +1641,8 @@ function Workspace({ backendUrl, onLogout }) {
       let dcf = null, mom = null;
       try {
         [dcf, mom] = await Promise.all([
-          fetch(`${BACKEND}/dcf/${encodeURIComponent(t)}`).then(r => r.json()).catch(() => null),
-          fetch(`${BACKEND}/momentum/${encodeURIComponent(t)}`).then(r => r.json()).catch(() => null),
+          authorizedFetch(`${BACKEND}/dcf/${encodeURIComponent(t)}`).then(r => r.json()).catch(() => null),
+          authorizedFetch(`${BACKEND}/momentum/${encodeURIComponent(t)}`).then(r => r.json()).catch(() => null),
         ]);
       } catch { /* sin dato: se conserva el valor previo */ }
       results.push({ ticker: t, ...sd, scores, dcf, momentum: mom, sharpe1y });
@@ -1773,7 +1681,7 @@ function Workspace({ backendUrl, onLogout }) {
       const ticker = MAGIC_UNIVERSE[i];
       setMagicProgress({ done: i + 1, total: MAGIC_UNIVERSE.length, current: ticker });
       try {
-        const magicRes = await fetch(`${BACKEND}/magic_one/${encodeURIComponent(ticker)}`).then(r => r.json()).catch(() => null);
+        const magicRes = await authorizedFetch(`${BACKEND}/magic_one/${encodeURIComponent(ticker)}`).then(r => r.json()).catch(() => null);
         if (!magicRes || magicRes.skip) { await sleep(80); continue; }
         candidates.push(magicRes);
       } catch { /* sin dato: se conserva el valor previo */ }
@@ -1802,7 +1710,7 @@ function Workspace({ backendUrl, onLogout }) {
     try {
       const extra = fibrasExtra.trim();
       const url = extra ? `${BACKEND}/fibras/${encodeURIComponent(extra)}` : `${BACKEND}/fibras`;
-      const data = await fetch(url).then(r => r.json());
+      const data = await authorizedFetch(url).then(r => r.json());
       setFibrasData(data);
       try {
         localStorage.setItem("kaizen_fibras_data", JSON.stringify(data));
@@ -1872,7 +1780,7 @@ function Workspace({ backendUrl, onLogout }) {
     setNewsLoading(true);
     setNewsData([]);
     try {
-      const res = await fetch(`${BACKEND}/news/${encodeURIComponent(ticker.trim().toUpperCase())}`);
+      const res = await authorizedFetch(`${BACKEND}/news/${encodeURIComponent(ticker.trim().toUpperCase())}`);
       const data = await res.json();
       setNewsData(data.news ?? []);
     } catch { setNewsData([]); }
@@ -1897,8 +1805,8 @@ function Workspace({ backendUrl, onLogout }) {
     setAnalisisEdgar(null);
     try {
       const [stockRes, chartRes] = await Promise.all([
-        fetch(`${BACKEND}/stock/${t}`),
-        fetch(`${BACKEND}/chart/${t}?period=${period}`),
+        authorizedFetch(`${BACKEND}/stock/${t}`),
+        authorizedFetch(`${BACKEND}/chart/${t}?period=${period}`),
       ]);
       const sd = stockRes.ok ? await stockRes.json() : null;
       const cd = chartRes.ok ? await chartRes.json() : null;
@@ -1910,12 +1818,12 @@ function Workspace({ backendUrl, onLogout }) {
     } finally {
       setAnalisisLoading(false);
     }
-    fetch(`${BACKEND}/returns/${t}`).then(r => r.ok ? r.json() : null).then(rd => setAnalisisReturns(rd)).catch(() => {});
+    authorizedFetch(`${BACKEND}/returns/${t}`).then(r => r.ok ? r.json() : null).then(rd => setAnalisisReturns(rd)).catch(() => {});
     setAnalisisEdgarLoading(true);
-    fetch(`${BACKEND}/edgar/${t}`).then(r => r.ok ? r.json() : null).then(ed => setAnalisisEdgar(ed)).catch(() => setAnalisisEdgar(null)).finally(() => setAnalisisEdgarLoading(false));
+    authorizedFetch(`${BACKEND}/edgar/${t}`).then(r => r.ok ? r.json() : null).then(ed => setAnalisisEdgar(ed)).catch(() => setAnalisisEdgar(null)).finally(() => setAnalisisEdgarLoading(false));
     setAnalisisNewsLoading(true);
     try {
-      const nr = await fetch(`${BACKEND}/news/${encodeURIComponent(t)}`);
+      const nr = await authorizedFetch(`${BACKEND}/news/${encodeURIComponent(t)}`);
       const nd = nr.ok ? await nr.json() : null;
       setAnalisisNews(nd?.news ?? []);
     } catch { setAnalisisNews([]); }
@@ -1928,7 +1836,7 @@ function Workspace({ backendUrl, onLogout }) {
     setAnalisisPeriod(period);
     setAnalisisHoverIdx(null);
     try {
-      const cd = await fetch(`${BACKEND}/chart/${t}?period=${period}`).then(r => r.ok ? r.json() : null);
+      const cd = await authorizedFetch(`${BACKEND}/chart/${t}?period=${period}`).then(r => r.ok ? r.json() : null);
       setAnalisisChart(cd);
     } catch { /* sin dato: se conserva el valor previo */ }
   }, [analisisTicker]);
@@ -1936,7 +1844,7 @@ function Workspace({ backendUrl, onLogout }) {
   const loadMarketData = useCallback(async () => {
     setMarketDataLoading(true);
     try {
-      const data = await fetch(`${BACKEND}/market`).then(r => r.json());
+      const data = await authorizedFetch(`${BACKEND}/market`).then(r => r.json());
       setMarketData(data);
       setLastUpdated(new Date());
     } catch { /* sin dato: se conserva el valor previo */ }
@@ -1946,7 +1854,7 @@ function Workspace({ backendUrl, onLogout }) {
   const loadMarketNews = useCallback(async () => {
     setMarketNewsLoading(true);
     try {
-      const data = await fetch(`${BACKEND}/news/market`).then(r => r.json());
+      const data = await authorizedFetch(`${BACKEND}/news/market`).then(r => r.json());
       setMarketNews(data.news ?? []);
     } catch { /* sin dato: se conserva el valor previo */ }
     setMarketNewsLoading(false);
@@ -1956,7 +1864,7 @@ function Workspace({ backendUrl, onLogout }) {
   const loadWorldMap = useCallback(async () => {
     setWorldMapLoading(true);
     try {
-      const data = await fetch(`${BACKEND}/worldmap`).then(r => r.json());
+      const data = await authorizedFetch(`${BACKEND}/worldmap`).then(r => r.json());
       setWorldMapData(data);
     } catch { /* sin dato: se conserva el valor previo */ }
     setWorldMapLoading(false);
