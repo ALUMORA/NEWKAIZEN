@@ -91,3 +91,34 @@ rebalance.js
 - `glossary` object keyed by slug (≥60 terms): { titulo, corto (≤160 chars), largo (2-4 short paragraphs), formula (plain text or simple notation), comoLeer, ejemplo, fuente/referencia (e.g. "Sharpe (1966)", "Ledoit y Wolf (2004)", "LISR art. 129"), relacionados:[slugs] }. Terms: rendimiento simple/logarítmico, CAGR, volatilidad, Sharpe, Sortino, drawdown máximo, Calmar, VaR, CVaR, beta, beta ajustada (Blume), alfa de Jensen, tracking error, information ratio, Treynor, correlación, covarianza, contracción Ledoit-Wolf, frontera eficiente, mínima varianza, portafolio tangente, paridad de riesgo, walk-forward, sobreajuste, Monte Carlo, lognormal, interés compuesto, inflación real vs nominal, TWR, MWR/XIRR, costo promedio, efecto precio vs efecto tipo de cambio, ISR por ganancia de capital, retención por dividendos, CETES, tasa objetivo Banxico, TIIE, UDI, INPC, bono M, curva de rendimientos, spread 10A-2A, VIX, DXY, P/U, P/VL, EV/EBITDA, FCF yield, earnings yield, ROE, ROIC, margen operativo, deuda/capital, fórmula mágica (Greenblatt), momentum 12-1, factor valor, factor calidad, baja volatilidad, FIBRA, FFO/AFFO, cap rate, NAV y P/NAV, LTV, rendimiento por distribución, DCF, WACC, CAPM, prima de riesgo de mercado, riesgo país, crecimiento terminal, múltiplos, SIC, BMV, diversificación, rebalanceo, horizonte de inversión, perfil de riesgo.
 - Spanish (es-MX), accurate, plain; no em/en dashes; no advice. Also `glossarySearch(q)`.
 - docs/metodologia/*.md: one page per tool (portafolio, riesgo, optimizador, backtest, simulador, screener de factores, fórmula mágica, FIBRAs, valuación DCF, fuentes de datos) explaining exact methods, assumptions and limitations; the Learn pages will render them.
+
+## Backend known answers (B3b valuation and momentum, B3c screeners)
+
+Recovered from the planning session on 22 September 2026 and re-derived here, because PLAN.md only
+kept the results. Every B stream must test against these.
+
+DCF, two stages, FCFF = EBIT(1−t) + D&A − capex − ΔNWC
+- FCFF0 = 100, growth 10% for 5 years, terminal growth 3%, WACC 9%
+  → stage-1 PV 513.93, terminal value discounted 1,796.87, enterprise value **2,310.80**.
+- Hamada: β_U = .8, D/E = .5, t = .30 → **β_L = 1.08**.
+- Re = rf + β_L·ERP + λ·CRP with rf 4.2%, ERP 4.5%, CRP 2.5%, λ = 1 → **11.56%**.
+- WACC with E/V = 2/3, Rd = 7%, t = .30 → **9.34%**; converted to MXN with
+  (1+WACC_USD)(1+π_MX)/(1+π_US) − 1, π_MX 3.5% and π_US 2.3% → **10.62%**.
+- Guards: terminal growth ≤ rf of that currency and WACC − g ≥ 2 pp.
+- Banks, justified P/B = (ROE − g)/(Re − g): ROE 15%, g 5%, Re 12% → **1.4286**.
+
+Factors (B3c)
+- Sector-relative robust z = (x − mediana)/(1.4826·MAD), winsorizado a ±3:
+  [10, 12, 14, 16, 18] → **z(18) = 1.349**.
+- Multiples are converted to yields first, so negative earnings score low instead of "cheap".
+- A sector with n < 5 falls back to the whole universe and is flagged; coverage under 50% is
+  excluded with a reason.
+
+Magic formula (B3c)
+- EY = EBIT/EV with EV = capitalización + deuda + interés minoritario + preferentes − efectivo.
+- ROC = EBIT/(capital de trabajo neto sin efectivo ni deuda de corto plazo + PP&E neto).
+- EY [.10, .08, .12] and ROC [.50, .30, .20] → order **1, 3, 2**.
+
+Momentum 12-1 (B3b)
+- P_{t−1m}/P_{t−12m} − 1 over month-end adjusted closes: 13 monthly prices → P₁₁/P₀ − 1, against a
+  benchmark in the same currency.
