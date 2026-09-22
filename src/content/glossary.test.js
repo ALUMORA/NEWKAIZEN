@@ -197,6 +197,40 @@ describe('reglas de estilo de la casa', () => {
   })
 })
 
+describe('páginas de metodología', () => {
+  const PAGINAS = [
+    'README.md', 'portafolio.md', 'riesgo.md', 'optimizador.md', 'backtest.md', 'simulador.md',
+    'screener-de-factores.md', 'formula-magica.md', 'fibras.md', 'valuacion-dcf.md',
+    'fuentes-de-datos.md',
+  ]
+  const leer = (nombre) => readFileSync(new URL(`../../docs/metodologia/${nombre}`, import.meta.url), 'utf8')
+
+  it.each(PAGINAS)('docs/metodologia/%s existe, tiene título y el aviso de que no es recomendación', (nombre) => {
+    const texto = leer(nombre)
+    expect(texto.startsWith('# ')).toBe(true)
+    expect(GUIONES_PROHIBIDOS.test(texto)).toBe(false)
+    // El aviso está redactado distinto en cada página, así que se revisa el sentido y no la letra:
+    // tiene que aparecer "recomendación de inversión" con una negación pegada.
+    const plano = texto.replace(/\s+/g, ' ')
+    const avisos = [...plano.matchAll(/.{0,90}recomendaci[oó]n de inversi[oó]n/gi)].map((m) => m[0])
+    expect(avisos.length, `${nombre} no menciona el aviso`).toBeGreaterThan(0)
+    expect(avisos.some((a) => /\b(no|nada|ni|nunca)\b/i.test(a)), `${nombre}: ${avisos[0]}`).toBe(true)
+  })
+
+  it('los términos que citan las páginas existen en el glosario', () => {
+    const rotos = []
+    for (const nombre of PAGINAS) {
+      const seccion = leer(nombre).split('## Términos relacionados en el glosario')[1]
+      if (!seccion) continue
+      for (const token of seccion.split(/[\s,.]+/)) {
+        if (!/^[a-z0-9]+(-[a-z0-9]+)+$/.test(token)) continue
+        if (token.endsWith('-md') || !(token in glossary)) rotos.push(`${nombre}: ${token}`)
+      }
+    }
+    expect(rotos).toEqual([])
+  })
+})
+
 describe('slugify', () => {
   it('normaliza acentos, mayúsculas y separadores', () => {
     expect(slugify('Sharpe')).toBe('sharpe')
