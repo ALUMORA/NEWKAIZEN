@@ -1,5 +1,10 @@
-"""Routers HTTP. Aquí van las piezas compartidas por todos: caché HTTP, validación de símbolos,
+"""Routers HTTP. Aquí van las piezas compartidas por todos: validación de símbolos y fechas,
 respuestas de error para OpenAPI y el registro de capacidades.
+
+Este archivo está congelado bajo O: lo leen los doce routers y cambiarlo se pide en
+``docs/requests/<stream>.md``. La caché HTTP (``CACHE_SECONDS``, ``cache_control``, ``no_store``)
+ya NO vive aquí, vive en ``kaizen_api/http_cache.py``, que es de B1 y sí puede cambiar durante la
+fase 2; se reexporta desde aquí para que los routers no cambien sus imports.
 
 Cada router v2 expone:
 
@@ -12,45 +17,29 @@ from __future__ import annotations
 
 import datetime as _dt
 import re
-from typing import Annotated, Any
+from typing import Annotated
 
-from fastapi import Depends, Path, Query, Response
+from fastapi import Depends, Path, Query
 
 from kaizen_api.errors import ApiError, field_error, invalid_param
+from kaizen_api.http_cache import CACHE_SECONDS, cache_control, no_store
 from kaizen_api.schemas import ISO_DATE_PATTERN, SYMBOL_PATTERN, ErrorBody
 
-CACHE_SECONDS: dict[str, int] = {
-    "quotes": 30,
-    "history": 3600,
-    "fundamentals": 21600,
-    "macro": 3600,
-    "news": 600,
-    "screeners": 43200,
-}
-"""``Cache-Control: private, max-age=<n>`` por clase de dato (spec v2)."""
+__all__ = [
+    "CACHE_SECONDS",
+    "ERROR_RESPONSES",
+    "MAX_SYMBOLS",
+    "IsoDateQuery",
+    "SymbolPath",
+    "Symbols",
+    "cache_control",
+    "check_date_range",
+    "no_store",
+    "parse_symbols",
+]
 
 MAX_SYMBOLS = 50
 _SYMBOL_RE = re.compile(SYMBOL_PATTERN)
-
-
-def cache_control(data_class: str) -> Any:
-    """Dependencia que pone ``Cache-Control: private, max-age=<n>`` en la respuesta exitosa.
-
-    Los errores salen con ``no-store`` (lo ponen los manejadores de ``errors.py``).
-    """
-    seconds = CACHE_SECONDS[data_class]
-    value = f"private, max-age={seconds}"
-
-    def _set_cache_control(response: Response) -> None:
-        response.headers["Cache-Control"] = value
-
-    _set_cache_control.__name__ = f"cache_{data_class}"
-    return Depends(_set_cache_control)
-
-
-def no_store(response: Response) -> None:
-    """Para respuestas que nunca deben guardarse (salud, sesión)."""
-    response.headers["Cache-Control"] = "no-store"
 
 
 def _error(description: str) -> dict:
