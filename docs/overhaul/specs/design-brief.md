@@ -1,0 +1,37 @@
+# Kaizen design brief (for C1, C2, C3 and all feature streams)
+
+## Character
+An affordable Bloomberg for Mexican retail investors and employees. It should feel like a calm, precise professional terminal, not a crypto casino and not a marketing site. Dense but breathable; every number legible, labeled, sourced and dated. Dark theme is the flagship (terminal feel); the light theme is equally polished. Spanish (es-MX), friendly and plain, never hype. No em/en dashes in copy.
+
+## Keep
+Brand: the Kaizen mark (src/assets/kaizen-*), the green accent family, Plus Jakarta Sans (UI) + JetBrains Mono (tickers, codes, key figures), the existing token names in src/theme.css (--bg, --surface*, --ink*, --muted*, --border*, --accent*, --positive*, --negative*, --warning*, --info*, --focus, --shadow-*, --radius-*, --chart-*). They are AA-tuned; extend, don't rename (legacy still uses them until M3).
+
+## Tokens to add (both themes, AA verified: text ≥4.5:1, large text/UI ≥3:1)
+- Type scale (rem, base 16px html): --text-2xs .6875 (11px, only uppercase eyebrow labels), --text-xs .75, --text-sm .8125, --text-md .875 (default body/data), --text-lg 1rem, --text-xl 1.25, --text-2xl 1.5, --text-3xl 2; line-heights --leading-tight 1.2, --leading-normal 1.5; weights 400/500/600/700. Minimum 12px for any data value; 11px only for uppercase labels with letter-spacing .06em.
+- Numbers: utility class `.num` = font-variant-numeric: tabular-nums lining-nums; right-aligned in tables.
+- Spacing scale 4px base: --space-1..--space-12 (4,8,12,16,20,24,32,40,48,64...).
+- Semantic: --up (= positive), --down (= negative), --flat (= muted), --up-soft, --down-soft; --neutral-dir for directionless moves like USD/MXN (use --info); --stale (warning tone) for stale data badges.
+- Charts: categorical --chart-1..--chart-8 validated with the dataviz skill's validator in both themes (distinguishable, CVD-safe as far as possible); sequential --seq-1..--seq-5; diverging --div-neg-2, --div-neg-1, --div-0, --div-pos-1, --div-pos-2 in blue/orange (correlation is not good/bad, so not red/green); --grid, --axis, --crosshair.
+- Motion: --ease-out cubic-bezier(.2,.8,.2,1), --dur-fast 120ms, --dur-base 180ms. All animation disabled under prefers-reduced-motion.
+- Layout: --sidebar-w 240px (collapsed 64px), --topbar-h 56px, --bottomnav-h 64px (+ safe-area inset), --content-max 1440px.
+
+## Semantics (never color alone)
+Gains: "+" sign + --up color (+ optional ▲). Losses: U+2212 "−" + --down color (+ ▼). Flat: --flat. USD/MXN up = peso se deprecia: show value and change in --neutral-dir with a text hint ("peso más débil"), never green/red. Stale or fallback data: DataStatus badge in --stale with text ("Cierre del 19 sep", "Respaldo: FRED"). Missing values: "s/d" in --muted.
+
+## Components (C1 owns; API frozen at checkpoint C1)
+Button (variants primary, secondary, ghost, danger; sizes sm/md; loading; icon), IconButton (required aria-label), Card (header slot: title h2/h3, InfoTip, actions, DataStatus; body; footer), Badge (tones), Tabs (roving tabindex, aria), SegmentedControl, Field/Input/Select/NumberInput (label, hint, error, es-MX number parsing "1,234.56"), DataTable (columns config: key, header, align, format, sortable, sticky first column; sortable headers with aria-sort; numeric right-aligned; zebra off, hover on; responsive: horizontal scroll inside its container with sticky first column, never page overflow; empty/loading/error states built in; optional row click with keyboard), Stat (label + InfoTip, value, delta, sublabel, loading skeleton), Delta (value, kind pct|pp|bp|money, direction-aware), Money (value, currency, compact), InfoTip (glossary key → popover with short text + "ver más" link to /aprender/:termino; keyboard and touch accessible; uses src/content/glossary.js when available, falls back to a text prop), Skeleton, EmptyState (icon, title, text, action), ErrorState (title, message, retry), DataStatus ({asOf, source, delayMinutes, stale, fallback} → compact badge + tooltip), ConfirmDialog (destructive confirm, focus trap, Esc), Dialog, Sheet (mobile bottom sheet), Toast + useToast (with Undo action, aria-live polite), Disclaimer (short/long), PageHeader (h1, description, actions, breadcrumbs optional), SectionHeading (h2), SrOnly, ThemeToggle, Mark (logo). All keyboard-operable, visible :focus-visible ring (--focus), touch targets ≥ 24px (44px on mobile for primary actions), no hover-only info.
+
+## Charts (C2)
+Dependency-free SVG, tokens only. ChartFrame wraps every chart: title, description (sr + visible caption), legend, "Ver tabla" toggle that renders the data as a DataTable (text alternative), source/asOf footer. TimeSeries: multiple series, time x-axis with sensible ticks (es-MX month abbreviations), y-axis with formatted ticks (money/pct), crosshair + tooltip on pointer AND keyboard (arrow keys move the active point when the chart is focused), optional log scale, optional area, baseline at 0 for returns; handles empty/one-point data. FanChart (percentile bands p5-p95, p25-p75, median), DrawdownChart (area below 0), Donut (with center label, legend with values; ≤8 slices then "Otros"), Bars (horizontal/vertical, signed), Heatmap (diverging, values printed in cells when size allows), FrontierChart (scatter of assets + frontier line + markers for min-var/tangency/current), Sparkline (inline, aria-hidden with sibling text). Responsive via ResizeObserver; no layout shift; 60fps pointer handling (rAF).
+
+## Shell and IA (C3)
+Sidebar sections (labels in Spanish):
+- Mercados: Panorama (/mercados), México y tasas (/mercados/mexico), CETES (/mercados/cetes), Noticias (/mercados/noticias)
+- Mi portafolio: Resumen (/portafolio), Movimientos, Rendimiento, Riesgo, Rebalanceo
+- Investigar: Buscar emisora (/investigar), Comparar, Screener de factores (/screener), Fórmula mágica, FIBRAs
+- Herramientas: Optimizador, Backtest, Simulador y metas
+- Watchlist, Aprender
+Top bar: ⌘K search button ("Buscar emisora o función… ⌘K"), compact market strip (IPC, S&P 500, USD/MXN, CETES 28, VIX; each with value + change, DataStatus on hover/focus; never overlaps; hides or scrolls horizontally inside its own container on narrow screens), server/data status dot, theme toggle, user menu (nombre, Cerrar sesión). Mobile (<768px): top bar = logo + search icon + menu; bottom nav with 4 items (Mercados, Portafolio, Investigar, Herramientas) + "Más" opening a Sheet with the rest (Watchlist, Aprender, Tema, Cerrar sesión); content never under the bottom nav (padding-bottom). Footer: persistent short disclaimer "Kaizen es una herramienta educativa y de análisis. No es recomendación de inversión." + links to /legal/*. Command palette: ⌘K / Ctrl+K / "/"; combobox semantics (aria-activedescendant), arrow keys, Enter, Esc; groups: Emisoras (from /v2/search, debounced 200 ms, plus recent), Ir a (all routes), Acciones (cambiar tema, cerrar sesión); typing a ticker like "WALMEX" and Enter opens /investigar/WALMEX.MX. Skip link "Saltar al contenido". Landmarks: header, nav (aria-label), main (id="contenido"), footer. Route changes move focus to the page h1 and update document.title.
+
+## Quality bar
+WCAG 2.1 AA (axe zero violations) in both themes, both viewports 1440x900 and 390x844, no horizontal page scroll, no console errors, Lighthouse a11y ≥95. Use the impeccable, make-interfaces-feel-better, dataviz and accessibility skills while designing; verify in the rendered page with screenshots, not by reading code.
