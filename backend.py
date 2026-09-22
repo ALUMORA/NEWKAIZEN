@@ -405,7 +405,9 @@ def get_chart(ticker: str, period: str = "5y") -> dict:
 def _fred_rate(series_id: str):
     """Obtiene la tasa más reciente de FRED (API pública de la Reserva Federal)."""
     try:
-        resp = _session.get(
+        # Sin _session y con el User-Agent default de requests: FRED deja colgada la conexión
+        # con uno que imita a un navegador, y también con uno propio no reconocido.
+        resp = requests.get(
             f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={series_id}",
             timeout=8
         )
@@ -479,7 +481,7 @@ def _get_macro_fresh() -> dict:
     missing = {}
     if "vix"  not in results: missing["^VIX"]    = "vix"
     if "t10y" not in results: missing["^TNX"]    = "t10y"
-    if "t2y"  not in results: missing["^IRX"]    = "t2y"
+    # Sin fallback para t2y: ^IRX es el bono de 13 semanas, no el de 2 años, y daba un spread falso.
     if "dxy"  not in results: missing["DX-Y.NYB"] = "dxy"
     if missing:
         bulk = _bulk_download(missing)
@@ -501,7 +503,7 @@ def _get_macro_fresh() -> dict:
         t10 = results.get("t10y") or {}
         t2  = results.get("t2y")  or {}
         if t10.get("value") and t2.get("value"):
-            spread = round(t10["value"] - t2["value"] / 10, 2)
+            spread = round(t10["value"] - t2["value"], 2)  # ambos vienen de FRED en puntos porcentuales
             results["spread"] = {"value": spread, "inverted": spread < 0}
     except Exception:
         results["spread"] = None
@@ -1636,7 +1638,8 @@ def get_rf() -> dict:
         except Exception:
             pass
     # Fallback: Bono M México 10 años — mayo 2026
-    return {"rate": 0.0860, "label": "Bono M 10Y"}
+    # La etiqueta lo dice para que la UI no presente la referencia fija como dato en vivo.
+    return {"rate": 0.0860, "label": "Bono M 10Y (ref. fija may 2026)", "fallback": True}
 
 
 # ─── Autenticación ────────────────────────────────────────────────────────────

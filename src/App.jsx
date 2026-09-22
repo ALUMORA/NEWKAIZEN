@@ -23,10 +23,13 @@ function posCostMXN(p, usdMxn) {
 }
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
-const BACKEND_CANDIDATES = [
-  "https://app-4-everyone.onrender.com",  // Render (primario)
-  "http://localhost:8002",                // Local dev
-];
+// VITE_API_URL (en .env.local) fija un solo backend; sin él se prueban Render y luego local.
+const BACKEND_CANDIDATES = import.meta.env.VITE_API_URL
+  ? [import.meta.env.VITE_API_URL]
+  : [
+      "https://app-4-everyone.onrender.com",  // Render (primario)
+      "http://localhost:8002",                // Local dev
+    ];
 
 async function detectBackend() {
   for (const url of BACKEND_CANDIDATES) {
@@ -123,10 +126,13 @@ async function fetchChart(ticker, period = "5y", timeoutMs = 90000) {
 async function fetchRiskFreeRate() {
   try {
     const res = await fetch(`${BACKEND}/rf`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    return { rate: data?.rate ?? 0.0860, label: data?.label ?? "Bono M 5Y" };
+    if (data?.rate == null) throw new Error("respuesta sin rate");
+    return { rate: data.rate, label: data.label ?? "Bono M", ok: true };
   } catch {
-    return { rate: 0.0860, label: "Bono M 5Y" };
+    // ok:false para que la UI no muestre "Backend OK" sobre un valor que no vino del backend
+    return { rate: 0.0860, label: "Bono M 10Y (ref. fija, sin backend)", ok: false };
   }
 }
 
@@ -225,6 +231,18 @@ function calcTrackingError(portReturns, benchReturns) {
   const mean = diffs.reduce((a, b) => a + b, 0) / n;
   const variance = diffs.reduce((s, d) => s + (d - mean) ** 2, 0) / (n - 1);
   return Math.sqrt(variance * 52);
+}
+
+// Retornos semanales del portafolio, alineados por el final (la semana más reciente).
+// weights va índice a índice con positions; la caja ($MXN) pesa en el total pero rinde 0.
+function weightedReturns(positions, weights, returnsMap, n) {
+  return Array.from({ length: n }, (_, i) =>
+    positions.reduce((s, p, wi) => {
+      if (p.ticker === "$MXN") return s;
+      const r = returnsMap[p.ticker];
+      return s + weights[wi] * (r?.[r.length - n + i] ?? 0);
+    }, 0)
+  );
 }
 
 function calcPortfolioBeta(portReturns, benchReturns) {
@@ -959,6 +977,8 @@ function LoginScreen({ onAuth }) {
   );
 }
 
+// Workspace se monta solo cuando BACKEND ya está resuelto y la sesión está abierta:
+// sus efectos de montaje piden datos al backend y antes corrían contra "null/...".
 export default function App() {
   const [authed, setAuthed] = useState(false);
   const [backendUrl, setBackendUrl] = useState(null);
@@ -972,6 +992,34 @@ export default function App() {
     });
   }, []);
 
+  if (backendSearching) return (
+    <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
+      <div style={{ fontSize:13, color:"var(--muted)", letterSpacing:3 }}>CONECTANDO AL SERVIDOR…</div>
+      <div style={{ marginTop:16, width:180, height:3, background:"var(--surface-3)", borderRadius:4, overflow:"hidden" }}>
+        <div style={{ height:"100%", background:"var(--accent)", borderRadius:4, animation:"loadbar 1.5s ease-in-out infinite" }} />
+      </div>
+      <style>{`@keyframes loadbar { 0%{width:0%} 60%{width:100%} 100%{width:100%} }`}</style>
+    </div>
+  );
+
+  if (!backendUrl) return (
+    <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:12 }}>
+      <div style={{ fontSize:20, color:"var(--negative)", fontWeight:800 }}>SIN CONEXIÓN AL SERVIDOR</div>
+      <div style={{ fontSize:12, color:"var(--muted)", letterSpacing:1, textAlign:"center", maxWidth:340 }}>
+        Ningún backend respondió. Asegúrate de que Railway o Render estén activos, o corre <span style={{color:"var(--accent)",fontFamily:"var(--font-mono)"}}>python backend.py</span> localmente.
+      </div>
+      <Button onClick={() => { setBackendSearching(true); detectBackend().then(url => { BACKEND=url; setBackendUrl(url); setBackendSearching(false); }); }} size="lg">
+        REINTENTAR
+      </Button>
+    </div>
+  );
+
+  if (!authed) return <LoginScreen onAuth={() => setAuthed(true)} />;
+
+  return <Workspace backendUrl={backendUrl} />;
+}
+
+function Workspace({ backendUrl }) {
   const { dark, toggle: toggleTheme } = useTheme();
   const [tab, setTab] = useState("news");
   const [rfRate, setRfRate] = useState(null);
@@ -1174,7 +1222,7 @@ export default function App() {
   // Fetch RF rate + macro on mount
   useEffect(() => {
     fetchRiskFreeRate()
-      .then((r) => { setRfRate(r.rate); setRfLabel(r.label); setBackendOk(true); })
+      .then((r) => { setRfRate(r.rate); setRfLabel(r.label); setBackendOk(r.ok); })
       .catch(() => setBackendOk(false));
     fetch(`${BACKEND}/macro`).then(r => r.json()).then(setMacroData).catch(() => {});
     fetch(`${BACKEND}/fx`).then(r => r.json()).then(d => { if (d?.USDMXN) setUsdMxn(d.USDMXN); }).catch(() => {});
@@ -1399,7 +1447,12 @@ export default function App() {
       const spyCloses = await fetchChart("SPY", "5y", 60000);
       const spyReturnsRaw = spyCloses.slice(1).map((v, i) => (v - spyCloses[i]) / spyCloses[i]).filter(isFinite);
 
-      const tickers = portfolio.map((p) => p.ticker);
+      const tickers = portfolio.map((p) => p.ticker).filter(t => t !== '$MXN');
+      if (!tickers.length) {
+        setBacktestError("El portafolio solo tiene efectivo; agrega al menos un activo para el backtest.");
+        setBacktestLoading(false);
+        return;
+      }
       const returnsMap = {};
       for (const t of tickers) {
         await sleep(200);
@@ -1438,10 +1491,8 @@ export default function App() {
       }
 
       const limitingTickerBack = tickerLensBack.reduce((a, b) => a.len <= b.len ? a : b).t;
-      const spyReturns = spyReturnsRaw.slice(0, minLen);
-      const portReturns = Array.from({ length: minLen }, (_, i) =>
-        tickers.reduce((s, t, wi) => s + weights[wi] * (returnsMap[t]?.[i] ?? 0), 0)
-      );
+      const spyReturns = spyReturnsRaw.slice(-minLen);
+      const portReturns = weightedReturns(portfolio, weights, returnsMap, minLen);
 
       // Generar etiquetas de semanas hacia atrás desde hoy
       const today = new Date();
@@ -1465,8 +1516,8 @@ export default function App() {
       // Matriz de correlación entre activos del portafolio
       const corrMatrix = tickers.map((ti) =>
         tickers.map((tj) => {
-          const ri = returnsMap[ti]?.slice(0, minLen) ?? [];
-          const rj = returnsMap[tj]?.slice(0, minLen) ?? [];
+          const ri = returnsMap[ti]?.slice(-minLen) ?? [];
+          const rj = returnsMap[tj]?.slice(-minLen) ?? [];
           if (!ri.length || !rj.length) return 0;
           const mi = ri.reduce((a, b) => a + b, 0) / ri.length;
           const mj = rj.reduce((a, b) => a + b, 0) / rj.length;
@@ -1516,6 +1567,11 @@ export default function App() {
       const spyRet = spyCloses.slice(1).map((v, i) => (v - spyCloses[i]) / spyCloses[i]).filter(isFinite);
 
       const tickers = portfolio.map(p => p.ticker).filter(t => t !== '$MXN');
+      if (!tickers.length) {
+        setMonteCarloError("El portafolio solo tiene efectivo; agrega al menos un activo para simular.");
+        setMonteCarloLoading(false);
+        return;
+      }
       const returnsMap = {};
       for (const t of tickers) {
         await sleep(200);
@@ -1553,15 +1609,14 @@ export default function App() {
       }
 
       const limitingTicker = tickerLens.reduce((a, b) => a.len <= b.len ? a : b).t;
-      const portRet = Array.from({ length: minLen }, (_, i) =>
-        tickers.reduce((s, t, wi) => s + weights[wi] * (returnsMap[t]?.[i] ?? 0), 0)
-      );
+      const portRet = weightedReturns(portfolio, weights, returnsMap, minLen);
+      const spyWin  = spyRet.slice(-minLen);  // misma ventana que el portafolio
 
       const mean = arr => arr.reduce((a, b) => a + b, 0) / (arr.length || 1);
       const std  = arr => { const m = mean(arr); return Math.sqrt(arr.reduce((s, v) => s + (v - m) ** 2, 0) / (arr.length || 1)); };
 
       const muPort  = mean(portRet);  const sigPort = std(portRet);
-      const muSpy   = mean(spyRet);   const sigSpy  = std(spyRet);
+      const muSpy   = mean(spyWin);   const sigSpy  = std(spyWin);
 
       // Box-Muller para números normales
       const randn = () => Math.sqrt(-2 * Math.log(Math.random() + 1e-12)) * Math.cos(2 * Math.PI * Math.random());
@@ -1982,29 +2037,6 @@ export default function App() {
   };
 
   // ── RENDER ──────────────────────────────────────────────────────────────────
-  if (backendSearching) return (
-    <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
-      <div style={{ fontSize:13, color:"var(--muted)", letterSpacing:3 }}>CONECTANDO AL SERVIDOR…</div>
-      <div style={{ marginTop:16, width:180, height:3, background:"var(--surface-3)", borderRadius:4, overflow:"hidden" }}>
-        <div style={{ height:"100%", background:"var(--accent)", borderRadius:4, animation:"loadbar 1.5s ease-in-out infinite" }} />
-      </div>
-      <style>{`@keyframes loadbar { 0%{width:0%} 60%{width:100%} 100%{width:100%} }`}</style>
-    </div>
-  );
-
-  if (!backendUrl) return (
-    <div style={{ minHeight:"100vh", background:"var(--bg)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:12 }}>
-      <div style={{ fontSize:20, color:"var(--negative)", fontWeight:800 }}>SIN CONEXIÓN AL SERVIDOR</div>
-      <div style={{ fontSize:12, color:"var(--muted)", letterSpacing:1, textAlign:"center", maxWidth:340 }}>
-        Ningún backend respondió. Asegúrate de que Railway o Render estén activos, o corre <span style={{color:"var(--accent)",fontFamily:"var(--font-mono)"}}>python backend.py</span> localmente.
-      </div>
-      <Button onClick={() => { setBackendSearching(true); detectBackend().then(url => { BACKEND=url; setBackendUrl(url); setBackendSearching(false); }); }} size="lg">
-        REINTENTAR
-      </Button>
-    </div>
-  );
-
-  if (!authed) return <LoginScreen onAuth={() => setAuthed(true)} />;
 
   return (
     <div className="app-shell">
