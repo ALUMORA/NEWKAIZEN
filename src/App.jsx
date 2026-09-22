@@ -120,6 +120,10 @@ async function fetchStock(ticker, timeoutMs = 30000) {
   }
 }
 
+// Último USD/MXN conocido. Respaldo para un backend anterior que ignora ccy=MXN y devuelve
+// dólares: sin esto los pesos por valor de mercado volvían a mezclar USD con MXN.
+let USDMXN_SPOT = 17.5;
+
 // Siempre en MXN: todo lo que usa fetchChart (Sharpe, optimizador, backtest, Monte Carlo,
 // screener) resta la tasa libre de riesgo mexicana, así que los retornos deben ser en pesos.
 async function fetchChart(ticker, period = "5y", timeoutMs = 90000) {
@@ -129,7 +133,9 @@ async function fetchChart(ticker, period = "5y", timeoutMs = 90000) {
       const res = await fetch(`${BACKEND}/chart/${encodeURIComponent(ticker)}?period=${period}&ccy=MXN`,
         { signal: AbortSignal.timeout(timeoutMs) });
       const data = await res.json();
-      return data?.closes ?? [];
+      const closes = data?.closes ?? [];
+      if (data?.currency !== "MXN" && !isMXN(ticker)) return closes.map(c => c * USDMXN_SPOT);
+      return closes;
     } catch (e) {
       if (attempt < 2) {
         await new Promise(r => setTimeout(r, 8000 * (attempt + 1))); // 8s, 16s
@@ -1228,7 +1234,7 @@ function Workspace({ backendUrl, onLogout }) {
       .then((r) => { setRfRate(r.rate); setRfLabel(r.label); setBackendOk(r.ok); })
       .catch(() => setBackendOk(false));
     fetch(`${BACKEND}/macro`).then(r => r.json()).then(setMacroData).catch(() => {});
-    fetch(`${BACKEND}/fx`).then(r => r.json()).then(d => { if (d?.USDMXN) setUsdMxn(d.USDMXN); }).catch(() => {});
+    fetch(`${BACKEND}/fx`).then(r => r.json()).then(d => { if (d?.USDMXN) { USDMXN_SPOT = d.USDMXN; setUsdMxn(d.USDMXN); } }).catch(() => {});
   }, []);
 
   // Keep-alive: ping cada 9 min para evitar que Render (free tier) duerma
