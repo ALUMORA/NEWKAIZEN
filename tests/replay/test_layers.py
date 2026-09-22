@@ -1,8 +1,10 @@
-"""Sets de fixtures en capas: ``"base,capa"`` busca capa por capa y graba solo en la última.
+"""Sets de fixtures en capas: ``"base,capa"`` busca capa por capa y graba en una sola.
 
 Todo corre sin red: los proveedores son falsos (``yfinance.Ticker`` y ``requests.Session.request``
-parchados) y los sets viven en ``tmp_path``. La prueba sobre el set real ``2026-09-22`` lo monta con
-un enlace simbólico y comprueba byte por byte que grabar encima no lo toca.
+parchados) y los sets viven en ``tmp_path``. Las pruebas que necesitan el set real ``2026-09-22``
+lo **copian** a ``tmp_path`` (nunca lo enlazan): si alguna vez se rompe la guarda que impide
+escribir en una capa base, la prueba falla sin haber tocado las referencias grabadas, que son el
+guardarraíl del repo y no se regeneran.
 """
 
 from __future__ import annotations
@@ -10,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import shutil
 import sys
 import urllib.error
 import urllib.request
@@ -55,6 +58,8 @@ class _Upstream:
 
     calls: list[str] = []
     version = "v1"
+    broken: set[str] = {"BAD"}
+    """Símbolos que hoy fallan. Vaciarlo simula el día en que el proveedor vuelve a responder."""
 
 
 class _FakeTicker:
@@ -65,7 +70,7 @@ class _FakeTicker:
     @property
     def info(self):
         _Upstream.calls.append(f"{self.ticker}.info")
-        if self.ticker == "BAD":
+        if self.ticker in _Upstream.broken:
             raise KeyError("currentTradingPeriod")
         return {"symbol": self.ticker, "version": _Upstream.version}
 
@@ -89,6 +94,7 @@ def _fake_upstream() -> Iterator[type[_Upstream]]:
 
     _Upstream.calls = []
     _Upstream.version = "v1"
+    _Upstream.broken = {"BAD"}
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(yfinance, "Ticker", _FakeTicker)
         mp.setattr(requests.Session, "request", _fake_request)
@@ -113,8 +119,20 @@ def _get(url: str) -> str:
 
 
 def _hashes(directory: Path) -> dict[str, str]:
-    """Nombre y sha256 de cada archivo (sigue enlaces simbólicos)."""
+    """Nombre y sha256 de cada archivo de la carpeta."""
     return {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(directory.iterdir()) if p.is_file()}
+
+
+def _copy_real_set(root: Path) -> Path:
+    """Copia el set real commiteado dentro de ``root`` y devuelve la copia.
+
+    Copia, nunca enlace: las pruebas de abajo graban encima de esta capa a propósito, y si alguna
+    guarda se rompiera, un enlace dejaría modificadas las referencias de ``tests/fixtures/recorded/``
+    (que no se regeneran, regenerarlas daría el dato de hoy) antes de que la aserción lo notara.
+    """
+    dest = root / DEFAULT_SET
+    shutil.copytree(FIXTURES_ROOT / DEFAULT_SET, dest)
+    return dest
 
 
 def _index(root: Path, name: str) -> dict:
@@ -270,10 +288,63 @@ def test_recording_writes_only_the_last_layer_and_never_the_base(base, upstream)
     assert sorted(_index(root, "top")["entries"]) == ["http:GET https://x.test/c", "yf:GOOG:info", "yf:MSFT:info"]
 
 
+def test_the_recording_layer_can_be_chosen_apart_from_the_lookup_order(base, upstream):
+    """``record_layer`` (``--grabar-en``): la capa del stream gana la búsqueda Y recibe lo grabado.
+
+    Sin esto, una llamada que el set base grabó vacía o con error no se puede corregir desde la capa
+    de un stream: la base contesta primero, así que grabarla arriba no cambiaría nada al reproducir.
+    """
+    root = base
+    before = _hashes(root / "base")
+    upstream.broken = set()  # el proveedor ya responde bien para BAD
+
+    # Con el orden de siempre (base primero) el error grabado en la base manda y no se regraba.
+    with recording("base,top", root=root, throttle=0, refresh=True) as rec:
+        with pytest.raises(KeyError):
+            _info("BAD")
+        assert rec.stats["base_hits"] == 1
+    assert upstream.calls == [] and not (root / "top").exists()
+
+    # Con la capa primero y nombrada como destino, el stream sí la corrige, en SU carpeta.
+    with recording("capa,base", root=root, record_layer="capa", throttle=0) as rec:
+        assert rec.store.top.name == "capa" and [layer.name for layer in rec.store.bases] == ["base"]
+        assert _info("BAD")["symbol"] == "BAD"  # va al proveedor y se graba en capa
+        assert _info("AAPL")["version"] == "v1"  # lo bueno de la base se sigue sirviendo de la base
+    assert upstream.calls == ["BAD.info"]
+    capa = _index(root, "capa")
+    assert list(capa["entries"]) == ["yf:BAD:info"]
+    assert capa["layered_on"] == ["base"] and capa["lookup_order"] == ["capa", "base"]
+    assert capa["frozen_at"] == _index(root, "base")["frozen_at"]
+    assert _hashes(root / "base") == before  # la base sigue intacta, con su error grabado
+
+    # Al reproducir con ese mismo orden gana la capa; con el orden contrario, la base.
+    with replaying("capa,base", root=root) as rp:
+        assert _info("BAD")["symbol"] == "BAD"
+        assert _info("AAPL")["version"] == "v1"
+    assert rp.misses == []
+    with replaying("base,capa", root=root) as rp:
+        with pytest.raises(KeyError):
+            _info("BAD")
+    assert rp.misses == []
+
+
+def test_the_recording_layer_has_to_be_one_of_the_layers(base, upstream):
+    with pytest.raises(FixtureSetError, match="no está en el spec"):
+        recording("base,top", root=base, record_layer="otra").__enter__()
+    with pytest.raises(FixtureSetError, match="solo aplica al grabar"):
+        replaying("base", root=base, record_layer="base").__enter__()
+    # Y nombrar el set base como destino sigue pidiendo --permitir-base, aunque vaya primero.
+    with pytest.raises(FixtureSetError, match="Graba en tu propia capa"):
+        recording(f"{DEFAULT_SET},capa", root=base, record_layer=DEFAULT_SET).__enter__()
+    assert active_session() is None
+    assert upstream.calls == [] and not (base / "top").exists() and not (base / DEFAULT_SET).exists()
+
+
 def test_recording_over_the_real_committed_set_never_writes_it(tmp_path, upstream):
     real = FIXTURES_ROOT / DEFAULT_SET
-    (tmp_path / DEFAULT_SET).symlink_to(real, target_is_directory=True)
-    before = _hashes(real)
+    committed = _hashes(real)
+    copy = _copy_real_set(tmp_path)
+    before = _hashes(copy)
     fred_alone = None
     with replaying(DEFAULT_SET) as rp:
         fred_alone = _get("https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10")
@@ -288,7 +359,8 @@ def test_recording_over_the_real_committed_set_never_writes_it(tmp_path, upstrea
     assert rec.stats["base_hits"] == 2
     assert rec.store.locate(FRED_KEY)[0].name == DEFAULT_SET
 
-    assert _hashes(real) == before  # ni un byte del set real cambió
+    assert _hashes(copy) == before  # ni un byte de la capa base de la pila cambió
+    assert _hashes(real) == committed  # ni del set commiteado, que ni siquiera entró en la pila
     top = _index(tmp_path, f"{DEFAULT_SET}-prueba")
     assert list(top["entries"]) == ["yf:ZZZCAPA:info"]
     assert top["frozen_at"] == FixtureStore.open(DEFAULT_SET).frozen_at == "2026-09-22T14:51:31+00:00"
@@ -408,7 +480,7 @@ def test_replay_server_serves_a_layered_spec(tmp_path, monkeypatch, capsys):
     for var in ("KAIZEN_ENV", "AUTH_REQUIRED", "KAIZEN_LEGACY_ROUTES", "USERS", "SECRET_KEY"):
         monkeypatch.delenv(var, raising=False)
     runner = _load_script("run_replay_backend")
-    (tmp_path / DEFAULT_SET).symlink_to(FIXTURES_ROOT / DEFAULT_SET, target_is_directory=True)
+    _copy_real_set(tmp_path)
     spec = f"{DEFAULT_SET},{DEFAULT_SET}-srv"
     with _fake_upstream() as fake, recording(spec, root=tmp_path, throttle=0):
         _info("ZZZSRV")
@@ -448,7 +520,8 @@ def test_replay_server_serves_a_layered_spec(tmp_path, monkeypatch, capsys):
 
 def test_record_fixtures_layers_entry_point(tmp_path, monkeypatch, capsys):
     recorder = _load_script("record_fixtures")
-    (tmp_path / DEFAULT_SET).symlink_to(FIXTURES_ROOT / DEFAULT_SET, target_is_directory=True)
+    copy = _copy_real_set(tmp_path)
+    copy_before = _hashes(copy)
     before = _hashes(FIXTURES_ROOT / DEFAULT_SET)
     goldens_before = _hashes(GOLDENS_DIR)
     for var in recorder.SECRET_ENV_VARS:
@@ -494,6 +567,18 @@ def test_record_fixtures_layers_entry_point(tmp_path, monkeypatch, capsys):
     assert run("--root", str(tmp_path), "--set", f"{DEFAULT_SET},falta,{DEFAULT_SET}-rec", "--get", "/health") == 2
     assert "No existe el set grabado 'falta'" in capsys.readouterr().out
 
+    # --grabar-en: la capa va primero en el orden y aun así es la que recibe lo grabado.
+    arriba = f"{DEFAULT_SET}-rec,{DEFAULT_SET}"
+    argv = ("--root", str(tmp_path), "--set", arriba, "--grabar-en", f"{DEFAULT_SET}-rec", "--throttle", "0")
+    assert run(*argv, "--get", "/stock/AAPL") == 0
+    out = capsys.readouterr().out
+    assert f"capas={arriba} graba en={DEFAULT_SET}-rec" in out and "todas las rutas se reproducen completas" in out
+    assert list(_index(tmp_path, f"{DEFAULT_SET}-rec")["entries"]) == ["yf:ZZZREC:info"]  # nada nuevo que grabar
+    # Y tiene que ser una de las capas del spec.
+    assert run("--root", str(tmp_path), "--set", spec, "--grabar-en", "otra-capa", "--get", "/health") == 2
+    assert "no está en el spec" in capsys.readouterr().out
+
+    assert _hashes(copy) == copy_before  # la capa base de la pila no se tocó ni una vez
     assert _hashes(FIXTURES_ROOT / DEFAULT_SET) == before
     assert _hashes(GOLDENS_DIR) == goldens_before
     assert active_session() is None

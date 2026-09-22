@@ -2,12 +2,16 @@
 
 A session takes one recorded set or several stacked layers (``"2026-09-22,2026-09-22-b2a"``):
 replay looks each key up layer by layer (first hit wins, a miss only after every layer); recording
-serves keys found in earlier layers from those layers as they are and writes new calls ONLY to the
-last layer. The clock is the first layer's ``frozen_at`` and a new top layer inherits it.
+writes new calls to ONE layer, the last one unless ``record_layer=`` names another. Keys found in a
+layer that answers BEFORE the recording one are served from there as they are, because writing them
+would change nothing; keys found in a layer below it can be re-recorded (that is what
+``record_layer=`` is for: ``"capa,2026-09-22"`` with ``record_layer="capa"`` lets a stream correct a
+call the shared base recorded empty). The clock is the first layer's ``frozen_at`` and a new layer
+inherits it.
 
 Recording never touches the shared base set by accident: a spec whose comma collapsed into a single
 layer is refused (``check_record_spec``), writing into ``DEFAULT_SET`` needs ``allow_base=True``
-(``check_base_write``) and the top layer is only created on disk when something is actually written.
+(``check_base_write``) and the recording layer is only created on disk when something is written.
 """
 
 from __future__ import annotations
@@ -37,6 +41,7 @@ from .serialize import SerializationError, decode, encode
 from .store import (
     DEFAULT_SET,
     FIXTURES_ROOT,
+    FixtureSetError,
     FixtureStore,
     LayeredStore,
     SetSpec,
@@ -214,17 +219,21 @@ class ReplaySession:
         throttle: float = 1.0,
         refresh: bool = False,
         allow_base: bool = False,
+        record_layer: str | None = None,
         max_retries: int = 4,
         backoff: float = 20.0,
         log: Callable[[str], None] | None = None,
     ):
         if mode not in ("replay", "record"):
             raise ValueError(f"modo inválido: {mode}")
+        if record_layer is not None and mode != "record":
+            raise FixtureSetError("record_layer solo aplica al grabar: al reproducir nadie escribe nada.")
         # Al grabar, una coma que se quedó en una sola capa es un error: escribiría en esa capa.
         self.set_names = check_record_spec(set_name) if mode == "record" else parse_sets(set_name)
         self.set_name = ",".join(self.set_names)
         self.mode = mode
-        self.store = LayeredStore.open(self.set_names, root)
+        self.record_layer = record_layer
+        self.store = LayeredStore.open(self.set_names, root, record=record_layer if mode == "record" else None)
         if mode == "replay" and self.store.missing():
             hint = (
                 " Una capa que no grabó ninguna llamada no se crea: quítala del spec o graba algo en ella."
@@ -322,6 +331,7 @@ class ReplaySession:
             }
             if self.store.bases:
                 fields["layered_on"] = [layer.name for layer in self.store.bases]
+                fields["lookup_order"] = self.store.names
             top.set_meta(**fields)
 
         ticker_cls = make_ticker_class(self)
@@ -427,9 +437,11 @@ class ReplaySession:
             key_lock = self._key_locks.setdefault(key, threading.Lock())
         with key_lock:
             layer, rec = self.store.locate(key)
-            if rec is not None and layer is not self.store.top:
-                # An earlier layer is read-only and shadows the top one: served as recorded, even a
-                # recorded failure and even with refresh. Re-record it in its own set, never here.
+            if rec is not None and self.store.wins_over_record_layer(layer):
+                # A layer that answers BEFORE the recording one is read-only and shadows it: served
+                # as recorded, even a recorded failure and even with refresh, because writing the
+                # call here would not change what replay returns. Re-record it in its own set, or
+                # put your layer first (``--set capa,base --grabar-en capa``).
                 self.stats["hits"] += 1
                 self.stats["base_hits"] += 1
                 return self._materialize(rec, decoder)
@@ -535,11 +547,13 @@ def replaying(set_name: SetSpec = DEFAULT_SET, **kwargs: Any) -> Iterator[Replay
 def recording(set_name: SetSpec = DEFAULT_SET, **kwargs: Any) -> Iterator[ReplaySession]:
     """Serve recorded calls from fixtures and fetch (throttled) + store everything else.
 
-    With several layers, keys found in earlier layers come from them untouched and every new call
-    is written to the LAST layer only (created with its own ``index.json`` at the first write; a
-    layer that records nothing is not created). Two guards protect the shared base set: a spec with
-    a comma that collapsed into one layer is refused, and writing into ``DEFAULT_SET`` needs
-    ``allow_base=True``.
+    With several layers, keys found in a layer that answers before the recording one come from there
+    untouched and every new call is written to a single layer (created with its own ``index.json``
+    at the first write; a layer that records nothing is not created). That layer is the LAST one
+    unless ``record_layer=`` names another, which is how a stream both wins the lookup and records:
+    ``recording("capa,2026-09-22", record_layer="capa")``. Two guards protect the shared base set: a
+    spec with a comma that collapsed into one layer is refused, and recording into ``DEFAULT_SET``
+    needs ``allow_base=True``.
     """
     session = ReplaySession(set_name, mode="record", **kwargs)
     with session:

@@ -20,9 +20,10 @@ Uso:
     python scripts/record_fixtures.py --goldens-only --goldens-dir /tmp/g   # regenera en otra carpeta
 
 Capas (fase 2): ``--set`` acepta varios sets separados por coma, en orden de búsqueda. Lo que ya
-está en una capa anterior se sirve de ahí sin tocarla; lo nuevo se graba SOLO en la última capa, que
-se crea con su propio ``index.json`` y hereda el reloj (``frozen_at``) de la base. Así cada stream
-graba en su carpeta sin chocar con los demás en un mismo ``index.json``:
+está en una capa que contesta antes se sirve de ahí sin tocarla; lo nuevo se graba en UNA sola capa,
+la última salvo que ``--grabar-en`` nombre otra. Esa capa se crea con su propio ``index.json`` y
+hereda el reloj (``frozen_at``) de la base, así cada stream graba en su carpeta sin chocar con los
+demás en un mismo ``index.json``:
 
     # B2a graba las llamadas que hacen sus rutas v2 (TestClient sobre create_app, sin servidor)
     python scripts/record_fixtures.py --set 2026-09-22,2026-09-22-b2a \
@@ -30,10 +31,18 @@ graba en su carpeta sin chocar con los demás en un mismo ``index.json``:
     # lo mismo sin red: solo comprueba que esas rutas se reproducen completas desde las capas
     python scripts/record_fixtures.py --set 2026-09-22,2026-09-22-b2a --get '/v2/quotes?symbols=AAPL' --goldens-only
 
+``--grabar-en CAPA`` separa las dos decisiones que ``--set`` mezclaba: el ORDEN de búsqueda y a qué
+capa se GRABA. Por omisión se graba en la última, pero una llamada que ya está en una capa anterior
+se sirve de ahí y no se puede corregir desde arriba. Para corregir una llamada que el set base
+grabó vacía o con error, la capa del stream va PRIMERO y se nombra como destino:
+
+    python scripts/record_fixtures.py --set 2026-09-22-b3a,2026-09-22 --grabar-en 2026-09-22-b3a \
+        --get '/v2/insiders/WALMEX.MX'
+
 Tres guardas para que nadie escriba en el set base por accidente: un ``--set`` con coma que se
 quedó en una sola capa (``"2026-09-22,$CAPA"`` con ``$CAPA`` sin definir) sale con error en vez de
-grabar en la base; grabar con el set base como última capa pide ``--permitir-base``; y la capa nueva
-solo se crea en disco si de verdad grabó alguna llamada.
+grabar en la base; grabar con el set base como capa de destino pide ``--permitir-base``; y la capa
+nueva solo se crea en disco si de verdad grabó alguna llamada.
 
 Con ``--get`` no se tocan los goldens del legado. Sin ``--get`` y con varias capas hay que pasar
 ``--goldens-dir``: los goldens de ``tests/goldens_legacy`` quedan fijos en el set base. Al terminar
@@ -176,10 +185,19 @@ def summarize(store: FixtureStore) -> dict:
 def phase_record(args: argparse.Namespace, specs: list[tuple[str, list, dict]]) -> dict[str, dict]:
     live: dict[str, dict] = {}
     with recording(
-        args.set, root=args.root, throttle=args.throttle, refresh=args.refresh, allow_base=args.permitir_base, log=_log
+        args.set,
+        root=args.root,
+        throttle=args.throttle,
+        refresh=args.refresh,
+        allow_base=args.permitir_base,
+        record_layer=args.grabar_en,
+        log=_log,
     ) as rec:
         package = load_module(args.module)
-        _log(f"[record] set={args.set} frozen_at={rec.store.frozen_at} run={rec.run_id}")
+        _log(
+            f"[record] capas={rec.set_name} graba en={rec.store.top.name} "
+            f"frozen_at={rec.store.frozen_at} run={rec.run_id}"
+        )
         for i, (fn_name, fargs, fkwargs) in enumerate(specs, 1):
             name = golden_name(fn_name, fargs, fkwargs)
             if fn_name == "get_magic_formula":
@@ -315,7 +333,7 @@ def _get_routes(session: Any, paths: list[str], tag: str) -> dict[str, dict]:
 
 
 def run_routes(args: argparse.Namespace) -> int:
-    """``--get``: graba en la última capa lo que piden las rutas v2 y luego verifica el replay."""
+    """``--get``: graba lo que piden las rutas v2 en la capa de destino y verifica el replay."""
     paths = [p if p.startswith("/") else "/" + p for p in args.get]
     recorded: dict[str, dict] = {}
     if not args.goldens_only:
@@ -325,6 +343,7 @@ def run_routes(args: argparse.Namespace) -> int:
             throttle=args.throttle,
             refresh=args.refresh,
             allow_base=args.permitir_base,
+            record_layer=args.grabar_en,
             log=_log,
         ) as rec:
             _log(
@@ -355,7 +374,7 @@ def run_routes(args: argparse.Namespace) -> int:
             problems += 1
             diffs = compare(got["body"], want["body"])[:3]
             _log(f"[replay] GET {path}: difiere de la grabación ({want['status']} vs {got['status']}) {diffs}")
-    top = open_sets(args.set, args.root).top
+    top = open_sets(args.set, args.root, record=args.grabar_en).top
     leaks = leaked_secrets(top.dir)
     if leaks:
         problems += 1
@@ -383,7 +402,7 @@ def run_legacy(args: argparse.Namespace) -> int:
     if not args.goldens_only:
         live = phase_record(args, specs)
     problems = phase_goldens(args, specs, live)
-    stack = open_sets(args.set, args.root)
+    stack = open_sets(args.set, args.root, record=args.grabar_en)
     if len(stack.layers) == 1:
         _log(f"[resumen] {summarize(stack.top)}")
     else:
@@ -416,6 +435,13 @@ def main() -> int:
     parser.add_argument("--only", help="regex sobre el nombre del golden")
     parser.add_argument("--throttle", type=float, default=1.0, help="segundos mínimos entre llamadas en vivo")
     parser.add_argument("--refresh", action="store_true", help="volver a pedir lo ya grabado")
+    parser.add_argument(
+        "--grabar-en",
+        metavar="CAPA",
+        default=None,
+        help="capa de --set que recibe las grabaciones (por omisión la última); sirve para ganarle la "
+        "precedencia al set base: --set 2026-09-22-b3a,2026-09-22 --grabar-en 2026-09-22-b3a",
+    )
     parser.add_argument(
         "--permitir-base",
         action="store_true",

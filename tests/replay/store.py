@@ -1,9 +1,10 @@
 """On-disk fixture store: ``tests/fixtures/recorded/<set>/index.json`` plus one file per key.
 
 Sets can be stacked in layers with a comma-separated spec, e.g. ``"2026-09-22,2026-09-22-b2a"``
-(:class:`LayeredStore`): lookups go layer by layer and the first hit wins; writes only ever go to
-the LAST layer, which is created with its own ``index.json``. Earlier layers are read-only. A
-single name keeps behaving exactly as before.
+(:class:`LayeredStore`): lookups go layer by layer and the first hit wins; writes go to ONE layer,
+which is created with its own ``index.json``. By default that is the last layer; ``record=`` names
+another, so the lookup order and the write target are two separate decisions. Every other layer is
+read-only for that session. A single name keeps behaving exactly as before.
 """
 
 from __future__ import annotations
@@ -223,19 +224,32 @@ class LayeredStore:
     """Several recorded sets stacked in order: the first layer that has a key answers for it.
 
     Reads (``get``, ``meta``, ``keys``, ``frozen_at``) look through every layer; writes (``put``,
-    ``set_meta``, ``save_index``) only touch the LAST layer (``top``). ``dir`` and ``index`` are the
-    top layer's, so code written for a single :class:`FixtureStore` keeps working. With one layer it
+    ``set_meta``, ``save_index``) only touch ONE layer, ``top``. ``dir`` and ``index`` are that
+    layer's, so code written for a single :class:`FixtureStore` keeps working. With one layer it
     behaves exactly like that layer.
+
+    ``record`` names which layer receives the writes; by default it is the last one, so
+    ``"base,capa"`` reads base first and records into ``capa``. Naming it explicitly separates the
+    two axes: ``LayeredStore.open("capa,base", record="capa")`` gives the stream's layer precedence
+    over the shared base AND records into it, which is how a stream corrects a call the base already
+    has (see ``docs/OWNERSHIP.md``).
     """
 
-    def __init__(self, layers: Sequence[FixtureStore]):
+    def __init__(self, layers: Sequence[FixtureStore], record: str | None = None):
         if not layers:
             raise FixtureSetError("Un LayeredStore necesita al menos una capa.")
         self.layers: list[FixtureStore] = list(layers)
+        names = [layer.name for layer in self.layers]
+        if record is not None and record not in names:
+            raise FixtureSetError(
+                f"La capa de grabación {record!r} no está en el spec {SET_SEPARATOR.join(names)!r}: "
+                f"agrégala a --set (se graba en una de las capas que se consultan, no fuera de ellas)."
+            )
+        self.record_index = len(self.layers) - 1 if record is None else names.index(record)
 
     @classmethod
-    def open(cls, spec: SetSpec = DEFAULT_SET, root: Path | None = None) -> LayeredStore:
-        return cls([FixtureStore._open_one(name, root) for name in parse_sets(spec)])
+    def open(cls, spec: SetSpec = DEFAULT_SET, root: Path | None = None, record: str | None = None) -> LayeredStore:
+        return cls([FixtureStore._open_one(name, root) for name in parse_sets(spec)], record=record)
 
     # ─── layers ──────────────────────────────────────────────────────────────
     @property
@@ -248,13 +262,21 @@ class LayeredStore:
 
     @property
     def top(self) -> FixtureStore:
-        """The layer that receives new recordings."""
-        return self.layers[-1]
+        """The layer that receives new recordings (the last one unless ``record`` named another)."""
+        return self.layers[self.record_index]
 
     @property
     def bases(self) -> list[FixtureStore]:
-        """Read-only layers under the top one."""
-        return self.layers[:-1]
+        """Read-only layers: every layer other than the one being recorded into, in lookup order."""
+        return [layer for i, layer in enumerate(self.layers) if i != self.record_index]
+
+    def wins_over_record_layer(self, layer: FixtureStore) -> bool:
+        """Does ``layer`` answer before the recording layer? Then its records are untouchable here.
+
+        A layer BELOW the recording one (later in the lookup order) can be overridden, because once
+        the call is written to the recording layer that one answers first.
+        """
+        return self.layers.index(layer) < self.record_index
 
     @property
     def dir(self) -> Path:
@@ -320,6 +342,6 @@ class LayeredStore:
         self.top.save_index()
 
 
-def open_sets(spec: SetSpec = DEFAULT_SET, root: Path | None = None) -> LayeredStore:
+def open_sets(spec: SetSpec = DEFAULT_SET, root: Path | None = None, record: str | None = None) -> LayeredStore:
     """A :class:`LayeredStore` for any spec (one name or several)."""
-    return LayeredStore.open(spec, root)
+    return LayeredStore.open(spec, root, record=record)
