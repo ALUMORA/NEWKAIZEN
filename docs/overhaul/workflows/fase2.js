@@ -15,7 +15,7 @@ const BASE = args && args.base ? args.base : 'analizavende'
 
 const COMMON = (s) => `You are stream ${s.id} of phase 2 of a multi-agent overhaul of NEWKAIZEN (GitHub ALUMORA/NEWKAIZEN), a Spanish-language (es-MX) investing app being rebuilt as an affordable "Bloomberg-lite" for Mexican/US retail investors and employer financial-wellness programs: correct per finance theory, honest about data provenance, accessible, fast. React 19 + Vite 8 plain-JS SPA (JSDoc + tsc --checkJs on src/lib only; legacy app in src/legacy/App.legacy.jsx mounted by LegacyPage until features replace it) and a Python backend (FastAPI package kaizen_api/; providers yfinance/FRED/Banxico/SEC/RSS; offline tests replay recorded provider calls).
 
-READ FIRST: ${DOCS}/PLAN.md (approved plan), ${DOCS}/CONTINUAR.md (state and decisions: do NOT re-discuss them), the handoff notes ${DOCS}/notas/fase1-S1.md, ${DOCS}/notas/fase1-S2.md and ${DOCS}/notas/fase1-M1.md, and in your worktree docs/OWNERSHIP.md (ownership, seams between streams, layered fixtures recipe) and scripts/ownership.json. Your specs: ${s.specs}.
+READ FIRST: ${DOCS}/PLAN.md (approved plan), ${DOCS}/CONTINUAR.md (state and decisions: do NOT re-discuss them), the handoff notes ${DOCS}/notas/fase1-S1.md, ${DOCS}/notas/fase1-S2.md plus its close-out ${DOCS}/notas/fase1-S2-cierre.md, and ${DOCS}/notas/fase1-M1.md, and in your worktree docs/OWNERSHIP.md (ownership, seams between streams, layered fixtures recipe) and scripts/ownership.json. Your specs: ${s.specs}.
 
 WORKING RULES (mandatory):
 - Work ONLY inside your git worktree "${WT}/${s.id}" (branch ws/${s.id}, based on ${BASE}). Never edit "${MAIN}" (read-only) or other worktrees. Use absolute paths or "git -C"; do not rely on cd persisting.
