@@ -2,7 +2,7 @@
 // nuevas; el simulador (Monte Carlo, metas y retiro) es ruta nueva.
 import { Navigate } from 'react-router'
 import ComingSoon from '../../app/ComingSoon.jsx'
-import LegacyPage from '../../app/LegacyPage.jsx'
+import { legacyRoute } from '../../app/legacyRoute.jsx'
 import { PATHS, route } from '../../app/paths.js'
 
 export const routes = [
@@ -10,16 +10,8 @@ export const routes = [
     path: route(PATHS.tools),
     element: <Navigate replace to={PATHS.toolsOptimizer} />,
   },
-  {
-    path: route(PATHS.toolsOptimizer),
-    element: <LegacyPage tab="optimize" />,
-    handle: { title: 'Optimizador', legacy: true },
-  },
-  {
-    path: route(PATHS.toolsBacktest),
-    element: <LegacyPage tab="analytics" />,
-    handle: { title: 'Backtest', legacy: true },
-  },
+  legacyRoute(PATHS.toolsOptimizer, { title: 'Optimizador' }),
+  legacyRoute(PATHS.toolsBacktest, { title: 'Backtest' }),
   {
     path: route(PATHS.toolsSimulator),
     element: <ComingSoon />,

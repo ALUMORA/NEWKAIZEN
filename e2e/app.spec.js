@@ -11,7 +11,7 @@ import { test as base, expect } from './support/guards.js'
 import { attachGuards } from './support/guards.js'
 import { DEFAULT_SESSION, SESSION_KEY } from './support/auth.js'
 import { API_URL_RE, expectedHttpError, loginResponse, setupApp } from './support/app.js'
-import { trackNetwork, waitForSettled } from './support/legacy.js'
+import { LEGACY_TABS, openLegacyTab, trackNetwork, waitForSettled } from './support/legacy.js'
 
 const test = base
 const WCAG_AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
@@ -254,6 +254,77 @@ test.describe('app legada dentro de LegacyPage', () => {
     await expect(page.getByText('Resumen Mañanero').first()).toBeVisible()
     expect(sent.length).toBeGreaterThan(5)
     expect(sent.filter((h) => h !== null)).toEqual([])
+  })
+
+  // La URL sigue a la tab del legado: cambiar de tab navega (push) a la ruta de esa tab, el
+  // título cambia, recargar conserva la tab y Atrás regresa. Escritorio usa la barra lateral y
+  // móvil las pastillas de abajo (openLegacyTab).
+  test('cambiar de tab en el legado cambia la URL y el título; recargar la conserva y Atrás regresa', async ({ page, baseURL }, testInfo) => {
+    const mobile = testInfo.project.name === 'mobile'
+    const sharpe = /** @type {(typeof LEGACY_TABS)[number]} */ (LEGACY_TABS.find((t) => t.id === 'optimize'))
+    const topbar = page.locator('.app-topbar')
+    await setupApp(page, { baseURL, session: true, legacyApi: true })
+    const net = trackNetwork(page, API_URL_RE)
+    await page.goto('/mercados')
+    await legacySettled(page, net)
+    await expect(page).toHaveTitle('Mercados · Kaizen')
+    const historyBefore = await page.evaluate(() => history.length)
+
+    await openLegacyTab(page, sharpe, mobile)
+    await expect(page).toHaveURL(/\/herramientas\/optimizador$/)
+    await expect(page).toHaveTitle('Optimizador · Kaizen')
+    await expect(topbar).toContainText('Sharpe Optimizer')
+    await legacySettled(page, net)
+    // Una sola entrada nueva en el historial: sin ciclos de navegación.
+    expect(await page.evaluate(() => history.length)).toBe(historyBefore + 1)
+    await expect(page).toHaveURL(/\/herramientas\/optimizador$/)
+
+    await page.reload()
+    await legacySettled(page, net)
+    await expect(page).toHaveURL(/\/herramientas\/optimizador$/)
+    await expect(page).toHaveTitle('Optimizador · Kaizen')
+    await expect(topbar).toContainText('Sharpe Optimizer')
+
+    await page.goBack()
+    await expect(page).toHaveURL(/\/mercados$/)
+    await legacySettled(page, net)
+    await expect(page).toHaveTitle('Mercados · Kaizen')
+    await expect(topbar).toContainText('Noticias')
+    await expect(page.getByText('Resumen Mañanero').first()).toBeVisible()
+  })
+
+  test('Atrás y Adelante dentro de la app mueven la tab del legado sin recargar', async ({ page, baseURL }, testInfo) => {
+    const mobile = testInfo.project.name === 'mobile'
+    const byId = (id) => /** @type {(typeof LEGACY_TABS)[number]} */ (LEGACY_TABS.find((t) => t.id === id))
+    const topbar = page.locator('.app-topbar')
+    await setupApp(page, { baseURL, session: true, legacyApi: true })
+    const net = trackNetwork(page, API_URL_RE)
+    await page.goto('/mercados')
+    await legacySettled(page, net)
+    // Marca en window: si algo recargara la página, se perdería.
+    await page.evaluate(() => {
+      /** @type {any} */ (window).__sinRecargar = true
+    })
+
+    await openLegacyTab(page, byId('fibras'), mobile)
+    await expect(page).toHaveURL(/\/screener\/fibras$/)
+    await expect(page).toHaveTitle('FIBRAs · Kaizen')
+    await openLegacyTab(page, byId('portfolio'), mobile)
+    await expect(page).toHaveURL(/\/portafolio$/)
+    await expect(page).toHaveTitle('Mi portafolio · Kaizen')
+    await legacySettled(page, net)
+
+    await page.goBack()
+    await expect(page).toHaveURL(/\/screener\/fibras$/)
+    await expect(topbar).toContainText('FIBRA Screener')
+    await page.goBack()
+    await expect(page).toHaveURL(/\/mercados$/)
+    await expect(topbar).toContainText('Noticias')
+    await page.goForward()
+    await expect(page).toHaveURL(/\/screener\/fibras$/)
+    await expect(page).toHaveTitle('FIBRAs · Kaizen')
+    await legacySettled(page, net)
+    expect(await page.evaluate(() => /** @type {any} */ (window).__sinRecargar)).toBe(true)
   })
 
   test('la raíz con sesión redirige a /mercados', async ({ page, baseURL }) => {

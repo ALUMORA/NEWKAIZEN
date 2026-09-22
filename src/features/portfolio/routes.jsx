@@ -1,15 +1,11 @@
 // Mi portafolio (F1). /portafolio monta la tab "Portfolio" de la app legada hasta que exista la
 // página nueva. Los datos locales ya viven en src/lib/storage.js (usePortfolios).
 import ComingSoon from '../../app/ComingSoon.jsx'
-import LegacyPage from '../../app/LegacyPage.jsx'
+import { legacyRoute } from '../../app/legacyRoute.jsx'
 import { PATHS, route } from '../../app/paths.js'
 
 export const routes = [
-  {
-    path: route(PATHS.portfolio),
-    element: <LegacyPage tab="portfolio" />,
-    handle: { title: 'Mi portafolio', legacy: true },
-  },
+  legacyRoute(PATHS.portfolio, { title: 'Mi portafolio' }),
   {
     path: route(PATHS.portfolioTransactions),
     element: <ComingSoon />,

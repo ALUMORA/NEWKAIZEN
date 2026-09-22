@@ -903,10 +903,11 @@ function MonteCarloChart({ portStats, spyStats, weeks }) {
 // La app nueva (src/app/LegacyPage.jsx) monta el Workspace legado dentro de sus rutas privadas:
 // la sesión ya la resolvió RequireAuth, así que aquí solo queda detectar el backend y abrir la
 // tab que pide la ruta. `apiBase` fija el backend (el API_BASE de src/lib/api/client.js); sin
-// él se prueban los candidatos de siempre.
+// él se prueban los candidatos de siempre. `onTabChange(tab)` avisa cada cambio de tab para que
+// la URL la siga.
 // Workspace se monta solo cuando BACKEND ya está resuelto: sus efectos de montaje piden datos
 // al backend y antes corrían contra "null/...".
-export function LegacyWorkspaceHost({ tab = "news", apiBase, onLogout }) {
+export function LegacyWorkspaceHost({ tab = "news", apiBase, onLogout, onTabChange }) {
   const [backendUrl, setBackendUrl] = useState(null);
   const [backendSearching, setBackendSearching] = useState(true);
 
@@ -940,15 +941,17 @@ export function LegacyWorkspaceHost({ tab = "news", apiBase, onLogout }) {
     </div>
   );
 
-  return <Workspace backendUrl={backendUrl} initialTab={tab} onLogout={onLogout} />;
+  return <Workspace backendUrl={backendUrl} initialTab={tab} onLogout={onLogout} onTabChange={onTabChange} />;
 }
 
-function Workspace({ backendUrl, initialTab = "news", onLogout }) {
+function Workspace({ backendUrl, initialTab = "news", onLogout, onTabChange }) {
   const { dark, toggle: toggleTheme } = useTheme();
   const [tab, setTab] = useState(initialTab);
   // Si la ruta cambia con el Workspace montado, se abre la tab nueva (ajuste de estado en render).
   const [routeTab, setRouteTab] = useState(initialTab);
   if (routeTab !== initialTab) { setRouteTab(initialTab); setTab(initialTab); }
+  // Y al revés: cada cambio de tab se avisa para que la URL lo siga (src/app/LegacyPage.jsx).
+  useEffect(() => { onTabChange?.(tab); }, [tab, onTabChange]);
   const [rfRate, setRfRate] = useState(null);
   const [rfLabel, setRfLabel] = useState("MX 5Y");
   const [backendOk, setBackendOk] = useState(null);

@@ -4,6 +4,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import { RouterProvider, createMemoryRouter } from 'react-router'
 import { resetCapabilitiesForTests } from '../lib/api/capabilities.js'
 import { SESSION_KEY, resetSessionForTests } from '../lib/auth/session.js'
+import { LEGACY_TABS, legacyTabForPath } from './legacyTabs.js'
 import { appRoutes } from './router.jsx'
 
 const session = { token: 't', expiresAt: '2099-01-01T00:00:00.000Z', user: { username: 'ana', displayName: 'Ana' } }
@@ -51,6 +52,19 @@ describe('router', () => {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
     const router = renderAt('/herramientas')
     await waitFor(() => expect(router.state.location.pathname).toBe('/herramientas/optimizador'))
+  })
+
+  it('cada ruta legada abre la tab que dice LEGACY_TAB_PATHS y cada tab tiene su ruta', () => {
+    const flat = []
+    const walk = (list) =>
+      list.forEach((r) => {
+        flat.push(r)
+        if (r.children) walk(r.children)
+      })
+    walk(appRoutes)
+    const legacy = flat.filter((r) => r.handle?.legacy)
+    for (const r of legacy) expect([r.path, r.element.props.tab]).toEqual([r.path, legacyTabForPath(r.path)])
+    expect(legacy.map((r) => r.element.props.tab).sort()).toEqual([...LEGACY_TABS].sort())
   })
 
   it('servidor viejo: aviso en rutas nuevas', async () => {

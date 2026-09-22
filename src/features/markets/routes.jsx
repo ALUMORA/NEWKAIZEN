@@ -1,16 +1,12 @@
 // Mercados (F2). /mercados monta la tab "Noticias" de la app legada hasta que exista la página
 // nueva; el resto son rutas nuevas. Para migrar una ruta: crear ./pages/X.jsx, cargarla con
-// lazy() y quitar `legacy: true` del handle.
+// lazy() y cambiar legacyRoute(...) por { path: route(PATHS.x), element: <Pages.X />, handle }.
 import ComingSoon from '../../app/ComingSoon.jsx'
-import LegacyPage from '../../app/LegacyPage.jsx'
+import { legacyRoute } from '../../app/legacyRoute.jsx'
 import { PATHS, route } from '../../app/paths.js'
 
 export const routes = [
-  {
-    path: route(PATHS.markets),
-    element: <LegacyPage tab="news" />,
-    handle: { title: 'Mercados', legacy: true },
-  },
+  legacyRoute(PATHS.markets, { title: 'Mercados' }),
   {
     path: route(PATHS.marketsMexico),
     element: <ComingSoon />,
