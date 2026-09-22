@@ -1,5 +1,6 @@
 import {
   BACKUP_PREFIX,
+  FUTURE_VERSION_ERROR,
   LEGACY_KEYS,
   MIGRATED_NOTE,
   STORAGE_KEY,
@@ -7,7 +8,10 @@ import {
   emptyState,
   exportJSON,
   getStorageError,
+  hashLegacyValue,
   importJSON,
+  isReadOnly,
+  legacyChangedSinceMigration,
   load,
   migrateLegacy,
   normalizeState,
@@ -375,5 +379,131 @@ describe('migrateLegacy (puro)', () => {
   it('acepta momentum_screener como arreglo JSON', () => {
     const s = migrateLegacy((k) => (k === LEGACY_KEYS.screener ? '["amxl.mx","AMXL.MX"]' : null))
     expect(s.watchlists[0].symbols).toEqual(['AMXL.MX'])
+  })
+})
+
+describe('datos de una versión más nueva', () => {
+  const future = {
+    v: 3,
+    updatedAt: '2027-01-01T00:00:00.000Z',
+    portfolios: [{ id: 'p-nuevo', name: 'Del futuro', transactions: [] }],
+    activePortfolioId: 'p-nuevo',
+    watchlists: [],
+    settings: { benchmark: 'NAFTRAC.MX', riskProfile: null, onboardingDone: true },
+    novedad: 'un campo que esta versión no conoce',
+  }
+  const stored = JSON.stringify(future)
+
+  beforeEach(() => {
+    localStorage.setItem(STORAGE_KEY, stored)
+    localStorage.setItem(LEGACY_KEYS.portfolios, JSON.stringify(legacyPortfolios))
+  })
+
+  it('no los sobrescribe, no los respalda y no re-migra', () => {
+    const state = load()
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(stored)
+    expect(backupKeys()).toEqual([])
+    expect(state.portfolios).toEqual([])
+    expect(state.migrationReport).toBeNull()
+  })
+
+  it('el estado queda en solo lectura y el mensaje está en español', () => {
+    expect(isReadOnly()).toBe(true)
+    expect(getStorageError()).toEqual({
+      code: 'FUTURE_VERSION',
+      message: 'Tus datos se guardaron con una versión más nueva de Kaizen. Recarga la página para usarla.',
+    })
+    expect(FUTURE_VERSION_ERROR.message).not.toMatch(/[—–]/)
+  })
+
+  it('guardar no hace nada: ni en el storage ni en memoria, y lo reporta', () => {
+    const before = load()
+    const calls = []
+    const off = subscribe(() => calls.push(1))
+    const next = save({ ...emptyState(), portfolios: [{ id: 'x', name: 'X', transactions: [] }] })
+    expect(next).toBe(before)
+    expect(load().portfolios).toEqual([])
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(stored)
+    expect(getStorageError()?.code).toBe('FUTURE_VERSION')
+    expect(calls).toHaveLength(1)
+    off()
+
+    update((st) => ({ ...st, settings: { ...st.settings, onboardingDone: true } }))
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(stored)
+    expect(load().settings.onboardingDone).toBe(false)
+  })
+
+  it('importar tampoco pisa los datos nuevos', () => {
+    expect(() => importJSON(JSON.stringify(emptyState()))).toThrow(ImportError)
+    expect(() => importJSON(JSON.stringify(emptyState()))).toThrow(FUTURE_VERSION_ERROR.message)
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(stored)
+  })
+
+  it('un v que no es número sigue contando como dañado (se respalda y se empieza de cero)', () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...future, v: 'tres' }))
+    resetStorageForTests()
+    const state = load()
+    expect(isReadOnly()).toBe(false)
+    expect(state.migrationReport?.recoveredFromCorruptV2).toBe(true)
+    expect(backupKeys().some((k) => k.endsWith(':kaizen:v2'))).toBe(true)
+  })
+})
+
+describe('la migración es una foto única (legacyHashes)', () => {
+  it('guarda la huella de las tres llaves viejas al migrar', () => {
+    localStorage.setItem(LEGACY_KEYS.portfolios, JSON.stringify(legacyPortfolios))
+    localStorage.setItem(LEGACY_KEYS.screener, 'AAPL,MSFT')
+    const state = load()
+    expect(state.legacyHashes).toEqual({
+      [LEGACY_KEYS.portfolios]: hashLegacyValue(JSON.stringify(legacyPortfolios)),
+      [LEGACY_KEYS.portfolio]: null,
+      [LEGACY_KEYS.screener]: hashLegacyValue('AAPL,MSFT'),
+    })
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).legacyHashes).toEqual(state.legacyHashes)
+  })
+
+  it('hashLegacyValue cambia con el contenido y no guarda una copia del texto', () => {
+    expect(hashLegacyValue(null)).toBeNull()
+    expect(hashLegacyValue('AAPL,MSFT')).toBe(hashLegacyValue('AAPL,MSFT'))
+    expect(hashLegacyValue('AAPL,MSFT')).not.toBe(hashLegacyValue('AAPL,MSFU'))
+    expect(hashLegacyValue('AAPL,MSFT')).not.toContain('AAPL')
+  })
+
+  it('legacyChangedSinceMigration ve el cambio pero no re-migra', () => {
+    localStorage.setItem(LEGACY_KEYS.portfolios, JSON.stringify(legacyPortfolios))
+    const migrated = load()
+    expect(legacyChangedSinceMigration()).toEqual({ known: true, changed: [], hashes: migrated.legacyHashes })
+
+    // La app legada sigue viva y agrega una posición.
+    const touched = [...legacyPortfolios, { id: 'p3', name: 'Nuevo', positions: [{ ticker: 'GMEXICOB.MX', shares: 1, cost: 100 }] }]
+    localStorage.setItem(LEGACY_KEYS.portfolios, JSON.stringify(touched))
+    resetStorageForTests()
+    const after = load()
+    expect(legacyChangedSinceMigration().changed).toEqual([LEGACY_KEYS.portfolios])
+    // Nada se re-migró: siguen los dos portafolios de la foto original.
+    expect(after.portfolios.map((p) => p.id)).toEqual(['p1', 'p2'])
+    expect(after.legacyHashes).toEqual(migrated.legacyHashes)
+  })
+
+  it('borrar una llave vieja también cuenta como cambio', () => {
+    localStorage.setItem(LEGACY_KEYS.screener, 'AAPL')
+    load()
+    localStorage.removeItem(LEGACY_KEYS.screener)
+    expect(legacyChangedSinceMigration().changed).toEqual([LEGACY_KEYS.screener])
+  })
+
+  it('sin foto guardada (estado de antes de este cambio) avisa known: false', () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...emptyState(), legacyHashes: undefined }))
+    const res = legacyChangedSinceMigration()
+    expect(res.known).toBe(false)
+    expect(res.changed).toEqual([])
+  })
+
+  it('guardar conserva la foto', () => {
+    localStorage.setItem(LEGACY_KEYS.screener, 'AAPL')
+    const hashes = load().legacyHashes
+    const next = update((s) => ({ ...s, settings: { ...s.settings, onboardingDone: true } }))
+    expect(next.legacyHashes).toEqual(hashes)
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY)).legacyHashes).toEqual(hashes)
   })
 })

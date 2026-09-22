@@ -4,7 +4,7 @@
 //
 // Forma (v: 2):
 //   { v, updatedAt, portfolios: Portfolio[], activePortfolioId, watchlists: Watchlist[],
-//     settings: { benchmark, riskProfile, onboardingDone }, migrationReport }
+//     settings: { benchmark, riskProfile, onboardingDone }, migrationReport, legacyHashes }
 //
 // Migración desde la app vieja, una sola vez, cuando "kaizen:v2" no existe:
 // - "momentum_portfolios" (varios) o "momentum_portfolio" (uno) → portafolios con un movimiento
@@ -13,6 +13,20 @@
 // - Antes de escribir se copia cada llave vieja a "kaizen:backup:<ISO>:<llave>". Las llaves
 //   viejas NUNCA se borran: la app legada las sigue usando mientras conviva con la nueva.
 // Si no hay nada que migrar se arranca sin portafolios (la bienvenida ofrece uno de ejemplo).
+//
+// LA MIGRACIÓN ES UNA FOTO DE UN SOLO MOMENTO, y a propósito no se repite. Mientras src/legacy
+// siga montado (hasta M3), la app vieja sigue escribiendo momentum_portfolios y
+// momentum_screener, y eso ya no llega a "kaizen:v2"; al revés tampoco. Volver a migrar solo
+// porque cambiaron las llaves viejas pisaría lo que la persona haya hecho en la app nueva, así
+// que no se hace automáticamente. Para que esa divergencia se pueda detectar, al crear el estado
+// v2 se guarda en `legacyHashes` (el sobre de la migración) una huella de cada llave vieja, y
+// legacyChangedSinceMigration() dice cuáles cambiaron desde entonces. Quien tenga que resolverlo
+// (F1, con la página nueva de portafolio) decide qué ofrecerle a la persona: re-importar, o
+// retirar las tabs legadas que leen esas llaves. Ver docs/overhaul/notas.
+//
+// Versión más nueva: si "kaizen:v2" trae un `v` mayor que 2 (una build más nueva escribió ahí),
+// NO se toca. No se respalda, no se re-migra y no se sobrescribe: se sirve un estado vacío de
+// solo lectura, save() no hace nada y getStorageError() lo explica en español.
 import { useSyncExternalStore } from 'react'
 
 export const STORAGE_KEY = 'kaizen:v2'
@@ -55,9 +69,12 @@ const LEGACY_DEFAULT_SCREENER = 'AAPL,MSFT,GOOGL,AMZN,META,NVDA,TSLA,JPM,V,WMT,C
  *   transactions: number, watchlists: number, dropped: DroppedEntry[], notes: string[],
  *   legacyExample: boolean, recoveredFromCorruptV2: boolean,
  * }} MigrationReport
+ * @typedef {Record<string, string | null>} LegacyHashes
+ *   Huella de cada llave de la app vieja al momento de crear el estado v2 (null = no existía).
  * @typedef {{
  *   v: 2, updatedAt: string, portfolios: Portfolio[], activePortfolioId: string | null,
  *   watchlists: Watchlist[], settings: Settings, migrationReport: MigrationReport | null,
+ *   legacyHashes: LegacyHashes | null,
  * }} KaizenState
  */
 
@@ -109,7 +126,39 @@ export function emptyState(now = new Date().toISOString()) {
     watchlists: [],
     settings: defaultSettings(),
     migrationReport: null,
+    legacyHashes: null,
   }
+}
+
+// ─── Huella de las llaves viejas ────────────────────────────────────────────
+
+/**
+ * Huella de un valor de localStorage: largo más FNV-1a de 32 bits en hexadecimal. No es
+ * criptográfica y no pretende serlo; solo tiene que cambiar cuando el texto cambia, sin guardar
+ * una copia del contenido viejo ni depender de crypto.subtle (que es asíncrono).
+ * @param {string | null} value
+ * @returns {string | null} null si la llave no existe
+ */
+export function hashLegacyValue(value) {
+  if (typeof value !== 'string') return null
+  let h = 0x811c9dc5
+  for (let i = 0; i < value.length; i += 1) {
+    h ^= value.charCodeAt(i)
+    h = Math.imul(h, 0x01000193) >>> 0
+  }
+  return `${value.length}-${h.toString(16).padStart(8, '0')}`
+}
+
+/**
+ * Huella de las tres llaves de la app vieja, tal como están ahorita.
+ * @param {(key: string) => string | null} get
+ * @returns {LegacyHashes}
+ */
+function snapshotLegacyKeys(get) {
+  /** @type {LegacyHashes} */
+  const out = {}
+  for (const key of Object.values(LEGACY_KEYS)) out[key] = hashLegacyValue(get(key))
+  return out
 }
 
 // ─── Validación ─────────────────────────────────────────────────────────────
@@ -272,9 +321,21 @@ export function normalizeState(raw, now = new Date().toISOString()) {
       watchlists,
       settings,
       migrationReport: raw.migrationReport && typeof raw.migrationReport === 'object' ? raw.migrationReport : null,
+      legacyHashes: normalizeLegacyHashes(raw.legacyHashes),
     },
     dropped,
   }
+}
+
+/** @param {unknown} raw @returns {LegacyHashes | null} */
+function normalizeLegacyHashes(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
+  /** @type {LegacyHashes} */
+  const out = {}
+  for (const [key, value] of Object.entries(raw)) {
+    if (value === null || typeof value === 'string') out[key] = value
+  }
+  return Object.keys(out).length ? out : null
 }
 
 // ─── Migración desde la app vieja ───────────────────────────────────────────
@@ -511,6 +572,26 @@ function backupKey(key, raw, iso) {
   return safeSet(target, raw) ? target : null
 }
 
+/** Mensaje único para cuando los datos guardados son de una versión más nueva. */
+export const FUTURE_VERSION_ERROR = Object.freeze({
+  code: 'FUTURE_VERSION',
+  message: 'Tus datos se guardaron con una versión más nueva de Kaizen. Recarga la página para usarla.',
+})
+
+/** true cuando el estado en memoria es de solo lectura (había datos de una versión más nueva). */
+let readOnly = false
+
+/** ¿El estado es de solo lectura? Si es true, save() y update() no escriben nada. */
+export function isReadOnly() {
+  load()
+  return readOnly
+}
+
+/** ¿`raw` es un estado v2 bien formado pero de una versión mayor? @param {unknown} raw */
+function isFutureVersion(raw) {
+  return Boolean(raw) && typeof raw === 'object' && !Array.isArray(raw) && typeof (/** @type {any} */ (raw).v) === 'number' && /** @type {any} */ (raw).v > 2
+}
+
 /**
  * Lee el estado (con caché en memoria). La primera vez migra desde la app vieja si hace falta.
  * @returns {KaizenState}
@@ -522,7 +603,15 @@ export function load() {
   let corrupt = false
   if (raw != null) {
     try {
-      const res = normalizeState(JSON.parse(raw), now)
+      const parsed = JSON.parse(raw)
+      // Una build más nueva escribió aquí: no se toca nada de lo guardado.
+      if (isFutureVersion(parsed)) {
+        memory = emptyState(now)
+        readOnly = true
+        lastError = { ...FUTURE_VERSION_ERROR }
+        return memory
+      }
+      const res = normalizeState(parsed, now)
       if (res) {
         memory = res.state
         return memory
@@ -533,7 +622,9 @@ export function load() {
     corrupt = true
   }
 
+  const legacyHashes = snapshotLegacyKeys(safeGet)
   const migrated = migrateLegacy(safeGet, now)
+  if (migrated) migrated.legacyHashes = legacyHashes
   const backups = []
   const report = migrated?.migrationReport ?? null
   if (corrupt) {
@@ -557,6 +648,7 @@ export function load() {
     return memory
   }
   memory = emptyState(now)
+  memory.legacyHashes = legacyHashes
   if (corrupt) {
     memory.migrationReport = {
       migratedAt: now,
@@ -578,15 +670,23 @@ export function load() {
 
 /**
  * Valida y guarda el estado completo. Si el navegador no deja escribir, el cambio queda en
- * memoria y getStorageError() lo reporta.
+ * memoria y getStorageError() lo reporta. Si los datos guardados son de una versión más nueva,
+ * no se guarda nada (ni en memoria): se devuelve el estado tal como está y getStorageError()
+ * explica por qué.
  * @param {KaizenState} state
  * @returns {KaizenState}
  */
 export function save(state) {
+  const current = load()
+  if (readOnly) {
+    lastError = { ...FUTURE_VERSION_ERROR }
+    notify()
+    return current
+  }
   const now = new Date().toISOString()
   const res = normalizeState({ ...state, v: 2 }, now)
   if (!res) throw new TypeError('save(): el estado no tiene la forma v2')
-  const next = { ...res.state, updatedAt: now }
+  const next = { ...res.state, updatedAt: now, legacyHashes: res.state.legacyHashes ?? current.legacyHashes ?? null }
   memory = next
   lastError = safeSet(STORAGE_KEY, JSON.stringify(next))
     ? null
@@ -603,14 +703,37 @@ export function update(fn) {
   return save(fn(load()))
 }
 
-/** Último error de escritura, o null. */
+/**
+ * Último problema con el almacenamiento, o null. Dos casos: no se pudo escribir en este navegador
+ * (WRITE_FAILED) o los datos guardados son de una versión más nueva (FUTURE_VERSION, y entonces
+ * el estado es de solo lectura). El mensaje está en español y se puede mostrar tal cual.
+ * @returns {{ code: string, message: string } | null}
+ */
 export function getStorageError() {
   return lastError
+}
+
+/**
+ * ¿Las llaves de la app vieja cambiaron desde que se creó el estado v2? La migración es una foto
+ * única (ver el encabezado del archivo): mientras src/legacy siga montado, la app vieja sigue
+ * escribiendo momentum_portfolios y momentum_screener sin que eso llegue a "kaizen:v2". Esto no
+ * re-migra nada; solo lo reporta, para que F1 decida qué ofrecerle a la persona.
+ * @returns {{ known: boolean, changed: string[], hashes: LegacyHashes }}
+ *   known: false si el estado v2 no trae la foto (datos de antes de este cambio, o de solo
+ *   lectura). changed: las llaves viejas cuyo contenido ya no es el de la migración.
+ */
+export function legacyChangedSinceMigration() {
+  const recorded = load().legacyHashes
+  const hashes = snapshotLegacyKeys(safeGet)
+  if (!recorded) return { known: false, changed: [], hashes }
+  const changed = Object.keys(recorded).filter((key) => recorded[key] !== (hashes[key] ?? null))
+  return { known: true, changed, hashes }
 }
 
 function onStorageEvent(event) {
   if (event.key === STORAGE_KEY || event.key === null) {
     memory = null
+    readOnly = false
     notify()
   }
 }
@@ -648,6 +771,7 @@ export class ImportError extends Error {
  * @returns {{ state: KaizenState, dropped: DroppedEntry[], backup: string | null }}
  */
 export function importJSON(text) {
+  if (isReadOnly()) throw new ImportError(FUTURE_VERSION_ERROR.message)
   let parsed
   try {
     parsed = JSON.parse(text)
@@ -679,5 +803,6 @@ export function useStore(selector) {
 export function resetStorageForTests() {
   memory = null
   lastError = null
+  readOnly = false
   listeners.clear()
 }
