@@ -1573,7 +1573,7 @@ const TERMS = {
 function normalize(value) {
   return String(value ?? '')
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/\p{M}/gu, '')
     .toLowerCase()
     .trim()
 }

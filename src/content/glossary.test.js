@@ -2,8 +2,9 @@
 // spec pide, que el texto cumpla las reglas de la casa (sin guiones largos, sin lenguaje de
 // recomendación) y que el buscador encuentre sin acentos ni mayúsculas.
 //
-// Ojo con los guiones: este archivo escribe los caracteres prohibidos SOLO como escapes (–,
-// —), nunca literales, para que un grep sobre src/content siga saliendo vacío.
+// Ojo con los guiones: este archivo no escribe los caracteres prohibidos, ni siquiera como
+// ejemplo. La expresión regular se arma con String.fromCodePoint, para que un grep de guiones
+// sobre src/content siga saliendo vacío.
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import {
@@ -37,8 +38,8 @@ const TERMINOS_DEL_SPEC = [
   'diversificacion', 'rebalanceo', 'horizonte-de-inversion', 'perfil-de-riesgo',
 ]
 
-/** Guion em (U+2014), en (U+2013), de cifra (U+2012) y barra horizontal (U+2015). */
-const GUIONES_PROHIBIDOS = /[‒–—―]/
+/** Guion de cifra (U+2012), en (U+2013), em (U+2014) y barra horizontal (U+2015). */
+const GUIONES_PROHIBIDOS = new RegExp(`[${String.fromCodePoint(0x2012)}-${String.fromCodePoint(0x2015)}]`)
 
 /** Lenguaje de recomendación: no va en ninguna pantalla de Kaizen. */
 const LENGUAJE_DE_RECOMENDACION = [
@@ -154,7 +155,7 @@ describe('integridad de relacionados', () => {
     const choques = []
     for (const term of glossaryTerms) {
       for (const alias of term.alias ?? []) {
-        const clave = alias.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
+        const clave = alias.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().trim()
         if (vistos.has(clave)) choques.push(`${clave}: ${vistos.get(clave)} y ${term.slug}`)
         else vistos.set(clave, term.slug)
         const otro = glossary[clave]
