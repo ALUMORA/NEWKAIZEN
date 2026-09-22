@@ -35,14 +35,21 @@ _LOGIN_ERRORS = {
 def login_limiter(request: Request) -> LoginRateLimiter:
     limiter = getattr(request.app.state, "login_limiter", None)
     if limiter is None:
-        limiter = request.app.state.login_limiter = LoginRateLimiter()
+        limiter = request.app.state.login_limiter = LoginRateLimiter.from_settings(app_settings(request))
     return limiter
 
 
 def check_login_rate(request: Request, username: str) -> float | None:
-    """Gasta un intento de login para la IP y el usuario; devuelve la espera si se pasó del límite."""
+    """Gasta un intento de login para la IP y el usuario; devuelve la espera si se pasó del límite.
+
+    La llave por IP sale de ``client_ip`` con ``TRUSTED_PROXY_HOPS``, así que ``X-Forwarded-For``
+    escrito por el cliente no sirve para cambiarse de cubeta. La cubeta por usuario se devuelve en
+    ``login()`` cuando las credenciales son buenas (cuenta fallas, no logins).
+    """
     host = request.client.host if request.client else None
-    return login_limiter(request).check(client_ip(request.headers, host), username)
+    settings = app_settings(request)
+    key = client_ip(request.headers, host, trusted_hops=settings.trusted_proxy_hops)
+    return login_limiter(request).check(key, username)
 
 
 @router.post(
@@ -59,8 +66,10 @@ def login(body: LoginRequest, request: Request) -> dict:
     settings = app_settings(request)
     user = authenticate(body.username, body.password, settings)
     if user is None:
-        logger.info("login rechazado")
+        logger.info("login rechazado")  # sin usuario ni IP: el log no es lugar para eso
         raise ApiError(401, "UNAUTHORIZED", MSG_BAD_CREDENTIALS, headers={"WWW-Authenticate": "Bearer"})
+    # Credenciales buenas: se devuelve el intento para que la cubeta por usuario cuente solo fallas.
+    login_limiter(request).refund_user(body.username)
     token, expires = create_token(user, settings)
     session = Session(username=user, expires_at=expires)
     return {"token": token, "expiresAt": session.expires_at_iso, "user": {"username": user, "displayName": display_name(user)}}

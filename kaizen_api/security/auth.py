@@ -31,6 +31,11 @@ SALT_BYTES = 16
 DKLEN = 32
 _MAXMEM = 2**27  # techo de memoria para scrypt (128 MiB); n y r se acotan abajo
 JWT_ALGORITHM = "HS256"
+JWT_REQUIRED_CLAIMS = ["sub", "iat", "exp", "ver"]
+"""Sin cualquiera de estas el token no vale: así un JWT de otro emisor nunca se parece a uno nuestro."""
+JWT_LEEWAY_SECONDS = 5
+"""Tolerancia de reloj al validar ``exp``/``iat``. Chica a propósito: es para el desfase entre
+máquinas (Render contra el navegador), no para alargar la sesión."""
 
 MSG_BAD_CREDENTIALS = "Usuario o contraseña incorrectos."
 MSG_NO_SESSION = "Necesitas iniciar sesión para ver esto."
@@ -49,7 +54,7 @@ def hash_password(password: str, *, n: int = SCRYPT_N, r: int = SCRYPT_R, p: int
     return f"{SCRYPT_PREFIX}{n}${r}${p}${salt.hex()}${digest.hex()}"
 
 
-def _parse_hash(encoded: str) -> tuple[int, int, int, bytes, bytes] | None:
+def parse_hash(encoded: str) -> tuple[int, int, int, bytes, bytes] | None:
     try:
         scheme, n_s, r_s, p_s, salt_hex, hash_hex = encoded.split("$")
         n, r, p = int(n_s), int(r_s), int(p_s)
@@ -66,7 +71,7 @@ def _parse_hash(encoded: str) -> tuple[int, int, int, bytes, bytes] | None:
 
 def verify_password(password: str, encoded: str) -> bool:
     """``True`` si ``password`` corresponde al hash ``encoded``. Un hash inválido da ``False``."""
-    parsed = _parse_hash(encoded) if isinstance(encoded, str) else None
+    parsed = parse_hash(encoded) if isinstance(encoded, str) else None
     if parsed is None or not isinstance(password, str):
         return False
     n, r, p, salt, expected = parsed
@@ -139,13 +144,19 @@ def create_token(username: str, settings: Settings, now: _dt.datetime | None = N
 
 
 def verify_token(token: str, settings: Settings) -> Session:
-    """Valida firma, vigencia, versión y que el usuario siga en USERS. Si no, ``ApiError`` 401."""
+    """Valida firma, vigencia, versión y que el usuario siga en USERS. Si no, ``ApiError`` 401.
+
+    El algoritmo va fijo en HS256 (``algorithms=[JWT_ALGORITHM]``), así que un token con ``alg:none``
+    o firmado con RS256 usando la llave pública como HMAC no pasa. ``require`` exige las cuatro
+    afirmaciones que emitimos, y la tolerancia de reloj son ``JWT_LEEWAY_SECONDS`` segundos.
+    """
     try:
         claims = jwt.decode(
             token,
             settings.secret_key,
             algorithms=[JWT_ALGORITHM],
-            options={"require": ["sub", "exp", "iat"]},
+            leeway=JWT_LEEWAY_SECONDS,
+            options={"require": list(JWT_REQUIRED_CLAIMS)},
         )
     except jwt.ExpiredSignatureError as exc:
         raise _unauthorized(MSG_EXPIRED, "token_expired") from exc

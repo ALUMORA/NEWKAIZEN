@@ -1,7 +1,8 @@
 """Aplicación FastAPI: ``create_app()`` arma la app y ``run()`` la sirve con uvicorn.
 
-Capas, de afuera hacia adentro: registro de cada request (id y tiempo), CORS, GZip (desde 1 KB),
-captura de errores inesperados (500 INTERNAL sin texto de la excepción, con CORS) y los routers.
+Capas, de afuera hacia adentro: registro de cada request (id y tiempo), CORS, guarda de carga
+(503 con el cuerpo del contrato antes de que uvicorn corte en seco), GZip (desde 1 KB), captura de
+errores inesperados (500 INTERNAL sin texto de la excepción, con CORS) y los routers.
 
 ``kaizen_api.main.app`` se crea la primera vez que alguien lo pide (``uvicorn kaizen_api.main:app``
 o ``scripts/run_replay_backend.py --module kaizen_api.main``), no al importar el módulo.
@@ -43,7 +44,13 @@ from kaizen_api.routers import (
 )
 from kaizen_api.security.auth import require_user
 from kaizen_api.security.ratelimit import LoginRateLimiter
-from kaizen_api.settings import Settings, SettingsError, configure, get_settings
+from kaizen_api.settings import (
+    UVICORN_LIMIT_CONCURRENCY,
+    Settings,
+    SettingsError,
+    configure,
+    get_settings,
+)
 
 logger = logging.getLogger("kaizen_api")
 
@@ -145,6 +152,70 @@ class CatchAllMiddleware:
             await send({"type": "http.response.body", "body": body})
 
 
+class ConcurrencyLimitMiddleware:
+    """Guarda de carga: con más de ``limit`` requests en vuelo contesta 503 con el cuerpo del contrato.
+
+    Existe porque el último recurso, el ``limit_concurrency`` de uvicorn, contesta un 503 en texto
+    plano, sin CORS y sin ``{"error": {...}}``: el navegador no lo puede leer y el frontend no sabe
+    qué mostrar. Esta guarda va por debajo (``MAX_CONCURRENCY`` < ``UVICORN_LIMIT_CONCURRENCY``), así
+    que el que se ve en la práctica es este, y el de uvicorn queda como red de seguridad.
+
+    Se pone por dentro de CORS (para que la respuesta lleve ``Access-Control-Allow-Origin`` y el JS
+    la pueda leer) y por fuera de los routers, para rechazar antes de tocar proveedores. ``/health``
+    no cuenta como excepción de cortesía: es lo que Render sondea, y tumbarlo por carga haría que la
+    plataforma reiniciara el servicio justo cuando está ocupado.
+
+    El código es ``RATE_LIMITED`` porque es el más cercano de los que ya existen en el contrato
+    congelado (``schemas.ErrorCode``): el cliente tiene que esperar y reintentar, que es justo lo que
+    dice ``Retry-After``. No es ``UPSTREAM_UNAVAILABLE`` porque aquí ninguna fuente falló.
+
+    El contador es un entero simple porque el API corre con **un** worker: sube y baja siempre en el
+    mismo event loop, entre ``await`` completos, así que no hace falta candado. Con varios workers
+    cada proceso contaría los suyos, igual que pasa con el límite de tasa del login.
+    """
+
+    MESSAGE = "El servidor está saturado en este momento. Espera unos segundos y vuelve a intentarlo."
+    RETRY_AFTER = "2"
+
+    def __init__(self, app: Any, limit: int, exempt_paths: tuple[str, ...] = ("/health",)):
+        self.app = app
+        self.limit = int(limit)
+        self.exempt_paths = exempt_paths
+        self.in_flight = 0
+
+    async def __call__(self, scope: dict, receive: Any, send: Any) -> None:
+        if scope.get("type") != "http" or scope.get("path") in self.exempt_paths:
+            await self.app(scope, receive, send)
+            return
+        if self.in_flight >= self.limit:
+            logger.warning(
+                "saturado: %s requests en vuelo, se rechaza %s %s",
+                self.in_flight,
+                scope.get("method"),
+                scope.get("path"),
+            )
+            body = json.dumps(error_body("RATE_LIMITED", self.MESSAGE), ensure_ascii=False).encode("utf-8")
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": 503,
+                    "headers": [
+                        (b"content-type", b"application/json"),
+                        (b"content-length", str(len(body)).encode()),
+                        (b"cache-control", b"no-store"),
+                        (b"retry-after", self.RETRY_AFTER.encode()),
+                    ],
+                }
+            )
+            await send({"type": "http.response.body", "body": body})
+            return
+        self.in_flight += 1
+        try:
+            await self.app(scope, receive, send)
+        finally:
+            self.in_flight -= 1
+
+
 def _collect_capabilities(settings: Settings) -> list[str]:
     caps: list[str] = []
     modules = [health, auth, *V2_ROUTERS] + ([legacy_v1] if settings.legacy_routes else [])
@@ -172,7 +243,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         openapi_url="/openapi.json" if docs else None,
     )
     app.state.settings = settings
-    app.state.login_limiter = LoginRateLimiter()
+    app.state.login_limiter = LoginRateLimiter.from_settings(settings)
     install_exception_handlers(app)
 
     app.include_router(health.router)
@@ -183,9 +254,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.include_router(legacy_v1.router)
     app.state.capabilities = _collect_capabilities(settings)
 
-    # add_middleware apila hacia afuera: el último agregado es el más externo.
+    # add_middleware apila hacia afuera: el último agregado es el más externo. De afuera hacia
+    # adentro quedan: registro del request, CORS, guarda de carga, GZip, captura de errores.
+    # La guarda va por DENTRO de CORS para que su 503 lleve Access-Control-Allow-Origin.
     app.add_middleware(CatchAllMiddleware)
     app.add_middleware(GZipMiddleware, minimum_size=1024)
+    app.add_middleware(ConcurrencyLimitMiddleware, limit=settings.max_concurrency)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=list(settings.allowed_origins),
@@ -230,15 +304,18 @@ def run() -> None:
     except SettingsError as exc:
         logger.critical("configuración inválida: %s", exc)
         raise SystemExit(f"KAIZEN API no arranca: {exc}") from exc
+    # Con TRUSTED_PROXY_HOPS=0 el API está expuesto directo: ahí ni uvicorn debe creerle a
+    # X-Forwarded-For, porque la IP del socket es el único dato honesto.
+    trust_proxy = settings.trusted_proxy_hops > 0
     uvicorn.run(
         application,
         host="0.0.0.0",
         port=settings.port,
         workers=1,
-        limit_concurrency=64,
+        limit_concurrency=UVICORN_LIMIT_CONCURRENCY,  # último recurso; la guarda de la app va antes
         timeout_keep_alive=5,
-        proxy_headers=True,
-        forwarded_allow_ips="*",
+        proxy_headers=trust_proxy,
+        forwarded_allow_ips="*" if trust_proxy else None,
         log_level="info",
         access_log=False,  # RequestLogMiddleware ya registra cada request, sin la query
     )
