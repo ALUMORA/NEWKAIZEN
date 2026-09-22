@@ -23,6 +23,7 @@ __pycache__/
 *.pyc
 *.pyo
 .venv/
+.venv-golden/
 venv/
 
 # Archivos del sistema
@@ -47,3 +48,11 @@ Thumbs.db
 # Archivos temporales
 *.local
 fondo-app@0.0.0
+
+# Pruebas
+test-results/
+playwright-report/
+blob-report/
+coverage/
+.pytest_cache/
+.ruff_cache/
