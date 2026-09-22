@@ -1,33 +1,21 @@
-"""Characterization of the OLD backend.py: replayed offline it must reproduce every golden.
+"""Integridad de los goldens del backend viejo (``tests/goldens_legacy``).
 
-Each golden in ``tests/goldens_legacy/`` names a function, its arguments and the fixture set it
-was recorded against. The call runs with the network blocked, the clock frozen at the set's
-``frozen_at`` and the legacy caches cleared. Values under ``volatile_paths`` must exist with the
-same JSON type but may differ; numbers compare with a relative tolerance of 1e-9.
+Los goldens se grabaron contra backend.py antes de moverlo al paquete ``kaizen_api``. La reproducción
+de cada uno contra el código actual vive en ``test_package_parity.py``; aquí se cuida que el
+material de referencia siga completo y coherente: que estén todos, que cada llamada a proveedor que
+usan esté grabada y que cada función tenga implementación en el paquete.
 """
 
 from __future__ import annotations
 
 import pytest
 
-from tests.replay import (
-    FixtureStore,
-    call_captured,
-    compare,
-    list_goldens,
-    load_golden,
-    load_module,
-    replaying,
-    reset_backend_state,
-)
+from kaizen_api.routers.legacy_v1 import LEGACY_FUNCTIONS
+from tests.replay import FixtureStore, golden_name, list_goldens, load_golden
 
 GOLDENS = list_goldens()
-MIN_GOLDENS = 100  # 8 símbolos x 13 llamadas + mercado, macro, fibras, magic...
-
-
-@pytest.fixture(scope="module")
-def legacy():
-    return load_module("backend")
+MIN_GOLDENS = 122  # 8 símbolos x 14 llamadas + mercado, macro, fibras, magic... (no se borran goldens)
+REQUIRED_KEYS = {"function", "args", "kwargs", "module", "fixture_set", "frozen_at", "volatile_paths", "fixtures_used"}
 
 
 def test_goldens_present():
@@ -44,16 +32,11 @@ def test_every_golden_fixture_is_recorded():
 
 
 @pytest.mark.parametrize("golden_path", GOLDENS, ids=[p.stem for p in GOLDENS])
-def test_legacy_golden(golden_path, legacy):
+def test_golden_is_well_formed(golden_path):
     golden = load_golden(golden_path)
-    fn = getattr(legacy, golden["function"])
-    with replaying(golden["fixture_set"]) as rp:
-        reset_backend_state(legacy)
-        result = call_captured(fn, golden["args"], golden["kwargs"])
-    assert rp.misses == [], f"llamadas sin grabar: {rp.misses}"
-    if "raises" in golden:
-        assert result.get("raises") == golden["raises"], result
-        return
-    assert "output" in result, f"lanzó {result.get('raises')}"
-    diffs = compare(result["output"], golden["output"], volatile=golden["volatile_paths"])
-    assert not diffs, "\n".join(diffs)
+    assert REQUIRED_KEYS <= set(golden), sorted(REQUIRED_KEYS - set(golden))
+    assert ("output" in golden) != ("raises" in golden)
+    assert golden_path.name == golden_name(golden["function"], golden["args"], golden["kwargs"])
+    assert golden["function"] in LEGACY_FUNCTIONS
+    assert golden["frozen_at"] == FixtureStore.open(golden["fixture_set"]).frozen_at
+    assert golden["fixtures_used"] == sorted(golden["fixtures_used"])

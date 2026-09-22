@@ -187,8 +187,8 @@ def call_captured(fn: Any, args: list, kwargs: dict) -> dict:
 # ─── legacy module helpers ───────────────────────────────────────────────────
 
 
-def load_module(name: str = "backend") -> Any:
-    """Import the backend module from the repo root (``backend`` today, ``kaizen_api...`` later)."""
+def load_module(name: str = "kaizen_api") -> Any:
+    """Import a module from the repo root (``kaizen_api`` or one of its submodules)."""
     root = str(REPO_ROOT)
     if root not in sys.path:
         sys.path.insert(0, root)
@@ -198,8 +198,8 @@ def load_module(name: str = "backend") -> Any:
 def reset_backend_state(module: Any) -> None:
     """Clear in-memory caches so every call exercises the providers.
 
-    Uses ``module.reset_state()`` when the module provides one (new package), otherwise the
-    legacy globals: ``_cache``, ``_key_locks`` and ``_edgar_ticker_cache``.
+    Uses ``module.reset_state()`` when the module provides one (``kaizen_api`` does), otherwise
+    the old backend.py globals: ``_cache``, ``_key_locks`` and ``_edgar_ticker_cache``.
     """
     hook = getattr(module, "reset_state", None)
     if callable(hook):

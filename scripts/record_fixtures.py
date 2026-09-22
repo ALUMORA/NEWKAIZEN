@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""Graba las respuestas de los proveedores (yfinance, FRED, CBOE, Stooq, SEC EDGAR, RSS) que usa el
-backend viejo y genera los goldens de caracterización.
+"""Graba las respuestas de los proveedores (yfinance, FRED, CBOE, Stooq, SEC EDGAR, RSS) que usan
+las funciones del legado (hoy en el paquete ``kaizen_api``) y genera los goldens de caracterización.
 
-Fase 1 (grabación): importa ``backend`` dentro de ``recording(...)`` y llama cada función de datos.
+Las funciones se resuelven por su nombre del legado con ``kaizen_api.routers.legacy_v1.LEGACY_FUNCTIONS``
+y el estado se limpia con ``kaizen_api.reset_state()`` antes de cada llamada.
+
+Fase 1 (grabación): importa ``kaizen_api`` dentro de ``recording(...)`` y llama cada función de datos.
     Lo que ya está grabado se sirve del disco (reanudable); lo demás sale a la red con ~1 llamada
     por segundo y reintentos con espera si Yahoo limita la tasa.
 Fase 2 (goldens): repite cada llamada en ``replaying(...)`` (red bloqueada, reloj congelado, caches
@@ -14,6 +17,7 @@ Uso:
     python scripts/record_fixtures.py --goldens-only     # solo fase 2, sin red
     python scripts/record_fixtures.py --only 'get_chart' # filtra por regex sobre el nombre del golden
     python scripts/record_fixtures.py --refresh          # vuelve a pedir todo a los proveedores
+    python scripts/record_fixtures.py --goldens-only --goldens-dir /tmp/g   # regenera en otra carpeta
 """
 
 from __future__ import annotations
@@ -24,6 +28,7 @@ import sys
 import time
 from collections import Counter
 from pathlib import Path
+from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
@@ -81,6 +86,26 @@ def build_specs() -> list[tuple[str, list, dict]]:
     return specs
 
 
+def legacy_function(name: str) -> Any:
+    """La implementación en kaizen_api de una función del legado (por su nombre en los goldens)."""
+    from kaizen_api.routers.legacy_v1 import LEGACY_FUNCTIONS
+
+    return LEGACY_FUNCTIONS[name]
+
+
+def prewarm_magic(rec: Any) -> None:
+    """Graba la Fórmula Mágica ticker por ticker (en paralelo Yahoo limita la tasa)."""
+    from kaizen_api.domain.screeners.magic import _fetch_magic_ticker
+    from kaizen_api.domain.universe import MAGIC_UNIVERSE
+
+    universe = list(dict.fromkeys(MAGIC_UNIVERSE))
+    _log(f"[record] precalentando Fórmula Mágica: {len(universe)} tickers, uno por uno")
+    for j, ticker in enumerate(universe, 1):
+        _fetch_magic_ticker(ticker)
+        if j % 10 == 0:
+            _log(f"[record]   magic {j}/{len(universe)} live={rec.stats['live']}")
+
+
 def _log(msg: str) -> None:
     print(msg, flush=True)
 
@@ -120,21 +145,16 @@ def summarize(store: FixtureStore) -> dict:
 def phase_record(args: argparse.Namespace, specs: list[tuple[str, list, dict]]) -> dict[str, dict]:
     live: dict[str, dict] = {}
     with recording(args.set, throttle=args.throttle, refresh=args.refresh, log=_log) as rec:
-        backend = load_module(args.module)
+        package = load_module(args.module)
         _log(f"[record] set={args.set} frozen_at={rec.store.frozen_at} run={rec.run_id}")
         for i, (fn_name, fargs, fkwargs) in enumerate(specs, 1):
             name = golden_name(fn_name, fargs, fkwargs)
             if fn_name == "get_magic_formula":
-                universe = list(dict.fromkeys(backend.MAGIC_UNIVERSE))
-                _log(f"[record] precalentando Fórmula Mágica: {len(universe)} tickers, uno por uno")
-                for j, ticker in enumerate(universe, 1):
-                    backend._fetch_magic_ticker(ticker)
-                    if j % 10 == 0:
-                        _log(f"[record]   magic {j}/{len(universe)} live={rec.stats['live']}")
+                prewarm_magic(rec)
             t0 = time.monotonic()
-            reset_backend_state(backend)
+            reset_backend_state(package)
             with rec.trace() as keys:
-                result = call_captured(getattr(backend, fn_name), fargs, fkwargs)
+                result = call_captured(legacy_function(fn_name), fargs, fkwargs)
             live[name] = result
             status = "raises " + result["raises"]["type"] if "raises" in result else "ok"
             _log(
@@ -155,13 +175,13 @@ def phase_goldens(args: argparse.Namespace, specs: list[tuple[str, list, dict]],
     problems = 0
     FixtureStore.forget()
     with replaying(args.set) as rp:
-        backend = load_module(args.module)
+        package = load_module(args.module)
         for fn_name, fargs, fkwargs in specs:
             name = golden_name(fn_name, fargs, fkwargs)
-            path = GOLDENS_DIR / name
-            reset_backend_state(backend)
+            path = args.goldens_dir / name
+            reset_backend_state(package)
             with rp.trace() as keys:
-                result = call_captured(getattr(backend, fn_name), fargs, fkwargs)
+                result = call_captured(legacy_function(fn_name), fargs, fkwargs)
             if rp.misses:
                 _log(f"[golden] {name}: FALTAN grabaciones {rp.misses}")
                 rp.misses.clear()
@@ -184,19 +204,23 @@ def phase_goldens(args: argparse.Namespace, specs: list[tuple[str, list, dict]],
                 if diffs:
                     golden["live_diff"] = diffs
                     _log(f"[golden] {name}: la repetición difiere de la llamada en vivo: {diffs[:3]}")
-            elif path.exists():
-                old = load_golden(path)
-                if "live_match" in old:
-                    golden["live_match"] = old["live_match"]
+            else:
+                # Sin llamada en vivo se conserva el live_match anterior (del destino o del commiteado)
+                previous = path if path.exists() else GOLDENS_DIR / name
+                if previous.exists():
+                    old = load_golden(previous)
+                    if "live_match" in old:
+                        golden["live_match"] = old["live_match"]
             write_golden(path, golden)
-        _log(f"[golden] {len(specs)} goldens escritos en {GOLDENS_DIR}")
+        _log(f"[golden] {len(specs)} goldens escritos en {args.goldens_dir}")
     return problems
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--set", default=DEFAULT_SET, help="nombre del set en tests/fixtures/recorded/")
-    parser.add_argument("--module", default="backend", help="módulo del backend a caracterizar")
+    parser.add_argument("--module", default="kaizen_api", help="paquete cuyo reset_state() limpia el estado")
+    parser.add_argument("--goldens-dir", type=Path, default=GOLDENS_DIR, help="carpeta donde escribir los goldens")
     parser.add_argument("--only", help="regex sobre el nombre del golden")
     parser.add_argument("--throttle", type=float, default=1.0, help="segundos mínimos entre llamadas en vivo")
     parser.add_argument("--refresh", action="store_true", help="volver a pedir lo ya grabado")
