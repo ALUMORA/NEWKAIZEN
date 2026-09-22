@@ -1,0 +1,33 @@
+{
+  "id": "mx",
+  "name": "México, emisoras grandes de la BMV",
+  "currency": "MXN",
+  "asOf": "2026-09-22",
+  "source": "curated",
+  "note": "Lista curada de emisoras grandes que cotizan en la Bolsa Mexicana de Valores, agrupadas por el sector que usa Yahoo Finance. No es una réplica del IPC ni una selección con criterio de inversión: sirve para comparar unas contra otras dentro de su sector.",
+  "members": [
+    { "symbol": "WALMEX.MX", "name": "Wal-Mart de México, S.A.B. de C.V.", "sector": "Consumer Defensive" },
+    { "symbol": "FEMSAUBD.MX", "name": "Fomento Económico Mexicano, S.A.B. de C.V.", "sector": "Consumer Defensive" },
+    { "symbol": "KOFUBL.MX", "name": "Coca-Cola FEMSA, S.A.B. de C.V.", "sector": "Consumer Defensive" },
+    { "symbol": "BIMBOA.MX", "name": "Grupo Bimbo, S.A.B. de C.V.", "sector": "Consumer Defensive" },
+    { "symbol": "CHDRAUIB.MX", "name": "Grupo Comercial Chedraui, S.A.B. de C.V.", "sector": "Consumer Defensive" },
+    { "symbol": "AC.MX", "name": "Arca Continental, S.A.B. de C.V.", "sector": "Consumer Defensive" },
+    { "symbol": "GRUMAB.MX", "name": "Gruma, S.A.B. de C.V.", "sector": "Consumer Defensive" },
+    { "symbol": "KIMBERA.MX", "name": "Kimberly-Clark de México, S.A.B. de C.V.", "sector": "Consumer Defensive" },
+    { "symbol": "GFNORTEO.MX", "name": "Grupo Financiero Banorte, S.A.B. de C.V.", "sector": "Financial Services" },
+    { "symbol": "Q.MX", "name": "Quálitas Controladora, S.A.B. de C.V.", "sector": "Financial Services" },
+    { "symbol": "BBAJIOO.MX", "name": "Banco del Bajío, S.A.", "sector": "Financial Services" },
+    { "symbol": "GENTERA.MX", "name": "Gentera, S.A.B. de C.V.", "sector": "Financial Services" },
+    { "symbol": "GMEXICOB.MX", "name": "Grupo México, S.A.B. de C.V.", "sector": "Basic Materials" },
+    { "symbol": "CEMEXCPO.MX", "name": "CEMEX, S.A.B. de C.V.", "sector": "Basic Materials" },
+    { "symbol": "ORBIA.MX", "name": "Orbia Advance Corporation, S.A.B. de C.V.", "sector": "Basic Materials" },
+    { "symbol": "GAPB.MX", "name": "Grupo Aeroportuario del Pacífico, S.A.B. de C.V.", "sector": "Industrials" },
+    { "symbol": "ASURB.MX", "name": "Grupo Aeroportuario del Sureste, S.A.B. de C.V.", "sector": "Industrials" },
+    { "symbol": "OMAB.MX", "name": "Grupo Aeroportuario del Centro Norte, S.A.B. de C.V.", "sector": "Industrials" },
+    { "symbol": "PINFRA.MX", "name": "Promotora y Operadora de Infraestructura, S.A.B. de C.V.", "sector": "Industrials" },
+    { "symbol": "AMXB.MX", "name": "América Móvil, S.A.B. de C.V.", "sector": "Communication Services" },
+    { "symbol": "TLEVISACPO.MX", "name": "Grupo Televisa, S.A.B.", "sector": "Communication Services" },
+    { "symbol": "ALSEA.MX", "name": "Alsea, S.A.B. de C.V.", "sector": "Consumer Cyclical" },
+    { "symbol": "LIVEPOLC-1.MX", "name": "El Puerto de Liverpool, S.A.B. de C.V.", "sector": "Consumer Cyclical" }
+  ]
+}
