@@ -218,3 +218,12 @@ def test_change_bp(valor, previo, unidad, esperado):
 def test_health_anuncia_las_capacidades_de_b2b(client):
     capacidades = set(client.get("/health").json()["capabilities"])
     assert {"rates.mx", "rf.series", "macro.us", "news"} <= capacidades
+
+
+def test_las_dos_rutas_comparten_una_sola_consulta_de_metadatos(cliente_con_token):
+    """Verificar ids cuesta una llamada al SIE, no una por ruta: la caché es del catálogo completo."""
+    http, mock = cliente_con_token
+    assert http.get("/v2/rates/mx").status_code == 200
+    assert http.get("/v2/rates/rf?tenorDays=28").status_code == 200
+    metadatos = [llamada for llamada in mock.calls if SIE_METADATOS_RE.match(llamada.request.url)]
+    assert len(metadatos) == 1, [llamada.request.url for llamada in metadatos]

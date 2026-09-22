@@ -260,7 +260,9 @@ def get_rf_series(start: str | None = None, end: str | None = None, tenor_days: 
     series_id = banxico.series_for(rate_id) if rate_id else None
     if banxico.configured() and series_id:
         try:
-            if banxico.verified_ids([series_id]).get(series_id):
+            # Se pregunta por TODO el catálogo, no solo por esta serie, para compartir la misma
+            # entrada de caché que /v2/rates/mx: así el SIE recibe una consulta de metadatos, no dos.
+            if banxico.verified_ids(list(banxico.catalog())).get(series_id):
                 data = banxico.fetch_series([series_id], start_date.isoformat(), end_date.isoformat()).get(series_id)
                 if data and data["values"]:
                     return {
