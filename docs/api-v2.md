@@ -99,9 +99,10 @@ cliente lo acepta.
 
 CORS: orígenes exactos de `ALLOWED_ORIGINS` más la regex `ALLOWED_ORIGIN_REGEX` (por omisión
 `^https://newkaizen(-[a-z0-9-]+)?\.vercel\.app$`; fuera de producción se suman
-`http://localhost:*` y `http://127.0.0.1:*`). Métodos `GET, POST, OPTIONS`; cabeceras
-`Authorization, Content-Type`; `max-age` 600; sin credenciales de navegador (el token va en la
-cabecera).
+`http://localhost:*` y `http://127.0.0.1:*`). Métodos `GET, POST, OPTIONS`; cabeceras de
+entrada `Authorization, Content-Type, X-Request-ID`; cabeceras expuestas al JS de otro origen
+`Retry-After, X-Request-ID` (`Access-Control-Expose-Headers`); `max-age` 600; sin credenciales de
+navegador (el token va en la cabecera).
 
 ## Endpoints
 

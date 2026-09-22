@@ -99,17 +99,50 @@ def test_cors_preflight(origin, allowed):
     client = client_for()
     r = client.options(
         "/v2/quotes",
-        headers={"Origin": origin, "Access-Control-Request-Method": "GET", "Access-Control-Request-Headers": "authorization"},
+        headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "authorization, x-request-id",
+        },
     )
     if allowed:
         assert r.status_code == 200
         assert r.headers["access-control-allow-origin"] == origin
         assert r.headers["access-control-max-age"] == "600"
-        assert "authorization" in r.headers["access-control-allow-headers"].lower()
+        allowed_headers = r.headers["access-control-allow-headers"].lower()
+        assert "authorization" in allowed_headers and "x-request-id" in allowed_headers
         assert "access-control-allow-credentials" not in r.headers
     else:
         assert r.status_code == 400
         assert "access-control-allow-origin" not in r.headers
+
+
+def _exposed(response) -> set[str]:
+    raw = response.headers.get("access-control-expose-headers", "")
+    return {h.strip().lower() for h in raw.split(",") if h.strip()}
+
+
+def test_cors_exposes_retry_after_and_request_id_on_cross_origin_429():
+    # El contrato le pide al frontend leer Retry-After en un 429 y X-Request-ID en toda respuesta;
+    # desde otro origen el navegador solo se los deja leer si vienen en Access-Control-Expose-Headers.
+    origin = "https://newkaizen.vercel.app"
+    client = client_for(USERS='{"luis": "clave"}')
+    headers = {"Origin": origin, "X-Forwarded-For": "203.0.113.7", "X-Request-ID": "front-42"}
+    for _ in range(5):
+        assert client.post("/auth/login", json={"username": "luis", "password": "mala"}, headers=headers).status_code == 401
+    r = client.post("/auth/login", json={"username": "luis", "password": "mala"}, headers=headers)
+    assert r.status_code == 429 and r.json()["error"]["code"] == "RATE_LIMITED"
+    assert r.headers["access-control-allow-origin"] == origin
+    assert {"retry-after", "x-request-id"} <= _exposed(r)
+    assert int(r.headers["retry-after"]) >= 1 and r.headers["x-request-id"] == "front-42"
+
+    legacy = client.post("/login", json={"username": "luis", "password": "mala"}, headers=headers)
+    assert legacy.status_code == 429 and {"retry-after", "x-request-id"} <= _exposed(legacy)
+
+    ok = client.get("/health", headers={"Origin": origin})
+    assert ok.status_code == 200 and "x-request-id" in _exposed(ok)
+    other = client.get("/health", headers={"Origin": "https://evil.example"})
+    assert "access-control-allow-origin" not in other.headers  # sin esto el navegador no deja leer nada
 
 
 def test_cors_production_only_configured_origins():

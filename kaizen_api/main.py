@@ -48,6 +48,11 @@ V2_ROUTERS = (quotes, history, rates, markets, news, search, research, screeners
 
 _REQUEST_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 
+CORS_ALLOW_HEADERS = ("Authorization", "Content-Type", "X-Request-ID")
+"""Cabeceras que el navegador puede mandar desde otro origen (el preflight las autoriza)."""
+CORS_EXPOSE_HEADERS = ("Retry-After", "X-Request-ID")
+"""Cabeceras de respuesta que el JS de otro origen puede leer: el contrato le pide usarlas."""
+
 
 class RequestLogMiddleware:
     """Una línea por request: método, ruta (sin query), status y milisegundos. Pone ``X-Request-ID``."""
@@ -177,7 +182,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_origins=list(settings.allowed_origins),
         allow_origin_regex=settings.cors_origin_regex,
         allow_methods=["GET", "POST", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type"],
+        allow_headers=list(CORS_ALLOW_HEADERS),
+        expose_headers=list(CORS_EXPOSE_HEADERS),
         allow_credentials=False,
         max_age=600,
     )
