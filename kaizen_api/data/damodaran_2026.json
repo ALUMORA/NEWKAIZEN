@@ -7,7 +7,7 @@
  "downloadedAt": "2026-09-22",
  "websiteStatedUpdate": "2026-01-09",
  "homepage": "https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datacurrent.html",
- "note": "Datos publicos publicados por el autor. Los valores se copian tal cual del archivo; la referencia por sector es la MEDIANA de las industrias mapeadas a ese sector.",
+ "note": "Datos públicos que publica el autor. Los valores se copian tal cual del archivo; la referencia por sector es la MEDIANA de las industrias mapeadas a ese sector.",
  "sources": [
   {
    "id": "pe",
@@ -88,7 +88,7 @@
   }
  ],
  "missing": {
-  "pfcf": "Damodaran no publica un multiplo precio/flujo libre por industria en el vintage de enero 2026, asi que P/FCF se marca sin referencia en vez de inventarla."
+  "pfcf": "Damodaran no publica un múltiplo precio entre flujo libre por industria en el vintage de enero 2026, así que P/FCF se marca sin referencia en vez de inventarla."
  },
  "riskFreeUsdInFile": 0.0395,
  "erpUsdInFile": 0.0446,

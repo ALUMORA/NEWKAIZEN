@@ -56,7 +56,7 @@ def _cost_of_debt(rf: float, risk: params_mod.CountryRisk, bench: params_mod.Sec
         spread = max(bench.cost_of_debt_usd - base_rf - base_default, MIN_INDUSTRY_SPREAD)
     detalle = (
         f"Costo de deuda = tasa libre de riesgo + {risk.default_spread:.2%} de riesgo soberano de "
-        f"{risk.country} + {spread:.2%} de diferencial de crédito del sector (Damodaran)."
+        f"{risk.label} + {spread:.2%} de diferencial de crédito del sector (Damodaran)."
     )
     return rf + risk.default_spread + spread, detalle
 
@@ -156,7 +156,7 @@ def get_valuation(
     notes.append(rd_note)
     notes.append(
         f"Tasa de impuesto {tax_rate:.1%}, {data.tax_rate_source}. Prima de mercado maduro "
-        f"{erp_value:.2%} y riesgo país de {risk.country} {crp_value:.2%}, con lambda 1."
+        f"{erp_value:.2%} y riesgo país de {risk.label} {crp_value:.2%}, con lambda 1."
     )
 
     missing_note = params_mod.dataset().get("missing", {}).get("pfcf")

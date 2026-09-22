@@ -49,6 +49,9 @@ LONG_RATE_SERIES = {
 
 COUNTRY_BY_CURRENCY = {"USD": "United States", "MXN": "Mexico"}
 
+COUNTRY_LABELS = {"Mexico": "México", "United States": "Estados Unidos"}
+"""Nombre del país para el texto visible. En el archivo de Damodaran vienen en inglés."""
+
 INFLATION_ANCHORS = {
     "MXN": {
         "value": 0.03,
@@ -202,6 +205,11 @@ class CountryRisk:
     rating: str | None
     as_of: str
 
+    @property
+    def label(self) -> str:
+        """El país como se escribe en español, para las notas que ve el usuario."""
+        return COUNTRY_LABELS.get(self.country, self.country)
+
 
 def country_risk(country: str | None, currency: str | None = None, symbol: str = "") -> CountryRisk:
     """Riesgo país de Damodaran. Si el país no está en el archivo, se usa el de la moneda."""
@@ -306,7 +314,7 @@ def risk_free(currency: str) -> RiskFree | None:
             net = gross - risk.default_spread
             notes.append(
                 f"A la tasa del bono a 10 años ({gross:.2%}) se le restó el diferencial de "
-                f"incumplimiento soberano de {risk.country} ({risk.default_spread:.2%}), "
+                f"incumplimiento soberano de {risk.label} ({risk.default_spread:.2%}), "
                 "como pide el CAPM."
             )
             return RiskFree(

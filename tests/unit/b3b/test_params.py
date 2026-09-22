@@ -65,6 +65,11 @@ def test_riesgo_pais_de_mexico_y_estados_unidos(data):
     assert us["statutoryTaxRate"] == 0.25
 
 
+def test_el_pais_se_escribe_en_espanol_para_el_texto_visible():
+    assert params.country_risk("Mexico").label == "México"
+    assert params.country_risk("United States").label == "Estados Unidos"
+
+
 def test_country_risk_resuelve_por_pais_moneda_y_sufijo():
     assert params.country_risk("Mexico").country == "Mexico"
     assert params.country_risk(None, "MXN").country == "Mexico"
