@@ -6,12 +6,15 @@ markers = [
 ]
 filterwarnings = [
     "ignore::DeprecationWarning:yfinance.*",
+    # TestClient de Starlette 1.x sobre httpx: aviso del propio Starlette, no de nuestro código
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated:UserWarning",
+    "ignore:The anyio.abc.BlockingPortal alias is deprecated:DeprecationWarning",
 ]
 
 [tool.ruff]
 target-version = "py311"
 line-length = 120
-extend-exclude = ["backend.py", ".venv", ".venv-golden", "node_modules", "dist", "tests/fixtures", "tests/goldens_legacy"]
+extend-exclude = [".venv", ".venv-golden", "node_modules", "dist", "tests/fixtures", "tests/goldens_legacy"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
@@ -20,6 +23,19 @@ ignore = [
     "B008",  # llamadas en argumentos por defecto (fixtures de pytest)
     "B010",  # setattr con constante: se usa para parchear módulos a propósito
 ]
+
+[tool.ruff.lint.per-file-ignores]
+# Cuerpos del backend viejo movidos a kaizen_api SIN cambios (los goldens de caracterización lo
+# prueban): se conservan tal cual sus líneas con varias sentencias, el `l` y las variables sin uso.
+# Los reemplazos v2 se escriben al lado con el estilo normal.
+"kaizen_api/domain/__init__.py" = ["E701"]
+"kaizen_api/domain/fundamentals.py" = ["B007", "E701", "E702"]
+"kaizen_api/domain/history.py" = ["F841"]
+"kaizen_api/domain/macro.py" = ["E701", "E702", "E741"]
+"kaizen_api/domain/news.py" = ["B033", "E701"]
+"kaizen_api/domain/screeners/fibras.py" = ["E701"]
+"kaizen_api/domain/screeners/magic.py" = ["E702", "I001"]
+"kaizen_api/domain/valuation/multiples.py" = ["E701"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["tests", "kaizen_api"]

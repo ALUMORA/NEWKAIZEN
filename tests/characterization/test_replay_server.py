@@ -1,21 +1,21 @@
-"""scripts/run_replay_backend.py serves the legacy Handler from fixtures with the network blocked."""
+"""scripts/run_replay_backend.py sirve ``kaizen_api.main`` (ASGI, uvicorn real) desde fixtures, sin red."""
 
 from __future__ import annotations
 
 import importlib.util
 import json
-import threading
 import urllib.error
 import urllib.request
 from pathlib import Path
 
 import pytest
 
-from tests.replay import GOLDENS_DIR, compare, golden_name, load_golden, reset_backend_state
+import kaizen_api
+from kaizen_api.settings import configure
+from tests.replay import GOLDENS_DIR, compare, golden_name, load_golden
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "run_replay_backend.py"
 ROUTES = {
-    "/health": None,
     "/stock/AAPL": golden_name("get_stock", ["AAPL"], {}),
     "/chart/WALMEX.MX?period=1y&ccy=MXN": golden_name("get_chart", ["WALMEX.MX"], {"period": "1y", "ccy": "MXN"}),
     "/market": golden_name("get_market", [], {}),
@@ -38,32 +38,36 @@ def _get(url: str) -> tuple[int, dict]:
 
 
 @pytest.fixture
-def replay_server(replay_set):
+def replay_server(replay_set, monkeypatch):
+    for var in ("KAIZEN_ENV", "AUTH_REQUIRED", "KAIZEN_LEGACY_ROUTES", "USERS", "SECRET_KEY"):
+        monkeypatch.delenv(var, raising=False)
+    configure(None)
     runner = _load_script()
-    session, module = runner.start("backend", replay_set)
+    session, module = runner.start(runner.DEFAULT_MODULE, replay_set)
     try:
-        reset_backend_state(module)
-        server = runner.make_http_server(module, "127.0.0.1", 0)
-        thread = threading.Thread(target=server.serve_forever, daemon=True)
-        thread.start()
-        yield f"http://127.0.0.1:{server.server_address[1]}", session
-        server.shutdown()
-        server.server_close()
+        kaizen_api.reset_state()
+        module.__dict__.pop("app", None)  # una app nueva con el entorno limpio
+        with runner.ServerThread(runner.asgi_app(module)) as base:
+            yield base, session
     finally:
         session.uninstall()
+        module.__dict__.pop("app", None)
+        configure(None)
 
 
 def test_replay_server_serves_sample_routes(replay_server):
     base, session = replay_server
+    status, body = _get(base + "/health")
+    assert status == 200 and body["status"] == "ok" and body["apiVersion"] == 2
+    assert "legacy.v1" in body["capabilities"]
     for route, golden_file in ROUTES.items():
         status, body = _get(base + route)
         assert status == 200, (route, body)
-        if golden_file is None:
-            assert body == {"status": "ok"}
-            continue
         golden = load_golden(GOLDENS_DIR / golden_file)
         diffs = compare(body, golden["output"], volatile=golden["volatile_paths"])
         assert not diffs, (route, diffs)
+    status, body = _get(base + "/v2/quotes?symbols=AAPL")
+    assert status == 501 and body["error"]["code"] == "NOT_IMPLEMENTED"
     assert session.misses == []
 
 
