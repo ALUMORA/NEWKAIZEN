@@ -126,14 +126,6 @@ Fundamentals come through the B3a seam and prices/history through the B2a seam a
     focus: 'z-score formula or winsorization wrong, negative P/E scored as cheap, coverage rule not applied, BUY/SELL or recommendation wording, magic formula EV or ROC definitions wrong, estimated EBIT sneaking in, rank ties unstable, FIBRA LTV or FFO mislabeled, spread vs CETES in the wrong units, universes without sources, partial results not flagged.',
     kind: 'backend',
   },
-  {
-    id: 'C1', web: 5328, api: 8114, browser: true, specs: `${DOCS}/specs/design-brief.md (authoritative) and ${DOCS}/specs/frontend-spec.md`,
-    task: `YOUR TASK (C1): the design system. Tokens in src/styles/tokens.css (+ base, components, layout) per the design brief, both themes, EXTENDING src/theme.css names (never rename: the legacy still uses them until M3); verify every text/UI color pair's contrast numerically (write a small script; AA: text >= 4.5:1, large text/UI >= 3:1) and validate the categorical chart palette for distinguishability in both themes; self-hosted fonts already come from @fontsource-variable. Primitives in src/components/ui/* with a single barrel src/components/ui/index.js: Button, IconButton, Card, Badge, Tabs, SegmentedControl, Field/Input/Select/NumberInput (es-MX number parsing "1,234.56"), DataTable (sortable with aria-sort, numeric right-aligned, sticky first column, horizontal scroll inside its container, empty/loading/error states, keyboard row activation), Stat, Delta, Money, InfoTip (glossary key -> popover; uses src/content/glossary.js if present via a guarded dynamic import or a prop fallback, keyboard and touch accessible), Skeleton, EmptyState, ErrorState, DataStatus ({asOf, source, delayMinutes, stale, fallback} -> compact badge + accessible tooltip), ConfirmDialog, Dialog, Sheet, Toast + useToast (Undo action, aria-live polite), Disclaimer, PageHeader, SectionHeading, SrOnly, ThemeToggle, Mark; fill src/components/ui/UiProvider.jsx (theme, toasts, dialogs). Use src/lib/format.js for every number. A DEV-only gallery at /dev/ui (src/features/dev-ui/**, excluded from production builds; check the bundle) showing every primitive and state in both themes. e2e/dev-ui.spec.js: axe WCAG 2.1 AA zero violations on /dev/ui in light AND dark at 1440x900 and 390x844, keyboard tests for Tabs, Dialog focus trap and Esc, DataTable sorting, Toast undo. The legacy baseline (npm run e2e:baseline) must stay green without updating snapshots. Use the impeccable, make-interfaces-feel-better, dataviz and accessibility skills while designing (Skill tool), and judge the result from screenshots you take and Read, in both themes and viewports.
-CHECKPOINT: when done, the API of src/components/ui/index.js is FROZEN for C2, C3 and phase 3. Document every component's props precisely in docs/design.md (you own it).
-DONE CRITERIA (paste real results): npm run lint && npm run typecheck && npm run test && npm run build && npm run bundle (first-load KB must stay within budget); E2E_BASELINE_PORT=${5328} npm run e2e:baseline (no snapshot updates); E2E_PORT=${5329} npx playwright test e2e/dev-ui.spec.js (both app projects) plus the existing app suite; screenshots of /dev/ui in both themes at both viewports, Read and described; node scripts/check-ownership.mjs C1.`,
-    focus: 'contrast failures (measure them yourself from computed styles in both themes), hardcoded colors, focus not visible, keyboard traps or missing Esc, aria misuse in Tabs/DataTable/Toast/InfoTip, hover-only information, touch targets < 24px, horizontal page overflow at 390px, DataTable not sortable by keyboard, DataStatus hiding fallback/stale, number parsing bugs with es-MX separators, dev-ui leaking into the production bundle, legacy baseline changed, generic AI look instead of a calm professional terminal (judge from screenshots).',
-    kind: 'ui',
-  },
 ]
 
 const LATE = [
@@ -202,17 +194,18 @@ Re-run the full DONE CRITERIA afterwards and commit fixes (one-line Spanish mess
 async function runStream(s) {
   let out = await agent(fullPrompt(s), { label: `${s.id} build`, phase: 'Build', schema: RESULT })
   if (!out) return { id: s.id, out: null, reviews: [] }
+  // Pareto: una sola ronda de revisión y corrección. La segunda ronda y los streams de diseño
+  // (C1, C2, C3) quedaron como pendientes escritos en CONTINUAR.md.
   const reviews = []
-  for (let round = 1; round <= 2; round++) {
-    const review = await agent(reviewPrompt(s, out, round), { label: `${s.id} review ${round}`, phase: 'Review', schema: REVIEW })
-    if (!review) break
+  const review = await agent(reviewPrompt(s, out, 1), { label: `${s.id} review 1`, phase: 'Review', schema: REVIEW })
+  if (review) {
     reviews.push(review)
     const serious = review.defects.filter(d => d.severity !== 'minor')
-    log(`${s.id} review ${round}: ${review.verdict}, ${serious.length} blocker/major, ${review.defects.length - serious.length} minor`)
-    if (!review.defects.length) break
-    const fixed = await agent(fixPrompt(s, out, review), { label: `${s.id} fix ${round}`, phase: 'Fix', schema: RESULT })
-    if (fixed) out = fixed
-    if (!serious.length) break
+    log(`${s.id} review 1: ${review.verdict}, ${serious.length} blocker/major, ${review.defects.length - serious.length} minor`)
+    if (review.defects.length) {
+      const fixed = await agent(fixPrompt(s, out, review), { label: `${s.id} fix 1`, phase: 'Fix', schema: RESULT })
+      if (fixed) out = fixed
+    }
   }
   return { id: s.id, out, reviews }
 }
@@ -222,15 +215,5 @@ ${ids.map(id => `git -C "${MAIN}" worktree add -b ws/${id} "${WT}/${id}" ws/C1 &
 If a worktree or branch already exists, do not recreate it: report its HEAD instead. Then print "git -C <worktree> log --oneline -1" for each. Return a one-line status per worktree.`, { label: 'C2/C3 worktrees', phase: 'Build', effort: 'low' })
 
 phase('Build')
-const chains = STREAMS.map(s => () => {
-  if (s.id !== 'C1') return runStream(s)
-  return runStream(s).then(async (c1) => {
-    if (!c1.out) return [c1]
-    log('C1 frozen: starting C2 and C3 from ws/C1')
-    await makeLateWorktrees(LATE.map(l => l.id))
-    const late = await parallel(LATE.map(l => () => runStream(l)))
-    return [c1, ...late]
-  })
-})
-const results = (await parallel(chains)).flat().filter(Boolean)
+const results = (await parallel(STREAMS.map(s => () => runStream(s)))).filter(Boolean)
 return results.map(r => ({ id: r.id, ok: !!r.out, verdicts: r.reviews.map(v => v.verdict), out: r.out, lastDefects: r.reviews.length ? r.reviews[r.reviews.length - 1].defects : [] }))
