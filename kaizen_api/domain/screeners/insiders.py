@@ -1,7 +1,8 @@
-"""Operaciones de consejeros y directivos, y tenedores institucionales (legado).
+"""Operaciones de consejeros y directivos: el legado y el v2 de ``/v2/insiders/{symbol}``.
 
-Movido sin cambios desde backend.py (fase S1): los cuerpos son idénticos al legado y los
-goldens de tests/goldens_legacy lo prueban. La versión v2 se escribe al lado, no encima.
+``get_insiders`` viene sin cambios de backend.py (fase S1): los goldens de tests/goldens_legacy
+fijan su comportamiento, defectos incluidos, y por eso no se toca. El v2 (``get_insiders_v2``)
+está escrito al lado, más abajo, y sí corrige esos defectos.
 """
 
 import math
