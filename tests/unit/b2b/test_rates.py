@@ -105,6 +105,24 @@ def test_rates_rf_sin_token_es_la_serie_de_fred_marcada(client):
     assert any("no son cetes" in nota.lower() for nota in body.meta.notes)
 
 
+@pytest.mark.parametrize("tenor", [28, 91, 182, 364])
+def test_el_aviso_del_respaldo_nombra_el_plazo_pedido(client, tenor):
+    """El respaldo sirve la misma serie de 3 meses para todos los plazos, y lo tiene que decir.
+
+    Antes el aviso dec\u00eda "no son CETES de 28 d\u00edas" aunque pidieras 364, que es cierto pero no
+    responde la duda de quien pregunt\u00f3 por 364.
+    """
+    r = client.get(f"/v2/rates/rf?tenorDays={tenor}")
+    assert r.status_code == 200, r.text
+    body = RfSeriesResponse.model_validate(r.json())
+    assert body.tenorDays == tenor
+    assert body.fallback is True
+    aviso = next(n for n in body.meta.notes if "no son cetes" in n.lower())
+    assert f"de {tenor} d\u00edas" in aviso, f"el aviso no nombra el plazo pedido: {aviso}"
+    otros = [t for t in (28, 91, 182, 364) if t != tenor]
+    assert not any(f"de {o} d\u00edas" in aviso for o in otros), f"el aviso nombra otro plazo: {aviso}"
+
+
 def test_rates_rf_respeta_el_rango_de_fechas(client):
     body = RfSeriesResponse.model_validate(
         client.get("/v2/rates/rf?start=2025-01-01&end=2025-12-31").json()

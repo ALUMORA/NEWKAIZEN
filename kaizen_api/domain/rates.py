@@ -92,10 +92,17 @@ como respaldo, en ``/v2/rates/rf``, donde el contrato la nombra (``source: "fred
 """
 
 FRED_RF_SERIES = "IR3TIB01MXM156N"
-RF_FALLBACK_NOTE = (
-    "Respaldo: serie interbancaria de México a 3 meses de la OCDE en FRED, mensual. No son CETES de"
-    " 28 días ni tiene la convención de la subasta; se publica solo mientras no haya token de Banxico."
-)
+def rf_fallback_note(tenor_days: int) -> str:
+    """Aviso del respaldo de FRED, nombrando el plazo que de verdad se pidió.
+
+    La serie es interbancaria a 3 meses pase lo que pase, así que el aviso tiene que decir contra
+    qué plazo no corresponde: si alguien pide 364 días, hablarle de 28 no le aclara nada.
+    """
+    return (
+        f"Respaldo: serie interbancaria de México a 3 meses de la OCDE en FRED, mensual. No son CETES"
+        f" de {int(tenor_days)} días ni tiene la convención de la subasta; se publica solo mientras no"
+        " haya token de Banxico."
+    )
 
 
 def _today() -> _dt.date:
@@ -289,7 +296,7 @@ def get_rf_series(start: str | None = None, end: str | None = None, tenor_days: 
             "UPSTREAM_UNAVAILABLE",
             "No hay serie de tasa libre de riesgo disponible para ese rango. Intenta más tarde.",
         )
-    notes.append(RF_FALLBACK_NOTE)
+    notes.append(rf_fallback_note(tenor_days))
     return {
         "tenorDays": int(tenor_days),
         "dates": serie["dates"],
