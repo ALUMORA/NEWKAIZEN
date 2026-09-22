@@ -146,3 +146,150 @@ def get_edgar_financials(ticker: str) -> dict:
     # Errores de red se guardan solo 60 s; "no registrado" o "sin 10-K" sí duran 6 h
     return _cached(f"edgar:{ticker.upper()}", _fetch, ttl=6 * 3600,
                    ok=lambda r: r.get("error") not in (_EDGAR_ERR_CONN, _EDGAR_ERR_BAD))
+
+
+# ─── v2: hechos XBRL y Formas 4 (stream B3a) ─────────────────────────────────
+#
+# Lo de arriba es el legado (``get_edgar_financials``) y no se toca: los goldens lo fijan.
+# De aquí para abajo vive lo que usan ``/v2/instrument/{symbol}/statements`` y
+# ``/v2/insiders/{symbol}``. Todo sale por ``_edgar_session``, así que el replay lo graba.
+
+SEC_FACTS_TTL = 6 * 3600
+SEC_FORM4_TTL = 6 * 3600
+FORM4_MAX = 20
+"""Cuántas Formas 4 recientes se leen. Cada una es un XML chico; la SEC pide no pasar de 10 req/s."""
+
+
+def cik_for(symbol: str) -> str | None:
+    """CIK de 10 dígitos del símbolo, o ``None`` si no reporta ante la SEC.
+
+    Los símbolos ``.MX`` no aplican: EDGAR solo cubre emisores de EE. UU. Se devuelve ``None``
+    sin salir a la red, igual que hace el legado al cortar por el punto.
+    """
+    base = symbol.split(".")[0].upper()
+    if symbol.upper().endswith(".MX"):
+        return None
+    mapping = _edgar_ticker_map()
+    return mapping.get(base) if mapping else None
+
+
+def get_companyfacts(symbol: str) -> dict | None:
+    """``companyfacts`` XBRL del emisor, o ``None`` si no está registrado o la SEC no respondió.
+
+    El resultado es el JSON tal cual lo publica la SEC (``{"entityName", "facts": {...}}``).
+    """
+    cik = cik_for(symbol)
+    if not cik:
+        return None
+
+    def fetch() -> dict | None:
+        try:
+            resp = _edgar_session.get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json", timeout=15)
+        except Exception:
+            return None
+        if resp.status_code != 200:
+            return None
+        try:
+            data = resp.json()
+        except Exception:
+            return None
+        if not isinstance(data, dict) or not data.get("facts"):
+            return None
+        data["cik"] = cik
+        return data
+
+    return _cached(f"v2:sec:facts:{cik}", fetch, ttl=SEC_FACTS_TTL, ok=lambda d: bool(d))
+
+
+def _submissions(cik: str) -> dict | None:
+    def fetch() -> dict | None:
+        try:
+            resp = _edgar_session.get(f"https://data.sec.gov/submissions/CIK{cik}.json", timeout=15)
+        except Exception:
+            return None
+        if resp.status_code != 200:
+            return None
+        try:
+            return resp.json()
+        except Exception:
+            return None
+
+    return _cached(f"v2:sec:subs:{cik}", fetch, ttl=SEC_FACTS_TTL, ok=lambda d: bool(d))
+
+
+def recent_filings(symbol: str, form: str = "4", limit: int = FORM4_MAX) -> list[dict]:
+    """Últimos expedientes de un tipo (``form``) del emisor: accession, fechas y documento."""
+    cik = cik_for(symbol)
+    if not cik:
+        return []
+    data = _submissions(cik)
+    if not data:
+        return []
+    recent = (data.get("filings") or {}).get("recent") or {}
+    forms = recent.get("form") or []
+    out: list[dict] = []
+    for i, kind in enumerate(forms):
+        if kind != form:
+            continue
+        accession = (recent.get("accessionNumber") or [None] * (i + 1))[i]
+        document = (recent.get("primaryDocument") or [None] * (i + 1))[i]
+        if not accession or not document:
+            continue
+        out.append({
+            "cik": cik,
+            "accession": accession,
+            "document": document,
+            "filingDate": (recent.get("filingDate") or [None] * (i + 1))[i],
+            "reportDate": (recent.get("reportDate") or [None] * (i + 1))[i],
+        })
+        if len(out) >= limit:
+            break
+    return out
+
+
+def get_filing_document(cik: str, accession: str, document: str) -> str | None:
+    """Texto del documento principal de un expediente (para la Forma 4, su XML)."""
+    folder = accession.replace("-", "")
+    url = f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{folder}/{document}"
+
+    def fetch() -> str | None:
+        try:
+            resp = _edgar_session.get(url, timeout=15)
+        except Exception:
+            return None
+        if resp.status_code != 200:
+            return None
+        return resp.text or None
+
+    return _cached(f"v2:sec:doc:{folder}:{document}", fetch, ttl=SEC_FORM4_TTL, ok=lambda t: bool(t))
+
+
+def raw_document_name(document: str) -> str:
+    """Quita la carpeta ``xsl.../`` del documento principal para quedarse con el XML de verdad.
+
+    ``primaryDocument`` de una Forma 4 apunta a la versión RENDERIZADA
+    (``xslF345X06/form4.xml``), que es HTML con hojas de estilo y no se puede parsear como XML.
+    El archivo fuente vive al lado, en la misma carpeta del expediente (``form4.xml``).
+    """
+    parts = str(document).split("/")
+    if len(parts) > 1 and parts[0].lower().startswith("xsl"):
+        return "/".join(parts[1:])
+    return str(document)
+
+
+def get_form4_documents(symbol: str, limit: int = FORM4_MAX) -> list[dict]:
+    """Las Formas 4 recientes del emisor con su XML ya descargado.
+
+    Devuelve ``[{accession, filingDate, xml}]``. Lista vacía cuando el símbolo no es de un emisor
+    registrado ante la SEC (toda la BMV) o cuando EDGAR no respondió.
+    """
+    out: list[dict] = []
+    for filing in recent_filings(symbol, "4", limit):
+        document = raw_document_name(filing["document"])
+        if not document.lower().endswith(".xml"):
+            continue
+        xml = get_filing_document(filing["cik"], filing["accession"], document)
+        if not xml:
+            continue
+        out.append({"accession": filing["accession"], "filingDate": filing["filingDate"], "xml": xml})
+    return out

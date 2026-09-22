@@ -1,0 +1,30 @@
+{
+ "key": "yf:WALMEX.MX:calendar",
+ "provider": "yfinance",
+ "symbol": "WALMEX.MX",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-11-17"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-27"
+   }
+  ],
+  "Earnings High": 0.734,
+  "Earnings Low": 0.7,
+  "Earnings Average": 0.7129,
+  "Revenue High": 251881109660,
+  "Revenue Low": 249991000000,
+  "Revenue Average": 250633850040
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T19:15:33+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "adf141d04b4c"
+}

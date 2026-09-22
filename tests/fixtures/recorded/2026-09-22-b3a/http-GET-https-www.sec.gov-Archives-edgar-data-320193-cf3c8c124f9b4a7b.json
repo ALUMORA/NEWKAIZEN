@@ -1,0 +1,39 @@
+{
+ "key": "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126020871/form4.xml",
+ "provider": "http",
+ "method": "GET",
+ "url": "https://www.sec.gov/Archives/edgar/data/320193/000114036126020871/form4.xml",
+ "params": null,
+ "kind": "value",
+ "payload": {
+  "status": 200,
+  "reason": "OK",
+  "url": "https://www.sec.gov/Archives/edgar/data/320193/000114036126020871/form4.xml",
+  "encoding": "ISO-8859-1",
+  "headers": {
+   "Content-Type": "text/xml",
+   "X-Frame-Options": "SAMEORIGIN",
+   "x-amz-id-2": "QAIG2ieAHC9+VLFyb7WE2GmBS8YM/pvNzbsLVoQP2RH/GPznTId5u/uSUMx+Y55iKYLhF+R3PRo=",
+   "x-amz-request-id": "B95383TPXF2VK09F",
+   "x-amz-replication-status": "COMPLETED",
+   "Last-Modified": "Tue, 12 May 2026 22:31:53 GMT",
+   "ETag": "\"77c569657501bfdf980fe8274ab02610-gzip\"",
+   "x-amz-server-side-encryption": "AES256",
+   "x-amz-meta-mode": "33188",
+   "x-amz-version-id": "0p38nJCL2p29e2XgmvMhgPwjGrs7cjZW",
+   "Accept-Ranges": "bytes",
+   "X-Content-Type-Options": "nosniff",
+   "X-XSS-Protection": "1; mode=block",
+   "Date": "Tue, 22 Sep 2026 19:15:48 GMT",
+   "Vary": "Accept-Encoding",
+   "Strict-Transport-Security": "max-age=31536000 ; includeSubDomains ; preload"
+  },
+  "body": {
+   "text": "<?xml version=\"1.0\"?>\n<ownershipDocument>\n\n    <schemaVersion>X0609</schemaVersion>\n\n    <documentType>4</documentType>\n\n    <periodOfReport>2026-05-08</periodOfReport>\n\n    <issuer>\n        <issuerCik>0000320193</issuerCik>\n        <issuerName>Apple Inc.</issuerName>\n        <issuerTradingSymbol>AAPL</issuerTradingSymbol>\n        <issuerForeignTradingSymbol></issuerForeignTradingSymbol>\n    </issuer>\n\n    <reportingOwner>\n        <reportingOwnerId>\n            <rptOwnerCik>0002100523</rptOwnerCik>\n            <rptOwnerName>Borders Ben</rptOwnerName>\n        </reportingOwnerId>\n        <reportingOwnerAddress>\n            <rptOwnerNonUSAddressFlag>false</rptOwnerNonUSAddressFlag>\n            <rptOwnerStreet1>ONE APPLE PARK WAY</rptOwnerStreet1>\n            <rptOwnerStreet2></rptOwnerStreet2>\n            <rptOwnerCity>CUPERTINO</rptOwnerCity>\n            <rptOwnerState>CA</rptOwnerState>\n            <rptOwnerZipCode>95014</rptOwnerZipCode>\n            <rptOwnerStateDescription></rptOwnerStateDescription>\n        </reportingOwnerAddress>\n        <reportingOwnerRelationship>\n            <isOfficer>true</isOfficer>\n            <officerTitle>Principal Accounting Officer</officerTitle>\n        </reportingOwnerRelationship>\n    </reportingOwner>\n\n    <aff10b5One>true</aff10b5One>\n\n    <nonDerivativeTable>\n        <nonDerivativeTransaction>\n            <securityTitle>\n                <value>Common Stock</value>\n                <footnoteId id=\"F1\"/>\n            </securityTitle>\n            <transactionDate>\n                <value>2026-05-08</value>\n            </transactionDate>\n            <transactionCoding>\n                <transactionFormType>4</transactionFormType>\n                <transactionCode>S</transactionCode>\n                <equitySwapInvolved>0</equitySwapInvolved>\n            </transactionCoding>\n            <transactionAmounts>\n                <transactionShares>\n                    <value>1274</value>\n                </transactionShares>\n                <transactionPricePerShare>\n                    <value>290</value>\n                </transactionPricePerShare>\n                <transactionAcquiredDisposedCode>\n                    <value>D</value>\n                </transactionAcquiredDisposedCode>\n            </transactionAmounts>\n            <postTransactionAmounts>\n                <sharesOwnedFollowingTransaction>\n                    <value>38713</value>\n                </sharesOwnedFollowingTransaction>\n            </postTransactionAmounts>\n            <ownershipNature>\n                <directOrIndirectOwnership>\n                    <value>D</value>\n                </directOrIndirectOwnership>\n            </ownershipNature>\n        </nonDerivativeTransaction>\n    </nonDerivativeTable>\n\n    <footnotes>\n        <footnote id=\"F1\">This transaction was made pursuant to a Rule 10b5-1 trading plan adopted by the reporting person on February 6, 2026.</footnote>\n    </footnotes>\n\n    <ownerSignature>\n        <signatureName>/s/ Sam Whittington, Attorney-in-Fact for Ben Borders</signatureName>\n        <signatureDate>2026-05-12</signatureDate>\n    </ownerSignature>\n</ownershipDocument>\n"
+  }
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T19:15:48+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "adf141d04b4c"
+}

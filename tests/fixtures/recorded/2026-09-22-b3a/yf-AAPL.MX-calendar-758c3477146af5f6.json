@@ -1,0 +1,30 @@
+{
+ "key": "yf:AAPL.MX:calendar",
+ "provider": "yfinance",
+ "symbol": "AAPL.MX",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-08-10"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-29"
+   }
+  ],
+  "Earnings High": null,
+  "Earnings Low": null,
+  "Earnings Average": null,
+  "Revenue High": 117219700000,
+  "Revenue Low": 112248100000,
+  "Revenue Average": 113624521680
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T19:15:35+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "adf141d04b4c"
+}
