@@ -9,10 +9,11 @@
 //   cotizaciones 30 s (y se refrescan cada 60 s solo con la pestaña visible), historia 1 h,
 //   emisora y fundamentales 6 h, macro y tasas 1 h, noticias 10 min, screeners 12 h,
 //   búsqueda 24 h.
-// Reintentos: el cliente ya reintenta el arranque en frío; aquí a lo más uno más para errores de
-// red o 5xx, y nunca para 4xx.
+// Reintentos: apiFetch ya reintenta el arranque en frío (~67 s), así que aquí NO se vuelve a
+// reintentar eso ni los errores de red; a lo más uno más para un 5xx del API despierto, y nunca
+// para 4xx ni cancelaciones.
 import { QueryClient } from '@tanstack/react-query'
-import { ApiError } from './http.js'
+import { ApiError, isAbortError, isColdStartError } from './http.js'
 import * as api from './endpoints.js'
 
 const SECOND = 1_000
@@ -37,13 +38,21 @@ export const STALE_TIME = Object.freeze({
 export const QUOTES_REFETCH_MS = 60 * SECOND
 
 /**
- * Política de reintento de TanStack: nunca 4xx (ni cancelaciones), a lo más 1 reintento.
+ * Política de reintento de TanStack. Devuelve false, o sea que el error se muestra de una vez:
+ * - cancelaciones (AbortError) y 4xx, incluido LEGACY_SERVER: reintentar no cambia nada;
+ * - arranque en frío y errores de red o timeout (status 0): apiFetch ya los reintentó cinco
+ *   veces durante ~67 s. Otra vuelta de Query dejaría a la persona ~140 s viendo un spinner
+ *   antes del mensaje de error.
+ * Queda un reintento solo para lo demás: 5xx del API ya despierto y errores raros.
  * @param {number} failureCount
  * @param {unknown} error
  */
 export function shouldRetry(failureCount, error) {
+  if (isAbortError(error)) return false
   if (error instanceof ApiError && error.status >= 400 && error.status < 500) return false
   if (error instanceof ApiError && error.code === 'LEGACY_SERVER') return false
+  if (isColdStartError(error)) return false
+  if (error instanceof ApiError && error.status === 0) return false
   return failureCount < 1
 }
 
