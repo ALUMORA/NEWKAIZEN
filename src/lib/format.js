@@ -235,6 +235,48 @@ function cdmxParts(date) {
   }
 }
 
+/**
+ * Milisegundos UTC de una fecha y hora, cuidando los años de menos de tres cifras: Date.UTC(50, …)
+ * significa 1950, no el año 50.
+ */
+function utcMs(year, month, day, hour = 0, minute = 0) {
+  const ms = Date.UTC(year, month - 1, day, hour, minute)
+  if (year >= 0 && year < 100) {
+    const d = new Date(ms)
+    d.setUTCFullYear(year)
+    return d.getTime()
+  }
+  return ms
+}
+
+/**
+ * Las 00:00 de una fecha de calendario en la Ciudad de México, como instante. Se arma en UTC y se
+ * corrige con el desfase que la zona reporta ahí mismo; con una corrección basta, porque México ya
+ * no cambia de horario (y aun con cambio el error quedaría dentro de la hora del salto).
+ * @param {{ year: number, month: number, day: number }} cal
+ */
+function cdmxStartOfDay(cal) {
+  const guess = utcMs(cal.year, cal.month, cal.day)
+  const p = cdmxParts(new Date(guess))
+  return new Date(guess + (guess - utcMs(p.year, p.month, p.day, p.hour, p.minute)))
+}
+
+/** "19 sep 2026" a partir de una fecha de calendario. */
+function calendarText(cal) {
+  return `${cal.day} ${MONTHS[cal.month - 1]} ${cal.year}`
+}
+
+/**
+ * ¿El valor es una fecha sola (YYYY-MM-DD, sin hora)? Devuelve el texto y su fecha de calendario,
+ * que es null cuando la fecha no existe ("2026-02-31"). null si no tiene esa forma.
+ * @param {unknown} value
+ */
+function asDateOnly(value) {
+  if (typeof value !== 'string') return null
+  const text = value.trim()
+  return DATE_ONLY.test(text) ? { text, cal: calendarDate(text) } : null
+}
+
 /** @param {unknown} value @returns {Date | null} */
 function toDate(value) {
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value
@@ -259,13 +301,8 @@ function toDate(value) {
  * @param {unknown} value ISO, Date o epoch en ms
  */
 export function fmtDate(value) {
-  if (typeof value === 'string') {
-    const text = value.trim()
-    if (DATE_ONLY.test(text)) {
-      const cal = calendarDate(text)
-      return cal ? `${cal.day} ${MONTHS[cal.month - 1]} ${cal.year}` : MISSING
-    }
-  }
+  const only = asDateOnly(value)
+  if (only) return only.cal ? calendarText(only.cal) : MISSING
   const d = toDate(value)
   if (!d) return MISSING
   const p = cdmxParts(d)
@@ -274,9 +311,17 @@ export function fmtDate(value) {
 
 /**
  * "19 sep 2026, 14:05" en la Ciudad de México (reloj de 24 h).
+ *
+ * Una fecha sola (YYYY-MM-DD) no trae hora, así que se dibuja como fecha de calendario, exactamente
+ * igual que en fmtDate y sin inventarle un "00:00". Antes se construía new Date('2024-02-29'), o
+ * sea medianoche UTC, y la Ciudad de México la bajaba al día anterior a las 18:00: el mismo valor
+ * salía "29 feb 2024" con fmtDate y "28 feb 2024, 18:00" con fmtDateTime. Importa porque los
+ * movimientos del storage guardan la fecha sola (date: 'YYYY-MM-DD').
  * @param {unknown} value
  */
 export function fmtDateTime(value) {
+  const only = asDateOnly(value)
+  if (only) return only.cal ? calendarText(only.cal) : MISSING
   const d = toDate(value)
   if (!d) return MISSING
   const p = cdmxParts(d)
@@ -285,11 +330,17 @@ export function fmtDateTime(value) {
 
 /**
  * "hace 5 min", "hace 3 h", "hace 2 días"; en el futuro "en 5 min". Más de 30 días: la fecha.
+ *
+ * Una fecha sola (YYYY-MM-DD) se ancla a las 00:00 de ese día en la Ciudad de México, no a la
+ * medianoche UTC: si no, "2026-09-19" se contaba desde las 18:00 del 18 y la fecha de respaldo
+ * salía un día antes que la de fmtDate.
  * @param {unknown} value
  * @param {number | Date} [now]
  */
 export function fmtRelative(value, now = Date.now()) {
-  const d = toDate(value)
+  const only = asDateOnly(value)
+  if (only && !only.cal) return MISSING
+  const d = only ? cdmxStartOfDay(only.cal) : toDate(value)
   if (!d) return MISSING
   const nowMs = now instanceof Date ? now.getTime() : now
   const diff = nowMs - d.getTime()
@@ -303,7 +354,7 @@ export function fmtRelative(value, now = Date.now()) {
   if (hours < 24) return wrap(`${hours} h`)
   const days = Math.round(abs / 86_400_000)
   if (days <= 30) return wrap(days === 1 ? '1 día' : `${days} días`)
-  return fmtDate(d)
+  return only ? calendarText(only.cal) : fmtDate(d)
 }
 
 /**

@@ -229,7 +229,31 @@ describe('fechas en America/Mexico_City', () => {
   it('fmtDateTime y fmtRelative usan la misma validación estricta', () => {
     expect(fmtDateTime('2026-02-31')).toBe('s/d')
     expect(fmtRelative('2026-02-31', Date.UTC(2026, 8, 19))).toBe('s/d')
-    expect(fmtDateTime('2026-02-28')).toBe('27 feb 2026, 18:00')
+    expect(fmtDateTime('2026-02-28')).toBe('28 feb 2026')
+  })
+
+  // Una fecha sola no trae hora. Antes toDate la volvía medianoche UTC y CDMX la bajaba al día
+  // anterior a las 18:00, así que el mismo valor salía distinto según el formateador; los
+  // movimientos del storage guardan justo fechas solas (date: 'YYYY-MM-DD').
+  it('una fecha sola se dibuja igual en los tres formateadores, sin correrse un día', () => {
+    const now = Date.parse('2027-06-01T12:00:00Z')
+    for (const [text, expected] of [
+      ['2024-02-29', '29 feb 2024'],
+      ['2026-09-19', '19 sep 2026'],
+      ['2026-01-01', '1 ene 2026'],
+      ['2025-12-31', '31 dic 2025'],
+    ]) {
+      expect(fmtDate(text)).toBe(expected)
+      expect(fmtDateTime(text)).toBe(expected)
+      expect(fmtRelative(text, now)).toBe(expected)
+    }
+  })
+
+  it('una fecha sola se cuenta desde las 00:00 de CDMX, no desde la medianoche UTC', () => {
+    // 20:00 UTC son las 14:00 en CDMX: el día empezó hace 14 h, no hace 20.
+    expect(fmtRelative('2026-09-22', Date.parse('2026-09-22T20:00:00Z'))).toBe('hace 14 h')
+    expect(fmtRelative('2026-09-21', Date.parse('2026-09-22T06:00:00Z'))).toBe('hace 1 día')
+    expect(fmtRelative('2026-09-23', Date.parse('2026-09-22T18:00:00Z'))).toBe('en 12 h')
   })
 
   // Las fechas del API (meta.asOf entre otras) llegan como instantes ISO completos: la validación
