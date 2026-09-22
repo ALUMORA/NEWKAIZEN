@@ -427,7 +427,15 @@ export function quantilesOf(values) {
  * `C_t = contribution · (1 + contributionGrowth)^{t/stepsPerYear}`. Si `contributionGrowth` es
  * `null` se usa `inflation`, que es lo que mantiene el poder de compra de la aportación.
  * Con `contributionFrequency: 'annual'` solo se aporta cada `stepsPerYear` pasos, y para que eso
- * tenga sentido `stepsPerYear` tiene que ser múltiplo de 12 cuando la frecuencia es mensual.
+ * tenga sentido `stepsPerYear` tiene que ser múltiplo de 12 cuando la frecuencia es mensual. Con
+ * `contribution: 0` ese requisito no aplica, porque no hay nada que calendarizar.
+ *
+ * `contribution` no puede ser negativa: retirar no es aportar al revés. El escenario de retiro es
+ * `retirementIncome` de goals.js.
+ *
+ * El campo `seed` del resultado es la etiqueta del generador, que es la que reproduce la corrida
+ * si se vuelve a pasar como `seed`. No siempre es igual a lo que se recibió: `null` y `undefined`
+ * salen como la semilla por omisión.
  *
  * Los valores reales se obtienen dividiendo entre `(1 + inflation)^{t/stepsPerYear}`. Como es un
  * divisor positivo, los percentiles reales son los nominales deflactados, sin volver a ordenar.
@@ -438,7 +446,8 @@ export function quantilesOf(values) {
  * @param {SimulateOptions} options
  * @returns {SimulationResult | null} `null` cuando no alcanzan los datos: `mu ≤ −1`, o `bootstrap`
  *   con menos historia que `blockSize`. Lanza (Error con mensaje en español) si algún parámetro no
- *   es finito o está fuera de rango.
+ *   es finito o está fuera de rango; `mu` y `sigma` se validan con los DOS métodos, aunque
+ *   `bootstrap` no los use.
  */
 export function simulate(options) {
   if (!options || typeof options !== 'object') {
@@ -466,6 +475,11 @@ export function simulate(options) {
   finite(contribution, 'contribution')
   finite(years, 'years')
   finite(inflation, 'inflation')
+  // mu y sigma se validan aquí y no dentro de la rama lognormal: con `method: 'bootstrap'` no se
+  // usan, pero un valor roto tiene que truenar igual. Quien llama arma UN objeto de opciones y le
+  // cambia el método, así que un mu en NaN se colaría callado y reaparecería al volver a lognormal.
+  finite(mu, 'mu')
+  finite(sigma, 'sigma')
   const k = finite(stepsPerYear, 'stepsPerYear')
   if (!Number.isInteger(k) || k < 1) {
     throw new Error('montecarlo: stepsPerYear tiene que ser un entero mayor o igual a 1')
@@ -475,6 +489,11 @@ export function simulate(options) {
     throw new Error('montecarlo: paths tiene que ser un entero mayor o igual a 1')
   }
   if (initial < 0) throw new Error('montecarlo: initial no puede ser negativo')
+  // Retirar no es aportar en negativo: el piso de cero del saldo se tragaría el faltante sin avisar
+  // que el plan es imposible, y `contributedTotal` saldría negativo. Para retiros está
+  // `retirementIncome` de goals.js.
+  if (contribution < 0) throw new Error('montecarlo: contribution no puede ser negativa')
+  if (sigma < 0) throw new Error('montecarlo: sigma no puede ser negativa')
   if (inflation <= -1) throw new Error('montecarlo: inflation tiene que ser mayor que −1')
   if (method !== 'lognormal' && method !== 'bootstrap') {
     throw new Error('montecarlo: method tiene que ser "lognormal" o "bootstrap"')
@@ -483,13 +502,18 @@ export function simulate(options) {
     throw new Error('montecarlo: contributionFrequency tiene que ser "monthly" o "annual"')
   }
   const perYear = contributionFrequency === 'monthly' ? 12 : 1
-  if (k % perYear !== 0) {
+  // Sin aportación la periodicidad no significa nada, así que no se exige el múltiplo: pedir pasos
+  // anuales, trimestrales o semanales para dibujar un saldo sin aportaciones es legítimo y no tiene
+  // por qué chocar con el valor por omisión de `contributionFrequency`.
+  if (contribution !== 0 && k % perYear !== 0) {
     throw new Error(
       `montecarlo: con aportación ${contributionFrequency === 'monthly' ? 'mensual' : 'anual'}, ` +
         `stepsPerYear (${k}) tiene que ser múltiplo de ${perYear}`,
     )
   }
-  const every = k / perYear
+  // Con aportación el cociente es exacto; con aportación cero se redondea y nunca baja de 1, y da
+  // igual porque el monto aportado es cero en todos los pasos.
+  const every = Math.max(1, Math.round(k / perYear))
 
   const steps = Math.round(years * k)
   if (!Number.isFinite(steps) || steps < 1) return null
@@ -641,7 +665,10 @@ export function simulate(options) {
     stepsPerYear: k,
     years,
     paths: nPaths,
-    seed: String(seed),
+    // La etiqueta del generador, no `String(seed)`: con `seed: null` (un campo de formulario vacío
+    // llega así) createRng cae en DEFAULT_SEED, y reportar la cadena 'null' daba un campo que NO
+    // reproducía la corrida al volver a pasarlo.
+    seed: rng.seed,
     method,
     perStep,
     annual,

@@ -68,11 +68,26 @@ export function probabilityOfGoal(sim, target, options = {}) {
  */
 
 /**
+ * Por qué la búsqueda no dio una respuesta refinada. `null` cuando sí la dio.
+ *
+ * - `'max-contribution'`: se probó `maxContribution` y ni con eso se alcanza la probabilidad.
+ *   Subir `maxIterations` no sirve; hay que subir el tope o bajar la meta.
+ * - `'max-iterations-bracket'`: se acabaron las iteraciones buscando un corchete, antes de llegar
+ *   al tope. La meta podría ser alcanzable con más iteraciones.
+ * - `'max-iterations-bisect'`: había corchete y se acabaron las iteraciones bisecando, así que
+ *   `contribution` es una cota superior sin refinar a `tolerance`.
+ *
+ * @typedef {'max-contribution' | 'max-iterations-bracket' | 'max-iterations-bisect'} RequiredContributionReason
+ */
+
+/**
  * @typedef {{
  *   contribution: number | null,
  *   probability: number | null,
  *   iterations: number,
  *   bounded: boolean,
+ *   converged: boolean,
+ *   reason: RequiredContributionReason | null,
  *   sim: SimulationResult | null,
  * }} RequiredContribution
  */
@@ -88,11 +103,18 @@ export function probabilityOfGoal(sim, target, options = {}) {
  * Costo: corre una simulación completa por iteración, de ahí que `paths` sea 2000 por omisión y
  * no 10000. Súbelo si la respuesta se va a mostrar como definitiva.
  *
+ * Tres campos dicen qué tan buena es la respuesta, y conviene leerlos los tres:
+ * - `bounded: true` y `contribution: null`: no se encontró aportación que alcance.
+ * - `converged: false`: hay número, pero sin refinar a `tolerance`. Es una cota SUPERIOR, o sea
+ *   que la aportación real es menor. No lo pintes como definitivo.
+ * - `reason`: cuál de los tres finales fue. `null` solo cuando la respuesta está refinada.
+ *
  * @param {RequiredContributionOptions} options
  * @returns {RequiredContribution | null} `contribution` en `null` (con `bounded: true`) cuando ni
  *   siquiera `maxContribution` alcanza la probabilidad pedida. Devuelve `null` completo si la
  *   simulación misma no se puede hacer (por ejemplo `mu ≤ −1`). Lanza si un parámetro no es
- *   finito o `probability` está fuera de (0, 1].
+ *   finito, si `probability` está fuera de (0, 1] o si `maxContribution` no es positivo, y lo
+ *   hace ANTES de simular, o sea siempre que el dato esté mal y no solo a veces.
  */
 export function requiredContribution(options) {
   if (!options || typeof options !== 'object') {
@@ -159,17 +181,29 @@ export function requiredContribution(options) {
     return { sim, probability: p === null ? 0 : p }
   }
 
-  let iterations = 1
-  const zero = run(0)
-  if (zero === null) return null
-  if (zero.probability >= probability) {
-    return { contribution: 0, probability: zero.probability, iterations, bounded: false, sim: zero.sim }
-  }
-
+  // El tope se calcula y se valida ANTES de simular. Si se deja abajo, un `maxContribution`
+  // inválido pasa callado cuando la meta ya se cumple sin aportar y truena solo con otros datos,
+  // o sea que un error de captura aparece o no según el caso. Misma clase de error de orden que el
+  // de `history` en montecarlo.js.
   const cap = maxContribution == null
     ? Math.max(1e6, Math.abs(target) * 10)
     : finite(maxContribution, 'maxContribution')
   if (cap <= 0) throw new Error('goals: maxContribution tiene que ser mayor que cero')
+
+  let iterations = 1
+  const zero = run(0)
+  if (zero === null) return null
+  if (zero.probability >= probability) {
+    return {
+      contribution: 0,
+      probability: zero.probability,
+      iterations,
+      bounded: false,
+      converged: true,
+      reason: null,
+      sim: zero.sim,
+    }
+  }
 
   // Corchete: se duplica desde una primera estimación hasta que la meta se alcance o se tope.
   let lo = 0
@@ -184,7 +218,17 @@ export function requiredContribution(options) {
   }
   if (feasible === null) return null
   if (feasible.probability < probability) {
-    return { contribution: null, probability: feasible.probability, iterations, bounded: true, sim: feasible.sim }
+    return {
+      contribution: null,
+      probability: feasible.probability,
+      iterations,
+      bounded: true,
+      converged: false,
+      // Se probó el tope y no alcanzó, o se acabaron las iteraciones antes de llegar a él. No es
+      // lo mismo: en el primer caso subir `maxIterations` no sirve de nada.
+      reason: hi >= cap ? 'max-contribution' : 'max-iterations-bracket',
+      sim: feasible.sim,
+    }
   }
 
   // Bisección sobre [lo, hi] con lo infactible y hi factible.
@@ -201,7 +245,19 @@ export function requiredContribution(options) {
     }
   }
 
-  return { contribution: hi, probability: feasible.probability, iterations, bounded: false, sim: feasible.sim }
+  // Si se acabaron las iteraciones el corchete sigue abierto y `hi` es una SOBRESTIMACIÓN sin
+  // refinar, no la respuesta. Se devuelve igual, porque es una cota superior honesta, pero
+  // marcada: con maxIterations bajo la diferencia llega a ser de varios por ciento.
+  const converged = hi - lo <= tol
+  return {
+    contribution: hi,
+    probability: feasible.probability,
+    iterations,
+    bounded: false,
+    converged,
+    reason: converged ? null : 'max-iterations-bisect',
+    sim: feasible.sim,
+  }
 }
 
 /**
