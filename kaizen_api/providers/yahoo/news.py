@@ -1,8 +1,16 @@
-"""Normalización de las noticias de Yahoo (``Ticker.news``, forma nueva ``{id, content}``).
+"""Noticias de Yahoo (``Ticker.news``). El normalizador del legado se queda igual; abajo va el v2.
 
-Movido sin cambios desde backend.py (fase S1): los cuerpos son idénticos al legado y los
-goldens de tests/goldens_legacy lo prueban. La versión v2 se escribe al lado, no encima.
+``Ticker.news`` cambió de forma entre versiones de yfinance: antes traía ``title``/``link``/
+``providerPublishTime`` planos y ahora casi todo cuelga de ``content`` (``canonicalUrl.url``,
+``provider.displayName``, ``pubDate`` en ISO). El normalizador v2 acepta las dos y devuelve la
+fecha como instante ISO en UTC, no como epoch.
 """
+
+from __future__ import annotations
+
+import datetime as _dt
+
+from kaizen_api.providers.yahoo.session import yft
 
 
 def _extract_news_item(item: dict) -> dict:
@@ -19,3 +27,52 @@ def _extract_news_item(item: dict) -> dict:
         except Exception:
             time_val = 0
     return {"title": title, "summary": str(summary)[:250], "url": url, "publisher": publisher, "time": time_val}
+
+
+# ─── v2 ──────────────────────────────────────────────────────────────────────
+
+
+def _instant(raw) -> str | None:
+    """Epoch o texto ISO a instante ISO en UTC con ``Z``; ``None`` si no hay fecha utilizable."""
+    if raw in (None, "", 0):
+        return None
+    moment: _dt.datetime | None = None
+    if isinstance(raw, (int, float)):
+        try:
+            moment = _dt.datetime.fromtimestamp(float(raw), _dt.UTC)
+        except (OverflowError, OSError, ValueError):
+            return None
+    else:
+        try:
+            moment = _dt.datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    if moment.tzinfo is None:
+        moment = moment.replace(tzinfo=_dt.UTC)
+    return moment.astimezone(_dt.UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def normalize(item: dict) -> dict:
+    """Un elemento de ``Ticker.news`` (forma vieja o nueva) a ``{title, url, summary, published, source}``."""
+    base = _extract_news_item(item if isinstance(item, dict) else {})
+    return {
+        "title": str(base["title"] or "").strip(),
+        "url": str(base["url"] or "").strip(),
+        "summary": (str(base["summary"] or "").strip() or None),
+        "published": _instant(base["time"]),
+        "source": str(base["publisher"] or "").strip() or "Yahoo Finanzas",
+    }
+
+
+def fetch_news(symbol: str, limit: int = 20) -> list[dict]:
+    """Noticias normalizadas de un símbolo. Si Yahoo falla o no trae nada, devuelve una lista vacía."""
+    try:
+        raw = yft(symbol).news or []
+    except Exception:
+        return []
+    items = []
+    for entry in list(raw)[: max(0, limit)]:
+        parsed = normalize(entry)
+        if parsed["title"] and parsed["url"]:
+            items.append(parsed)
+    return items
