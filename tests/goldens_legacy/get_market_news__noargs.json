@@ -1,0 +1,264 @@
+{
+  "function": "get_market_news",
+  "args": [],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [
+    "news[*].time"
+  ],
+  "output": {
+    "news": [
+      {
+        "title": "No Margin Account? This ETF Is the Most Popular Way to Short the S&P 500",
+        "summary": "Shorting the S&P 500 without a margin account sounds like a loophole, but the most popular tool for doing it carries a hidden cost that turns a decade of bearish bets into a slow-motion wipeout.",
+        "url": "https://247wallst.com/investing/etf/2026/09/22/no-margin-account-this-etf-is-the-most-popular-way-to-short-the-sp-500/",
+        "publisher": "24/7 Wall St.",
+        "time": 1790088132,
+        "sentiment": "neutral"
+      },
+      {
+        "title": "ABM Stock Rises 12.7% in Three Months: Here's What You Should Know",
+        "summary": "ABM shares jump 12.7% in three months as infrastructure growth, stronger cash flow and a raised earnings midpoint supported performance.",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/abm-stock-rises-12-7-144000970.html",
+        "publisher": "Zacks",
+        "time": 1790088000,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Nasdaq hits intraday record high on Alphabet boost, Mideast negotiation hopes",
+        "summary": "By Johann M Cherian and Tharuniyaa Lakshmi Sept 22 (Reuters) - The tech-heavy Nasdaq hit an intraday record high for the first time since early June on Tuesday, underpinned by strong gains in Gemini-",
+        "url": "https://finance.yahoo.com/markets/articles/wall-st-futures-pause-ai-101907090.html",
+        "publisher": "Reuters",
+        "time": 1790087415,
+        "sentiment": "positive"
+      },
+      {
+        "title": "This Fund Trimmed Murphy USA (MUSA) Amid Fuel Margin Strengths",
+        "summary": "The London Company, an investment management company, released its second-quarter 2026 investor letter for its “Small Cap Strategy.” U.S. equities rebounded in the quarter, driven by AI infrastructure spending and positive earnings. The letter can be",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/fund-trimmed-murphy-usa-musa-142800363.html",
+        "publisher": "Insider Monkey",
+        "time": 1790087280,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Strong Results Lifted CTS Corporation (CTS) in Q2",
+        "summary": "The London Company, an investment management company, released its second-quarter 2026 investor letter for its “Small Cap Strategy.” U.S. equities rebounded in the quarter, driven by AI infrastructure spending and positive earnings. The letter can be",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/strong-results-lifted-cts-corporation-142559440.html",
+        "publisher": "Insider Monkey",
+        "time": 1790087159,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Brent Remains Below $100 on Improved Supply Prospects",
+        "summary": "Oil prices continued to trade lower, with Brent crude below $100 a barrel on hopes for improved Gulf supply.",
+        "url": "https://www.wsj.com/finance/commodities-futures/oil-edges-higher-focus-on-signs-of-diplomacy-in-mideast-conflict-2712f57a?siteid=yhoof2&yptr=yahoo",
+        "publisher": "The Wall Street Journal",
+        "time": 1790086860,
+        "sentiment": "negative"
+      },
+      {
+        "title": "Oil Prices Fall As Trump Heads To Make-Or-Break U.N. Conference",
+        "summary": "Oil prices fell back toward $90 a barrel on Tuesday morning as President Donald Trump headed to the United Nations for a 9:55 a.m. ET General Assembly address and afternoon meetings with Gulf state leaders.  Meanwhile, reports that Saudi Arabia resta",
+        "url": "https://www.investors.com/news/oil-prices-trump-united-nations-iraq-hormuz/?src=A00220&yptr=yahoo",
+        "publisher": "Investor's Business Daily",
+        "time": 1790086854,
+        "sentiment": "negative"
+      },
+      {
+        "title": "Stock Market Today: Dow Slips, Oil Stocks Fall On U.S.-Iran Hopes; Homebuilders, Retailers Shine (Live Coverage)",
+        "summary": "Stock Market Today: The Dow Jones index was firm on U.S.-Iran peace hopes Tuesday as oil prices and Treasury yields continue to fall.",
+        "url": "https://www.investors.com/market-trend/stock-market-today/dow-jones-sp500-nasdaq-us-iran-peace-hopes-oil-prices-treasury-yields/?src=A00220&yptr=yahoo",
+        "publisher": "Investor's Business Daily",
+        "time": 1790086769,
+        "sentiment": "negative"
+      },
+      {
+        "title": "Still Waters Bring Mixed Pre-Market Levels",
+        "summary": "A grand total of zero monthly or quarterly economic reports have come out so far this week.",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/still-waters-bring-mixed-pre-141600857.html",
+        "publisher": "Zacks",
+        "time": 1790086560,
+        "sentiment": "neutral"
+      },
+      {
+        "title": "3 Crypto Stocks To Watch In September 2026",
+        "summary": "AI-fuelled enthusiasm has swung global markets back toward high growth stories, and crypto and blockchain are sharing that spotlight as investors look for the next big infrastructure plays behind digital assets. With capital chasing clear business mo",
+        "url": "https://finance.yahoo.com/markets/crypto/articles/3-crypto-stocks-watch-september-141519735.html",
+        "publisher": "Simply Wall St.",
+        "time": 1790086519,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Scaramucci Says Bitcoin Doesn’t Need the Clarity Act. He Says Bessent’s Bond Move Is What’s Really Driving the Rally.",
+        "summary": "Anthony Scaramucci thinks everyone is watching the wrong catalyst for Bitcoin's recent surge, and his argument points to a corner of the bond market most crypto investors are not watching.",
+        "url": "https://247wallst.com/investing/2026/09/22/scaramucci-says-bitcoin-doesnt-need-the-clarity-act-he-says-bessents-bond-move-is-whats-really-driving-the-rally/",
+        "publisher": "24/7 Wall St.",
+        "time": 1790086279,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Why Gabelli Global Growth Fund Added Advanced Micro Devices (AMD) in Q2",
+        "summary": "Gabelli Investment Management Firm recently released its “Global Growth Fund” second-quarter 2026 investor letter. A copy of the letter can be downloaded here. The Fund returned 12.84% in the second quarter of 2026, compared with 15.2% for the S&P 50",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/why-gabelli-global-growth-fund-141047976.html",
+        "publisher": "Insider Monkey",
+        "time": 1790086247,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Why Gabelli Global Growth Fund Added Micron Technology (MU) in Q2",
+        "summary": "Gabelli Investment Management Firm recently released its “Global Growth Fund” second-quarter 2026 investor letter. A copy of the letter can be downloaded here. The Fund returned 12.84% in the second quarter of 2026, compared with 15.2% for the S&P 50",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/why-gabelli-global-growth-fund-141037360.html",
+        "publisher": "Insider Monkey",
+        "time": 1790086237,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Stocks climb as oil slides, AI buzz returns",
+        "summary": "Stock markets advanced Tuesday as oil prices fell further on speculation the United States and Iran could make progress on talks to end the Mideast war this week, with enthusiasm about Meta's new AI agent fanning a tech rally.Enthusiasm poured back i",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/stocks-rise-ai-buzz-drop-023748822.html",
+        "publisher": "AFP",
+        "time": 1790086100,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Best Momentum Stocks to Buy for September 22nd",
+        "summary": "VNCE, NMR and MNTK made it to the Zacks Rank #1 (Strong Buy) momentum stocks list on September 22nd, 2026.",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/best-momentum-stocks-buy-september-140000465.html",
+        "publisher": "Zacks",
+        "time": 1790085600,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Stocks Inch Higher, Testing the Recent Risk-On Rally",
+        "summary": "Stocks opened Tuesday's trading session higher, extending the risk-on rally fueled by hopes for diplomacy between the U.S. and Iran. The Nasdaq Composite added 0.4%. The S&P 500 rose 0.1%. The Dow Jones Industrial Average fell 0.",
+        "url": "https://www.barrons.com/livecoverage/stock-market-news-today-092226/card/stocks-inch-higher-testing-the-recent-risk-on-rally-dTxTv0GrjSAW1wMYn9Sj?siteid=yhoof2&yptr=yahoo",
+        "publisher": "Barrons.com",
+        "time": 1790085503,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Elon Musk’s X Offers Crypto Trading To Users",
+        "summary": "Social media company X, formerly known as Twitter, is moving forward with plans to offer trading in Bitcoin (CRYPTO...",
+        "url": "https://www.cryptoprowl.com/releases/elon-musks-x-offers-crypto-trading-to-users-7112",
+        "publisher": "CryptoProwl",
+        "time": 1790084940,
+        "sentiment": "neutral"
+      },
+      {
+        "title": "Bitcoin Surges Above $86,000: ETFs in Focus",
+        "summary": "Bitcoin tops $86,000. Read on to learn how Bitcoin ETFs are riding the rally.",
+        "url": "https://finance.yahoo.com/markets/crypto/articles/bitcoin-surges-above-86-000-134700203.html",
+        "publisher": "Zacks",
+        "time": 1790084820,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Crypto's Next Catalyst Could Be Tokenized Stocks: Clear Street Raises Bullish, Coinbase Targets",
+        "summary": "Clear Street raised price target for crypto exchange Bullish, citing that the setback in CLARITY Act could lead to adoption of tokenized stocks.",
+        "url": "https://stocktwits.com/news-articles/markets/equity/crypto-catalyst-tokenized-stocks-bullish-coinbase/cZMPoi8RBes",
+        "publisher": "Stocktwits",
+        "time": 1790084539,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Tomahawk Metals chair: Slovakia and Australia assets set stage for AIM listing",
+        "summary": "Tomahawk Metals Plc (AQSE:TMHK) executive chairman Rolf Gerritsen spoke with Proactive's Stephen Gunnio about the company's gold and antimony assets in Slovakia and Australia, recent exploration results from its Saturn licence, and plans to seek admi",
+        "url": "https://finance.yahoo.com/video/tomahawk-metals-chair-slovakia-australia-134208933.html",
+        "publisher": "Proactive",
+        "time": 1790084528,
+        "sentiment": "negative"
+      },
+      {
+        "title": "Exchange-Traded Funds Mixed, Equity Futures Up Pre-Bell Tuesday as Oil Prices Drop Due to Possible Diplomacy in US-Iran Conflict",
+        "summary": "The broad market exchange-traded fund SPDR S&P 500 ETF Trust (SPY) was up 0.1%, and the actively tra",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/exchange-traded-funds-mixed-equity-130832359.html",
+        "publisher": "MT Newswires",
+        "time": 1790082512,
+        "sentiment": "negative"
+      },
+      {
+        "title": "Bitcoin and ethereum prices today, Tuesday, September 22, 2026: Crypto prices continue to surge to prices last seen in January",
+        "summary": "Bitcoin opened at $86,597.82 on Tuesday, September 22, 2026, 6.7% higher than Monday's opening price. As of 7:20 a.m. ET this morning, the price of bitcoin slid to $86,035.18. Ethereum opened at $2,775.96 on Tuesday, September 22, 2026, up 5% from Mo",
+        "url": "https://finance.yahoo.com/personal-finance/investing/article/bitcoin-and-ethereum-prices-today-tuesday-september-22-2026-crypto-prices-continue-to-surge-to-prices-last-seen-in-january-114724449.html",
+        "publisher": "Yahoo Personal Finance",
+        "time": 1790077644,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Gold price today, Tuesday, September 22, 2026: Gold prices holding as Chinese gold imports set record",
+        "summary": "Gold futures opened at $4,382.50 per troy ounce on Tuesday, September 22, 2026, flat from Monday's closing price. Gold fell slightly in early trading to $4,368.40 as of 6:27 a.m. ET.",
+        "url": "https://finance.yahoo.com/personal-finance/investing/article/gold-price-today-tuesday-september-22-2026-gold-prices-holding-as-chinese-gold-imports-set-record-104326063.html",
+        "publisher": "Yahoo Personal Finance",
+        "time": 1790073806,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Meridian Mining shares jump 10% as Cabaçal study points to $2bn value",
+        "summary": "Shares in Meridian Mining Plc (LSE:MNO, TSX:MNO, OTCQX:MRRDF) rose 10% after a definitive feasibility study valued its Cabaçal gold-copper-silver project in Brazil at more than $2 billion. The stock climbed to 109p in early trading. Meridian, a miner",
+        "url": "https://www.proactiveinvestors.com/companies/news/1098875/meridian-mining-shares-jump-10-as-cabacal-study-points-to-2bn-value-1098875.html",
+        "publisher": "Proactive",
+        "time": 1790071620,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Gold Prices Fall as Stronger Dollar and Fed Rate Expectations Weigh on Bullion",
+        "summary": "Gold prices declined on Tuesday as the US dollar strengthened and investors assessed the possibility of further interest rate increases by the Federal Reserve following last week’s hike. At 04:43 ET (08:43 GMT), spot gold fell 0.",
+        "url": "https://investorshub.advfn.com/market-news/article/36672/gold-prices-fall-as-stronger-dollar-and-fed-rate-expectations-weigh-on-bullion",
+        "publisher": "InvestorsHub",
+        "time": 1790070241,
+        "sentiment": "negative"
+      },
+      {
+        "title": "Sunda Energy, Meridian Mining, Quantum Helium, Light Science Technologies, Foresight Solar, hVIVO",
+        "summary": "Sunda Energy PLC (AIM:SNDA, FRA:GHA0) has raised £5.25 million to fund completion of its New Zealand acquisition. It's also launching a retail offer for a further £525,000. Meridian Mining Plc (LSE:MNO, TSX:MNO, OTCQX:MRRDF) has delivered a net prese",
+        "url": "https://finance.yahoo.com/video/sunda-energy-meridian-mining-quantum-084952496.html",
+        "publisher": "Proactive",
+        "time": 1790066992,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Stock market today: Nasdaq, S&P 500 drift higher as oil retreats, AI trade powers market",
+        "summary": "US stocks steadied on Tuesday after confidence in artificial intelligence and falling oil prices spurred a rally on Wall Street.",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-tuesday-september-22-nasdaq-dow-sp-500-080625961.html",
+        "publisher": "Yahoo Finance",
+        "time": 1790064385,
+        "sentiment": "neutral"
+      },
+      {
+        "title": "Meridian Mining's Cabaçal gold-copper-silver project valued at $2bn",
+        "summary": "Meridian Mining Plc (LSE:MNO, TSX:MNO, OTCQX:MRRDF) told investors that its Cabaçal gold-copper-silver project in Brazil has delivered an after-tax net present value of US$2.09 billion, a 108% internal rate of return and a payback period of less than",
+        "url": "https://www.proactiveinvestors.com/companies/news/1098868/meridian-mining-s-cabacal-gold-copper-silver-project-valued-at-2bn-1098868.html",
+        "publisher": "Proactive",
+        "time": 1790058660,
+        "sentiment": "neutral"
+      },
+      {
+        "title": "Gold Edges Higher as Lower Oil Prices Damp Chance of Rate Hikes",
+        "summary": "Gold edged higher as a slump in oil prices over the past few sessions reduced the chance of further interest-rate hikes by the Federal Reserve to contain inflation.",
+        "url": "https://finance.yahoo.com/markets/commodities/articles/gold-edges-higher-lower-oil-002600744.html",
+        "publisher": "Bloomberg",
+        "time": 1790036760,
+        "sentiment": "negative"
+      },
+      {
+        "title": "Agnico Eagle Mines (AEM) Stock Declines While Market Improves: Some Information for Investors",
+        "summary": "The latest trading day saw Agnico Eagle Mines (AEM) settling at $197.48, representing a -1.01% change from its previous close.",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/agnico-eagle-mines-aem-stock-214504910.html",
+        "publisher": "Zacks",
+        "time": 1790027104,
+        "sentiment": "negative"
+      }
+    ]
+  },
+  "fixtures_used": [
+    "yf:BTC-USD:news",
+    "yf:CL=F:news",
+    "yf:GC=F:news",
+    "yf:USDMXN=X:news",
+    "yf:^GSPC:news",
+    "yf:^MXX:news"
+  ],
+  "live_match": true
+}

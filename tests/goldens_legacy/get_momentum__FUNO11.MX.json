@@ -1,0 +1,37 @@
+{
+  "function": "get_momentum",
+  "args": [
+    "FUNO11.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "sector": "Real Estate",
+    "benchmark": "XLRE",
+    "stock": {
+      "m3": 1.72,
+      "m6": 9.16,
+      "m12": 15.69
+    },
+    "sector_r": {
+      "m3": -5.29,
+      "m6": 8.03,
+      "m12": 5.04
+    },
+    "alpha": {
+      "m3": 7.01,
+      "m6": 1.13,
+      "m12": 10.65
+    },
+    "score": 3
+  },
+  "fixtures_used": [
+    "yf:FUNO11.MX:history?interval=1wk&period=2y",
+    "yf:FUNO11.MX:info",
+    "yf:XLRE:history?interval=1wk&period=2y"
+  ],
+  "live_match": true
+}

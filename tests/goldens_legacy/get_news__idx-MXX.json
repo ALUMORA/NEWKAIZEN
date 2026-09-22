@@ -1,0 +1,29 @@
+{
+  "function": "get_news",
+  "args": [
+    "^MXX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [
+    "news[*].time"
+  ],
+  "output": {
+    "news": [
+      {
+        "title": "As U.S. Stocks Hit Records, Do Mexican Equities Offer Diversification Opportunities?",
+        "summary": "Beyond the U.S. market's recent highs, Mexican equities reveal a possible case for portfolio diversification. Explore their historically low correlation with U.S. stocks and the economic differences that could set their future trajectory apart.",
+        "url": "https://finance.yahoo.com/news/u-stocks-hit-records-mexican-145200620.html",
+        "publisher": "CME Group",
+        "time": 1759330320,
+        "sentiment": "positive"
+      }
+    ]
+  },
+  "fixtures_used": [
+    "yf:^MXX:news"
+  ],
+  "live_match": true
+}

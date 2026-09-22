@@ -1,0 +1,185 @@
+{
+  "function": "get_market",
+  "args": [],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "sp500": {
+      "value": 7765.8198,
+      "change": 1.1196,
+      "change_pct": 0.01
+    },
+    "nasdaq": {
+      "value": 27235.9102,
+      "change": 113.8203,
+      "change_pct": 0.42
+    },
+    "dow": {
+      "value": 51835.0586,
+      "change": -213.7695,
+      "change_pct": -0.41
+    },
+    "ipc": {
+      "value": 63688.6719,
+      "change": 151.7109,
+      "change_pct": 0.24
+    },
+    "nikkei": {
+      "value": 65018.9492,
+      "change": 882.6992,
+      "change_pct": 1.38
+    },
+    "ftse": {
+      "value": 10725.9297,
+      "change": -13.0703,
+      "change_pct": -0.12
+    },
+    "dax": {
+      "value": 25624.75,
+      "change": 49.7402,
+      "change_pct": 0.19
+    },
+    "cac": {
+      "value": 8169.4399,
+      "change": 30.5,
+      "change_pct": 0.37
+    },
+    "hsi": {
+      "value": 25087.75,
+      "change": 45.0391,
+      "change_pct": 0.18
+    },
+    "usdmxn": {
+      "value": 17.297,
+      "change": 0.0695,
+      "change_pct": 0.4
+    },
+    "eurusd": {
+      "value": 1.1444,
+      "change": -0.0035,
+      "change_pct": -0.3
+    },
+    "eurmxn": {
+      "value": 19.7876,
+      "change": 0.0133,
+      "change_pct": 0.07
+    },
+    "gbpusd": {
+      "value": 1.3345,
+      "change": -0.0043,
+      "change_pct": -0.32
+    },
+    "usdjpy": {
+      "value": 157.293,
+      "change": 0.247,
+      "change_pct": 0.16
+    },
+    "wti": {
+      "value": 91.28,
+      "change": -4.5,
+      "change_pct": -4.7
+    },
+    "brent": {
+      "value": 100.01,
+      "change": -0.33,
+      "change_pct": -0.33
+    },
+    "gold": {
+      "value": 4357.1001,
+      "change": -26.7998,
+      "change_pct": -0.61
+    },
+    "silver": {
+      "value": 66.04,
+      "change": 0.215,
+      "change_pct": 0.33
+    },
+    "copper": {
+      "value": 6.8415,
+      "change": 0.155,
+      "change_pct": 2.32
+    },
+    "natgas": {
+      "value": 3.08,
+      "change": 0.244,
+      "change_pct": 8.6
+    },
+    "btc": {
+      "value": 86046.5781,
+      "change": -556.3359,
+      "change_pct": -0.64
+    },
+    "eth": {
+      "value": 2733.46,
+      "change": -43.0083,
+      "change_pct": -1.55
+    },
+    "vix": {
+      "value": 14.43,
+      "change": -0.44,
+      "change_pct": -2.96
+    },
+    "dxy": {
+      "value": 100.578,
+      "change": 0.148,
+      "change_pct": 0.15
+    },
+    "t10y": {
+      "value": 4.951,
+      "change": -0.012,
+      "change_pct": -0.24
+    },
+    "sb_lv": {
+      "value": 232.915,
+      "change": -0.535,
+      "change_pct": -0.23
+    },
+    "sb_lb": {
+      "value": 776.92,
+      "change": 0.06,
+      "change_pct": 0.01
+    },
+    "sb_lg": {
+      "value": 143.61,
+      "change": 0.24,
+      "change_pct": 0.17
+    },
+    "sb_mv": {
+      "value": 141.51,
+      "change": 0.01,
+      "change_pct": 0.01
+    },
+    "sb_mb": {
+      "value": 73.26,
+      "change": 0.01,
+      "change_pct": 0.01
+    },
+    "sb_mg": {
+      "value": 110.69,
+      "change": -0.03,
+      "change_pct": -0.03
+    },
+    "sb_sv": {
+      "value": 131.72,
+      "change": 0.42,
+      "change_pct": 0.32
+    },
+    "sb_sb": {
+      "value": 139.4599,
+      "change": 0.2199,
+      "change_pct": 0.16
+    },
+    "sb_sg": {
+      "value": 163.94,
+      "change": -0.01,
+      "change_pct": -0.01
+    }
+  },
+  "fixtures_used": [
+    "yf.download:[^GSPC,^IXIC,^DJI,^MXX,^N225,^FTSE,^GDAXI,^FCHI,^HSI,USDMXN=X,EURUSD=X,EURMXN=X,GBPUSD=X,USDJPY=X,CL=F,BZ=F,GC=F,SI=F,HG=F,NG=F,BTC-USD,ETH-USD,^VIX,DX-Y.NYB,^TNX,IVE,IVV,IVW,IJJ,IJH,IJK,IJS,IJR,IJT]?period=5d"
+  ],
+  "live_match": true
+}

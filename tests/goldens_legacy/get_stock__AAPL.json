@@ -1,0 +1,53 @@
+{
+  "function": "get_stock",
+  "args": [
+    "AAPL"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "name": "Apple Inc.",
+    "price": 341.44,
+    "pe": 39.2,
+    "eps": 8.71,
+    "peg": 2.7,
+    "pegy": 2.64,
+    "evEbitda": 29.59,
+    "pb": 46.4,
+    "roe": 148.75,
+    "profitMargin": 27.62,
+    "debtEquity": 78.44,
+    "revenueGrowth": 16.4,
+    "priceChange52w": 33.23,
+    "beta": 1.08,
+    "marketCap": 4983474880512.0,
+    "dividendYield": 0.32,
+    "pcf": null,
+    "debtToAssets": 23.5,
+    "leverageRatio": 1.78,
+    "sector": "Technology",
+    "totalRevenue": 466822987776.0,
+    "netIncomeToCommon": 128929996800.0,
+    "totalAssets": 359241000000.0,
+    "totalDebt": 84343996416.0,
+    "operatingCashflow": 146723995648.0,
+    "freeCashflow": 107721875456.0,
+    "description": "Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide. The company offers iPhone, a line of smartphones; Mac, a line of personal computers; iPad, a line of multi-purpose tablets; and wearables, home, and accessories comprising AirPods, Apple Vision Pro, Apple TV, Apple Watch, Beats products, and HomePod, as well as Apple branded and third-party accessories. It also provides AppleCare support and cloud services; and operates various platforms, including the App Store that allows customers to discover and download applications and digital content, such as books, music, video, games, and podcasts, as well as advertising services include third-party licensing arrangements and its own advertising platforms. In addition, the company offers various subscription-based services, such as Apple Arcade, a game subscription service; Apple Fitness+, a personalized fitness service; Apple Music, which offers users a curated listening experience with on-demand radio stations; Apple News+, a subscription news and magazine service; Apple TV, which offers original content and live sports; Apple Card, a co-branded credit card; and Apple Pay, a cashless payment service, as well as licenses its intellectual property. The company serves consumers, and small and mid-sized businesses; and the education, enterprise, and government markets. It distributes third-party applications for its products through the App Store. The company also sells its products through its retail and online stores, and direct sales force; and third-party cellular network carriers and resellers. The company was formerly known as Apple Computer, Inc. and changed its name to Apple Inc. in January 2007. Apple Inc. was founded in 1976 and is headquartered in Cupertino, California.",
+    "industry": "Consumer Electronics",
+    "website": "https://www.apple.com",
+    "employees": 150000,
+    "country": "United States",
+    "currency": "USD"
+  },
+  "fixtures_used": [
+    "yf:AAPL:balance_sheet",
+    "yf:AAPL:cashflow",
+    "yf:AAPL:financials",
+    "yf:AAPL:income_stmt",
+    "yf:AAPL:info"
+  ],
+  "live_match": true
+}

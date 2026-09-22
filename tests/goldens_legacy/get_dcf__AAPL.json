@@ -1,0 +1,58 @@
+{
+  "function": "get_dcf",
+  "args": [
+    "AAPL"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "price": 341.44,
+    "priceCurrency": "USD",
+    "financialCurrency": "USD",
+    "fxRate": 1.0,
+    "fxNote": null,
+    "fairPrice": 193.97,
+    "margin": -76.0,
+    "overall": "SOBREVALORADO",
+    "methods": [
+      {
+        "name": "P/E",
+        "actual": 39.2,
+        "fair": 28,
+        "target": 243.88,
+        "signal": "caro"
+      },
+      {
+        "name": "P/B",
+        "actual": 46.4,
+        "fair": 8,
+        "target": 58.88,
+        "signal": "caro"
+      },
+      {
+        "name": "P/FCF",
+        "actual": 46.26,
+        "fair": 30,
+        "target": 221.43,
+        "signal": "caro"
+      },
+      {
+        "name": "EV/EBITDA",
+        "actual": 29.59,
+        "fair": 22,
+        "target": 251.69,
+        "signal": "caro"
+      }
+    ],
+    "sector": "Technology",
+    "sectorNote": null,
+    "nMethods": 4
+  },
+  "fixtures_used": [
+    "yf:AAPL:info"
+  ],
+  "live_match": true
+}

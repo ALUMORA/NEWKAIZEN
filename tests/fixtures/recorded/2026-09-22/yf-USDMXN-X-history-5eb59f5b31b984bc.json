@@ -1,0 +1,94 @@
+{
+ "key": "yf:USDMXN=X:history?period=2d",
+ "provider": "yfinance",
+ "symbol": "USDMXN=X",
+ "attr": "history",
+ "kwargs": {
+  "period": "2d"
+ },
+ "kind": "value",
+ "payload": {
+  "__rp__": "DataFrame",
+  "index": {
+   "__rp__": "Index",
+   "name": "Date",
+   "data": {
+    "dtype": "datetime64[s, Europe/London]",
+    "v": [
+     1789945200
+    ]
+   }
+  },
+  "columns": {
+   "__rp__": "Index",
+   "name": null,
+   "data": {
+    "dtype": "str",
+    "v": [
+     "Open",
+     "High",
+     "Low",
+     "Close",
+     "Volume",
+     "Dividends",
+     "Stock Splits"
+    ]
+   }
+  },
+  "data": [
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": [
+     17.227100372314453
+    ]
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": [
+     17.230379104614258
+    ]
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": [
+     17.17020034790039
+    ]
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": [
+     17.227500915527344
+    ]
+   },
+   {
+    "dtype": "int64",
+    "np": true,
+    "v": [
+     0
+    ]
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": [
+     0.0
+    ]
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": [
+     0.0
+    ]
+   }
+  ]
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T14:52:21+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

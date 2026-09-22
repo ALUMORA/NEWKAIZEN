@@ -1,0 +1,29 @@
+{
+ "key": "http:GET https://data.sec.gov/api/xbrl/companyfacts/CIK0000884394.json",
+ "provider": "http",
+ "method": "GET",
+ "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000884394.json",
+ "params": null,
+ "kind": "value",
+ "payload": {
+  "status": 404,
+  "reason": "Not Found",
+  "url": "https://data.sec.gov/api/xbrl/companyfacts/CIK0000884394.json",
+  "encoding": null,
+  "headers": {
+   "x-amzn-RequestId": "a552e111-f5af-4813-b24a-5383af0a87c8",
+   "x-amz-apigw-id": "EGxuXHszIAMEcXg=",
+   "X-Amzn-Trace-Id": "Root=1-6ab2965b-d78414ae3f5a81c44c3ca754",
+   "Content-Type": "application/xml",
+   "Date": "Tue, 22 Sep 2026 14:53:18 GMT",
+   "Strict-Transport-Security": "max-age=31536000 ; preload"
+  },
+  "body": {
+   "text": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Error><Code>NoSuchKey</Code><Message>The specified key does not exist.</Message><Key>api/xbrl/companyfacts/CIK0000884394.json</Key><RequestId>6FKMW7PDYNX3SY1X</RequestId><HostId>doR/dFT3PMU8Hx0EnnHLoA2Tpi/59OmTOM3uOvI1rnENas01iZnGxIbyRKFH7vYMbyARSoEqCzs=</HostId></Error>"
+  }
+ },
+ "soft_failure": true,
+ "recorded_at": "2026-09-22T14:53:18+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

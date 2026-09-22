@@ -1,0 +1,33 @@
+{
+ "key": "yf:ZZZNOTREAL:cashflow",
+ "provider": "yfinance",
+ "symbol": "ZZZNOTREAL",
+ "attr": "cashflow",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "__rp__": "DataFrame",
+  "index": {
+   "__rp__": "Index",
+   "name": null,
+   "data": {
+    "dtype": "object",
+    "np": true,
+    "v": []
+   }
+  },
+  "columns": {
+   "__rp__": "Index",
+   "name": null,
+   "data": {
+    "dtype": "datetime64[s]",
+    "v": []
+   }
+  },
+  "data": []
+ },
+ "soft_failure": true,
+ "recorded_at": "2026-09-22T14:53:43+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

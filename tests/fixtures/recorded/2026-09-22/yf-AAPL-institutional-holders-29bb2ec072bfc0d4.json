@@ -1,0 +1,133 @@
+{
+ "key": "yf:AAPL:institutional_holders",
+ "provider": "yfinance",
+ "symbol": "AAPL",
+ "attr": "institutional_holders",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "__rp__": "DataFrame",
+  "index": {
+   "__rp__": "RangeIndex",
+   "start": 0,
+   "stop": 10,
+   "step": 1,
+   "name": null
+  },
+  "columns": {
+   "__rp__": "Index",
+   "name": null,
+   "data": {
+    "dtype": "str",
+    "v": [
+     "Date Reported",
+     "Holder",
+     "pctHeld",
+     "Shares",
+     "Value",
+     "pctChange"
+    ]
+   }
+  },
+  "data": [
+   {
+    "dtype": "datetime64[s]",
+    "v": [
+     1782777600,
+     1782777600,
+     1782777600,
+     1782777600,
+     1782777600,
+     1782777600,
+     1782777600,
+     1782777600,
+     1782777600,
+     1782777600
+    ]
+   },
+   {
+    "dtype": "str",
+    "v": [
+     "Blackrock Inc.",
+     "Vanguard Capital Management LLC",
+     "State Street Corporation",
+     "Geode Capital Management, LLC",
+     "Vanguard Portfolio Management LLC",
+     "FMR, LLC",
+     "Morgan Stanley",
+     "JPMORGAN CHASE & CO",
+     "Berkshire Hathaway, Inc",
+     "NORGES BANK"
+    ]
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": [
+     0.0797,
+     0.0657,
+     0.0421,
+     0.0254,
+     0.0229,
+     0.0223,
+     0.0166,
+     0.015700001,
+     0.0156,
+     0.013099999
+    ]
+   },
+   {
+    "dtype": "int64",
+    "np": true,
+    "v": [
+     1162996939,
+     959107911,
+     615129929,
+     371336543,
+     334119156,
+     325348754,
+     242614238,
+     228762008,
+     227917808,
+     190726866
+    ]
+   },
+   {
+    "dtype": "int64",
+    "np": true,
+    "v": [
+     397244872972,
+     327602496184,
+     210109934353,
+     126837425712,
+     114125082562,
+     111129376286,
+     82869747050,
+     78138240748,
+     77849887347,
+     65146577016
+    ]
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": [
+     0.016,
+     0.0055,
+     0.0212,
+     0.0074,
+     0.0081,
+     0.0582,
+     -0.0076,
+     -0.0123000005,
+     0.0,
+     -0.007900001
+    ]
+   }
+  ]
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T14:52:11+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

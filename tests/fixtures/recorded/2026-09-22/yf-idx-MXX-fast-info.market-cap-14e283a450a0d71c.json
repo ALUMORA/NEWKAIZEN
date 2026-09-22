@@ -1,0 +1,13 @@
+{
+ "key": "yf:^MXX:fast_info.market_cap",
+ "provider": "yfinance",
+ "symbol": "^MXX",
+ "attr": "fast_info.market_cap",
+ "kwargs": {},
+ "kind": "value",
+ "payload": null,
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T14:53:25+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

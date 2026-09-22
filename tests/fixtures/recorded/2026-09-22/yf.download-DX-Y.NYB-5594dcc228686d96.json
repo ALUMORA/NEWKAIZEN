@@ -1,0 +1,131 @@
+{
+ "key": "yf.download:[DX-Y.NYB]?period=5d",
+ "provider": "yfinance.download",
+ "symbol": "[DX-Y.NYB]",
+ "attr": "download",
+ "kwargs": {
+  "period": "5d"
+ },
+ "kind": "value",
+ "payload": {
+  "__rp__": "DataFrame",
+  "index": {
+   "__rp__": "Index",
+   "name": "Date",
+   "data": {
+    "dtype": "datetime64[s]",
+    "v": [
+     1789603200,
+     1789689600,
+     1789948800,
+     1790035200
+    ]
+   }
+  },
+  "columns": {
+   "__rp__": "MultiIndex",
+   "levels": [
+    {
+     "__rp__": "Index",
+     "name": "Price",
+     "data": {
+      "dtype": "str",
+      "v": [
+       "Close",
+       "High",
+       "Low",
+       "Open",
+       "Volume"
+      ]
+     }
+    },
+    {
+     "__rp__": "Index",
+     "name": "Ticker",
+     "data": {
+      "dtype": "str",
+      "v": [
+       "DX-Y.NYB"
+      ]
+     }
+    }
+   ],
+   "codes": [
+    [
+     0,
+     1,
+     2,
+     3,
+     4
+    ],
+    [
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   ],
+   "names": [
+    "Price",
+    "Ticker"
+   ]
+  },
+  "data": [
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": [
+     100.22000122070312,
+     100.22000122070312,
+     100.43000030517578,
+     100.53800201416016
+    ]
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": [
+     100.37000274658203,
+     100.55999755859375,
+     100.44999694824219,
+     100.66699981689453
+    ]
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": [
+     100.0199966430664,
+     100.16999816894531,
+     100.18000030517578,
+     100.30699920654297
+    ]
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": [
+     100.2699966430664,
+     100.23999786376953,
+     100.25,
+     100.41699981689453
+    ]
+   },
+   {
+    "dtype": "int64",
+    "np": true,
+    "v": [
+     0,
+     0,
+     0,
+     0
+    ]
+   }
+  ]
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T14:51:44+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "caf19003c3fc"
+}

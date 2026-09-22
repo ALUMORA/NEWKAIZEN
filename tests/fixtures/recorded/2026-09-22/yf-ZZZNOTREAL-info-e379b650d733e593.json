@@ -1,0 +1,18 @@
+{
+ "key": "yf:ZZZNOTREAL:info",
+ "provider": "yfinance",
+ "symbol": "ZZZNOTREAL",
+ "attr": "info",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "trailingPegRatio": null
+ },
+ "soft_failure": false,
+ "logs": [
+  "HTTP Error 404: {\"quoteSummary\":{\"result\":null,\"error\":{\"code\":\"Not Found\",\"description\":\"Quote not found for symbol: ZZZNOTREAL\"}}}"
+ ],
+ "recorded_at": "2026-09-22T14:53:34+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

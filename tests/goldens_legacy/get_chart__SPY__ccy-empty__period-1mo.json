@@ -1,0 +1,46 @@
+{
+  "function": "get_chart",
+  "args": [
+    "SPY"
+  ],
+  "kwargs": {
+    "period": "1mo",
+    "ccy": ""
+  },
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "closes": [
+      761.5788,
+      764.0128,
+      764.1824,
+      769.1899,
+      767.4443,
+      765.15,
+      759.8931,
+      763.2646,
+      771.2548,
+      768.2822,
+      764.0627,
+      760.5115,
+      755.9528,
+      762.3968,
+      758.9952,
+      755.5139,
+      752.1822,
+      760.711,
+      761.69,
+      773.5,
+      773.455
+    ],
+    "period": "1mo",
+    "bars": 21,
+    "currency": "USD"
+  },
+  "fixtures_used": [
+    "yf:SPY:history?period=1mo"
+  ],
+  "live_match": true
+}

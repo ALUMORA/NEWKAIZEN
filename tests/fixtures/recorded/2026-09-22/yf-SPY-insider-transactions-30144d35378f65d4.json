@@ -1,0 +1,33 @@
+{
+ "key": "yf:SPY:insider_transactions",
+ "provider": "yfinance",
+ "symbol": "SPY",
+ "attr": "insider_transactions",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "__rp__": "DataFrame",
+  "index": {
+   "__rp__": "RangeIndex",
+   "start": 0,
+   "stop": 0,
+   "step": 1,
+   "name": null
+  },
+  "columns": {
+   "__rp__": "RangeIndex",
+   "start": 0,
+   "stop": 0,
+   "step": 1,
+   "name": null
+  },
+  "data": []
+ },
+ "soft_failure": true,
+ "logs": [
+  "HTTP Error 404: {\"quoteSummary\":{\"result\":null,\"error\":{\"code\":\"Not Found\",\"description\":\"No fundamentals data found for symbol: SPY\"}}}"
+ ],
+ "recorded_at": "2026-09-22T14:53:16+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

@@ -1,0 +1,52 @@
+{
+  "function": "get_dcf",
+  "args": [
+    "AAPL.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "price": 5840.01,
+    "priceCurrency": "MXN",
+    "financialCurrency": "USD",
+    "fxRate": 17.2275,
+    "fxNote": "Financieros en USD → MXN (1 USD = 17.23 MXN)",
+    "fairPrice": 3010.47,
+    "margin": -94.0,
+    "overall": "SOBREVALORADO",
+    "methods": [
+      {
+        "name": "P/E",
+        "actual": 38.92,
+        "fair": 28,
+        "target": 4201.96,
+        "signal": "caro"
+      },
+      {
+        "name": "P/B",
+        "actual": 46.04,
+        "fair": 8,
+        "target": 1014.7,
+        "signal": "caro"
+      },
+      {
+        "name": "P/FCF",
+        "actual": 45.93,
+        "fair": 30,
+        "target": 3814.76,
+        "signal": "caro"
+      }
+    ],
+    "sector": "Technology",
+    "sectorNote": null,
+    "nMethods": 3
+  },
+  "fixtures_used": [
+    "yf:AAPL.MX:info",
+    "yf:USDMXN=X:history?period=2d"
+  ],
+  "live_match": true
+}

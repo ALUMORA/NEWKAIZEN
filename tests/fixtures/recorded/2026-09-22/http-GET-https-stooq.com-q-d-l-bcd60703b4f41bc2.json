@@ -1,0 +1,31 @@
+{
+ "key": "http:GET https://stooq.com/q/d/l/?i=d&s=dxy.fo",
+ "provider": "http",
+ "method": "GET",
+ "url": "https://stooq.com/q/d/l/?s=dxy.fo&i=d",
+ "params": null,
+ "kind": "value",
+ "payload": {
+  "status": 200,
+  "reason": "OK",
+  "url": "https://stooq.com/q/d/l/?s=dxy.fo&i=d",
+  "encoding": "utf-8",
+  "headers": {
+   "Server": "openresty",
+   "Date": "Tue, 22 Sep 2026 14:51:43 GMT",
+   "Content-Type": "text/html; charset=utf-8",
+   "Cache-Control": "no-store",
+   "X-Robots-Tag": "noindex, nofollow",
+   "X-Content-Type-Options": "nosniff",
+   "Referrer-Policy": "no-referrer",
+   "Content-Security-Policy": "default-src 'none'; script-src 'nonce-GRyQkhi7j72DLmmJyo2bsg'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'"
+  },
+  "body": {
+   "text": "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"robots\" content=\"noindex,nofollow\"></head><body><noscript>This site requires JavaScript to verify your browser. Please enable JavaScript and reload.</noscript><script nonce=\"GRyQkhi7j72DLmmJyo2bsg\">\n(async()=>{const c=\"AAAAAGqylf8KAeZ-WErUEwh5PP9zuGGTu98GfC02P8sTYZmpTAZ_o3z1Vjs\",d=4,t=\"0\".repeat(d),e=new TextEncoder;let n=0;while(1){const h=await crypto.subtle.digest(\"SHA-256\",e.encode(c+n)),x=Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,\"0\")).join(\"\");if(x.startsWith(t))break;n++}const r=await fetch(\"/__verify\",{method:\"POST\",headers:{\"Content-Type\":\"application/x-www-form-urlencoded\"},body:\"c=\"+encodeURIComponent(c)+\"&n=\"+n,credentials:\"same-origin\"});if(r.ok)location.reload()})();\n</script></body></html>\n"
+  }
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T14:51:43+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "caf19003c3fc"
+}

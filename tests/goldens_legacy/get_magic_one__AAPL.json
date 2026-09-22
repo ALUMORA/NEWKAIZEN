@@ -1,0 +1,28 @@
+{
+  "function": "get_magic_one",
+  "args": [
+    "AAPL"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "ticker": "AAPL",
+    "name": "Apple Inc.",
+    "sector": "Technology",
+    "marketCap": 4983474880512.0,
+    "price": 341.44,
+    "ey": 2.68,
+    "roc": 413.71,
+    "pe": 39.2,
+    "pb": 46.4
+  },
+  "fixtures_used": [
+    "yf:AAPL:balance_sheet",
+    "yf:AAPL:income_stmt",
+    "yf:AAPL:info"
+  ],
+  "live_match": true
+}

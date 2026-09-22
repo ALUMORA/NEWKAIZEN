@@ -1,0 +1,47 @@
+{
+  "function": "get_chart",
+  "args": [
+    "SPY"
+  ],
+  "kwargs": {
+    "period": "1mo",
+    "ccy": "MXN"
+  },
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "closes": [
+      12882.106,
+      12945.5853,
+      12947.9244,
+      13032.3858,
+      13018.5402,
+      13031.0006,
+      12917.3545,
+      12967.9201,
+      13101.4597,
+      12991.7754,
+      12948.7995,
+      12860.0976,
+      12768.3382,
+      12949.2634,
+      12884.399,
+      12935.0027,
+      12897.217,
+      13114.8707,
+      13073.2212,
+      13325.472,
+      13371.7294
+    ],
+    "period": "1mo",
+    "bars": 21,
+    "currency": "MXN"
+  },
+  "fixtures_used": [
+    "yf:MXN=X:history?period=1mo",
+    "yf:SPY:history?period=1mo"
+  ],
+  "live_match": true
+}

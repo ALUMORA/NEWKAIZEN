@@ -1,0 +1,101 @@
+{
+  "function": "get_news",
+  "args": [
+    "AAPL.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [
+    "news[*].time"
+  ],
+  "output": {
+    "news": [
+      {
+        "title": "The Magnificent 7 are back: Meta’s AI bet leads the charge",
+        "summary": "Yahoo Finance Executive Editor and host of Sozzi Unleashed, Brian Sozzi, tees up the stories making waves across the markets. The Magnificent 7 are back in focus as megacap tech stocks help push markets higher, with Meta (META) leading the charge aft",
+        "url": "https://finance.yahoo.com/video/magnificent-7-back-meta-ai-140300865.html",
+        "publisher": "Yahoo Finance Video",
+        "time": 1790085780,
+        "sentiment": "negative"
+      },
+      {
+        "title": "Apple’s new iPhone Duo: Will consumers bite?",
+        "summary": "Laffer Tengler Investments CEO and chief investment officer Nancy Tengler, Epistrophy Capital Research chief market strategist and The Drill Down podcast host Cory Johnson, and Slatestone Wealth partner Kenny Polcari join Yahoo Finance Executive Edit",
+        "url": "https://finance.yahoo.com/video/apple-iphone-duo-consumers-bite-174100022.html",
+        "publisher": "Yahoo Finance Video",
+        "time": 1790012460,
+        "sentiment": "negative"
+      },
+      {
+        "title": "Stocks to Watch: Meta, Shopify, Roche",
+        "summary": "↗️ Alibaba (HK:9988), (BABA): The tech giant rolled out its most powerful chip yet, doubling down on its bid to control the software and hardware that power its AI ambitions. Shares rose about 2% in Hong Kong.",
+        "url": "https://www.wsj.com/livecoverage/stock-market-today-dow-sp-500-nasdaq-09-22-2026/card/stocks-to-watch-meta-shopify-roche-HZDxyGhxTZidFLyjgExJ?siteid=yhoof2&yptr=yahoo",
+        "publisher": "The Wall Street Journal",
+        "time": 1790088394,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Stock Market Today: Dow Slips, Oil Stocks Fall On U.S.-Iran Hopes; Homebuilders, Retailers Shine (Live Coverage)",
+        "summary": "Stock Market Today: The Dow Jones index was firm on U.S.-Iran peace hopes Tuesday as oil prices and Treasury yields continue to fall.",
+        "url": "https://www.investors.com/market-trend/stock-market-today/dow-jones-sp500-nasdaq-us-iran-peace-hopes-oil-prices-treasury-yields/?src=A00220&yptr=yahoo",
+        "publisher": "Investor's Business Daily",
+        "time": 1790086769,
+        "sentiment": "negative"
+      },
+      {
+        "title": "What Will $5,000 Invested in Apple Stock Be Worth in 5 Years?",
+        "summary": "Apple is riding record Services revenue, an iPhone surge, and Tim Cook's bold AI ambitions into what could be a transformative five years, but stretched valuations and a memory cost crisis could just as easily derail the rally before it gets started.",
+        "url": "https://247wallst.com/investing/2026/09/22/what-will-5000-invested-in-apple-stock-be-worth-in-5-years/",
+        "publisher": "24/7 Wall St.",
+        "time": 1790085649,
+        "sentiment": "positive"
+      },
+      {
+        "title": "1 Red Flag Apple Investors Can't Afford to Ignore",
+        "summary": "Apple isn't a cheap stock, and it could hurt future returns.",
+        "url": "https://www.fool.com/investing/2026/09/22/1-red-flag-apple-investors-cant-afford-to-ignore/",
+        "publisher": "Motley Fool",
+        "time": 1790085000,
+        "sentiment": "neutral"
+      },
+      {
+        "title": "Crypto's Next Catalyst Could Be Tokenized Stocks: Clear Street Raises Bullish, Coinbase Targets",
+        "summary": "Clear Street raised price target for crypto exchange Bullish, citing that the setback in CLARITY Act could lead to adoption of tokenized stocks.",
+        "url": "https://stocktwits.com/news-articles/markets/equity/crypto-catalyst-tokenized-stocks-bullish-coinbase/cZMPoi8RBes",
+        "publisher": "Stocktwits",
+        "time": 1790084539,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Apple Just Got a New Signal From iPhone 18 Demand",
+        "summary": "iPhone 18 Pro and Pro Max delivery times are slightly higher than last year in the U.S. and U.K.",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/apple-just-got-signal-iphone-132148578.html",
+        "publisher": "GuruFocus.com",
+        "time": 1790083308,
+        "sentiment": "neutral"
+      },
+      {
+        "title": "Meta’s Muse Could Become Most Widely Used Consumer AI App Since ChatGPT, JPMorgan Says — BofA Sees Improving AI Return Sentiment",
+        "summary": "Muse’s early momentum is giving analysts more confidence that Meta can turn its AI spending into new revenue streams, with subscriptions, advertising and transaction fees all emerging as potential paths.",
+        "url": "https://stocktwits.com/news-articles/markets/equity/meta-s-muse-could-become-most-widely-used-consumer-ai-app-since-chat-gpt-jp-morgan-says-bof-a-sees-improving-ai-return-sentiment/cZMP8SDRBep",
+        "publisher": "Stocktwits",
+        "time": 1790082397,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Meta Stock Soars After Jaw-Dropping Price Target Hike on AI Products",
+        "summary": "Meta Stock Jumps 11% as Wall Street Delivers a Bold New Price Target",
+        "url": "https://finance.yahoo.com/technology/ai/articles/meta-stock-soars-jaw-dropping-130612799.html",
+        "publisher": "GuruFocus.com",
+        "time": 1790082372,
+        "sentiment": "neutral"
+      }
+    ]
+  },
+  "fixtures_used": [
+    "yf:AAPL.MX:news"
+  ],
+  "live_match": true
+}

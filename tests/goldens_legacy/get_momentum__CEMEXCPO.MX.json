@@ -1,0 +1,37 @@
+{
+  "function": "get_momentum",
+  "args": [
+    "CEMEXCPO.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "sector": "Basic Materials",
+    "benchmark": "XLB",
+    "stock": {
+      "m3": -19.24,
+      "m6": -10.61,
+      "m12": 5.84
+    },
+    "sector_r": {
+      "m3": -2.65,
+      "m6": 3.08,
+      "m12": 14.6
+    },
+    "alpha": {
+      "m3": -16.59,
+      "m6": -13.69,
+      "m12": -8.76
+    },
+    "score": 0
+  },
+  "fixtures_used": [
+    "yf:CEMEXCPO.MX:history?interval=1wk&period=2y",
+    "yf:CEMEXCPO.MX:info",
+    "yf:XLB:history?interval=1wk&period=2y"
+  ],
+  "live_match": true
+}

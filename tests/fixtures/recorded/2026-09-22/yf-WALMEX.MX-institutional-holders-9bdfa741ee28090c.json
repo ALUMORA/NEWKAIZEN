@@ -1,0 +1,103 @@
+{
+ "key": "yf:WALMEX.MX:institutional_holders",
+ "provider": "yfinance",
+ "symbol": "WALMEX.MX",
+ "attr": "institutional_holders",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "__rp__": "DataFrame",
+  "index": {
+   "__rp__": "RangeIndex",
+   "start": 0,
+   "stop": 5,
+   "step": 1,
+   "name": null
+  },
+  "columns": {
+   "__rp__": "Index",
+   "name": null,
+   "data": {
+    "dtype": "str",
+    "v": [
+     "Date Reported",
+     "Holder",
+     "pctHeld",
+     "Shares",
+     "Value",
+     "pctChange"
+    ]
+   }
+  },
+  "data": [
+   {
+    "dtype": "datetime64[s]",
+    "v": [
+     1782777600,
+     1782777600,
+     1782777600,
+     1782777600,
+     1782777600
+    ]
+   },
+   {
+    "dtype": "str",
+    "v": [
+     "Aristotle Capital Management, LLC",
+     "Pacer Advisors, Inc.",
+     "Gamma Investing LLC",
+     "Howard Capital Management Group, LLC",
+     "FCA Corp /TX"
+    ]
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": [
+     0.0015,
+     0.0001,
+     0.0,
+     0.0,
+     0.0
+    ]
+   },
+   {
+    "dtype": "int64",
+    "np": true,
+    "v": [
+     26195100,
+     1454442,
+     5008,
+     51232,
+     10016
+    ]
+   },
+   {
+    "dtype": "int64",
+    "np": true,
+    "v": [
+     1179041407,
+     65464431,
+     225410,
+     2305952,
+     450820
+    ]
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": [
+     0.2217,
+     1.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   }
+  ]
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T14:52:38+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

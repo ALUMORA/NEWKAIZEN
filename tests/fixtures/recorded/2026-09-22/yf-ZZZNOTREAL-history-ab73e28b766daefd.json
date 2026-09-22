@@ -1,0 +1,77 @@
+{
+ "key": "yf:ZZZNOTREAL:history?interval=1wk&period=2y",
+ "provider": "yfinance",
+ "symbol": "ZZZNOTREAL",
+ "attr": "history",
+ "kwargs": {
+  "period": "2y",
+  "interval": "1wk"
+ },
+ "kind": "value",
+ "payload": {
+  "__rp__": "DataFrame",
+  "index": {
+   "__rp__": "Index",
+   "name": "Date",
+   "data": {
+    "dtype": "object",
+    "np": true,
+    "v": []
+   }
+  },
+  "columns": {
+   "__rp__": "Index",
+   "name": null,
+   "data": {
+    "dtype": "str",
+    "v": [
+     "Open",
+     "High",
+     "Low",
+     "Close",
+     "Adj Close",
+     "Volume"
+    ]
+   }
+  },
+  "data": [
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": []
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": []
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": []
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": []
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": []
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": []
+   }
+  ]
+ },
+ "soft_failure": true,
+ "logs": [
+  "$ZZZNOTREAL: No data found, symbol may be delisted"
+ ],
+ "recorded_at": "2026-09-22T14:53:52+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

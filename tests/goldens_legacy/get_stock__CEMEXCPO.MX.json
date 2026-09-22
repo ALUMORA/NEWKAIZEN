@@ -1,0 +1,53 @@
+{
+  "function": "get_stock",
+  "args": [
+    "CEMEXCPO.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "name": "CEMEX S.A.B. DE C.V.",
+    "price": 17.31,
+    "pe": 28.85,
+    "eps": 0.6,
+    "peg": 3.21,
+    "pegy": 2.82,
+    "evEbitda": 79.7,
+    "pb": 1.17,
+    "roe": 4.01,
+    "profitMargin": 2.83,
+    "debtEquity": 53.59,
+    "revenueGrowth": 12.2,
+    "priceChange52w": 3.46,
+    "beta": 0.83,
+    "marketCap": 249775063040.0,
+    "dividendYield": 1.23,
+    "pcf": null,
+    "debtToAssets": 23.8,
+    "leverageRatio": 1.54,
+    "sector": "Basic Materials",
+    "totalRevenue": 17037756416.0,
+    "netIncomeToCommon": 513400000.0,
+    "totalAssets": 28945000000.0,
+    "totalDebt": 6878801920.0,
+    "operatingCashflow": 2647216128.0,
+    "freeCashflow": 1122481408.0,
+    "description": "CEMEX, S.A.B. de C.V., together with its subsidiaries, engages in the production, marketing, distribution, and sale of cement, ready-mix concrete, aggregates, urbanization solutions, and other construction materials and services worldwide. It offers gray ordinary portland, white portland, and blended cement products; masonry or mortar products; standard ready-mix, architectural and decorative, rapid-setting, fiber-reinforced, fluid-fill, roller-compacted, self-consolidating, pervious, and antibacterial, and other concrete products; aggregate products, including crushed stone and manufactured sand, gravel, sand, and recycled concrete; and vertua products. The company also provides urbanization solutions for construction chemicals, mortars, concrete products, and asphalt businesses, as well as municipal and industrial waste management solutions; and construction, demolition, and excavation waste solutions. CEMEX, S.A.B. de C.V. was founded in 1906 and is based in San Pedro Garza García, Mexico.",
+    "industry": "Building Materials",
+    "website": "https://www.cemex.com",
+    "employees": 38495,
+    "country": "Mexico",
+    "currency": "MXN"
+  },
+  "fixtures_used": [
+    "yf:CEMEXCPO.MX:balance_sheet",
+    "yf:CEMEXCPO.MX:cashflow",
+    "yf:CEMEXCPO.MX:financials",
+    "yf:CEMEXCPO.MX:income_stmt",
+    "yf:CEMEXCPO.MX:info"
+  ],
+  "live_match": true
+}

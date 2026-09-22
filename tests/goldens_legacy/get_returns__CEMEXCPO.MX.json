@@ -1,0 +1,23 @@
+{
+  "function": "get_returns",
+  "args": [
+    "CEMEXCPO.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "1mo": -6.5,
+    "3mo": -19.24,
+    "6mo": -10.61,
+    "1y": 5.84,
+    "2y": 43.42,
+    "5y": 20.35
+  },
+  "fixtures_used": [
+    "yf:CEMEXCPO.MX:history?interval=1wk&period=5y"
+  ],
+  "live_match": true
+}

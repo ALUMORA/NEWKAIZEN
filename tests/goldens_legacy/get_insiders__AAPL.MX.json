@@ -1,0 +1,182 @@
+{
+  "function": "get_insiders",
+  "args": [
+    "AAPL.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "transactions": [
+      {
+        "name": "NEWSTEAD JENNIFER",
+        "action": "BUY",
+        "shares": 30104,
+        "value": 0,
+        "date": "2026-09-15",
+        "text": ""
+      },
+      {
+        "name": "NEWSTEAD JENNIFER",
+        "action": "SELL",
+        "shares": 1438,
+        "value": 474813,
+        "date": "2026-09-15",
+        "text": "Sale at price 330.19 per share."
+      },
+      {
+        "name": "NEWSTEAD JENNIFER",
+        "action": "SELL",
+        "shares": 1438,
+        "value": 456177,
+        "date": "2026-09-08",
+        "text": "Sale at price 317.23 per share."
+      },
+      {
+        "name": "NEWSTEAD JENNIFER",
+        "action": "SELL",
+        "shares": 1439,
+        "value": 456177,
+        "date": "2026-09-01",
+        "text": "Sale at price 317.01 per share."
+      },
+      {
+        "name": "NEWSTEAD JENNIFER",
+        "action": "SELL",
+        "shares": 1439,
+        "value": 447457,
+        "date": "2026-08-25",
+        "text": "Sale at price 310.95 per share."
+      },
+      {
+        "name": "NEWSTEAD JENNIFER",
+        "action": "SELL",
+        "shares": 1439,
+        "value": 442478,
+        "date": "2026-08-18",
+        "text": "Sale at price 307.49 per share."
+      },
+      {
+        "name": "NEWSTEAD JENNIFER",
+        "action": "SELL",
+        "shares": 1439,
+        "value": 442852,
+        "date": "2026-08-11",
+        "text": "Sale at price 307.75 per share."
+      },
+      {
+        "name": "BORDERS BEN",
+        "action": "SELL",
+        "shares": 116,
+        "value": 34236,
+        "date": "2026-06-16",
+        "text": "Sale at price 295.14 per share."
+      },
+      {
+        "name": "NEWSTEAD JENNIFER",
+        "action": "BUY",
+        "shares": 30104,
+        "value": 0,
+        "date": "2026-06-15",
+        "text": ""
+      },
+      {
+        "name": "BORDERS BEN",
+        "action": "BUY",
+        "shares": 240,
+        "value": 0,
+        "date": "2026-06-15",
+        "text": ""
+      },
+      {
+        "name": "LEVINSON ARTHUR D",
+        "action": "GIFT",
+        "shares": 65000,
+        "value": 0,
+        "date": "2026-05-27",
+        "text": "Stock Gift at price 0.00 per share."
+      },
+      {
+        "name": "LEVINSON ARTHUR D",
+        "action": "SELL",
+        "shares": 50000,
+        "value": 15551000,
+        "date": "2026-05-27",
+        "text": "Sale at price 311.02 per share."
+      },
+      {
+        "name": "BORDERS BEN",
+        "action": "SELL",
+        "shares": 1274,
+        "value": 369460,
+        "date": "2026-05-08",
+        "text": "Sale at price 290.00 per share."
+      },
+      {
+        "name": "LEVINSON ARTHUR D",
+        "action": "GIFT",
+        "shares": 5000,
+        "value": 0,
+        "date": "2026-05-06",
+        "text": "Stock Gift at price 0.00 per share."
+      },
+      {
+        "name": "LEVINSON ARTHUR D",
+        "action": "SELL",
+        "shares": 250000,
+        "value": 71189722,
+        "date": "2026-05-06",
+        "text": "Sale at price 284.57 - 285.04 per share."
+      }
+    ],
+    "institutions": [
+      {
+        "name": "Blackrock Inc.",
+        "shares": 1162996939,
+        "pct": 7.97
+      },
+      {
+        "name": "Vanguard Capital Management LLC",
+        "shares": 959107911,
+        "pct": 6.57
+      },
+      {
+        "name": "State Street Corporation",
+        "shares": 615129929,
+        "pct": 4.21
+      },
+      {
+        "name": "Geode Capital Management, LLC",
+        "shares": 371336543,
+        "pct": 2.54
+      },
+      {
+        "name": "Vanguard Portfolio Management LLC",
+        "shares": 334119156,
+        "pct": 2.29
+      },
+      {
+        "name": "FMR, LLC",
+        "shares": 325348754,
+        "pct": 2.23
+      },
+      {
+        "name": "Morgan Stanley",
+        "shares": 242614238,
+        "pct": 1.66
+      },
+      {
+        "name": "JPMORGAN CHASE & CO",
+        "shares": 228762008,
+        "pct": 1.57
+      }
+    ]
+  },
+  "fixtures_used": [
+    "yf:AAPL.MX:insider_transactions",
+    "yf:AAPL.MX:institutional_holders"
+  ],
+  "live_match": true
+}

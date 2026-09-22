@@ -1,0 +1,13 @@
+{
+ "key": "yf:STORAGE18.MX:fast_info.shares",
+ "provider": "yfinance",
+ "symbol": "STORAGE18.MX",
+ "attr": "fast_info.shares",
+ "kwargs": {},
+ "kind": "value",
+ "payload": null,
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T14:54:31+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "d6511ec2c42a"
+}

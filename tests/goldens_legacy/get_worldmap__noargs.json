@@ -1,0 +1,145 @@
+{
+  "function": "get_worldmap",
+  "args": [],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "840": {
+      "value": 773.51,
+      "change": 0.01,
+      "change_pct": 0.0
+    },
+    "124": {
+      "value": 60.61,
+      "change": 0.18,
+      "change_pct": 0.3
+    },
+    "484": {
+      "value": 73.715,
+      "change": 0.015,
+      "change_pct": 0.02
+    },
+    "076": {
+      "value": 37.83,
+      "change": -0.24,
+      "change_pct": -0.63
+    },
+    "152": {
+      "value": 40.25,
+      "change": 0.29,
+      "change_pct": 0.73
+    },
+    "826": {
+      "value": 47.55,
+      "change": -0.14,
+      "change_pct": -0.29
+    },
+    "276": {
+      "value": 42.4967,
+      "change": -0.1033,
+      "change_pct": -0.24
+    },
+    "250": {
+      "value": 44.09,
+      "change": -0.13,
+      "change_pct": -0.29
+    },
+    "380": {
+      "value": 60.61,
+      "change": -0.63,
+      "change_pct": -1.03
+    },
+    "724": {
+      "value": 61.41,
+      "change": -0.01,
+      "change_pct": -0.02
+    },
+    "528": {
+      "value": 68.25,
+      "change": 0.4,
+      "change_pct": 0.59
+    },
+    "756": {
+      "value": 61.07,
+      "change": 0.26,
+      "change_pct": 0.43
+    },
+    "752": {
+      "value": 52.005,
+      "change": 0.245,
+      "change_pct": 0.47
+    },
+    "040": {
+      "value": 43.9,
+      "change": 0.1,
+      "change_pct": 0.23
+    },
+    "392": {
+      "value": 98.37,
+      "change": 0.41,
+      "change_pct": 0.42
+    },
+    "156": {
+      "value": 35.01,
+      "change": 0.1,
+      "change_pct": 0.29
+    },
+    "036": {
+      "value": 29.01,
+      "change": -0.03,
+      "change_pct": -0.1
+    },
+    "356": {
+      "value": 48.31,
+      "change": -0.19,
+      "change_pct": -0.39
+    },
+    "410": {
+      "value": 190.625,
+      "change": 1.465,
+      "change_pct": 0.77
+    },
+    "158": {
+      "value": 115.205,
+      "change": -0.435,
+      "change_pct": -0.38
+    },
+    "344": {
+      "value": 22.7391,
+      "change": -0.0209,
+      "change_pct": -0.09
+    },
+    "702": {
+      "value": 33.505,
+      "change": 0.345,
+      "change_pct": 1.04
+    },
+    "710": {
+      "value": 68.31,
+      "change": 0.08,
+      "change_pct": 0.12
+    },
+    "682": {
+      "value": 37.285,
+      "change": 0.125,
+      "change_pct": 0.34
+    },
+    "792": {
+      "value": 37.395,
+      "change": -0.245,
+      "change_pct": -0.65
+    },
+    "616": {
+      "value": 45.275,
+      "change": -0.395,
+      "change_pct": -0.86
+    }
+  },
+  "fixtures_used": [
+    "yf.download:[SPY,EWC,EWW,EWZ,ECH,EWU,EWG,EWQ,EWI,EWP,EWN,EWL,EWD,EWO,EWJ,FXI,EWA,INDA,EWY,EWT,EWH,EWS,EZA,KSA,TUR,EPOL]?period=5d"
+  ],
+  "live_match": true
+}

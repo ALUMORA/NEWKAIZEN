@@ -1,0 +1,45 @@
+{
+  "function": "get_chart",
+  "args": [
+    "AAPL.MX"
+  ],
+  "kwargs": {
+    "period": "1mo",
+    "ccy": "MXN"
+  },
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "closes": [
+      5261.0698,
+      5247.3101,
+      5330.0,
+      5338.0098,
+      5448.7798,
+      5377.96,
+      5517.1602,
+      5522.1802,
+      5548.0801,
+      5415.5601,
+      5402.5801,
+      5348.6001,
+      5332.8999,
+      5531.4302,
+      5640.98,
+      5727.8999,
+      5668.1299,
+      5794.4199,
+      5839.1299,
+      5840.0098
+    ],
+    "period": "1mo",
+    "bars": 20,
+    "currency": "MXN"
+  },
+  "fixtures_used": [
+    "yf:AAPL.MX:history?period=1mo"
+  ],
+  "live_match": true
+}

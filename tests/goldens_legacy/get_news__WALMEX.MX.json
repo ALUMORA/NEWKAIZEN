@@ -1,0 +1,101 @@
+{
+  "function": "get_news",
+  "args": [
+    "WALMEX.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [
+    "news[*].time"
+  ],
+  "output": {
+    "news": [
+      {
+        "title": "Worried About an AI Slowdown? Check Out the Staples.",
+        "summary": "Consumer staples could be a good hunting ground for stockpickers., whether inflation goes up or eases.",
+        "url": "https://www.barrons.com/articles/ai-slowdown-consumer-staples-buy-16ce9300?siteid=yhoof2&yptr=yahoo",
+        "publisher": "Barrons.com",
+        "time": 1789655100,
+        "sentiment": "neutral"
+      },
+      {
+        "title": "Walmex (BMV:WALMEX *) Stock Sees Modest Fair Value Cut On Softer Mexico Consumer Trends",
+        "summary": "The fair value price target for Wal-Mart de México has been revised slightly lower from MX$62.71 to MX$61.04, a reduction of about 2.7%. Analysts are linking this small adjustment to a softer consumer backdrop in Mexico, while still pointing to stabi",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/walmex-bmv-walmex-stock-sees-111540865.html",
+        "publisher": "Simply Wall St.",
+        "time": 1785582940,
+        "sentiment": "negative"
+      },
+      {
+        "title": "Wal Mex (BMV:WALMEX *) Stock Sees Modest Fair Value Cut As Analysts Turn Cautious",
+        "summary": "The latest analyst revisions for Wal-Mart de México center on a reduced price target, with the average moving from MX$66 to MX$63 and a fair value estimate adjusted from MX$64.82 to MX$62.71. This shift aligns with a more cautious tone in recent rese",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/wal-mex-bmv-walmex-stock-001751503.html",
+        "publisher": "Simply Wall St.",
+        "time": 1784247471,
+        "sentiment": "negative"
+      },
+      {
+        "title": "WMMVY or WMT: Which Is the Better Value Stock Right Now?",
+        "summary": "WMMVY vs. WMT: Which Stock Is the Better Value Option?",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/wmmvy-wmt-better-value-stock-154003925.html",
+        "publisher": "Zacks",
+        "time": 1782402003,
+        "sentiment": "neutral"
+      },
+      {
+        "title": "How The Wal-Mart De México (BMV:WALMEX *) Story Is Shifting With A Cautious Analyst Stance",
+        "summary": "The fair value estimate for Wal-Mart de México, de has been adjusted slightly, moving from MX$65.37 to MX$65.32, which keeps the modelled price target essentially in the same range. This small trim aligns with a more cautious analyst stance, where th",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/wal-mart-m-xico-bmv-051027465.html",
+        "publisher": "Simply Wall St.",
+        "time": 1778476227,
+        "sentiment": "neutral"
+      },
+      {
+        "title": "Walmex posts revenue growth amid margin pressure",
+        "summary": "For January to March, consolidated revenue increased 1.7% from a year earlier to 245.01bn pesos.",
+        "url": "https://www.retail-insight-network.com/news/walmex-revenue-growth-margin-pressure/",
+        "publisher": "Retail Insight Network",
+        "time": 1777454918,
+        "sentiment": "positive"
+      },
+      {
+        "title": "How The Narrative On Wal‑Mart de México (BMV:WALMEX *) Is Shifting After Fair Value Trim",
+        "summary": "The latest update trimmed Wal-Mart de México’s fair value estimate from MX$65.98 to MX$65.37, a move of around 0.9%. Bullish and bearish analysts interpret this shift differently, with supportive views seeing it as a recalibration of expectations and",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/narrative-wal-mart-m-xico-120613686.html",
+        "publisher": "Simply Wall St.",
+        "time": 1776945973,
+        "sentiment": "neutral"
+      },
+      {
+        "title": "How Walmart’s Push Into Higher-Margin Ecosystem Plays Could Impact Walmart (WMT) Investors",
+        "summary": "In late March 2026, brands including Opopop, FHI Heat, Zep, and Clean Simple Eats announced nationwide or expanded launches at Walmart, while Walmex outlined a US$2.50 billion 2026 investment plan and Walmart advanced retail media partnerships with V",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/walmart-push-higher-margin-ecosystem-211259854.html",
+        "publisher": "Simply Wall St.",
+        "time": 1775337179,
+        "sentiment": "positive"
+      },
+      {
+        "title": "WalMart de Mexico (WMMVY) Upgraded to Buy: What Does It Mean for the Stock?",
+        "summary": "WalMart de Mexico (WMMVY) has been upgraded to a Zacks Rank #2 (Buy), reflecting growing optimism about the company's earnings prospects. This might drive the stock higher in the near term.",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/walmart-mexico-wmmvy-upgraded-buy-160002283.html",
+        "publisher": "Zacks",
+        "time": 1775145602,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Are Retail-Wholesale Stocks Lagging  Tapestry (TPR) This Year?",
+        "summary": "Here is how Tapestry (TPR) and Wal-Mart de Mexico SAB de CV (WMMVY) have performed compared to their sector so far this year.",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/retail-wholesale-stocks-lagging-tapestry-134002436.html",
+        "publisher": "Zacks",
+        "time": 1775137202,
+        "sentiment": "neutral"
+      }
+    ]
+  },
+  "fixtures_used": [
+    "yf:WALMEX.MX:news"
+  ],
+  "live_match": true
+}

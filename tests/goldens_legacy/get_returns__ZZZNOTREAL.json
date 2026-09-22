@@ -1,0 +1,23 @@
+{
+  "function": "get_returns",
+  "args": [
+    "ZZZNOTREAL"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [],
+  "output": {
+    "1mo": null,
+    "3mo": null,
+    "6mo": null,
+    "1y": null,
+    "2y": null,
+    "5y": null
+  },
+  "fixtures_used": [
+    "yf:ZZZNOTREAL:history?interval=1wk&period=5y"
+  ],
+  "live_match": true
+}

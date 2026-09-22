@@ -1,0 +1,20 @@
+{
+  "function": "get_rf",
+  "args": [],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [
+    "asOf"
+  ],
+  "output": {
+    "rate": 0.0916,
+    "label": "Bono M 10Y (ago 2026)",
+    "asOf": "2026-08-01"
+  },
+  "fixtures_used": [
+    "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=IRLTLT01MXM156N"
+  ],
+  "live_match": true
+}

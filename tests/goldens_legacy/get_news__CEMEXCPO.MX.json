@@ -1,0 +1,101 @@
+{
+  "function": "get_news",
+  "args": [
+    "CEMEXCPO.MX"
+  ],
+  "kwargs": {},
+  "module": "backend",
+  "fixture_set": "2026-09-22",
+  "frozen_at": "2026-09-22T14:51:31+00:00",
+  "volatile_paths": [
+    "news[*].time"
+  ],
+  "output": {
+    "news": [
+      {
+        "title": "CEMEX (CX) Q2 2026 Earnings Call Transcript",
+        "summary": "Free cash flow hit $651 million as cost savings accelerated.",
+        "url": "https://www.fool.com/earnings/call-transcripts/2026/07/23/cemex-cx-q2-2026-earnings-call-transcript/",
+        "publisher": "Motley Fool",
+        "time": 1784856397,
+        "sentiment": "neutral"
+      },
+      {
+        "title": "Cemex SAB de CV (CX) Q2 2026 Earnings Call Highlights: Record Cash Flow and Raised Guidance ...",
+        "summary": "Cemex SAB de CV (CX) reports robust EBITDA growth and record free cash flow, while navigating operational disruptions and market uncertainties.",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/cemex-sab-cv-cx-q2-210401077.html",
+        "publisher": "GuruFocus.com",
+        "time": 1784840641,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Cemex Q2 Earnings Call Highlights",
+        "summary": "Cemex (NYSE:CX) reported what executives described as strong second-quarter 2026 results, with consolidated EBITDA exceeding $1 billion and management raising its full-year EBITDA growth outlook as cost savings and operational initiatives continued t",
+        "url": "https://www.marketbeat.com/instant-alerts/cemex-q2-earnings-call-highlights-2026-07-23/?utm_source=yahoofinance&utm_medium=yahoofinance",
+        "publisher": "MarketBeat",
+        "time": 1784833643,
+        "sentiment": "positive"
+      },
+      {
+        "title": "EU Says Construction Companies, Trade Bodies Likely Formed Pricing Cartel",
+        "summary": "Ten chemical groups and three trade bodies operated a cartel to raise prices following the Covid-19 pandemic and Russia’s invasion of Ukraine, the commission said it provisionally found.",
+        "url": "https://www.wsj.com/business/retail/eu-says-construction-companies-trade-bodies-likely-formed-pricing-cartel-05189568?siteid=yhoof2&yptr=yahoo",
+        "publisher": "The Wall Street Journal",
+        "time": 1784551080,
+        "sentiment": "neutral"
+      },
+      {
+        "title": "MCEM Stock Outperforms Industry in 6 Months: Time to Buy?",
+        "summary": "Monarch Cement's long-life reserves, capacity investments, expansion strategy and discounted valuation make it a compelling building materials stock to buy.",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/mcem-stock-outperforms-industry-6-160000133.html",
+        "publisher": "Zacks",
+        "time": 1783353600,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Amazon Labor Ruling Puts Cemex Precedent in Play",
+        "summary": "Amazon plans to appeal after a judge ordered bargaining with San Francisco delivery workers backed by Teamsters.",
+        "url": "https://finance.yahoo.com/economy/policy/articles/amazon-labor-ruling-puts-cemex-190229285.html",
+        "publisher": "GuruFocus.com",
+        "time": 1782241349,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Update: Amazon Ordered to Bargain With Teamsters at California Facility",
+        "summary": "(Updates with details from the labor judge's decision and Teamsters' comment in the last paragraph.)",
+        "url": "https://finance.yahoo.com/economy/policy/articles/amazon-ordered-bargain-teamsters-california-164404131.html",
+        "publisher": "MT Newswires",
+        "time": 1782233044,
+        "sentiment": "positive"
+      },
+      {
+        "title": "Eagle Materials (EXP) Surges 5.3%: Is This an Indication of Further Gains?",
+        "summary": "Eagle Materials (EXP) witnessed a jump in share price last session on above-average trading volume. The latest trend in earnings estimate revisions for the stock suggests that there could be more strength down the road.",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/eagle-materials-exp-surges-5-153200636.html",
+        "publisher": "Zacks",
+        "time": 1781883120,
+        "sentiment": "positive"
+      },
+      {
+        "title": "3 Stocks That Announced Dividend Hikes Amid Geopolitical Tensions",
+        "summary": "CASY, CX and UNH raise dividends as geopolitical tensions, rising oil prices and rate uncertainty fuel the need for steady income.",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/3-stocks-announced-dividend-hikes-122000588.html",
+        "publisher": "Zacks",
+        "time": 1781180400,
+        "sentiment": "positive"
+      },
+      {
+        "title": "How EWZ and EWW Investors Are Riding Commodity and Supply Chain Tailwinds",
+        "summary": "Latin American equities have quietly become one of the strongest regional trades of 2026, and three exchange-traded funds capture the move from very different angles. iShares MSCI Brazil ETF (NYSEARCA:EWZ) is up about 26% year to date on a wave of co",
+        "url": "https://247wallst.com/investing/2026/05/07/how-ewz-and-eww-investors-are-riding-commodity-and-supply-chain-tailwinds/",
+        "publisher": "24/7 Wall St.",
+        "time": 1778166388,
+        "sentiment": "positive"
+      }
+    ]
+  },
+  "fixtures_used": [
+    "yf:CEMEXCPO.MX:news"
+  ],
+  "live_match": true
+}
