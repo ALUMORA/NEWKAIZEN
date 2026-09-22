@@ -405,6 +405,26 @@ describe('simulate: determinismo', () => {
     const b = simulate({ ...opciones, seed: '7' })
     expect(a.percentiles.p95).toEqual(b.percentiles.p95)
   })
+
+  it('el seed que reporta reproduce la corrida, incluso con seed null', () => {
+    // Un campo de formulario vacío llega como null. Antes el resultado decía 'null', que como
+    // semilla es OTRA corrida: el campo que F4 guarda para repetir un escenario no servía.
+    for (const semilla of [null, undefined, 42, 'texto']) {
+      const a = simulate({ ...opciones, seed: /** @type {any} */ (semilla) })
+      const b = simulate({ ...opciones, seed: a.seed })
+      expect(typeof a.seed).toBe('string')
+      expect(b.percentiles.p50).toEqual(a.percentiles.p50)
+      expect(Array.from(b.terminalSorted)).toEqual(Array.from(a.terminalSorted))
+    }
+  })
+
+  it('seed null y seed omitido son la semilla por omisión', () => {
+    const nulo = simulate({ ...opciones, seed: /** @type {any} */ (null) })
+    const sinSemilla = simulate({ ...opciones, seed: undefined })
+    expect(nulo.seed).toBe('kaizen')
+    expect(sinSemilla.seed).toBe('kaizen')
+    expect(nulo.percentiles.p50).toEqual(sinSemilla.percentiles.p50)
+  })
 })
 
 describe('simulate: bootstrap por bloques', () => {
