@@ -439,6 +439,25 @@ describe('datos de una versión más nueva', () => {
     expect(localStorage.getItem(STORAGE_KEY)).toBe(stored)
   })
 
+  // Un respaldo vacío con nombre de respaldo bueno es peor que no poder respaldar: si después se
+  // importa, borra los datos reales. Se exporta lo que de verdad está guardado.
+  it('exportar entrega los datos guardados, no el estado vacío de solo lectura', () => {
+    const text = exportJSON()
+    const parsed = JSON.parse(text)
+    expect(parsed.kind).toBe('kaizen-backup')
+    expect(parsed.v).toBe(3)
+    expect(parsed.data).toEqual(future)
+    expect(parsed.data.portfolios).toHaveLength(1)
+    // Esta build no puede restaurar un respaldo de la versión nueva, y así debe ser.
+    expect(() => importJSON(text)).toThrow(ImportError)
+  })
+
+  it('exportar avisa si los datos de la versión nueva desaparecieron entre la carga y el respaldo', () => {
+    isReadOnly()
+    localStorage.removeItem(STORAGE_KEY)
+    expect(() => exportJSON()).toThrow(FUTURE_VERSION_ERROR.message)
+  })
+
   it('un v que no es número sigue contando como dañado (se respalda y se empieza de cero)', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...future, v: 'tres' }))
     resetStorageForTests()

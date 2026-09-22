@@ -26,7 +26,9 @@
 //
 // Versión más nueva: si "kaizen:v2" trae un `v` mayor que 2 (una build más nueva escribió ahí),
 // NO se toca. No se respalda, no se re-migra y no se sobrescribe: se sirve un estado vacío de
-// solo lectura, save() no hace nada y getStorageError() lo explica en español.
+// solo lectura, save() no hace nada, importJSON() lanza y getStorageError() lo explica en español.
+// exportJSON() sí entrega los datos guardados tal como están, porque exportar el estado vacío
+// daría un respaldo vacío con nombre de respaldo bueno.
 import { useSyncExternalStore } from 'react'
 
 export const STORAGE_KEY = 'kaizen:v2'
@@ -798,9 +800,32 @@ export function subscribe(fn) {
   return () => listeners.delete(fn)
 }
 
-/** Respaldo descargable con todo el estado. */
+/**
+ * Respaldo descargable con todo el estado.
+ *
+ * En modo solo lectura (los datos guardados son de una versión más nueva) NO se exporta el estado
+ * en memoria: está vacío a propósito y el archivo saldría siendo un respaldo vacío con nombre de
+ * respaldo bueno, que además borraría los datos reales si alguien lo importa después. Se exporta lo
+ * que de verdad está guardado, con su propia versión en el sobre; esta build lo rechaza al
+ * importarlo (normalizeState solo acepta v: 2) y una más nueva sí lo entiende.
+ * @throws {Error} con el mensaje de FUTURE_VERSION_ERROR si los datos de la versión nueva
+ *   desaparecieron entre la carga y la exportación, o sea que ya no hay nada real que respaldar.
+ */
 export function exportJSON() {
-  return JSON.stringify({ app: 'kaizen', kind: 'kaizen-backup', v: 2, exportedAt: new Date().toISOString(), data: load() }, null, 2)
+  const state = load()
+  const envelope = { app: 'kaizen', kind: 'kaizen-backup', v: 2, exportedAt: new Date().toISOString(), data: state }
+  if (readOnly) {
+    const raw = safeGet(STORAGE_KEY)
+    let stored = null
+    try {
+      stored = raw == null ? null : JSON.parse(raw)
+    } catch {
+      stored = null
+    }
+    if (!isFutureVersion(stored)) throw new Error(FUTURE_VERSION_ERROR.message)
+    return JSON.stringify({ ...envelope, v: stored.v, data: stored }, null, 2)
+  }
+  return JSON.stringify(envelope, null, 2)
 }
 
 export class ImportError extends Error {
