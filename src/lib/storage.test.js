@@ -492,6 +492,56 @@ describe('la migración es una foto única (legacyHashes)', () => {
     expect(legacyChangedSinceMigration().changed).toEqual([LEGACY_KEYS.screener])
   })
 
+  // El Workspace legado escribe "momentum_screener" con su lista por defecto en cada montaje
+  // (App.legacy.jsx, efecto "Persistir screener"), así que a quien estrena la app nueva y luego
+  // abre cualquier ruta legada le aparece una llave vieja que no existía al migrar. Eso es ruido
+  // del legado, no algo que la persona haya cambiado: si contara, F1 ofrecería re-importar datos
+  // viejos sin que nadie los haya tocado.
+  describe('lo que el legado escribe solo por montarse no cuenta como cambio', () => {
+    // Tal como lo escribe la app vieja: SCREEN_TICKERS.join(", "), con espacio después de la coma.
+    const legacyDefaultScreener = 'AAPL, MSFT, GOOGL, AMZN, META, NVDA, TSLA, JPM, V, WMT, CEMEXCPO.MX, WALMEX.MX, AMXL.MX, FEMSAUBD.MX'
+    const legacyDefaultPortfolios = JSON.stringify([
+      {
+        id: 'p1',
+        name: 'Principal',
+        positions: [
+          { ticker: 'AAPL', shares: 10, cost: 150 },
+          { ticker: 'MSFT', shares: 8, cost: 320 },
+          { ticker: 'AMZN', shares: 5, cost: 130 },
+          { ticker: 'CEMEXCPO.MX', shares: 100, cost: 8.5 },
+          { ticker: 'WALMEX.MX', shares: 50, cost: 68 },
+        ],
+      },
+    ])
+
+    it('el screener por defecto que aparece al abrir una ruta legada no es divergencia', () => {
+      load() // storage vacío: la foto guarda null en las tres llaves
+      localStorage.setItem(LEGACY_KEYS.screener, legacyDefaultScreener)
+      expect(legacyChangedSinceMigration().changed).toEqual([])
+      expect(legacyChangedSinceMigration().known).toBe(true)
+    })
+
+    it('el portafolio de ejemplo del legado tampoco', () => {
+      load()
+      localStorage.setItem(LEGACY_KEYS.portfolios, legacyDefaultPortfolios)
+      expect(legacyChangedSinceMigration().changed).toEqual([])
+    })
+
+    it('una lista que la persona sí cambió sigue contando', () => {
+      load()
+      localStorage.setItem(LEGACY_KEYS.screener, `${legacyDefaultScreener}, GMEXICOB.MX`)
+      expect(legacyChangedSinceMigration().changed).toEqual([LEGACY_KEYS.screener])
+    })
+
+    it('el filtro solo aplica a una llave que no existía al migrar', () => {
+      localStorage.setItem(LEGACY_KEYS.screener, 'AAPL,MSFT')
+      load()
+      // La llave sí existía y ahora quedó en la lista por defecto: eso lo hizo la persona.
+      localStorage.setItem(LEGACY_KEYS.screener, legacyDefaultScreener)
+      expect(legacyChangedSinceMigration().changed).toEqual([LEGACY_KEYS.screener])
+    })
+  })
+
   it('sin foto guardada (estado de antes de este cambio) avisa known: false', () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...emptyState(), legacyHashes: undefined }))
     const res = legacyChangedSinceMigration()
