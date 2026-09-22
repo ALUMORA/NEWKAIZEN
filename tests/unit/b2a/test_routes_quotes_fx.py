@@ -110,3 +110,22 @@ def test_las_rutas_de_datos_traen_su_cache_control(client) -> None:
     assert client.get("/v2/quotes?symbols=AAPL").headers["cache-control"] == "private, max-age=30"
     assert client.get("/v2/fx?pair=USDMXN").headers["cache-control"] == "private, max-age=30"
     assert client.get("/v2/fx/history").headers["cache-control"] == "private, max-age=3600"
+
+
+def test_fx_con_el_fix_de_banxico_ya_no_va_marcado(client, monkeypatch) -> None:
+    """Camino bueno de la costura: cuando B2b entregue el SIE, la ruta deja de ser sustituta."""
+    from kaizen_api.providers import banxico
+
+    monkeypatch.setattr(
+        banxico,
+        "fetch_series",
+        lambda ids, start=None, end=None: {"bmx": {"series": [{"datos": [{"fecha": "22/09/2026", "dato": "18.3500"}]}]}},
+    )
+    body = client.get("/v2/fx?pair=USDMXN").json()
+    assert body["rate"] == 18.35
+    assert body["source"] == "banxico_fix"
+    assert body["asOf"] == "2026-09-22"
+    assert body["meta"]["source"] == "banxico"
+    assert body["meta"]["fallback"] is False
+    assert body["meta"]["delayMinutes"] is None
+    assert body["meta"]["notes"] == []

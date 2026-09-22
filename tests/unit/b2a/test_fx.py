@@ -148,3 +148,44 @@ def test_convertir_una_serie_de_pandas_usa_el_fx_de_cada_fecha(b2a_replay) -> No
     for stamp, value in convertida.items():
         rate, _ = fx_domain.rate_on(crudo, stamp.date().isoformat())
         assert value == pytest.approx(100.0 * rate)
+
+
+def _fix_falso(dias: dict[str, float]):
+    """Costura de Banxico de mentiras, con la forma cruda del SIE."""
+
+    def _fake(series_ids, start=None, end=None):
+        datos = [{"fecha": _dt.date.fromisoformat(d).strftime("%d/%m/%Y"), "dato": f"{v:.4f}"} for d, v in dias.items()]
+        return {"bmx": {"series": [{"idSerie": banxico.SERIES_FIX, "datos": datos}]}}
+
+    return _fake
+
+
+def test_con_el_fix_la_serie_diaria_deja_de_ser_sustituta(monkeypatch) -> None:
+    monkeypatch.setattr(banxico, "fetch_series", _fix_falso(RATES))
+    series = fx_domain.daily_range(_dt.date(2026, 9, 14), _dt.date(2026, 9, 18))
+    assert series.source == fx_domain.BANXICO_FIX_SOURCE
+    assert series.fallback is False and series.notes == []
+    assert series.dates == ["2026-09-14", "2026-09-15", "2026-09-18"]
+    assert series.values == [18.0, 18.1, 18.4]
+
+
+def test_el_rango_recorta_lo_que_el_sie_manda_de_mas(monkeypatch) -> None:
+    monkeypatch.setattr(banxico, "fetch_series", _fix_falso(RATES))
+    series = fx_domain.daily_range(_dt.date(2026, 9, 15), _dt.date(2026, 9, 15))
+    assert series.dates == ["2026-09-15"] and series.values == [18.1]
+
+
+def test_la_conversion_diaria_prefiere_el_fix_sobre_yahoo(monkeypatch) -> None:
+    monkeypatch.setattr(banxico, "fetch_series", _fix_falso(RATES))
+    monkeypatch.setattr(fx_domain, "_today", lambda: _dt.date(2026, 9, 22))
+    series = fx_domain.series_for("1mo", "1d")
+    assert series.source == fx_domain.BANXICO_FIX_SOURCE
+    assert series.fallback is False
+
+
+def test_la_conversion_semanal_se_queda_en_yahoo(monkeypatch) -> None:
+    """El SIE publica el FIX diario; para barras semanales se usa la serie semanal de Yahoo."""
+    monkeypatch.setattr(banxico, "fetch_series", _fix_falso(RATES))
+    monkeypatch.setattr(fx_domain, "_yahoo_points", lambda period, interval="1d": [("2026-09-14", 18.0)])
+    series = fx_domain.series_for("1y", "1wk")
+    assert series.source == fx_domain.YAHOO_SOURCE and series.fallback is True
