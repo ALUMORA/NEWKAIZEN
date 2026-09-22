@@ -51,26 +51,57 @@ Compuerta **G1 en verde**, verificada por el orquestador después de los merges:
   requests fallidos y sin scroll horizontal. Al hacer clic en una tab del legado la URL y el título
   la siguen, y Atrás regresa.
 
-### Lo que sigue: fase 2
+### Fase 2 entregada y mergeada (M2), con recorte deliberado
 
-El script está en [workflows/fase2.js](workflows/fase2.js). Son 14 streams, cada uno en su worktree
-`05 NEWKAIZEN.wt/<id>` sobre `ws/<id>`, y cada uno pasa por constructor, revisor independiente y
-corrección:
+Se cerró el 22 de septiembre de 2026 aplicando Pareto, porque la sesión iba al 78 % de su cuota. Se
+entregó todo el backend v2 y toda la librería financiera, y se dejaron fuera los tres streams de
+diseño. Lo que entró, con sus commits en `analizavende`:
 
-- **A1 a A4**: la librería financiera (`src/lib/finance/*`), con los goldens de `.venv-golden`.
-- **A5**: el glosario de más de 60 términos y `docs/metodologia/`.
-- **B1**: seguridad y plataforma encima de lo que dejó S1.
-- **B2a**: precios, historia con fechas, panel alineado, FX, búsqueda, panorama y calendario BMV/NYSE.
-- **B2b**: Banxico, FRED, tasas MX, rf CETES 28, macro EE.UU. en pb, noticias y tono.
-- **B3a**: fundamentales con monedas correctas, estados financieros reales, dividendos, insiders, beta local.
-- **B3b**: valuación (múltiplos con fuente y DCF FCFF) y momentum 12-1.
-- **B3c**: screener de factores, fórmula mágica honesta y FIBRAs.
-- **C1**: tokens, primitivas y `/dev/ui`. Cuando termina, su API queda congelada y arrancan **C2**
-  (gráficas SVG) y **C3** (shell, navegación, ⌘K), que parten de la rama de C1.
+| Stream | Qué entregó |
+| --- | --- |
+| A1 | returns, stats, performance, benchmark, rates, risk, backtest, fx y el barril, con 456 pruebas y 277 casos golden contra numpy y scipy |
+| A2 | álgebra, covarianza Ledoit-Wolf, rendimientos esperados, optimización y walk-forward |
+| A3 | generador con semilla, Monte Carlo y metas |
+| A4 | ledger de costo promedio, rendimiento del ledger, XIRR, ISR de México y rebalanceo en acciones enteras |
+| A5 | glosario de 95 términos y las diez páginas de metodología |
+| B1 | seguridad y plataforma: límite de tasa que ya no bloquea al usuario, validación de USERS, Cache-Control por clase de dato |
+| B2a | quotes, búsqueda, historia con fechas reales, panel alineado, FX, panorama y calendario BMV/NYSE |
+| B2b | Banxico, FRED sin llave, tasas de México, rf CETES 28 como serie, macro de EE.UU. en pb, noticias y tono |
+| B3a | ficha de emisora con monedas correctas, estados financieros reales, dividendos, insiders y beta local |
+| B3b | valuación con múltiplos de Damodaran y DCF FCFF de dos etapas, y momentum 12-1 |
+| B3c | screener de factores, fórmula mágica honesta y FIBRAs con métricas correctas |
 
-Después viene **M2** (mergear en orden B1, B2, B3, A, C; grabar fixtures v2; compuerta G2 del PLAN),
-la **fase 3** con las features F1 a F5, **M3** (borrar `src/legacy`), la **fase 4** de revisores
-(finanzas, seguridad, UX/a11y, copy) y la **fase 5** (push, preview y reporte final).
+Compuerta **G2 verificada por el orquestador después de mergear los once**:
+
+- `npm run lint` (0 errores), `typecheck`, **1,455 pruebas** de Vitest, `build`, presupuesto en 59 %.
+- **1,250 pruebas** de pytest sin red y 3 omitidas, `ruff` limpio.
+- `npm run e2e:baseline` 16 de 16 sin actualizar capturas, `npm run e2e` 75 de 75.
+- `/health` anuncia **25 capacidades** reales y `/v2/rates/rf` devuelve la serie de CETES con fechas
+  y en fracciones, servido con `preview_start`.
+
+Lo que costó integrarlos, y conviene saberlo para la próxima fase: los streams se probaron cada uno
+con las costuras de los demás simuladas, así que al juntarlos varias pruebas salían a la red o
+afirmaban cosas que dejaron de ser ciertas (por ejemplo "sin la costura de históricos la beta va
+vacía", cuando ya existe). Se arreglaron las pruebas, no el código, y las capas de fixtures de los
+cinco streams de backend se consolidaron en el set base, que pasó de 432 a 566 llamadas.
+
+### Lo que falta, en orden
+
+1. **C1, C2 y C3, el sistema de diseño.** No se hicieron. C1 alcanzó a dejar doce primitivas en la
+   rama local `ws/C1`, en el commit `wip` `bab3d5f`, sin revisar ni probar. Ahí están tokens, Button,
+   Card, Badge, Tabs, SegmentedControl, Field, Stat, DataStatus, InfoTip, Popover y el arranque de
+   `src/styles/`. El encargo completo de los tres sigue escrito en `workflows/fase2.js` (constantes
+   `LATE` y la entrada de C1 en el historial de git de ese archivo).
+2. **Fase 3, las features F1 a F5**, que es lo que de verdad cambia lo que el usuario ve: hoy la
+   interfaz sigue siendo la del legado, aunque abajo ya esté el API v2 honesto.
+3. **M3**: borrar `src/legacy` cuando las features lo reemplacen. Ahí se van los 76 guiones largos
+   visibles y los `—` como dato faltante.
+4. **Fases 4 y 5**: revisores de finanzas, seguridad, UX y copy, y el cierre con preview y reporte.
+5. **Revisión independiente pendiente de la fase 2.** Solo algunos streams alcanzaron a ser
+   revisados antes del recorte. Conviene una pasada de revisión adversaria sobre la librería
+   financiera y sobre valuación antes de que las features se apoyen en ellas.
+6. **Hueco de procedencia detectado al mergear**: `fxUsed.asOf` viene en `null` en la ficha de
+   emisora. El tipo de cambio se usa, pero la respuesta no dice de qué día es.
 
 ## Cómo trabajar aquí
 
