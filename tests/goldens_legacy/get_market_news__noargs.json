@@ -5,9 +5,7 @@
   "module": "backend",
   "fixture_set": "2026-09-22",
   "frozen_at": "2026-09-22T14:51:31+00:00",
-  "volatile_paths": [
-    "news[*].time"
-  ],
+  "volatile_paths": [],
   "output": {
     "news": [
       {

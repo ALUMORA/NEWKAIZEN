@@ -19,10 +19,10 @@ from .store import REPO_ROOT
 
 GOLDENS_DIR = REPO_ROOT / "tests" / "goldens_legacy"
 
-# Keys whose values depend on the wall clock or on when the recording happened.
-VOLATILE_KEYS = frozenset(
-    {"asOf", "updated", "updatedAt", "fetched", "fetchedAt", "generatedAt", "timestamp", "time", "ts", "age", "ago"}
-)
+# Replay congela el reloj y sirve datos grabados, así que ningún campo es volátil por defecto:
+# enmascarar "time" o "asOf" escondía regresiones reales (fechas de noticias, fecha de la rf).
+# Un golden puede declarar volatile_paths a mano si de verdad depende de algo no controlado.
+VOLATILE_KEYS: frozenset[str] = frozenset()
 NONFINITE_TAG = "__nonfinite__"
 
 
@@ -110,7 +110,7 @@ def compare(
 
     def walk(a: Any, e: Any, path: str) -> None:
         if path and _path_matches(path, volatile):
-            if _json_type(a) != _json_type(e) and None not in (a, e):
+            if _json_type(a) != _json_type(e):
                 add(f"{path}: tipo {_json_type(a)} != {_json_type(e)} (campo volátil)")
             return
         if isinstance(e, dict) and isinstance(a, dict):

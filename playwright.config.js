@@ -85,7 +85,7 @@ if (withBaseline) {
 }
 if (withApp) {
   webServer.push({
-    command: `npm run build:e2e && npx vite preview --port ${APP_PORT} --strictPort --host 127.0.0.1`,
+    command: `npm run build:e2e && npx vite preview --outDir dist-e2e --port ${APP_PORT} --strictPort --host 127.0.0.1`,
     url: appURL,
     reuseExistingServer: false,
     timeout: 120_000,

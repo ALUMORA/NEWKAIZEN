@@ -538,13 +538,16 @@ def test_network_guard_allows_loopback(no_network):
 def test_normalize_and_compare_with_volatile_paths():
     out = normalize({"news": [{"title": "a", "time": 1}, {"title": "b", "time": 2}], "rate": 0.1, "nan": float("nan")})
     assert out["nan"] == {"__nonfinite__": "nan"}
-    assert find_volatile_paths(out) == ["news[*].time"]
+    # Nada es volátil por defecto: el replay congela reloj y datos.
+    assert find_volatile_paths(out) == []
     other = {"news": [{"title": "a", "time": 9}, {"title": "b", "time": 8}], "rate": 0.1 * (1 + 1e-12), "nan": {"__nonfinite__": "nan"}}
     assert compare(other, out, volatile=["news[*].time"]) == []
     assert compare(other, out) != []
     assert compare({"rate": 0.1000001}, {"rate": 0.1})
     assert compare({"x": 1}, {"x": 1, "y": 2}) == ["y: falta en el resultado"]
     assert compare({"x": True}, {"x": 1}) != []
+    # Un campo volátil que se vuelve null sí se reporta.
+    assert compare({"news": [{"time": None}]}, {"news": [{"time": 1}]}, volatile=["news[*].time"]) != []
 
 
 def test_unknown_types_fail_loudly():

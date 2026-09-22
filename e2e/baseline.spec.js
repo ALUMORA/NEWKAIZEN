@@ -50,7 +50,10 @@ for (const tab of LEGACY_TABS) {
     })
     await scrollToTop(page)
 
-    await expect(page).toHaveScreenshot(`legacy-${tab.slug}.png`, { fullPage: true })
+    // Guardas antes de la captura: si algo falló, su causa exacta sale primero.
     guards.assertClean()
+    // El baseline es determinista (HAR + reloj fijo), así que el presupuesto va en píxeles
+    // absolutos: 0.02 de proporción dejaba pasar un cambio real de 9,311 píxeles.
+    await expect(page).toHaveScreenshot(`legacy-${tab.slug}.png`, { fullPage: true, maxDiffPixels: 150 })
   })
 }
