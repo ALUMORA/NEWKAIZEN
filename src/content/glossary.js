@@ -1604,10 +1604,10 @@ export const glossary = Object.freeze(
   ),
 )
 
-/** Todos los slugs, en el orden en que están escritos (temático, no alfabético). @type {string[]} */
+/** Todos los slugs, en el orden en que están escritos (temático, no alfabético). @type {readonly string[]} */
 export const glossarySlugs = Object.freeze(Object.keys(glossary))
 
-/** Todos los términos ordenados por título, que es como se listan en /aprender. @type {GlossaryTerm[]} */
+/** Todos los términos ordenados por título, que es como se listan en /aprender. @type {readonly GlossaryTerm[]} */
 export const glossaryTerms = Object.freeze(
   Object.values(glossary).sort((a, b) => a.titulo.localeCompare(b.titulo, 'es-MX')),
 )
