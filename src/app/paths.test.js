@@ -58,6 +58,16 @@ describe('paths', () => {
     ['///example.com'],
     ['/%2F/example.com'],
     ['/%2Fexample.com'],
+    // Relativas al protocolo por la vía de los segmentos de punto: el parser normaliza "/.."
+    // DENTRO del mismo origen y deja el pathname "//example.com".
+    ['/..//example.com'],
+    ['/..//example.com?x=1'],
+    ['/..//example.com#z'],
+    ['/..//attacker.test/path'],
+    ['/%2e%2e//example.com'],
+    ['/.%2e//example.com'],
+    ['/a/../..//example.com'],
+    ['/investigar/../..//example.com'],
     // Esquemas y URLs absolutas.
     ['https:'],
     ['https://example.com/portafolio'],
@@ -77,6 +87,15 @@ describe('paths', () => {
     expect(safeNext('/./screener')).toBe('/screener')
     expect(safeNext('/login/../portafolio')).toBe('/portafolio')
     expect(safeNext('/a/../login')).toBe(DEFAULT_PRIVATE_PATH)
+    // Subir de más no debe sacarnos del sitio: se queda en la raíz, no en "//".
+    expect(safeNext('/../portafolio')).toBe('/portafolio')
+    expect(safeNext('/a/b/../../../../screener')).toBe('/screener')
+  })
+
+  it('safeNext nunca devuelve algo que empiece con "//"', () => {
+    for (const input of ['/..//example.com', '/%2e%2e//example.com', '/a/../..//example.com', '/..//example.com?x=1']) {
+      expect(safeNext(input, '/respaldo').startsWith('//')).toBe(false)
+    }
   })
 
   it('safeNext compara contra location.origin cuando hay página', () => {

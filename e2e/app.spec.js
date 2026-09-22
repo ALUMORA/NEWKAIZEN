@@ -164,11 +164,21 @@ test.describe('login', () => {
     await legacySettled(page, net)
   })
 
-  // El parser de URL borra tab y saltos de línea y trata "\" como "/": sin filtrarlos, React
-  // Router se negaba a navegar ("External navigation is not allowed") y el login caía en la
-  // pantalla de error.
-  for (const next of ['%2F%09%2Fexample.com', '%2F%0A%2Fexample.com', '%2F%5Cexample.com', '%2F%250D%2Fexample.com']) {
-    test(`?next=${next} (control o diagonal invertida) cae en /mercados sin pantalla de error`, async ({ page, baseURL }) => {
+  // Tres maneras de armar un ?next que el parser de URL convierte en "//otro-sitio": caracteres
+  // de control (borra tab y saltos de línea), diagonal invertida (la trata como "/") y segmentos
+  // de punto (normaliza "/..//example.com" al pathname "//example.com" sin cambiar el origen).
+  // Sin filtrarlos, React Router se niega a navegar ("External navigation is not allowed") y el
+  // login cae en la pantalla de error.
+  for (const next of [
+    '%2F%09%2Fexample.com',
+    '%2F%0A%2Fexample.com',
+    '%2F%5Cexample.com',
+    '%2F%250D%2Fexample.com',
+    '%2F..%2F%2Fexample.com',
+    '%2F%252e%252e%2F%2Fexample.com',
+    '%2Fa%2F..%2F..%2F%2Fexample.com',
+  ]) {
+    test(`?next=${next} (destino de otro sitio disfrazado) cae en /mercados sin pantalla de error`, async ({ page, baseURL }) => {
       await setupApp(page, { baseURL, session: true, legacyApi: true })
       const net = trackNetwork(page, API_URL_RE)
       await page.goto(`/login?next=${next}`)

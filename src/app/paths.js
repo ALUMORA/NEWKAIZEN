@@ -108,8 +108,9 @@ function hasUnsafeChars(s) {
  * Evita redirecciones abiertas y que un link armado tumbe el login con "Algo salió mal" (React
  * Router se niega a navegar a otro origen). Rechaza, tal cual o ya decodificado con %XX:
  * caracteres de control, diagonales invertidas, "//otro-sitio", esquemas ("https:",
- * "javascript:") y cualquier cosa que el navegador resuelva a otro origen. Devuelve la ruta
- * normalizada (pathname + search + hash) o `fallback`.
+ * "javascript:"), cualquier cosa que el navegador resuelva a otro origen y también lo que
+ * TERMINE en "//otro-sitio" después de normalizar los segmentos de punto ("/..//example.com").
+ * Devuelve la ruta normalizada (pathname + search + hash) o `fallback`.
  * @param {string | null | undefined} next
  * @param {string} [fallback]
  */
@@ -130,6 +131,11 @@ export function safeNext(next, fallback = DEFAULT_PRIVATE_PATH) {
     return fallback
   }
   if (url.origin !== origin) return fallback
+  // El origen no alcanza: los segmentos de punto se normalizan DENTRO del mismo origen, así que
+  // "/..//example.com" termina con el pathname "//example.com" y `url.origin` sigue siendo el
+  // nuestro. Devolver esa cadena sería entregar un destino relativo al protocolo, o sea otro
+  // sitio. Se revisa el resultado ya normalizado, no la entrada.
+  if (url.pathname.startsWith('//')) return fallback
   let path
   try {
     path = decodeURIComponent(url.pathname)
@@ -137,7 +143,11 @@ export function safeNext(next, fallback = DEFAULT_PRIVATE_PATH) {
     return fallback
   }
   if (/^\/login(?:\/|$)/i.test(path)) return fallback
-  return `${url.pathname}${url.search}${url.hash}`
+  const resolved = `${url.pathname}${url.search}${url.hash}`
+  // Cinturón y tirantes: nada que salga de aquí puede leerse como URL absoluta o relativa al
+  // protocolo, pase lo que pase con el parser.
+  if (!resolved.startsWith('/') || resolved.startsWith('//')) return fallback
+  return resolved
 }
 
 /**
