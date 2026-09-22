@@ -40,6 +40,7 @@ def markets_overview() -> MarketsOverviewResponse:
             "yahoo",
             as_of=as_of,
             delay_minutes=prices.DELAY_MINUTES,
+            stale=markets_domain.basket_is_stale(as_of),
             notes=[*notes, *status_notes],
         ),
     }
@@ -56,5 +57,11 @@ def markets_world() -> WorldResponse:
     return {
         "items": items,
         "method": markets_domain.WORLD_METHOD,
-        "meta": meta("yahoo", as_of=as_of, delay_minutes=prices.DELAY_MINUTES, notes=notes),
+        "meta": meta(
+            "yahoo",
+            as_of=as_of,
+            delay_minutes=prices.DELAY_MINUTES,
+            stale=markets_domain.basket_is_stale(as_of),
+            notes=notes,
+        ),
     }

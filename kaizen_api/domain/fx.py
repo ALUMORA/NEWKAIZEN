@@ -302,6 +302,18 @@ def _period_days(period: str) -> int:
     return {"1mo": 31, "3mo": 93, "6mo": 186, "1y": 372, "2y": 744, "5y": 1860, "10y": 3720}.get(period, 3720 * 3)
 
 
+def series_is_stale(series: FxSeries, now: _dt.date | None = None) -> bool:
+    """¿La serie del tipo de cambio viene atrasada? Misma tolerancia que el dato puntual.
+
+    El FIX se publica en días hábiles bancarios, así que ``STALE_AFTER_DAYS`` días naturales cubren
+    un fin de semana largo sin marcar como vieja una serie que solo está esperando al lunes.
+    """
+    if not series.dates:
+        return True
+    today = now or _today()
+    return (today - _dt.date.fromisoformat(series.dates[-1])).days > STALE_AFTER_DAYS
+
+
 def rate_on(rates: dict[str, float], date: str) -> tuple[float | None, int]:
     """Tipo de cambio de ``date``, o el del día hábil anterior hasta 3 días naturales atrás.
 

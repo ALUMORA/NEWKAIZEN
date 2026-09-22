@@ -68,6 +68,7 @@ def history(
             _source_token(series),
             as_of=series.as_of,
             delay_minutes=prices.DELAY_MINUTES,
+            stale=history_domain.is_stale(series.symbol, series.as_of, series.interval),
             fallback=series.fx_source == fx_domain.YAHOO_SOURCE,
             notes=series.notes,
         ),
@@ -150,6 +151,14 @@ def panel(
             if note not in notes:
                 notes.append(note)
 
+    late = sorted(
+        symbol
+        for symbol, series in series_by_symbol.items()
+        if history_domain.is_stale(symbol, series.as_of, series.interval)
+    )
+    if late:
+        notes.append("Vienen atrasados, les falta al menos una jornada ya cerrada: " + ", ".join(late) + ".")
+
     source = "yahoo,banxico" if used_banxico else "yahoo"
     return {
         "currency": currency,
@@ -161,6 +170,7 @@ def panel(
             source,
             as_of=dates[-1],
             delay_minutes=prices.DELAY_MINUTES,
+            stale=bool(late),
             fallback=used_yahoo_fx,
             notes=notes,
         ),
@@ -186,6 +196,7 @@ def fx_history(pair: FxPairQuery = "USDMXN", start: IsoDateQuery = None, end: Is
             source,
             as_of=series.dates[-1],
             delay_minutes=None if source == "banxico" else prices.DELAY_MINUTES,
+            stale=fx_domain.series_is_stale(series),
             fallback=series.fallback,
             notes=series.notes,
         ),

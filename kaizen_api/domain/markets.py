@@ -242,6 +242,25 @@ def overview_data() -> tuple[list[dict], str | None, list[str]]:
     return groups, as_of, notes
 
 
+BASKET_STALE_DAYS = 4
+"""Días naturales que puede tener la canasta antes de marcarse vieja (cubre un puente largo)."""
+
+
+def basket_is_stale(as_of: str | None, now=None) -> bool:
+    """¿La canasta viene atrasada? Regla por días naturales, porque mezcla bolsas de varios países.
+
+    No se mide contra el calendario de la BMV ni el de la NYSE: la canasta trae Tokio, Londres,
+    Fráncfort y cripto, que abren en días distintos. Devolver siempre ``False`` sería afirmar
+    frescura sin haberla comprobado.
+    """
+    import datetime as _dt
+
+    if not as_of:
+        return True
+    today = (now or _dt.datetime.now(_dt.UTC)).astimezone(_dt.UTC).date()
+    return (today - _dt.date.fromisoformat(str(as_of)[:10])).days > BASKET_STALE_DAYS
+
+
 def world_data() -> tuple[list[dict], str | None, list[str]]:
     """``(renglones por país, fecha del dato más nuevo, avisos)`` de ``/v2/markets/world``."""
     from kaizen_api.providers.yahoo import prices

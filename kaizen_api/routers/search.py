@@ -35,5 +35,10 @@ def search(
         notes.append(f"No encontramos nada que se parezca a {q.strip()!r}.")
     return {
         "results": results,
-        "meta": meta(source, as_of=search_domain.curated_as_of(), notes=notes),
+        "meta": meta(
+            source,
+            as_of=search_domain.curated_as_of(),
+            stale=search_domain.curated_is_stale(),
+            notes=notes,
+        ),
     }

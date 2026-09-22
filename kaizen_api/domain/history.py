@@ -84,6 +84,55 @@ def native_currency(symbol: str) -> tuple[str, bool]:
     return "USD", True
 
 
+EXCHANGE_BY_SUFFIX = ((".MX", "bmv"),)
+"""Bolsa de la que sale el calendario de un símbolo, cuando el sufijo la dice sin ambigüedad."""
+
+EXCHANGE_BY_SYMBOL = {"^MXX": "bmv", "^GSPC": "nyse", "^IXIC": "nyse", "^DJI": "nyse"}
+
+GENERIC_STALE_DAYS = {"1d": 4, "1wk": 11, "1mo": 45}
+"""Días naturales que puede tener el punto más nuevo antes de marcarse viejo, sin calendario."""
+
+
+def exchange_for(symbol: str) -> str | None:
+    """Bolsa cuyo calendario aplica al símbolo, o ``None`` si no es una de las dos que publicamos.
+
+    Solo se afirma lo que se sabe: tenemos calendario de la BMV y de la NYSE. Un índice de Tokio o
+    una cripto no se miden contra ninguno de los dos, así que caen a la regla por días naturales.
+    """
+    up = symbol.upper()
+    if up in EXCHANGE_BY_SYMBOL:
+        return EXCHANGE_BY_SYMBOL[up]
+    for suffix, exchange in EXCHANGE_BY_SUFFIX:
+        if up.endswith(suffix):
+            return exchange
+    if up.endswith("-USD") or up.endswith("=X") or up.endswith("=F") or up.startswith("^"):
+        return None
+    return "nyse" if up.isalpha() else None
+
+
+def is_stale(symbol: str, last_date: str | None, interval: str = "1d", now=None) -> bool:
+    """¿El punto más nuevo de la serie viene atrasado?
+
+    Con calendario de la bolsa (BMV o NYSE) y barras diarias, la serie está vieja si le falta una
+    jornada que ya cerró. Sin calendario, o con barras semanales o mensuales, se usa una tolerancia
+    en días naturales. Devolver siempre ``False`` sería el valor fijo silencioso que el contrato
+    prohíbe: ``stale`` dice que el dato es más viejo de lo esperado para su clase.
+    """
+    import datetime as _dt
+
+    from kaizen_api.domain import market_calendar
+
+    if not last_date:
+        return False
+    newest = _dt.date.fromisoformat(str(last_date)[:10])
+    exchange = exchange_for(symbol) if interval == "1d" else None
+    if exchange is not None:
+        closed = market_calendar.last_completed_session(exchange, now)
+        return closed is not None and newest < closed
+    today = (now or _dt.datetime.now(_dt.UTC)).astimezone(_dt.UTC).date()
+    return (today - newest).days > GENERIC_STALE_DAYS.get(interval, 4)
+
+
 def get_series(symbol: str, range: str = "1y", interval: str = "1d", ccy: str = "native") -> PriceSeries:
     """Costura CONGELADA de históricos v2 (ver el docstring del módulo). La implementa B2."""
     sym = str(symbol).upper()

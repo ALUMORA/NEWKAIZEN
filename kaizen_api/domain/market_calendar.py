@@ -124,6 +124,26 @@ def _next_session(calendar: dict, tz: ZoneInfo, after: _dt.datetime) -> tuple[_d
     return None
 
 
+def last_completed_session(exchange: str, now: _dt.datetime | None = None) -> _dt.date | None:
+    """Última jornada de esa bolsa que YA cerró, mirando hasta ``SEARCH_DAYS`` hacia atrás.
+
+    Sirve para decidir si una serie diaria viene atrasada: si su punto más nuevo es anterior a esta
+    fecha, al proveedor le falta al menos una jornada que ya terminó. La jornada de hoy no cuenta
+    mientras el mercado siga abierto, porque su barra todavía se está formando.
+    """
+    calendar = load_calendar(exchange)
+    tz = ZoneInfo(calendar["timezone"])
+    moment = (now or _dt.datetime.now(_dt.UTC)).astimezone(tz)
+    for offset in range(SEARCH_DAYS + 1):
+        current = moment.date() - _dt.timedelta(days=offset)
+        hours = session(calendar, current)
+        if hours is None:
+            continue
+        if _localize(tz, current, hours[1]) <= moment:
+            return current
+    return None
+
+
 def status(exchange: str, now: _dt.datetime | None = None) -> ExchangeStatus:
     """Estado de una bolsa en este instante (o en ``now``, que sirve para las pruebas)."""
     calendar = load_calendar(exchange)

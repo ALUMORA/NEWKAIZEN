@@ -136,6 +136,23 @@ def curated_as_of() -> str:
     return _curated()[0]["updatedAt"]
 
 
+CURATED_STALE_DAYS = 180
+"""Días tras los cuales la lista curada se marca vieja: un semestre sin revisar ya pierde emisoras."""
+
+
+def curated_is_stale(now=None) -> bool:
+    """¿La lista curada de México lleva demasiado sin revisarse?
+
+    No es dato de mercado, es un directorio: envejece cuando salen o cambian emisoras y nadie lo
+    actualiza. Marcarlo es la única forma de que la UI pueda decir que una búsqueda pudo quedarse
+    corta en vez de afirmar que el símbolo no existe.
+    """
+    import datetime as _dt
+
+    today = (now or _dt.datetime.now(_dt.UTC)).astimezone(_dt.UTC).date()
+    return (today - _dt.date.fromisoformat(str(curated_as_of())[:10])).days > CURATED_STALE_DAYS
+
+
 @lru_cache(maxsize=1)
 def _known_us() -> tuple[SymbolEntry, ...]:
     return tuple(
