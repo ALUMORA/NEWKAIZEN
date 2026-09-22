@@ -212,3 +212,23 @@ def test_la_tabla_se_cachea_por_universo(monkeypatch):
     M.get_magic("us")
     M.get_magic("us")
     assert len(llamadas) == 1
+
+
+def test_a_los_sectores_excluidos_ni_se_les_pregunta(monkeypatch):
+    """Cada emisora cuesta tres llamadas a Yahoo: a un banco del universo curado no se le pide nada."""
+    universo = fakes.universe(
+        ("AAA", "A", "Technology"),
+        ("BANCO", "Banco", "Financial Services"),
+        ("LUZ", "Luz", "Utilities"),
+    )
+    preguntados = []
+
+    def espiar(syms, **kw):
+        preguntados.extend(syms)
+        return {s: emisora(s) for s in syms}, []
+
+    monkeypatch.setattr(M, "fetch_symbols", espiar)
+    tabla = M.build(universo)
+    assert preguntados == ["AAA"]
+    assert {e["symbol"] for e in tabla["excluded"]} == {"BANCO", "LUZ"}
+    assert tabla["partial"] is False

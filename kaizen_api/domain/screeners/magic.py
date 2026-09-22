@@ -483,13 +483,24 @@ def _row_or_reason(symbol: str, universe: Universe, data: SymbolData, floor: flo
 
 def build(universe: Universe) -> dict:
     """Arma la tabla de la fórmula mágica de un universo ya resuelto. Sin caché ni HTTP propio."""
-    fetched, pending = fetch_symbols(universe.symbols, statements=STATEMENTS)
+    # A las que el universo curado ya marca como banco o servicio público ni se les pregunta:
+    # la fórmula no las usa y cada una cuesta tres llamadas a Yahoo.
+    skipped = {
+        m.symbol: f"La fórmula deja fuera el sector {sector_label(m.sector)}."
+        for m in universe.members
+        if m.sector in MAGIC_EXCLUDED_SECTORS
+    }
+    asked = [s for s in universe.symbols if s not in skipped]
+    fetched, pending = fetch_symbols(asked, statements=STATEMENTS)
     floor = MIN_MARKET_CAP.get(universe.id, 0.0)
 
     rows: list[dict] = []
     excluded: list[dict] = []
     failures = 0
     for symbol in universe.symbols:
+        if symbol in skipped:
+            excluded.append({"symbol": symbol, "reason": skipped[symbol]})
+            continue
         data = fetched.get(symbol)
         if data is None:
             excluded.append({"symbol": symbol, "reason": "El proveedor no respondió a tiempo."})
