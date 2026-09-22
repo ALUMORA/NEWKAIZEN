@@ -59,6 +59,12 @@ IsoDate = Annotated[str, Field(pattern=ISO_DATE_PATTERN, examples=["2026-09-22"]
 Instant = Annotated[str, Field(pattern=INSTANT_PATTERN, examples=["2026-09-22T14:51:31Z"])]
 DateOrInstant = Annotated[str, Field(pattern=DATE_OR_INSTANT_PATTERN, examples=["2026-09-22"])]
 Currency = Annotated[str, Field(pattern=r"^[A-Z]{3}$", examples=["MXN"])]
+"""ISO 4217 de tres letras. Yahoo reporta unidades menores en algunas plazas (GBp en Londres, ZAc
+en Johannesburgo): el proveedor las normaliza a GBP y ZAR dividiendo el monto entre 100 antes de
+armar la respuesta, porque aquí no caben."""
+HttpUrl = Annotated[str, Field(pattern=r"^https?://", examples=["https://example.com/nota"])]
+"""Liga que se le puede dar al navegador. El patrón deja fuera javascript: y data:, que llegan en
+algunos RSS; el proveedor descarta el elemento en vez de publicarlo."""
 Fraction = Annotated[float, Field(description="Fracción decimal: 0.0123 = 1.23 %")]
 Money = Annotated[float, Field(description="Monto en la moneda del campo currency más cercano")]
 Ratio = Annotated[float, Field(description="Razón simple (múltiplo), no porcentaje")]
@@ -445,7 +451,7 @@ class NewsItem(ContractModel):
 
     id: str
     title: str
-    url: str
+    url: HttpUrl
     source: str
     publishedAt: Instant | None
     summary: str | None
@@ -573,7 +579,7 @@ class InstrumentResponse(ContractModel):
     industry: str | None
     country: str | None
     description: str | None
-    website: str | None
+    website: HttpUrl | None
     priceCurrency: Currency
     financialCurrency: Currency | None
     fxUsed: FxRateUsed | None

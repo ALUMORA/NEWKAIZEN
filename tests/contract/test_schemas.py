@@ -362,3 +362,26 @@ def test_docs_reference_is_current():
         DOCS.write_text(text[:start] + expected + text[stop:], encoding="utf-8")
         return
     assert text[start:stop] == expected, "docs/api-v2.md desactualizado: KAIZEN_WRITE_DOCS=1 pytest tests/contract -k docs_reference"
+
+
+def test_links_must_be_http_and_minor_units_are_documented():
+    """Las ligas que la UI abre en el navegador solo pueden ser http(s).
+
+    Un RSS puede traer ``javascript:`` o ``data:`` en el enlace; el contrato lo rechaza para que el
+    proveedor descarte el elemento en vez de publicarlo. Las monedas siguen siendo ISO de tres
+    letras: las unidades menores de Yahoo (GBp, ZAc) se normalizan antes de armar la respuesta.
+    """
+    news = {
+        "id": "1",
+        "title": "Titular",
+        "url": "https://ejemplo.mx/nota",
+        "source": "rss",
+        "publishedAt": "2026-09-22T14:00:00Z",
+        "summary": None,
+        "lang": "es",
+        "tone": None,
+    }
+    schemas.NewsItem.model_validate(news)
+    for malo in ("javascript:alert(1)", "data:text/html,<script>", "//ejemplo.mx/nota", "ftp://ejemplo.mx"):
+        with pytest.raises(ValidationError):
+            schemas.NewsItem.model_validate({**news, "url": malo})

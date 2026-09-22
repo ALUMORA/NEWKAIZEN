@@ -589,7 +589,7 @@ Titular y liga, nada más: entidades HTML decodificadas, sin duplicados por tít
 | --- | --- | --- | --- |
 | `id` | string | sí |  |
 | `title` | string | sí |  |
-| `url` | string | sí |  |
+| `url` | string /^https?:/// | sí |  |
 | `source` | string | sí |  |
 | `publishedAt` | instant \| null | sí |  |
 | `summary` | string \| null | sí |  |
@@ -634,7 +634,7 @@ Titular y liga, nada más: entidades HTML decodificadas, sin duplicados por tít
 | `industry` | string \| null | sí |  |
 | `country` | string \| null | sí |  |
 | `description` | string \| null | sí |  |
-| `website` | string \| null | sí |  |
+| `website` | string /^https?:/// \| null | sí |  |
 | `priceCurrency` | currency | sí |  |
 | `financialCurrency` | currency \| null | sí |  |
 | `fxUsed` | FxRateUsed \| null | sí |  |
