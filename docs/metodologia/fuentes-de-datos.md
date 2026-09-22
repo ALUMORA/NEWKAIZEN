@@ -55,9 +55,15 @@ Estas decisiones vienen de defectos concretos de la versión anterior:
    renglones que de verdad reportó la empresa, y los periodos sin dato salen vacíos.
 4. **No hay panel macro de México escrito a mano.** Antes estaba hardcodeado y llevaba meses sin
    actualizarse. Hoy sale de Banxico con la fecha de cada serie.
-5. **No se rellena hacia adelante.** Si a una serie le falta un día, ese día se cae de la
-   comparación. La única excepción es el tipo de cambio, que se puede arrastrar hasta 3 días para
-   cubrir puentes y días inhábiles, y cuando eso pasa queda escrito en `meta.notes`.
+5. **Casi nunca se rellena hacia adelante.** Si a una serie de precios le falta un día, ese día se
+   cae de la comparación: el cruce de series es por fecha ISO y no inventa el dato faltante. Hay
+   exactamente dos excepciones, y las dos quedan escritas en `meta.notes` cuando se usan:
+   - **El tipo de cambio** se puede arrastrar hasta 3 días, para cubrir puentes y días inhábiles.
+   - **La tasa libre de riesgo** se arrastra hasta 45 días. Se usa la tasa vigente al inicio de
+     cada periodo, y si no hay dato publicado dentro de esa ventana, el periodo sale nulo y la
+     pantalla muestra `s/d` en vez de suponer una tasa. Esto importa más de lo que parece, porque
+     esa serie alimenta el Sharpe, el Sortino, el Treynor y todas las regresiones en exceso: casi
+     toda la pantalla de riesgo.
 
 ## Moneda
 

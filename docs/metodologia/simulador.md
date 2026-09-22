@@ -70,8 +70,10 @@ estadístico.
 Los caminos individuales no se devuelven por omisión: son 10,000 por 360 pasos y no aportan nada a
 la lectura.
 
-Rendimiento: 10,000 caminos por 360 pasos corren en menos de 400 ms en node, así que la pantalla no
-necesita un worker para no trabarse.
+Rendimiento: el objetivo es que 10,000 caminos por 360 pasos corran en menos de 400 ms en node. Es
+un requisito de diseño, no una medición: mientras no esté implementado el motor no hay número que
+reportar. Si no se alcanza, la simulación se mueve a un worker para que la pantalla no se trabe
+mientras corre.
 
 ## Cómo leer los percentiles
 

@@ -98,8 +98,11 @@ Estas no son opcionales y la pantalla no deja salir de ellas:
    empresa crece para siempre más rápido que la economía en la que vive, y la tasa libre de riesgo
    nominal es una buena cota superior del crecimiento nominal de largo plazo.
 2. **`WACC − g` tiene que ser de al menos 2 puntos porcentuales.** Si no, el valor terminal se
-   dispara hacia el infinito y la valuación deja de significar nada. Con `WACC = 9%` y `g = 8.9%`,
-   el valor terminal es 90 veces el flujo.
+   dispara hacia el infinito y la valuación deja de significar nada. Con `WACC = 9%` y una
+   diferencia sana de 6 puntos (`g = 3%`), el valor terminal vale 17.17 veces el flujo del último
+   año. Con 2 puntos, que es el mínimo que deja pasar la guarda, ya son 53.50 veces. Y con una
+   décima de punto (`g = 8.9%`) se va a 1,089 veces el flujo: el resultado deja de depender del
+   negocio y pasa a depender de la resta del denominador.
 
 Cuando un supuesto rompe una guarda, la pantalla explica cuál y por qué, en vez de mostrar un
 número.

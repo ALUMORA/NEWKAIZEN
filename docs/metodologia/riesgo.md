@@ -46,8 +46,8 @@ negativo del k ésimo peor. El CVaR es el negativo del promedio de esos k peores
 distribución, pero solo puede ver lo que ya pasó en la ventana.
 
 **Paramétrica.** Supone una normal con la media y la desviación de la muestra. Usa una inversa
-acurada de la normal, la aproximación de Acklam. Subestima el riesgo real, porque los mercados
-tienen colas más gordas que la normal.
+precisa de la normal acumulada, la aproximación de Acklam. Subestima el riesgo real, porque los
+mercados tienen colas más gordas que la normal.
 
 Casos probados: con 20 rendimientos de −5 por ciento a +14 por ciento en pasos de 1 punto, al 95 por
 ciento el VaR y el CVaR históricos son 5 por ciento y 5 por ciento; al 90 por ciento, 4 por ciento y
@@ -87,6 +87,12 @@ error de estimación. Por eso siempre se muestra el número de periodos y la R²
 
 Los dos se calculan sobre rendimientos en exceso contra la tasa libre de riesgo del periodo, que es
 la serie de CETES a 28 días convertida al plazo de cada periodo, no una constante.
+
+Sobre esa serie hay una excepción a la regla general de no rellenar huecos, y conviene tenerla
+presente al leer cualquiera de estos números: se usa la tasa vigente al inicio de cada periodo y se
+arrastra hasta 45 días. Si no hay dato publicado dentro de esa ventana, el periodo sale nulo y la
+pantalla muestra `s/d` en vez de suponer una tasa. La misma excepción aplica al Treynor, al alfa de
+Jensen y a cualquier otra medida que se calcule sobre excesos.
 
 - Sharpe: promedio de los excesos entre su desviación estándar, por la raíz de los periodos por año.
 - Sortino: el mismo numerador, con denominador de desviación a la baja, calculada como la raíz del
