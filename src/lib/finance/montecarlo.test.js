@@ -766,7 +766,8 @@ describe('simulate: desempeño', () => {
     // La meta del spec son 400 ms, y en una máquina de desarrollo se cumple de sobra. El corredor
     // de CI es más lento (midió 613 ms), así que ahí el techo es más flojo: lo que se vigila en CI
     // es una regresión de algoritmo, no la velocidad del hardware que le tocó al job.
-    const meta = Number(process.env.KAIZEN_PERF_MS ?? (process.env.CI ? 2000 : 400))
+    const env = globalThis.process?.env ?? {}
+    const meta = Number(env.KAIZEN_PERF_MS ?? (env.CI ? 2000 : 400))
     console.log(`Monte Carlo, 10,000 trayectorias por 360 pasos: ${best.toFixed(1)} ms (techo ${meta} ms)`)
     expect(best).toBeLessThan(meta)
   })
