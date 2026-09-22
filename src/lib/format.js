@@ -191,6 +191,23 @@ export function describeMultiple(x, options) {
 
 const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/
 
+/**
+ * Fecha de calendario YYYY-MM-DD que de verdad existe. La forma no basta: "2026-02-31" y
+ * "2026-13-01" la cumplen y el navegador los corre al 3 de marzo y al enero siguiente. La prueba
+ * es la vuelta completa en UTC (misma idea que isIsoDate de storage.js): si el texto que sale no
+ * es el que entró, la fecha no existía. Una fecha imposible no se dibuja como si fuera buena: se
+ * muestra "s/d".
+ * @param {string} value
+ * @returns {{ year: number, month: number, day: number } | null}
+ */
+function calendarDate(value) {
+  const m = DATE_ONLY.exec(value)
+  if (!m) return null
+  const d = new Date(`${value}T00:00:00Z`)
+  if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== value) return null
+  return { year: Number(m[1]), month: Number(m[2]), day: Number(m[3]) }
+}
+
 const partsFormatter = new Intl.DateTimeFormat('en-US', {
   timeZone: TIME_ZONE,
   year: 'numeric',
@@ -221,7 +238,11 @@ function toDate(value) {
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value
   if (isNum(value)) return new Date(value)
   if (typeof value === 'string' && value.trim()) {
-    const d = new Date(value)
+    const text = value.trim()
+    // Una fecha sola pasa primero por la validación estricta: así fmtDateTime y fmtRelative
+    // tampoco aceptan un 31 de febrero.
+    if (DATE_ONLY.test(text) && !calendarDate(text)) return null
+    const d = new Date(text)
     return Number.isNaN(d.getTime()) ? null : d
   }
   return null
@@ -229,17 +250,16 @@ function toDate(value) {
 
 /**
  * "19 sep 2026". Una fecha sola (YYYY-MM-DD) se toma como fecha de calendario, sin moverla de
- * zona; un instante se muestra en la fecha de la Ciudad de México.
+ * zona; un instante se muestra en la fecha de la Ciudad de México. Una fecha que no existe
+ * ("2026-02-31") da "s/d", no el 3 de marzo.
  * @param {unknown} value ISO, Date o epoch en ms
  */
 export function fmtDate(value) {
   if (typeof value === 'string') {
-    const m = DATE_ONLY.exec(value.trim())
-    if (m) {
-      const month = Number(m[2])
-      const day = Number(m[3])
-      if (month < 1 || month > 12 || day < 1 || day > 31) return MISSING
-      return `${day} ${MONTHS[month - 1]} ${m[1]}`
+    const text = value.trim()
+    if (DATE_ONLY.test(text)) {
+      const cal = calendarDate(text)
+      return cal ? `${cal.day} ${MONTHS[cal.month - 1]} ${cal.year}` : MISSING
     }
   }
   const d = toDate(value)

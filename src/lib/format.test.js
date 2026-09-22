@@ -207,6 +207,30 @@ describe('fechas en America/Mexico_City', () => {
   it('acepta Date inválido como faltante', () => {
     expect(fmtDate(new Date('x'))).toBe('s/d')
   })
+
+  it('una fecha de calendario que no existe da s/d, no la corre al mes siguiente', () => {
+    // new Date('2026-02-31') da el 3 de marzo: dibujarla sería inventar un dato.
+    expect(fmtDate('2026-02-31')).toBe('s/d')
+    expect(fmtDate('2025-02-29')).toBe('s/d')
+    expect(fmtDate('2026-04-31')).toBe('s/d')
+    expect(fmtDate('2026-06-31')).toBe('s/d')
+    expect(fmtDate('2026-00-10')).toBe('s/d')
+    expect(fmtDate('2026-13-01')).toBe('s/d')
+    expect(fmtDate('2026-09-00')).toBe('s/d')
+    expect(fmtDate('2026-09-32')).toBe('s/d')
+  })
+
+  it('los años bisiestos de verdad sí pasan', () => {
+    expect(fmtDate('2024-02-29')).toBe('29 feb 2024')
+    expect(fmtDate('2000-02-29')).toBe('29 feb 2000')
+    expect(fmtDate('1900-02-29')).toBe('s/d')
+  })
+
+  it('fmtDateTime y fmtRelative usan la misma validación estricta', () => {
+    expect(fmtDateTime('2026-02-31')).toBe('s/d')
+    expect(fmtRelative('2026-02-31', Date.UTC(2026, 8, 19))).toBe('s/d')
+    expect(fmtDateTime('2026-02-28')).toBe('27 feb 2026, 18:00')
+  })
 })
 
 describe('fmtRelative', () => {
