@@ -254,7 +254,17 @@ describe('el barril index.js', () => {
       // fx
       'toCurrency', 'pnlDecomposition', 'fxAt', 'convertSeries', 'returnInBaseCurrency', 'CURRENCIES', 'MAX_FX_STALE_DAYS',
       // ledger (A4)
-      'derivePositions',
+      'derivePositions', 'cashBalances', 'validateTransaction',
+      // A2: álgebra, covarianza, rendimientos esperados y optimización
+      'matmul', 'transpose', 'cholesky', 'solveSPD', 'largestEigenvalue',
+      'sampleCov', 'ledoitWolfConstantCorrelation', 'annualize', 'corrFromCov',
+      'capmExpected', 'historicalMean', 'jamesStein',
+      'projectBoxSimplex', 'minVariance', 'meanVariance', 'efficientFrontier', 'maxSharpe', 'riskParity', 'InfeasibleError',
+      'walkForward',
+      // A3: azar con semilla, Monte Carlo y metas
+      'createRng', 'lognormalParams', 'simulate', 'probabilityOfGoal', 'requiredContribution', 'retirementIncome',
+      // A4: rendimiento del ledger, XIRR, ISR y rebalanceo
+      'valueSeries', 'twr', 'xirr', 'isrOnGains', 'wholeShareRebalance',
     ]
     for (const nombre of esperados) expect(api[nombre], nombre).toBeDefined()
     expect(Object.keys(api).sort()).toEqual([...esperados].sort())

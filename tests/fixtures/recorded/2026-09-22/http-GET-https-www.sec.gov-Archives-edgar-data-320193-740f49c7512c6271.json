@@ -1,0 +1,39 @@
+{
+ "key": "http:GET https://www.sec.gov/Archives/edgar/data/320193/000114036126017175/form4.xml",
+ "provider": "http",
+ "method": "GET",
+ "url": "https://www.sec.gov/Archives/edgar/data/320193/000114036126017175/form4.xml",
+ "params": null,
+ "kind": "value",
+ "payload": {
+  "status": 200,
+  "reason": "OK",
+  "url": "https://www.sec.gov/Archives/edgar/data/320193/000114036126017175/form4.xml",
+  "encoding": "ISO-8859-1",
+  "headers": {
+   "Content-Type": "text/xml",
+   "X-Frame-Options": "SAMEORIGIN",
+   "x-amz-id-2": "TT8O1iXvs8S5CJcBN7JDMrTqpg8ABM2ol8K1s07WMLtysLJstBeermT729oL4r3m3RWHSmgzCOkdnKt/GjCn+O4XxQDyY5bR",
+   "x-amz-request-id": "YJABXX11B5YEZG85",
+   "x-amz-replication-status": "COMPLETED",
+   "Last-Modified": "Mon, 27 Apr 2026 22:31:03 GMT",
+   "ETag": "\"ecd22948ba751274557d3f878cfb7e6e-gzip\"",
+   "x-amz-server-side-encryption": "AES256",
+   "x-amz-meta-mode": "33188",
+   "x-amz-version-id": "bFrz9Ze5Y54IxduM4wmeXnAeez4oKRua",
+   "Accept-Ranges": "bytes",
+   "X-Content-Type-Options": "nosniff",
+   "X-XSS-Protection": "1; mode=block",
+   "Date": "Tue, 22 Sep 2026 19:15:50 GMT",
+   "Vary": "Accept-Encoding",
+   "Strict-Transport-Security": "max-age=31536000 ; includeSubDomains ; preload"
+  },
+  "body": {
+   "text": "<?xml version=\"1.0\"?>\n<ownershipDocument>\n\n    <schemaVersion>X0609</schemaVersion>\n\n    <documentType>4</documentType>\n\n    <periodOfReport>2026-04-23</periodOfReport>\n\n    <issuer>\n        <issuerCik>0000320193</issuerCik>\n        <issuerName>Apple Inc.</issuerName>\n        <issuerTradingSymbol>AAPL</issuerTradingSymbol>\n        <issuerForeignTradingSymbol></issuerForeignTradingSymbol>\n    </issuer>\n\n    <reportingOwner>\n        <reportingOwnerId>\n            <rptOwnerCik>0002050912</rptOwnerCik>\n            <rptOwnerName>Parekh Kevan</rptOwnerName>\n        </reportingOwnerId>\n        <reportingOwnerAddress>\n            <rptOwnerNonUSAddressFlag>false</rptOwnerNonUSAddressFlag>\n            <rptOwnerStreet1>ONE APPLE PARK WAY</rptOwnerStreet1>\n            <rptOwnerStreet2></rptOwnerStreet2>\n            <rptOwnerCity>CUPERTINO</rptOwnerCity>\n            <rptOwnerState>CA</rptOwnerState>\n            <rptOwnerZipCode>95014</rptOwnerZipCode>\n            <rptOwnerStateDescription></rptOwnerStateDescription>\n        </reportingOwnerAddress>\n        <reportingOwnerRelationship>\n            <isOfficer>true</isOfficer>\n            <officerTitle>Senior Vice President, CFO</officerTitle>\n        </reportingOwnerRelationship>\n    </reportingOwner>\n\n    <aff10b5One>true</aff10b5One>\n\n    <nonDerivativeTable>\n        <nonDerivativeTransaction>\n            <securityTitle>\n                <value>Common Stock</value>\n                <footnoteId id=\"F1\"/>\n            </securityTitle>\n            <transactionDate>\n                <value>2026-04-23</value>\n            </transactionDate>\n            <transactionCoding>\n                <transactionFormType>4</transactionFormType>\n                <transactionCode>S</transactionCode>\n                <equitySwapInvolved>0</equitySwapInvolved>\n            </transactionCoding>\n            <transactionAmounts>\n                <transactionShares>\n                    <value>1534</value>\n                </transactionShares>\n                <transactionPricePerShare>\n                    <value>275</value>\n                </transactionPricePerShare>\n                <transactionAcquiredDisposedCode>\n                    <value>D</value>\n                </transactionAcquiredDisposedCode>\n            </transactionAmounts>\n            <postTransactionAmounts>\n                <sharesOwnedFollowingTransaction>\n                    <value>13366</value>\n                </sharesOwnedFollowingTransaction>\n            </postTransactionAmounts>\n            <ownershipNature>\n                <directOrIndirectOwnership>\n                    <value>D</value>\n                </directOrIndirectOwnership>\n            </ownershipNature>\n        </nonDerivativeTransaction>\n    </nonDerivativeTable>\n\n    <footnotes>\n        <footnote id=\"F1\">This transaction was made pursuant to a Rule 10b5-1 trading plan adopted by the reporting person on November 21, 2025.</footnote>\n    </footnotes>\n\n    <ownerSignature>\n        <signatureName>/s/ Sam Whittington, Attorney-in-Fact for Kevan Parekh</signatureName>\n        <signatureDate>2026-04-27</signatureDate>\n    </ownerSignature>\n</ownershipDocument>\n"
+  }
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T19:15:50+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "adf141d04b4c"
+}

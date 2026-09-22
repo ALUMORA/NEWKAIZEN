@@ -55,19 +55,25 @@ def test_the_yield_field_keeps_its_contract_name(client):
     assert "yield" in body and "yield_" not in body
 
 
-def test_a_fallback_beta_is_flagged_as_a_fallback(client):
-    """Sin la costura de históricos, AAPL cae a la beta de Yahoo y la respuesta lo declara."""
-    body = client.get("/v2/instrument/AAPL").json()
-    assert body["beta"]["source"] == "yahoo"
-    assert body["meta"]["fallback"] is True
-    assert any("S&P 500" in note for note in body["meta"]["notes"])
+def test_the_beta_says_how_it_was_obtained(client):
+    """Desde M2 la costura de históricos existe: la beta se calcula y dice contra qué y en qué moneda.
+
+    Si por lo que sea cayera al respaldo de Yahoo, la respuesta tiene que declararlo como respaldo.
+    """
+    beta = client.get("/v2/instrument/AAPL").json()["beta"]
+    assert beta["source"] in ("computed", "yahoo")
+    if beta["source"] == "computed":
+        assert beta["benchmark"] == "SPY" and beta["currency"] == "USD"
+        assert beta["observations"] > 50
+    else:
+        assert client.get("/v2/instrument/AAPL").json()["meta"]["fallback"] is True
 
 
 def test_a_bmv_symbol_never_borrows_the_us_beta(client):
-    body = client.get("/v2/instrument/WALMEX.MX").json()
-    assert body["beta"] is None
-    assert body["meta"]["fallback"] is False
-    assert any("beta no se calculó" in note for note in body["meta"]["notes"])
+    """Una emisora de la BMV se mide contra una referencia local en la MISMA moneda, nunca contra el S&P."""
+    beta = client.get("/v2/instrument/WALMEX.MX").json()["beta"]
+    assert beta is None or (beta["benchmark"] == "NAFTRAC.MX" and beta["currency"] == "MXN")
+    assert beta is None or beta["source"] == "computed"
 
 
 @pytest.mark.parametrize(

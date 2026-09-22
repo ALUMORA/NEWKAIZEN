@@ -81,7 +81,11 @@ def test_usa_la_costura_de_b2a_cuando_ya_existe(monkeypatch):
 
 
 def test_sin_historico_lanza_su_error(monkeypatch, replay_b3b):
-    with pytest.raises(mom.NoHistory):
+    # Desde M2 la costura de B2a existe: un símbolo inexistente ya no se queda sin serie, el
+    # proveedor contesta que no hay tal emisora. Las dos son la misma respuesta para el usuario.
+    from kaizen_api.errors import ApiError
+
+    with pytest.raises((mom.NoHistory, ApiError)):
         mom.monthly_closes("ZZZNOTREAL")
 
 

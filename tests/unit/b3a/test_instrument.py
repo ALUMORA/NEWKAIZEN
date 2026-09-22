@@ -62,17 +62,24 @@ def test_every_rate_like_metric_is_a_fraction(replay_b3a):
 
 
 def test_aapl_mx_never_mixes_pesos_with_dollars(replay_b3a):
-    """AAPL.MX cotiza en pesos y reporta en dólares. Sin tipo de cambio, esas razones van vacías."""
+    """AAPL.MX cotiza en pesos y reporta en dólares: los estados se convierten antes de dividir.
+
+    Antes de M2 la costura de tipo de cambio no existía y estas razones salían vacías. Ahora existe
+    (B2a), así que sí se calculan, pero con los dólares convertidos a pesos, nunca mezclados.
+    """
     data = mod.get_instrument("AAPL.MX")
     assert data["priceCurrency"] == "MXN"
     assert data["financialCurrency"] == "USD"
-    assert data["fxUsed"] is None
+    fx = data["fxUsed"]
+    assert fx["pair"] == "USDMXN" and fx["rate"] > 1
     f = data["fundamentals"]
     for key in ("ps", "evEbitda", "pfcf", "fcfYield", "enterpriseValue"):
-        assert f[key] is None, f"{key} salió con monedas mezcladas"
-    assert any("tipo de cambio USDMXN" in note for note in data["notes"])
-    # Yahoo sí publica esas razones, y mezcladas: su priceToSales de AAPL.MX vale 182.6.
-    assert f["ps"] != pytest.approx(AAPLMX_MARKET_CAP / AAPLMX_REVENUE_USD, rel=1e-3)
+        assert f[key] is not None, f"{key} debería calcularse con los estados convertidos"
+    # Yahoo sí publica esas razones, y mezcladas: su priceToSales de AAPL.MX vale 182.6. La nuestra
+    # sale del ingreso convertido a pesos, así que tiene que quedar cerca de 182.6 / 17.3.
+    mezclada = AAPLMX_MARKET_CAP / AAPLMX_REVENUE_USD
+    assert f["ps"] != pytest.approx(mezclada, rel=1e-3)
+    assert f["ps"] == pytest.approx(mezclada / fx["rate"], rel=0.05)
 
 
 def test_the_earnings_yield_fallback_says_where_it_came_from(replay_b3a):
@@ -83,9 +90,10 @@ def test_the_earnings_yield_fallback_says_where_it_came_from(replay_b3a):
     """
     data = mod.get_instrument("AAPL.MX")
     f = data["fundamentals"]
-    assert f["fcfYield"] is None, "el flujo libre no tiene respaldo y se queda vacío"
-    assert f["earningsYield"] == pytest.approx(1.0 / f["pe"], rel=1e-4)
-    assert any("P/U que publica Yahoo" in note for note in data["notes"])
+    # Desde M2 los estados sí se convierten, así que los dos rendimientos salen de los estados y no
+    # del respaldo de 1/(P/U). Lo que se vigila es que sigan siendo coherentes entre ellos.
+    assert f["fcfYield"] is not None and 0 < f["fcfYield"] < 1
+    assert f["earningsYield"] == pytest.approx(1.0 / f["pe"], rel=0.05)
 
 
 def test_the_earnings_yield_from_the_statements_does_not_claim_the_fallback(replay_b3a):

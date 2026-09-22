@@ -172,8 +172,17 @@ def test_currency_without_a_local_benchmark_says_so():
     assert notes == ["No hay un referente local en EUR para calcular la beta."]
 
 
-def test_while_the_history_seam_is_missing_the_beta_is_none_not_wrong():
-    """Hoy ``get_series`` levanta NotImplementedError: se reporta el hueco, no se inventa."""
+def test_while_the_history_seam_is_missing_the_beta_is_none_not_wrong(monkeypatch):
+    """Si ``get_series`` no está disponible se reporta el hueco, no se inventa una beta.
+
+    Desde M2 la costura existe (B2a), así que aquí se simula su ausencia a propósito.
+    """
+    from kaizen_api.domain import history
+
+    def _sin_costura(*a, **kw):
+        raise NotImplementedError
+
+    monkeypatch.setattr(history, "get_series", _sin_costura)
     notes: list[str] = []
     assert mod.compute_beta("WALMEX.MX", "MXN", notes) is None
     assert notes == ["La serie de precios v2 todavía no está disponible, así que la beta no se calculó."]

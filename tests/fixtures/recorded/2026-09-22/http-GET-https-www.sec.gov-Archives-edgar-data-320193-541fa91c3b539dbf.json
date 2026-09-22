@@ -1,0 +1,39 @@
+{
+ "key": "http:GET https://www.sec.gov/Archives/edgar/data/320193/000105923526000004/wk-form4_1772148856.xml",
+ "provider": "http",
+ "method": "GET",
+ "url": "https://www.sec.gov/Archives/edgar/data/320193/000105923526000004/wk-form4_1772148856.xml",
+ "params": null,
+ "kind": "value",
+ "payload": {
+  "status": 200,
+  "reason": "OK",
+  "url": "https://www.sec.gov/Archives/edgar/data/320193/000105923526000004/wk-form4_1772148856.xml",
+  "encoding": "ISO-8859-1",
+  "headers": {
+   "Content-Type": "text/xml",
+   "X-Frame-Options": "SAMEORIGIN",
+   "x-amz-id-2": "s8JBrCUrDu/Xp+73qfwQxNmA/FmySvqgqpfAcXb6ye0NtN4dErkp3sYYFfLWRuwPKryfQN+wJ0s9eL/zPgRA9M2LcK37yOTv",
+   "x-amz-request-id": "9J0N9PWDJKTQA5P2",
+   "x-amz-replication-status": "COMPLETED",
+   "Last-Modified": "Thu, 26 Feb 2026 23:34:32 GMT",
+   "ETag": "\"95116a77ace79e7d83e875919d8e3575-gzip\"",
+   "x-amz-server-side-encryption": "AES256",
+   "x-amz-meta-mode": "33188",
+   "x-amz-version-id": "M2rPK.lN0HY6uWK2v58yQ5RE55.SigOF",
+   "Accept-Ranges": "bytes",
+   "X-Content-Type-Options": "nosniff",
+   "X-XSS-Protection": "1; mode=block",
+   "Date": "Tue, 22 Sep 2026 19:15:57 GMT",
+   "Vary": "Accept-Encoding",
+   "Strict-Transport-Security": "max-age=31536000 ; includeSubDomains ; preload"
+  },
+  "body": {
+   "text": "<?xml version=\"1.0\"?>\n<ownershipDocument>\n\n    <schemaVersion>X0508</schemaVersion>\n\n    <documentType>4</documentType>\n\n    <periodOfReport>2026-02-24</periodOfReport>\n\n    <notSubjectToSection16>0</notSubjectToSection16>\n\n    <issuer>\n        <issuerCik>0000320193</issuerCik>\n        <issuerName>Apple Inc.</issuerName>\n        <issuerTradingSymbol>AAPL</issuerTradingSymbol>\n    </issuer>\n\n    <reportingOwner>\n        <reportingOwnerId>\n            <rptOwnerCik>0001059235</rptOwnerCik>\n            <rptOwnerName>WAGNER SUSAN</rptOwnerName>\n        </reportingOwnerId>\n        <reportingOwnerAddress>\n            <rptOwnerStreet1>ONE APPLE PARK WAY</rptOwnerStreet1>\n            <rptOwnerStreet2></rptOwnerStreet2>\n            <rptOwnerCity>CUPERTINO</rptOwnerCity>\n            <rptOwnerState>CA</rptOwnerState>\n            <rptOwnerZipCode>95014</rptOwnerZipCode>\n            <rptOwnerStateDescription></rptOwnerStateDescription>\n        </reportingOwnerAddress>\n        <reportingOwnerRelationship>\n            <isDirector>1</isDirector>\n            <isOfficer>0</isOfficer>\n            <isTenPercentOwner>0</isTenPercentOwner>\n            <isOther>0</isOther>\n        </reportingOwnerRelationship>\n    </reportingOwner>\n\n    <aff10b5One>0</aff10b5One>\n\n    <nonDerivativeTable></nonDerivativeTable>\n\n    <derivativeTable>\n        <derivativeTransaction>\n            <securityTitle>\n                <value>Restricted Stock Unit</value>\n                <footnoteId id=\"F1\"/>\n            </securityTitle>\n            <conversionOrExercisePrice>\n                <footnoteId id=\"F2\"/>\n            </conversionOrExercisePrice>\n            <transactionDate>\n                <value>2026-02-24</value>\n            </transactionDate>\n            <transactionCoding>\n                <transactionFormType>4</transactionFormType>\n                <transactionCode>A</transactionCode>\n                <equitySwapInvolved>0</equitySwapInvolved>\n            </transactionCoding>\n            <transactionAmounts>\n                <transactionShares>\n                    <value>1139</value>\n                </transactionShares>\n                <transactionPricePerShare>\n                    <value>0</value>\n                </transactionPricePerShare>\n                <transactionAcquiredDisposedCode>\n                    <value>A</value>\n                </transactionAcquiredDisposedCode>\n            </transactionAmounts>\n            <exerciseDate>\n                <value>2027-02-01</value>\n                <footnoteId id=\"F3\"/>\n            </exerciseDate>\n            <expirationDate>\n                <value>2027-02-01</value>\n                <footnoteId id=\"F3\"/>\n            </expirationDate>\n            <underlyingSecurity>\n                <underlyingSecurityTitle>\n                    <value>Common Stock</value>\n                </underlyingSecurityTitle>\n                <underlyingSecurityShares>\n                    <value>1139</value>\n                </underlyingSecurityShares>\n            </underlyingSecurity>\n            <postTransactionAmounts>\n                <sharesOwnedFollowingTransaction>\n                    <value>1139</value>\n                </sharesOwnedFollowingTransaction>\n            </postTransactionAmounts>\n            <ownershipNature>\n                <directOrIndirectOwnership>\n                    <value>D</value>\n                </directOrIndirectOwnership>\n            </ownershipNature>\n        </derivativeTransaction>\n    </derivativeTable>\n\n    <footnotes>\n        <footnote id=\"F1\">Automatic grant pursuant to the Apple Inc. Non-Employee Director Stock Plan, as Amended and Restated.</footnote>\n        <footnote id=\"F2\">Each restricted stock unit represents the right to receive, at settlement, one share of common stock.</footnote>\n        <footnote id=\"F3\">100% of these restricted stock units are scheduled to vest on February 1, 2027, assuming continued service through the vesting date.</footnote>\n    </footnotes>\n\n    <remarks></remarks>\n\n    <ownerSignature>\n        <signatureName>/s/ Sam Whittington, Attorney-in-Fact for Susan Wagner</signatureName>\n        <signatureDate>2026-02-26</signatureDate>\n    </ownerSignature>\n</ownershipDocument>\n"
+  }
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-09-22T19:15:57+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "adf141d04b4c"
+}

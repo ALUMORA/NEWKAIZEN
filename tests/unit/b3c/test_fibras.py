@@ -57,9 +57,11 @@ def fibra(sym="FUNO11.MX", **over):
 def _build(monkeypatch, datos, extra=None, rate=None):
     monkeypatch.setattr(FB, "fetch_symbols", lambda syms, **kw: ({s: datos[s] for s in syms if s in datos}, []))
     monkeypatch.setattr(FB, "get_fibras_universe", lambda: fakes_universe(datos))
-    if rate is None:
-        monkeypatch.delattr(rates, "get_cetes28", raising=False)
-    else:
+    # Al juntar los streams, B2b ya publica get_rf_series y compañía: para probar "sin costura" hay
+    # que quitar TODAS las que busca cetes28(), o la prueba termina saliendo a la red de verdad.
+    for _name in FB.RF_FUNCTIONS:
+        monkeypatch.delattr(rates, _name, raising=False)
+    if rate is not None:
         monkeypatch.setattr(rates, "get_cetes28", lambda: rate, raising=False)
     return FB.build(extra)
 

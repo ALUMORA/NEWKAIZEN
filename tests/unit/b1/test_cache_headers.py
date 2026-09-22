@@ -130,8 +130,8 @@ def test_unknown_data_class_fails_loudly():
 
 def test_errors_are_never_cached(app):
     client = TestClient(app, raise_server_exceptions=False)
+    # Nota de M2: ya no queda ninguna ruta en 501 entre estas, porque la fase 2 las implementó.
     casos = {
-        "/v2/quotes?symbols=AAPL": 501,  # stub del contrato
         "/v2/quotes?symbols=<mal>": 400,
         "/v2/quotes": 422,
         "/nada/que/ver": 404,

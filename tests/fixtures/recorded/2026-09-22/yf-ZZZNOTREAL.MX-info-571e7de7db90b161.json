@@ -1,0 +1,18 @@
+{
+ "key": "yf:ZZZNOTREAL.MX:info",
+ "provider": "yfinance",
+ "symbol": "ZZZNOTREAL.MX",
+ "attr": "info",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "trailingPegRatio": null
+ },
+ "soft_failure": false,
+ "logs": [
+  "HTTP Error 404: {\"quoteSummary\":{\"result\":null,\"error\":{\"code\":\"Not Found\",\"description\":\"Quote not found for symbol: ZZZNOTREAL.MX\"}}}"
+ ],
+ "recorded_at": "2026-09-22T23:03:18+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "b939543bfb98"
+}

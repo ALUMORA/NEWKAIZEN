@@ -77,7 +77,7 @@ def brute_force(prices, targets, value, cap=400_000):
         spend = sum(combo[i] * prices[symbols[i]] for i in range(len(symbols)))
         if spend > value + EPS:
             continue
-        qty = dict(zip(symbols, combo))
+        qty = dict(zip(symbols, combo, strict=True))
         d = deviation(qty, prices, targets, value)
         if d < best_dev - 1e-12:
             best, best_dev = qty, d

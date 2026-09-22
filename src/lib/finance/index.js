@@ -72,20 +72,20 @@ export { derivePositions } from './ledger.js'
 // y scripts/ownership.json.
 //
 // A2, álgebra lineal, covarianza y optimización:
-// export { matmul, transpose, cholesky, solve, largestEigenvalue } from './linalg.js'
-// export { sampleCov, ledoitWolfConstantCorrelation, annualize, corrFromCov } from './covariance.js'
-// export { capmExpected, historicalMean, jamesStein } from './expected.js'
-// export { projectBoxSimplex, minVariance, meanVariance, efficientFrontier, maxSharpe, riskParity, InfeasibleError } from './optimize.js'
-// export { walkForward } from './walkforward.js'
+export { matmul, transpose, cholesky, solveSPD, largestEigenvalue } from './linalg.js'
+export { sampleCov, ledoitWolfConstantCorrelation, annualize, corrFromCov } from './covariance.js'
+export { capmExpected, historicalMean, jamesStein } from './expected.js'
+export { projectBoxSimplex, minVariance, meanVariance, efficientFrontier, maxSharpe, riskParity, InfeasibleError } from './optimize.js'
+export { walkForward } from './walkforward.js'
 //
 // A3, aleatoriedad con semilla, Monte Carlo y metas (rng.js vive en src/lib/, no en finance/):
-// export { createRng } from '../rng.js'
-// export { lognormalParams, simulate } from './montecarlo.js'
-// export { probabilityOfGoal, requiredContribution, retirementIncome } from './goals.js'
+export { createRng } from '../rng.js'
+export { lognormalParams, simulate } from './montecarlo.js'
+export { probabilityOfGoal, requiredContribution, retirementIncome } from './goals.js'
 //
 // A4, lo que falta del portafolio:
-// export { cashBalances, validateTransaction } from './ledger.js'
-// export { valueSeries, twr } from './performance-ledger.js'
-// export { xirr } from './xirr.js'
-// export { isrOnGains } from './tax-mx.js'
-// export { wholeShareRebalance } from './rebalance.js'
+export { cashBalances, validateTransaction } from './ledger.js'
+export { valueSeries, twr } from './performance-ledger.js'
+export { xirr } from './xirr.js'
+export { isrOnGains } from './tax-mx.js'
+export { wholeShareRebalance } from './rebalance.js'

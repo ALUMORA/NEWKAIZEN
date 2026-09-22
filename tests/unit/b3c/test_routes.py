@@ -20,6 +20,20 @@ SIN_GUION_LARGO = ("—", "–")
 
 
 @pytest.fixture(autouse=True)
+def _sin_costura_rf(monkeypatch):
+    """Ninguna prueba de ruta sale a la red por la tasa.
+
+    Al juntar los streams, B2b publica de verdad ``get_rf_series`` y compañía, así que
+    ``fibras.cetes28()`` dejaría de caer en el camino "sin costura" y pediría la serie a FRED. Cada
+    prueba que quiera una tasa la pone ella misma con ``setattr`` después de esta fixture.
+    """
+    from kaizen_api.domain import rates
+
+    for name in FB.RF_FUNCTIONS:
+        monkeypatch.delattr(rates, name, raising=False)
+
+
+@pytest.fixture(autouse=True)
 def _clean_cache():
     cache.reset_state()
     yield
@@ -205,6 +219,8 @@ def test_fibras_con_tasa_sustituta_marca_fallback(client, monkeypatch):
     from kaizen_api.domain import rates
 
     monkeypatch.setattr(FB, "fetch_symbols", lambda syms, **kw: ({s: fibra(s) for s in syms}, []))
+    for _name in FB.RF_FUNCTIONS:
+        monkeypatch.delattr(rates, _name, raising=False)
     monkeypatch.setattr(rates, "get_cetes28",
                         lambda: {"rate": 0.0975, "asOf": "2026-09-18", "source": "fred", "fallback": True},
                         raising=False)
