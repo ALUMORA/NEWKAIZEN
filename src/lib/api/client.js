@@ -13,6 +13,11 @@
 //   capabilities esté en "probing" o "waking". Si el servidor ya estaba "ready", se vuelve a
 //   sondear /health (eso muestra el aviso de "Despertando") y se reintenta igual. Nunca se
 //   reintenta un 4xx, ni un POST, ni con el servidor marcado "down".
+// - authorizedFetch(input, init): fetch() con la misma política de sesión (Bearer y 401) que
+//   devuelve la Response cruda. Es para la app legada, que lee las respuestas a su manera. Solo
+//   toca URLs del API; /health nunca lleva token (es pública y la app legada la usa para detectar
+//   el backend); con token y /health todavía sin contestar, espera al sondeo para no mandarle el
+//   header a un backend viejo.
 import { API_BASE, UNAUTHORIZED_EVENT, buildUrl } from './config.js'
 import { ApiError, isAbortError, isColdStartError, request, sleep } from './http.js'
 import { getCapabilities, startCapabilitiesProbe } from './capabilities.js'
@@ -51,6 +56,93 @@ function notifyUnauthorized(path) {
   if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
     window.dispatchEvent(new CustomEvent(UNAUTHORIZED_EVENT, { detail: { path } }))
   }
+}
+
+/** URL, como texto, de lo que recibe fetch(): string, URL o Request. */
+function inputUrl(input) {
+  if (typeof input === 'string') return input
+  if (input instanceof URL) return input.href
+  return input && typeof input.url === 'string' ? input.url : String(input)
+}
+
+/**
+ * ¿La URL es del API? Compara contra la base completa más "/" o "?", para que un host como
+ * "https://api.example.com.otro.net" no pase por "https://api.example.com".
+ * @param {string} url
+ * @param {string} [base]
+ */
+export function isApiUrl(url, base = API_BASE) {
+  return url === base || url.startsWith(`${base}/`) || url.startsWith(`${base}?`)
+}
+
+/**
+ * Rutas del API que nunca llevan token. /health es pública en el API v2, y el backend viejo
+ * contesta el preflight con "Access-Control-Allow-Headers: *", que según la especificación de
+ * fetch no cubre Authorization: si /health llevara el header, la app legada no detectaría ese
+ * backend.
+ */
+const PUBLIC_API_PATHS = new Set(['/health'])
+
+/** "/stock/AAPL" para `${API_BASE}/stock/AAPL?x=1`. La URL ya pasó por isApiUrl. */
+function apiPath(url) {
+  return url.slice(API_BASE.length).split(/[?#]/)[0] || '/'
+}
+
+/**
+ * Con token en mano, antes de mandarlo hay que saber si el servidor usa sesiones: mientras el
+ * primer sondeo de /health no conteste (authRequired null, sin checkedAt) se espera a que
+ * termine. Así un backend viejo nunca recibe Authorization. Respeta la cancelación del request.
+ * @param {AbortSignal | undefined} signal
+ */
+async function waitForAuthPolicy(signal) {
+  const caps = getCapabilities()
+  if (caps.authRequired !== null || caps.checkedAt) return
+  const probe = startCapabilitiesProbe()
+  if (!signal) {
+    await probe
+    return
+  }
+  if (signal.aborted) throw signal.reason
+  await new Promise((resolve, reject) => {
+    const onAbort = () => reject(signal.reason)
+    signal.addEventListener('abort', onAbort, { once: true })
+    probe.then(resolve, resolve).finally(() => signal.removeEventListener('abort', onAbort))
+  })
+}
+
+/**
+ * fetch() con la política de sesión de apiFetch, para código que necesita la Response cruda (la
+ * app legada de src/legacy). Solo actúa sobre URLs del API (API_BASE):
+ * - agrega Authorization: Bearer <token> si hay token y el servidor no dijo authRequired=false
+ *   (un header Authorization que ya venga no se toca). Si /health todavía no contesta, primero
+ *   espera al sondeo. /health nunca lleva token.
+ * - un 401 cierra la sesión y emite "kaizen:unauthorized" como en apiFetch; RequireAuth manda a
+ *   /login?next=<ruta>.
+ * No lanza por status ni reintenta: devuelve la Response tal cual. Cualquier otra URL pasa
+ * directo a fetch, sin token y sin tocar la sesión.
+ * @param {RequestInfo | URL} input
+ * @param {RequestInit} [init]
+ * @returns {Promise<Response>}
+ */
+export async function authorizedFetch(input, init) {
+  const url = inputUrl(input)
+  if (!isApiUrl(url)) return fetch(input, init)
+  const path = apiPath(url)
+  if (PUBLIC_API_PATHS.has(path)) return fetch(input, init)
+  const fromRequest = typeof Request !== 'undefined' && input instanceof Request ? input : null
+  let options = init
+  if (getToken()) {
+    await waitForAuthPolicy(init?.signal ?? fromRequest?.signal ?? undefined)
+    const { Authorization } = authHeaders(true)
+    if (Authorization) {
+      const headers = new Headers(init?.headers ?? fromRequest?.headers)
+      if (!headers.has('Authorization')) headers.set('Authorization', Authorization)
+      options = { ...init, headers }
+    }
+  }
+  const res = await fetch(input, options)
+  if (res.status === 401) notifyUnauthorized(path)
+  return res
 }
 
 /**

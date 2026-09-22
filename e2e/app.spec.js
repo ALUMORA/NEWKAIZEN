@@ -9,7 +9,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { test as plainTest } from '@playwright/test'
 import { test as base, expect } from './support/guards.js'
 import { attachGuards } from './support/guards.js'
-import { SESSION_KEY } from './support/auth.js'
+import { DEFAULT_SESSION, SESSION_KEY } from './support/auth.js'
 import { API_URL_RE, expectedHttpError, loginResponse, setupApp } from './support/app.js'
 import { trackNetwork, waitForSettled } from './support/legacy.js'
 
@@ -40,9 +40,11 @@ test.describe('rutas privadas', () => {
 
 test.describe('login', () => {
   test('200: guarda la sesión y entra a ?next con la app legada', async ({ page, baseURL }) => {
+    // La compuerta de las rutas v1 solo acepta el token que devuelve el login.
     const api = await setupApp(page, {
       baseURL,
       legacyApi: true,
+      legacyAuth: loginResponse().token,
       routes: { 'POST /auth/login': { json: loginResponse() } },
     })
     const net = trackNetwork(page, API_URL_RE)
@@ -59,6 +61,9 @@ test.describe('login', () => {
     const stored = await page.evaluate((k) => JSON.parse(sessionStorage.getItem(k) ?? 'null'), SESSION_KEY)
     expect(stored).toMatchObject({ token: 'jwt.e2e', user: { username: 'ana', displayName: 'Ana López' } })
     api.assertAllMatched()
+    const gated = api.legacyAuth?.requests ?? []
+    expect(gated.length).toBeGreaterThan(0)
+    expect(gated.filter((r) => r.authorization !== 'Bearer jwt.e2e')).toEqual([])
   })
 
   test('manda usuario y contraseña tal cual en el cuerpo', async ({ page, baseURL }) => {
@@ -66,6 +71,7 @@ test.describe('login', () => {
     await setupApp(page, {
       baseURL,
       legacyApi: true,
+      legacyAuth: loginResponse().token,
       routes: {
         'POST /auth/login': (ctx) => {
           body = ctx.body
@@ -162,6 +168,11 @@ test.describe('login', () => {
 test.describe('app legada dentro de LegacyPage', () => {
   test('sesión sembrada + API v2: /mercados muestra Noticias del legado', async ({ page, baseURL }) => {
     const api = await setupApp(page, { baseURL, session: true, legacyApi: true })
+    /** @type {(string | null)[]} */
+    const healthAuth = []
+    page.on('request', (req) => {
+      if (/^http:\/\/api\.test\/health$/.test(req.url()) && req.method() === 'GET') healthAuth.push(req.headers().authorization ?? null)
+    })
     const net = trackNetwork(page, API_URL_RE)
     await page.goto('/mercados')
     await legacySettled(page, net)
@@ -171,6 +182,63 @@ test.describe('app legada dentro de LegacyPage', () => {
     await expect(page.getByText('Resumen Mañanero').first()).toBeVisible()
     expect(api.calls.filter((c) => c === 'GET /health').length).toBeGreaterThanOrEqual(1)
     api.assertAllMatched()
+    // Con authRequired:true el backend v2 exige sesión también en las rutas v1 (setupApp pone la
+    // compuerta): el legado solo ve datos porque cada request lleva el token de la sesión.
+    const gated = api.legacyAuth?.requests ?? []
+    expect(gated.length).toBeGreaterThan(5)
+    expect(gated.filter((r) => r.authorization !== `Bearer ${DEFAULT_SESSION.token}`)).toEqual([])
+    // /health es pública: ni el sondeo de la app ni la detección del legado mandan el token.
+    expect(healthAuth.length).toBeGreaterThanOrEqual(2)
+    expect(healthAuth.filter((h) => h !== null)).toEqual([])
+  })
+
+  // Dos formas de llegar sin el token que acepta el servidor: uno que ya revocó y una sesión sin
+  // token (la de desarrollo). En las dos el legado no llega a mostrar datos: el primer 401 cierra
+  // la sesión y RequireAuth manda a /login.
+  for (const { label, token, header } of [
+    { label: 'token que el servidor ya no acepta', token: 'e2e-token-revocado', header: 'Bearer e2e-token-revocado' },
+    { label: 'sesión sin token', token: null, header: null },
+  ]) {
+    plainTest(`${label}: el 401 del legado cierra la sesión y manda a /login`, async ({ page, baseURL }) => {
+      const guards = attachGuards(page, {
+        allow: [
+          { kind: 'http', match: /^401 GET http:\/\/api\.test\//, reason: 'La compuerta rechaza el request a propósito.' },
+          { kind: 'console.error', match: /status of 401\b/, reason: 'Chromium imprime cada 401 provocado como console.error.' },
+        ],
+      })
+      const api = await setupApp(page, {
+        baseURL,
+        session: { ...DEFAULT_SESSION, token },
+        legacyApi: true,
+        legacyAuth: DEFAULT_SESSION.token,
+      })
+      await page.goto('/mercados')
+      await expect(page).toHaveURL(/\/login\?next=%2Fmercados$/)
+      await expect(page.getByRole('status').filter({ hasText: 'Tu sesión ya no es válida.' })).toBeVisible()
+      expect(await page.evaluate((k) => sessionStorage.getItem(k), SESSION_KEY)).toBeNull()
+      await expect(page.getByText('Resumen Mañanero')).toHaveCount(0)
+      const gated = api.legacyAuth?.requests ?? []
+      expect(gated.length).toBeGreaterThan(0)
+      expect(new Set(gated.map((r) => r.authorization))).toEqual(new Set([header]))
+      expect(guards.allowed.length).toBeGreaterThan(0)
+      guards.assertClean()
+    })
+  }
+
+  test('servidor viejo (sin sesiones): el legado no manda Authorization', async ({ page, baseURL }) => {
+    const api = await setupApp(page, { baseURL, health: 'legacy', session: true, legacyApi: true })
+    expect(api.legacyAuth).toBeNull()
+    /** @type {(string | null)[]} */
+    const sent = []
+    page.on('request', (req) => {
+      if (API_URL_RE.test(req.url()) && req.method() !== 'OPTIONS') sent.push(req.headers().authorization ?? null)
+    })
+    const net = trackNetwork(page, API_URL_RE)
+    await page.goto('/mercados')
+    await legacySettled(page, net)
+    await expect(page.getByText('Resumen Mañanero').first()).toBeVisible()
+    expect(sent.length).toBeGreaterThan(5)
+    expect(sent.filter((h) => h !== null)).toEqual([])
   })
 
   test('la raíz con sesión redirige a /mercados', async ({ page, baseURL }) => {

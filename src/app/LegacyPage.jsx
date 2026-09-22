@@ -7,6 +7,11 @@
 // `handle.legacy` le dice a CapabilitiesBanner que aquí el API viejo sí sirve. El módulo legado
 // pesa mucho y se carga aparte (import dinámico): la primera pantalla de las rutas nuevas no lo
 // descarga.
+//
+// Sesión: el legado pide sus datos con authorizedFetch (src/lib/api/client.js), así que cada
+// request de datos al API lleva Authorization: Bearer <token> (el backend v2 exige sesión también
+// en las rutas v1; /health es pública y va sin token) y un 401 cierra la sesión: RequireAuth
+// manda a /login?next=<ruta>.
 import { Suspense, lazy, useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { API_BASE } from '../lib/api/config.js'

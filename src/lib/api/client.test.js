@@ -3,7 +3,7 @@
 import { installFetch, json, networkError, text, hang } from '../../test/fetchMock.js'
 import { SESSION_KEY, consumeEndReason, isAuthenticated, resetSessionForTests } from '../auth/session.js'
 import { getCapabilities, resetCapabilitiesForTests } from './capabilities.js'
-import { API_BASE, ApiError, COLD_START_DELAYS_MS, UNAUTHORIZED_EVENT, apiFetch } from './client.js'
+import { API_BASE, ApiError, COLD_START_DELAYS_MS, UNAUTHORIZED_EVENT, apiFetch, authorizedFetch, isApiUrl } from './client.js'
 
 const session = { token: 'jwt.xyz', expiresAt: '2099-01-01T00:00:00.000Z', user: { username: 'ana', displayName: 'Ana' } }
 const health = json(200, { status: 'ok', apiVersion: 2, authRequired: true, capabilities: [] })
@@ -95,6 +95,175 @@ describe('apiFetch: sesión', () => {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
     installFetch([json(401, {})])
     await apiFetch('/auth/login', { method: 'POST', body: {}, auth: false }).catch(() => {})
+    expect(isAuthenticated()).toBe(true)
+  })
+})
+
+describe('authorizedFetch (app legada)', () => {
+  /** @param {() => Promise<unknown>} fn */
+  async function collectEvents(fn) {
+    const events = []
+    const onEvent = (e) => events.push(e.detail)
+    window.addEventListener(UNAUTHORIZED_EVENT, onEvent)
+    try {
+      await fn()
+    } finally {
+      window.removeEventListener(UNAUTHORIZED_EVENT, onEvent)
+    }
+    return events
+  }
+
+  it('isApiUrl: la base, sus rutas y su query; no un host que solo empieza igual', () => {
+    expect(isApiUrl(API_BASE)).toBe(true)
+    expect(isApiUrl(`${API_BASE}/stock/AAPL`)).toBe(true)
+    expect(isApiUrl(`${API_BASE}?x=1`)).toBe(true)
+    expect(isApiUrl(`${API_BASE}.otro.net/stock/AAPL`)).toBe(false)
+    expect(isApiUrl(`${API_BASE}evil/stock`)).toBe(false)
+    expect(isApiUrl('https://news.example.com/articulo')).toBe(false)
+  })
+
+  it('con sesión manda Bearer a las rutas v1 y conserva el resto de init (signal, method)', async () => {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
+    const f = installFetch([json(200, { rate: 0.09 })])
+    const ctrl = new AbortController()
+    const res = await authorizedFetch(`${API_BASE}/rf`, { signal: ctrl.signal })
+    expect(res).toBeInstanceOf(Response)
+    expect(await res.json()).toEqual({ rate: 0.09 })
+    expect(f.calls[0]).toMatchObject({ url: `${API_BASE}/rf`, method: 'GET' })
+    expect(f.calls[0].headers.authorization).toBe('Bearer jwt.xyz')
+    expect(f.fn.mock.calls[0][1].signal).toBe(ctrl.signal)
+  })
+
+  it('acepta URL y Request, y no pisa un Authorization que ya venga', async () => {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
+    const f = installFetch([json(200, {}), json(200, {}), json(200, {})])
+    await authorizedFetch(new URL(`${API_BASE}/market`))
+    await authorizedFetch(new Request(`${API_BASE}/worldmap`, { headers: { 'x-extra': '1' } }))
+    await authorizedFetch(`${API_BASE}/fx`, { headers: { Authorization: 'Bearer otro' } })
+    expect(f.calls.map((c) => c.headers.authorization)).toEqual(['Bearer jwt.xyz', 'Bearer jwt.xyz', 'Bearer otro'])
+    expect(f.calls[1].headers['x-extra']).toBe('1')
+  })
+
+  it('sin token, con authRequired=false o con el API viejo no manda Authorization', async () => {
+    const f = installFetch([json(200, {}), json(200, {}), json(200, {})])
+    await authorizedFetch(`${API_BASE}/macro`)
+    // La sesión ya se leyó (vacía) y quedó en memoria: se olvida para que lea la nueva.
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
+    resetSessionForTests()
+    resetCapabilitiesForTests({ status: 'ready', apiVersion: 2, authRequired: false, checkedAt: 'x' })
+    await authorizedFetch(`${API_BASE}/macro`)
+    resetCapabilitiesForTests({ status: 'legacy', apiVersion: 1, authRequired: false, checkedAt: 'x' })
+    await authorizedFetch(`${API_BASE}/macro`)
+    expect(f.calls.map((c) => c.headers.authorization ?? null)).toEqual([null, null, null])
+  })
+
+  it('/health nunca lleva token (es pública y el backend viejo no acepta el header en el preflight)', async () => {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
+    const f = installFetch([json(200, { status: 'ok' }), json(401, {})])
+    const events = await collectEvents(async () => {
+      await authorizedFetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(60_000) })
+      // Un 401 de /health no dice nada de la sesión: no la cierra.
+      expect((await authorizedFetch(`${API_BASE}/health?x=1`)).status).toBe(401)
+    })
+    expect(f.calls.map((c) => c.headers.authorization ?? null)).toEqual([null, null])
+    expect(events).toEqual([])
+    expect(isAuthenticated()).toBe(true)
+  })
+
+  describe('con token y /health todavía sin contestar', () => {
+    beforeEach(() => {
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
+      resetCapabilitiesForTests({ status: 'probing' })
+    })
+
+    it('espera al sondeo: si el backend es el viejo, no manda Authorization', async () => {
+      const f = installFetch([json(200, { status: 'ok' }), json(200, { rate: 0.09 })])
+      await authorizedFetch(`${API_BASE}/rf`)
+      expect(f.calls.map((c) => [c.url, c.headers.authorization ?? null])).toEqual([
+        [`${API_BASE}/health`, null],
+        [`${API_BASE}/rf`, null],
+      ])
+      expect(getCapabilities().status).toBe('legacy')
+    })
+
+    it('espera al sondeo: si es el API v2 con sesiones, sí manda el token', async () => {
+      const f = installFetch([health, json(200, {})])
+      await authorizedFetch(`${API_BASE}/stock/AAPL`)
+      expect(f.calls.map((c) => [c.url, c.headers.authorization ?? null])).toEqual([
+        [`${API_BASE}/health`, null],
+        [`${API_BASE}/stock/AAPL`, 'Bearer jwt.xyz'],
+      ])
+    })
+
+    it('si el sondeo da al servidor por caído, manda el token (no se sabe si lo pide)', async () => {
+      const f = installFetch([json(404, {}), json(200, {})])
+      await authorizedFetch(`${API_BASE}/market`)
+      expect(getCapabilities().status).toBe('down')
+      expect(f.calls[1].headers.authorization).toBe('Bearer jwt.xyz')
+    })
+
+    it('cancelar mientras espera rechaza con el motivo del signal y no hace el request', async () => {
+      let release = () => {}
+      const gate = new Promise((resolve) => {
+        release = resolve
+      })
+      const f = installFetch([
+        async () => {
+          await gate
+          return new Response(JSON.stringify({ status: 'ok' }), { status: 200, headers: { 'content-type': 'application/json' } })
+        },
+      ])
+      const ctrl = new AbortController()
+      const pending = authorizedFetch(`${API_BASE}/fx`, { signal: ctrl.signal })
+      ctrl.abort(new DOMException('ya no hace falta', 'AbortError'))
+      await expect(pending).rejects.toMatchObject({ name: 'AbortError', message: 'ya no hace falta' })
+      release()
+      await Promise.resolve()
+      expect(f.calls.map((c) => c.url)).toEqual([`${API_BASE}/health`])
+    })
+
+    it('sin token no espera nada: el request sale de inmediato y sin header', async () => {
+      sessionStorage.removeItem(SESSION_KEY)
+      resetSessionForTests()
+      const f = installFetch([json(200, {})])
+      await authorizedFetch(`${API_BASE}/macro`)
+      expect(f.calls.map((c) => [c.url, c.headers.authorization ?? null])).toEqual([[`${API_BASE}/macro`, null]])
+    })
+  })
+
+  it('URL fuera del API: pasa directo, sin token, y su 401 no toca la sesión', async () => {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
+    const f = installFetch([json(401, {}), json(200, {})])
+    const events = await collectEvents(async () => {
+      const res = await authorizedFetch('https://otro.example.com/datos')
+      expect(res.status).toBe(401)
+      await authorizedFetch(`${API_BASE}.otro.net/stock/AAPL`)
+    })
+    expect(f.calls.map((c) => c.headers.authorization ?? null)).toEqual([null, null])
+    expect(events).toEqual([])
+    expect(isAuthenticated()).toBe(true)
+  })
+
+  it('401 del API: devuelve la Response, cierra la sesión y emite kaizen:unauthorized con la ruta', async () => {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
+    installFetch([json(401, { error: { code: 'UNAUTHORIZED', message: 'Inicia sesión.' } })])
+    let res
+    const events = await collectEvents(async () => {
+      res = await authorizedFetch(`${API_BASE}/chart/AAPL?period=1y&ccy=MXN`)
+    })
+    expect(res.status).toBe(401)
+    expect(events).toEqual([{ path: '/chart/AAPL' }])
+    expect(isAuthenticated()).toBe(false)
+    expect(sessionStorage.getItem(SESSION_KEY)).toBeNull()
+    expect(consumeEndReason()).toBe('unauthorized')
+  })
+
+  it('otros errores (500, red) no tocan la sesión: el legado los maneja como antes', async () => {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
+    installFetch([json(500, {}), networkError()])
+    const res = await authorizedFetch(`${API_BASE}/stock/MSFT`)
+    expect(res.status).toBe(500)
+    await expect(authorizedFetch(`${API_BASE}/stock/MSFT`)).rejects.toThrow(TypeError)
     expect(isAuthenticated()).toBe(true)
   })
 })

@@ -3,6 +3,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useTheme } from '../theme.js';
 import { Badge, Button, IconButton, Card, KpiTile, Mark, ThemeToggle } from '../ui.jsx';
 import { cn } from '../cn.js';
+// Todo request al backend pasa por authorizedFetch: lleva el token de la sesión (el API v2 exige
+// sesión también en sus rutas v1) y un 401 cierra la sesión y manda a /login. Nunca fetch directo.
+import { authorizedFetch } from '../lib/api/client.js';
 import {
   Menu, X,
   Newspaper, Briefcase, Gauge, ListFilter, LineChart as LineChartIcon,
@@ -37,7 +40,7 @@ const BACKEND_CANDIDATES = import.meta.env.DEV && import.meta.env.VITE_API_URL
 async function detectBackend(candidates = BACKEND_CANDIDATES) {
   for (const url of candidates) {
     try {
-      const res = await fetch(`${url}/health`, { signal: AbortSignal.timeout(60000) });
+      const res = await authorizedFetch(`${url}/health`, { signal: AbortSignal.timeout(60000) });
       const data = await res.json();
       if (data?.status === "ok") return url;
     } catch { /* sin dato: se conserva el valor previo */ }
@@ -94,7 +97,7 @@ async function fetchStock(ticker, timeoutMs = 30000) {
   // Reintenta automáticamente en caso de fallo de red/respuesta no-JSON (Render cold start)
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const res = await fetch(`${BACKEND}/stock/${encodeURIComponent(ticker)}`, { signal: AbortSignal.timeout(timeoutMs) });
+      const res = await authorizedFetch(`${BACKEND}/stock/${encodeURIComponent(ticker)}`, { signal: AbortSignal.timeout(timeoutMs) });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       return data?.error ? null : data;
@@ -118,7 +121,7 @@ async function fetchChart(ticker, period = "5y", timeoutMs = 90000) {
   // Reintenta automáticamente en caso de fallo de red (Render cold start)
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      const res = await fetch(`${BACKEND}/chart/${encodeURIComponent(ticker)}?period=${period}&ccy=MXN`,
+      const res = await authorizedFetch(`${BACKEND}/chart/${encodeURIComponent(ticker)}?period=${period}&ccy=MXN`,
         { signal: AbortSignal.timeout(timeoutMs) });
       const data = await res.json();
       const closes = data?.closes ?? [];
@@ -136,7 +139,7 @@ async function fetchChart(ticker, period = "5y", timeoutMs = 90000) {
 
 async function fetchRiskFreeRate() {
   try {
-    const res = await fetch(`${BACKEND}/rf`);
+    const res = await authorizedFetch(`${BACKEND}/rf`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     if (data?.rate == null) throw new Error("respuesta sin rate");
@@ -1135,8 +1138,8 @@ function Workspace({ backendUrl, initialTab = "news", onLogout }) {
     fetchRiskFreeRate()
       .then((r) => { setRfRate(r.rate); setRfLabel(r.label); setBackendOk(r.ok); })
       .catch(() => setBackendOk(false));
-    fetch(`${BACKEND}/macro`).then(r => r.json()).then(setMacroData).catch(() => {});
-    fetch(`${BACKEND}/fx`).then(r => r.json()).then(d => { if (d?.USDMXN) { USDMXN_SPOT = d.USDMXN; setUsdMxn(d.USDMXN); } }).catch(() => {});
+    authorizedFetch(`${BACKEND}/macro`).then(r => r.json()).then(setMacroData).catch(() => {});
+    authorizedFetch(`${BACKEND}/fx`).then(r => r.json()).then(d => { if (d?.USDMXN) { USDMXN_SPOT = d.USDMXN; setUsdMxn(d.USDMXN); } }).catch(() => {});
   }, []);
 
   // Keep-alive: ping cada 9 min para evitar que Render (free tier) duerma
@@ -1144,7 +1147,7 @@ function Workspace({ backendUrl, initialTab = "news", onLogout }) {
   useEffect(() => {
     if (!backendUrl) return;
     const id = setInterval(() => {
-      fetch(`${backendUrl}/fx`, { signal: AbortSignal.timeout(10000) }).catch(() => {});
+      authorizedFetch(`${backendUrl}/fx`, { signal: AbortSignal.timeout(10000) }).catch(() => {});
     }, 9 * 60 * 1000);
     return () => clearInterval(id);
   }, [backendUrl]);
@@ -1160,7 +1163,7 @@ function Workspace({ backendUrl, initialTab = "news", onLogout }) {
       const sd = await fetchStock(ticker);
       if (sd) setStockData((prev) => ({ ...prev, [ticker]: sd }));
       // DCF en paralelo
-      fetch(`${BACKEND}/dcf/${encodeURIComponent(ticker)}`).then(r => r.json())
+      authorizedFetch(`${BACKEND}/dcf/${encodeURIComponent(ticker)}`).then(r => r.json())
         .then(d => setDcfData(prev => ({ ...prev, [ticker]: d }))).catch(() => {});
     } catch (e) {
       console.error(ticker, e);
@@ -1344,7 +1347,7 @@ function Workspace({ backendUrl, initialTab = "news", onLogout }) {
     const deadline = Date.now() + 120000; // hasta 2 minutos
     while (Date.now() < deadline) {
       try {
-        const r = await fetch(`${BACKEND}/fx`, { signal: AbortSignal.timeout(15000) });
+        const r = await authorizedFetch(`${BACKEND}/fx`, { signal: AbortSignal.timeout(15000) });
         const d = await r.json();
         if (d?.USDMXN || d?.usdmxn) return true; // respuesta real del servicio
       } catch { /* sin dato: se conserva el valor previo */ }
@@ -1635,8 +1638,8 @@ function Workspace({ backendUrl, initialTab = "news", onLogout }) {
       let dcf = null, mom = null;
       try {
         [dcf, mom] = await Promise.all([
-          fetch(`${BACKEND}/dcf/${encodeURIComponent(t)}`).then(r => r.json()).catch(() => null),
-          fetch(`${BACKEND}/momentum/${encodeURIComponent(t)}`).then(r => r.json()).catch(() => null),
+          authorizedFetch(`${BACKEND}/dcf/${encodeURIComponent(t)}`).then(r => r.json()).catch(() => null),
+          authorizedFetch(`${BACKEND}/momentum/${encodeURIComponent(t)}`).then(r => r.json()).catch(() => null),
         ]);
       } catch { /* sin dato: se conserva el valor previo */ }
       results.push({ ticker: t, ...sd, scores, dcf, momentum: mom, sharpe1y });
@@ -1675,7 +1678,7 @@ function Workspace({ backendUrl, initialTab = "news", onLogout }) {
       const ticker = MAGIC_UNIVERSE[i];
       setMagicProgress({ done: i + 1, total: MAGIC_UNIVERSE.length, current: ticker });
       try {
-        const magicRes = await fetch(`${BACKEND}/magic_one/${encodeURIComponent(ticker)}`).then(r => r.json()).catch(() => null);
+        const magicRes = await authorizedFetch(`${BACKEND}/magic_one/${encodeURIComponent(ticker)}`).then(r => r.json()).catch(() => null);
         if (!magicRes || magicRes.skip) { await sleep(80); continue; }
         candidates.push(magicRes);
       } catch { /* sin dato: se conserva el valor previo */ }
@@ -1704,7 +1707,7 @@ function Workspace({ backendUrl, initialTab = "news", onLogout }) {
     try {
       const extra = fibrasExtra.trim();
       const url = extra ? `${BACKEND}/fibras/${encodeURIComponent(extra)}` : `${BACKEND}/fibras`;
-      const data = await fetch(url).then(r => r.json());
+      const data = await authorizedFetch(url).then(r => r.json());
       setFibrasData(data);
       try {
         localStorage.setItem("kaizen_fibras_data", JSON.stringify(data));
@@ -1774,7 +1777,7 @@ function Workspace({ backendUrl, initialTab = "news", onLogout }) {
     setNewsLoading(true);
     setNewsData([]);
     try {
-      const res = await fetch(`${BACKEND}/news/${encodeURIComponent(ticker.trim().toUpperCase())}`);
+      const res = await authorizedFetch(`${BACKEND}/news/${encodeURIComponent(ticker.trim().toUpperCase())}`);
       const data = await res.json();
       setNewsData(data.news ?? []);
     } catch { setNewsData([]); }
@@ -1799,8 +1802,8 @@ function Workspace({ backendUrl, initialTab = "news", onLogout }) {
     setAnalisisEdgar(null);
     try {
       const [stockRes, chartRes] = await Promise.all([
-        fetch(`${BACKEND}/stock/${t}`),
-        fetch(`${BACKEND}/chart/${t}?period=${period}`),
+        authorizedFetch(`${BACKEND}/stock/${t}`),
+        authorizedFetch(`${BACKEND}/chart/${t}?period=${period}`),
       ]);
       const sd = stockRes.ok ? await stockRes.json() : null;
       const cd = chartRes.ok ? await chartRes.json() : null;
@@ -1812,12 +1815,12 @@ function Workspace({ backendUrl, initialTab = "news", onLogout }) {
     } finally {
       setAnalisisLoading(false);
     }
-    fetch(`${BACKEND}/returns/${t}`).then(r => r.ok ? r.json() : null).then(rd => setAnalisisReturns(rd)).catch(() => {});
+    authorizedFetch(`${BACKEND}/returns/${t}`).then(r => r.ok ? r.json() : null).then(rd => setAnalisisReturns(rd)).catch(() => {});
     setAnalisisEdgarLoading(true);
-    fetch(`${BACKEND}/edgar/${t}`).then(r => r.ok ? r.json() : null).then(ed => setAnalisisEdgar(ed)).catch(() => setAnalisisEdgar(null)).finally(() => setAnalisisEdgarLoading(false));
+    authorizedFetch(`${BACKEND}/edgar/${t}`).then(r => r.ok ? r.json() : null).then(ed => setAnalisisEdgar(ed)).catch(() => setAnalisisEdgar(null)).finally(() => setAnalisisEdgarLoading(false));
     setAnalisisNewsLoading(true);
     try {
-      const nr = await fetch(`${BACKEND}/news/${encodeURIComponent(t)}`);
+      const nr = await authorizedFetch(`${BACKEND}/news/${encodeURIComponent(t)}`);
       const nd = nr.ok ? await nr.json() : null;
       setAnalisisNews(nd?.news ?? []);
     } catch { setAnalisisNews([]); }
@@ -1830,7 +1833,7 @@ function Workspace({ backendUrl, initialTab = "news", onLogout }) {
     setAnalisisPeriod(period);
     setAnalisisHoverIdx(null);
     try {
-      const cd = await fetch(`${BACKEND}/chart/${t}?period=${period}`).then(r => r.ok ? r.json() : null);
+      const cd = await authorizedFetch(`${BACKEND}/chart/${t}?period=${period}`).then(r => r.ok ? r.json() : null);
       setAnalisisChart(cd);
     } catch { /* sin dato: se conserva el valor previo */ }
   }, [analisisTicker]);
@@ -1838,7 +1841,7 @@ function Workspace({ backendUrl, initialTab = "news", onLogout }) {
   const loadMarketData = useCallback(async () => {
     setMarketDataLoading(true);
     try {
-      const data = await fetch(`${BACKEND}/market`).then(r => r.json());
+      const data = await authorizedFetch(`${BACKEND}/market`).then(r => r.json());
       setMarketData(data);
       setLastUpdated(new Date());
     } catch { /* sin dato: se conserva el valor previo */ }
@@ -1848,7 +1851,7 @@ function Workspace({ backendUrl, initialTab = "news", onLogout }) {
   const loadMarketNews = useCallback(async () => {
     setMarketNewsLoading(true);
     try {
-      const data = await fetch(`${BACKEND}/news/market`).then(r => r.json());
+      const data = await authorizedFetch(`${BACKEND}/news/market`).then(r => r.json());
       setMarketNews(data.news ?? []);
     } catch { /* sin dato: se conserva el valor previo */ }
     setMarketNewsLoading(false);
@@ -1858,7 +1861,7 @@ function Workspace({ backendUrl, initialTab = "news", onLogout }) {
   const loadWorldMap = useCallback(async () => {
     setWorldMapLoading(true);
     try {
-      const data = await fetch(`${BACKEND}/worldmap`).then(r => r.json());
+      const data = await authorizedFetch(`${BACKEND}/worldmap`).then(r => r.json());
       setWorldMapData(data);
     } catch { /* sin dato: se conserva el valor previo */ }
     setWorldMapLoading(false);
