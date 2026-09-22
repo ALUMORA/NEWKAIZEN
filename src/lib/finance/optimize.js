@@ -404,14 +404,46 @@ export function efficientFrontier(mu, cov, options = {}) {
   const first = fista(S, new Array(n).fill(0), lo, hi, { lipschitz })
   dense.push({ ...describe(first.weights, S, m, first.iterations, first.converged), tau: 0 })
 
+  const solveAt = (tau, start) => {
+    const c = m.map((v) => v * tau)
+    const r = fista(S, c, lo, hi, { start, lipschitz, maxIter: 8000 })
+    return { ...describe(r.weights, S, m, r.iterations, r.converged), tau }
+  }
+
   let warm = first.weights
   const tauMin = tauMax * 1e-6
   for (let j = 0; j < gridSize; j += 1) {
     const tau = tauMin * Math.pow(tauMax / tauMin, j / (gridSize - 1))
-    const c = m.map((v) => v * tau)
-    const r = fista(S, c, lo, hi, { start: warm, lipschitz, maxIter: 8000 })
-    warm = r.weights
-    dense.push({ ...describe(r.weights, S, m, r.iterations, r.converged), tau })
+    const point = solveAt(tau, warm)
+    warm = point.weights
+    dense.push(point)
+  }
+
+  // El mapa τ -> rendimiento es muy poco lineal: un barrido geométrico deja huecos grandes en el
+  // eje que de verdad se grafica. Se rellenan a propósito los huecos más anchos, partiendo τ por
+  // la mitad geométrica, hasta que ninguno pase de medio espacio objetivo. Cada solución arranca
+  // caliente desde su vecina, así que cada relleno cuesta muy poco.
+  const rangeLow = dense[0].expectedReturn ?? 0
+  const rangeHigh = dense[dense.length - 1].expectedReturn ?? 0
+  const wanted = (rangeHigh - rangeLow) / (2 * (points - 1))
+  let budget = points * 6
+  while (budget > 0 && wanted > 0) {
+    let worst = -1
+    let widest = 0
+    for (let i = 1; i < dense.length; i += 1) {
+      const gap = (dense[i].expectedReturn ?? 0) - (dense[i - 1].expectedReturn ?? 0)
+      if (gap > widest) {
+        widest = gap
+        worst = i
+      }
+    }
+    if (worst < 0 || widest <= wanted) break
+    const tauLow = dense[worst - 1].tau
+    const tauHigh = dense[worst].tau
+    const tauMid = tauLow > 0 ? Math.sqrt(tauLow * tauHigh) : tauHigh / 2
+    if (!(tauMid > tauLow && tauMid < tauHigh)) break
+    dense.splice(worst, 0, solveAt(tauMid, dense[worst - 1].weights))
+    budget -= 1
   }
 
   dense.sort((a, b) => (a.expectedReturn ?? 0) - (b.expectedReturn ?? 0))
@@ -464,9 +496,25 @@ export function maxSharpe(mu, cov, rf, options = {}) {
   const spread = Math.max(...m) - Math.min(...m)
   if (!(lipschitz > 0)) return null
 
+  // Cada τ que se resuelve se guarda, y el siguiente arranca desde la solución del τ más cercano
+  // en escala logarítmica. Los pesos cambian poco entre τ vecinos, así que el arranque caliente
+  // le quita la mayor parte del trabajo a FISTA: es lo que hace que esto se pueda correr dentro
+  // de un walk-forward con decenas de cortes.
+  /** @type {{ logTau: number, weights: number[] }[]} */
+  const solved = []
   const solveAt = (tau) => {
+    let start = null
+    if (solved.length > 0) {
+      const target = Math.log(Math.max(tau, 1e-300))
+      let closest = solved[0]
+      for (const entry of solved) {
+        if (Math.abs(entry.logTau - target) < Math.abs(closest.logTau - target)) closest = entry
+      }
+      start = closest.weights
+    }
     const c = tau === 0 ? new Array(n).fill(0) : m.map((v) => v * tau)
-    const r = fista(S, c, lo, hi, { lipschitz, maxIter: 20000 })
+    const r = fista(S, c, lo, hi, { lipschitz, maxIter: 20000, start })
+    solved.push({ logTau: Math.log(Math.max(tau, 1e-300)), weights: r.weights })
     const d = describe(r.weights, S, m, r.iterations, r.converged)
     const sharpe = d.volatility > 0 ? ((d.expectedReturn ?? 0) - rf) / d.volatility : -Infinity
     return { ...d, sharpe, tau }
