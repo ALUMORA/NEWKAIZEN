@@ -50,6 +50,8 @@ const QUANTILE_KEYS = /** @type {const} */ (['p5', 'p25', 'p50', 'p75', 'p95'])
  *   deflators: number[],
  *   contributed: number[],
  *   contributedTotal: number,
+ *   contributedReal: number[],
+ *   contributedTotalReal: number,
  *   percentiles: PercentileBands,
  *   percentilesReal: PercentileBands,
  *   terminal: TerminalSummary,
@@ -305,7 +307,10 @@ function lowerBound(sorted, target) {
  * de búferes para el segundo argumento de `postMessage`.
  *
  * Ojo: transferir DESPRENDE el búfer del lado que envía, así que después de `postMessage(payload,
- * transfer)` el objeto `sim` original ya no sirve en ese hilo.
+ * transfer)` el objeto `sim` original ya no sirve en ese hilo. No hay que confiarse del aviso: a
+ * partir de ese momento `sim.probabilityAbove()` devuelve `null` (antes devolvía 1, o sea un
+ * "100 % de llegar a la meta" falso), y lo mismo pasa si se rehidrata con `fromMessage` un payload
+ * cuyo búfer ya se fue.
  *
  * @param {SimulationResult | null} sim
  * @returns {{ payload: any, transfer: ArrayBuffer[] }}
@@ -328,14 +333,20 @@ export function fromMessage(payload) {
     ? payload.terminalSorted
     : Float64Array.from(payload.terminalSorted ?? [])
   const nPaths = terminalSorted.length
+  // Cuántas trayectorias DEBERÍA haber, según el propio payload. Si alguien rehidrata un payload
+  // cuyo búfer ya se transfirió, `nPaths` es 0 y `paths` sigue diciendo la verdad: la cuenta daría
+  // 0/0 = NaN, que en pantalla es peor que un `s/d` honesto.
+  const esperadas = Number.isFinite(payload.paths) ? payload.paths : nPaths
   const finalDeflator = payload.deflators[payload.deflators.length - 1]
   /**
    * @param {number} target
    * @param {{ real?: boolean }} [opts]
-   * @returns {number | null}
+   * @returns {number | null} `null` si `target` no es finito, o si los saldos finales no llegaron
+   *   completos (búfer ya transferido)
    */
   function probabilityAbove(target, opts = {}) {
     if (typeof target !== 'number' || !Number.isFinite(target)) return null
+    if (nPaths === 0 || nPaths !== esperadas) return null
     const nominalTarget = opts.real ? target * finalDeflator : target
     return (nPaths - lowerBound(terminalSorted, nominalTarget)) / nPaths
   }
@@ -439,15 +450,21 @@ export function quantilesOf(values) {
  *
  * Los valores reales se obtienen dividiendo entre `(1 + inflation)^{t/stepsPerYear}`. Como es un
  * divisor positivo, los percentiles reales son los nominales deflactados, sin volver a ordenar.
+ * Lo aportado NO se deflacta así: `contributedReal` se acumula deflactando cada aportación con el
+ * deflactor de SU fecha, y por eso viene calculado y no se deja que quien llama lo derive.
  *
  * Mínimos: `paths ≥ 1`, `steps = round(years · stepsPerYear) ≥ 1`. Con `bootstrap`, `history`
  * necesita al menos `max(2, blockSize)` rendimientos finitos.
  *
+ * Todas las validaciones corren ANTES del corte por horizonte, para que un `years` que redondea a
+ * cero pasos no se trague un parámetro roto.
+ *
  * @param {SimulateOptions} options
- * @returns {SimulationResult | null} `null` cuando no alcanzan los datos: `mu ≤ −1`, o `bootstrap`
- *   con menos historia que `blockSize`. Lanza (Error con mensaje en español) si algún parámetro no
- *   es finito o está fuera de rango; `mu` y `sigma` se validan con los DOS métodos, aunque
- *   `bootstrap` no los use.
+ * @returns {SimulationResult | null} `null` cuando no alcanzan los datos: `round(years ·
+ *   stepsPerYear) < 1` con `years ≥ 0`, `mu ≤ −1`, o `bootstrap` con menos historia que
+ *   `blockSize`. Lanza (Error con mensaje en español) si algún parámetro no es finito o está fuera
+ *   de rango; `mu` y `sigma` se validan con los DOS métodos, aunque `bootstrap` no los use, y
+ *   `years` negativo lanza en vez de devolver `null`.
  */
 export function simulate(options) {
   if (!options || typeof options !== 'object') {
@@ -489,6 +506,10 @@ export function simulate(options) {
     throw new Error('montecarlo: paths tiene que ser un entero mayor o igual a 1')
   }
   if (initial < 0) throw new Error('montecarlo: initial no puede ser negativo')
+  // Un horizonte negativo es un dato inválido, no "faltan datos": devolver null lo disfrazaba de
+  // s/d en pantalla. El null se reserva para el caso legítimo de years ≥ 0 que redondea a cero
+  // pasos (por ejemplo 0.04 años con pasos mensuales).
+  if (years < 0) throw new Error('montecarlo: years no puede ser negativo')
   // Retirar no es aportar en negativo: el piso de cero del saldo se tragaría el faltante sin avisar
   // que el plan es imposible, y `contributedTotal` saldría negativo. Para retiros está
   // `retirementIncome` de goals.js.
@@ -515,9 +536,6 @@ export function simulate(options) {
   // igual porque el monto aportado es cero en todos los pasos.
   const every = Math.max(1, Math.round(k / perYear))
 
-  const steps = Math.round(years * k)
-  if (!Number.isFinite(steps) || steps < 1) return null
-
   const growthAnnual = contributionGrowth == null ? inflation : finite(contributionGrowth, 'contributionGrowth')
   if (growthAnnual <= -1) throw new Error('montecarlo: contributionGrowth tiene que ser mayor que −1')
   const growthStep = growthAnnual === 0 ? 1 : Math.pow(1 + growthAnnual, 1 / k)
@@ -525,6 +543,9 @@ export function simulate(options) {
   const nSamples = Math.max(0, Math.min(Math.trunc(finite(samplePaths, 'samplePaths')), nPaths))
 
   // --- preparación del motor de rendimientos -------------------------------
+  // TODO lo que valida va ANTES del corte por horizonte. Si se deja después, un horizonte que
+  // redondea a cero pasos devuelve null y se traga parámetros rotos (un contributionGrowth en NaN,
+  // una history inválida), así que el mismo objeto de opciones truena o no según el horizonte.
   /** @type {{ mu: number, sigma: number } | null} */
   let perStep = null
   /** @type {{ mu: number, sigma: number } | null} */
@@ -553,6 +574,10 @@ export function simulate(options) {
     historyReturns = Float64Array.from(raw)
   }
 
+  // Corte por horizonte, ya con todo validado: aquí null sí quiere decir "no hay nada que simular".
+  const steps = Math.round(years * k)
+  if (!Number.isFinite(steps) || steps < 1) return null
+
   // --- salidas --------------------------------------------------------------
   const rng = createRng(seed)
   const wealth = new Float64Array(nPaths).fill(initial)
@@ -563,6 +588,11 @@ export function simulate(options) {
   const bands = QUANTILE_KEYS.map(() => new Array(steps + 1))
   const deflators = new Array(steps + 1)
   const contributed = new Array(steps + 1)
+  // Lo aportado en pesos de hoy. NO es `contributed[t] / deflators[t]`: cada aportación se hizo en
+  // una fecha distinta y le toca su propio deflactor, así que hay que deflactar al momento de
+  // aportar y luego acumular. A 30 años con 4 % de inflación la diferencia entre las dos cuentas
+  // es de varios por ciento, y la forma equivocada es la que parece obvia desde afuera.
+  const contributedReal = new Array(steps + 1)
   /** @type {number[][]} */
   const samples = []
   for (let i = 0; i < nSamples; i += 1) samples.push(new Array(steps + 1))
@@ -583,18 +613,25 @@ export function simulate(options) {
 
   deflators[0] = 1
   contributed[0] = initial
+  // El saldo inicial ya está en pesos de hoy: su deflactor es 1.
+  contributedReal[0] = initial
   record(0)
 
   let currentContribution = contribution
   let deflator = 1
   let totalContributed = initial
+  let totalContributedReal = initial
 
   /** @type {Int32Array | null} */
   const blockStart = historyReturns === null ? null : new Int32Array(nPaths)
 
   for (let t = 0; t < steps; t += 1) {
     const cash = t % every === 0 ? currentContribution : 0
-    if (cash !== 0) totalContributed += cash
+    if (cash !== 0) {
+      totalContributed += cash
+      // `deflator` todavía vale deflators[t], que es el del momento en que entra este dinero.
+      totalContributedReal += cash / deflator
+    }
 
     if (historyReturns === null && perStep !== null) {
       const drift = perStep.mu
@@ -628,6 +665,7 @@ export function simulate(options) {
     deflator *= inflationStep
     deflators[t + 1] = deflator
     contributed[t + 1] = totalContributed
+    contributedReal[t + 1] = totalContributedReal
     record(t + 1)
     currentContribution *= growthStep
   }
@@ -651,10 +689,15 @@ export function simulate(options) {
    * Proporción de trayectorias que terminan en `target` o más.
    * @param {number} target
    * @param {{ real?: boolean }} [opts] `real: true` compara contra pesos de hoy
-   * @returns {number | null} `null` si `target` no es finito
+   * @returns {number | null} `null` si `target` no es finito, o si los saldos finales ya no están
+   *   (búfer transferido a un worker)
    */
   function probabilityAbove(target, opts = {}) {
     if (typeof target !== 'number' || !Number.isFinite(target)) return null
+    // Si el búfer se transfirió con postMessage, este lado se queda con un Float64Array de largo
+    // cero. Sin esta guarda lowerBound devuelve 0 y la cuenta sale 1, o sea "100 % de llegar a la
+    // meta", que es una mentira callada y justo lo que se pintaría en pantalla. Mejor `s/d`.
+    if (terminalSorted.length !== nPaths) return null
     const nominalTarget = opts.real ? target * finalDeflator : target
     const idx = lowerBound(terminalSorted, nominalTarget)
     return (nPaths - idx) / nPaths
@@ -675,6 +718,8 @@ export function simulate(options) {
     deflators,
     contributed,
     contributedTotal: totalContributed,
+    contributedReal,
+    contributedTotalReal: totalContributedReal,
     percentiles,
     percentilesReal,
     terminal,

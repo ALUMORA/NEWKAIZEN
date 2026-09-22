@@ -506,8 +506,31 @@ describe('simulate: casos límite y validación', () => {
 
   it('devuelve null cuando no hay ni un paso que simular', () => {
     expect(simulate({ ...PLAN_BASE, years: 0 })).toBeNull()
-    expect(simulate({ ...PLAN_BASE, years: -3 })).toBeNull()
     expect(simulate({ ...PLAN_BASE, years: 0.04, stepsPerYear: 12 })).toBeNull()
+  })
+
+  it('un horizonte negativo lanza, no devuelve null', () => {
+    // null es "no alcanzan los datos" y en pantalla es s/d. Años negativos son un dato inválido,
+    // y disfrazarlos de s/d esconde un error de captura.
+    expect(() => simulate({ ...PLAN_BASE, years: -3 })).toThrow(/years no puede ser negativo/)
+  })
+
+  it('valida los parámetros aunque el horizonte redondee a cero pasos', () => {
+    // El corte por horizonte iba antes que estas validaciones, así que el MISMO objeto de opciones
+    // lanzaba con years: 1 y devolvía null con years: 0. Un parámetro roto no puede depender del
+    // horizonte para salir a la luz.
+    expect(() =>
+      simulate({ ...PLAN_BASE, years: 0, contributionGrowth: Number.NaN }),
+    ).toThrow(/contributionGrowth tiene que ser un número finito/)
+    expect(() => simulate({ ...PLAN_BASE, years: 0, samplePaths: Number.NaN })).toThrow(
+      /samplePaths tiene que ser un número finito/,
+    )
+    expect(() =>
+      simulate({ ...PLAN_BASE, years: 0, method: 'bootstrap', history: [0.01, Number.NaN] }),
+    ).toThrow(/history tiene que ser un número finito/)
+    expect(() =>
+      simulate({ ...PLAN_BASE, years: 0, method: 'bootstrap', history: [0.01, 0.02], blockSize: 0 }),
+    ).toThrow(/blockSize tiene que ser un entero mayor o igual a 1/)
   })
 
   it('devuelve null cuando la lognormal no existe', () => {
@@ -557,6 +580,54 @@ describe('simulate: casos límite y validación', () => {
   })
 })
 
+describe('simulate: lo aportado en pesos de hoy', () => {
+  /** Tres aportaciones anuales de 1,000 con 4 % de inflación, sin rendimiento. */
+  const PLAN_REAL = {
+    initial: 0,
+    contribution: 1000,
+    contributionFrequency: /** @type {const} */ ('annual'),
+    contributionGrowth: 0,
+    stepsPerYear: 1,
+    years: 3,
+    mu: 0,
+    sigma: 0,
+    inflation: 0.04,
+    paths: 1,
+    seed: 'real',
+  }
+
+  it('deflacta cada aportación con el deflactor de su propia fecha', () => {
+    const sim = simulate(PLAN_REAL)
+    const aMano = 1000 + 1000 / 1.04 + 1000 / 1.04 ** 2
+    expect(sim.contributed).toEqual([0, 1000, 2000, 3000])
+    expect(sim.contributedTotalReal).toBeCloseTo(aMano, 9)
+    expect(sim.contributedReal[3]).toBeCloseTo(aMano, 9)
+    expect(sim.contributedReal[1]).toBeCloseTo(1000, 9)
+    expect(sim.contributedReal[2]).toBeCloseTo(1000 + 1000 / 1.04, 9)
+  })
+
+  it('no es lo mismo que dividir el acumulado entre el deflactor final', () => {
+    // La trampa que este campo existe para evitar: la forma obvia desde afuera se equivoca por
+    // varios por ciento, porque trata tres aportaciones de fechas distintas como si fueran una.
+    const sim = simulate(PLAN_REAL)
+    const ingenua = sim.contributed[3] / sim.deflators[3]
+    expect(ingenua).toBeLessThan(sim.contributedTotalReal)
+    expect(Math.abs(ingenua / sim.contributedTotalReal - 1)).toBeGreaterThan(0.05)
+  })
+
+  it('sin inflación lo real y lo nominal coinciden', () => {
+    const sim = simulate({ ...PLAN_REAL, inflation: 0 })
+    expect(sim.contributedReal).toEqual(sim.contributed)
+    expect(sim.contributedTotalReal).toBe(sim.contributedTotal)
+  })
+
+  it('el saldo inicial cuenta completo, porque ya está en pesos de hoy', () => {
+    const sim = simulate({ ...PLAN_REAL, initial: 50000, contribution: 0 })
+    expect(sim.contributedReal[0]).toBe(50000)
+    expect(sim.contributedTotalReal).toBe(50000)
+  })
+})
+
 describe('ida y vuelta por el Web Worker', () => {
   it('toMessage quita la función y fromMessage la devuelve igual', () => {
     const sim = simulate({ ...PLAN_BASE, paths: 50, sigma: 0.12, seed: 'worker' })
@@ -586,6 +657,37 @@ describe('ida y vuelta por el Web Worker', () => {
     expect(toMessage(null)).toEqual({ payload: null, transfer: [] })
     expect(fromMessage(null)).toBeNull()
     expect(fromMessage(undefined)).toBeNull()
+  })
+
+  it('tras transferir el búfer, probabilityAbove devuelve null y no un 100 % falso', () => {
+    // El búfer transferido deja al emisor con un Float64Array de largo cero. Sin guarda, lowerBound
+    // devolvía 0 y la cuenta salía (n − 0)/n = 1, o sea "100 % de llegar a la meta" pintado en
+    // pantalla. structuredClone con lista de transferencia es exactamente lo que hace postMessage.
+    const sim = simulate({ ...PLAN_BASE, paths: 200, sigma: 0.12, seed: 'transferencia' })
+    const antes = sim.probabilityAbove(150000)
+    expect(antes).toBeGreaterThan(0)
+    expect(antes).toBeLessThan(1)
+
+    const { payload, transfer } = toMessage(sim)
+    const clon = structuredClone(payload, { transfer })
+
+    expect(sim.terminalSorted.length).toBe(0)
+    expect(sim.paths).toBe(200)
+    expect(sim.probabilityAbove(150000)).toBeNull()
+    expect(sim.probabilityAbove(150000, { real: true })).toBeNull()
+
+    // El receptor sí tiene los datos completos y contesta lo mismo que antes del viaje.
+    expect(fromMessage(clon).probabilityAbove(150000)).toBe(antes)
+  })
+
+  it('fromMessage sobre un payload ya desprendido devuelve null, no NaN', () => {
+    const sim = simulate({ ...PLAN_BASE, paths: 200, sigma: 0.12, seed: 'zombi' })
+    const { payload, transfer } = toMessage(sim)
+    structuredClone(payload, { transfer })
+    // payload.terminalSorted quedó en cero, pero payload.paths sigue diciendo 200: la cuenta daría
+    // 0/0 = NaN, que es peor que un s/d honesto.
+    const zombi = fromMessage(payload)
+    expect(zombi.probabilityAbove(150000)).toBeNull()
   })
 
   it('handleWorkerRequest contesta con el id y con el error en español', () => {
