@@ -10,16 +10,20 @@ presenta como una pista, nunca como un análisis de sentimiento.
 **Cómo funciona**, en cuatro reglas que se pueden explicar a un usuario:
 
 1. Se compara **palabra completa**, nunca por subcadena. El clasificador del legado
-   (``domain.news.classify_sentiment``) usa ``any(p in w ...)``, y por eso "recortar" le cuenta como
-   positivo por "corta" y "riesgo" aparece dentro de otras palabras. Aquí no.
+   (``domain.news.classify_sentiment``) usa ``any(p in w ...)``, y por eso "trabajadores" le cuenta
+   como negativo: trae "baja" dentro. Aquí no.
 2. Una **negación** hasta tres palabras antes invierte el signo: "no supera las expectativas" es
    negativo, no positivo.
-3. Los **intensificadores** ("se desploma", "cae fuerte") y los **atenuantes** ("sube levemente")
-   escalan el peso de la palabra que sigue.
+3. Los **intensificadores** ("cae fuerte", "sharply fell") y los **atenuantes** ("sube levemente")
+   escalan el peso de la palabra vecina, vaya antes o después: en español el adverbio casi siempre
+   va detrás del verbo y en inglés delante.
 4. El puntaje es ``suma_con_signo / (suma_de_magnitudes + 1.5)``, así que siempre cae dentro de
    ``(-1, 1)`` y un solo indicio débil no alcanza para etiquetar: hacen falta dos, o uno fuerte.
 
-Los números de ``/v2/news`` no dependen de esto: el tono es un campo aparte y opcional.
+**Lo que no hace.** No entiende ironía ni contexto de mercado. "Hacienda continúa con la baja de
+impuestos a gasolinas" le sale negativo por "baja", y "Canasta básica sube 13 pesos" le sale
+positivo por "sube", aunque para el lector sean lo contrario. Por eso es una pista con etiqueta
+visible, no un dato: los números de ``/v2/news`` no dependen de esto y el tono es opcional.
 """
 
 from __future__ import annotations
@@ -38,7 +42,7 @@ STRONG, MEDIUM, MILD = 1.0, 0.6, 0.35
 
 _POSITIVE_STRONG = (
     # español
-    "récord récords máximo máximos dispara disparan repunta repunte"
+    "récord récords máximo máximos repunta repunte"
     " gana ganancias utilidad utilidades supera superó superan"
     # inglés
     " record records surge surges surged soar soars soared rally rallies beat beats"
@@ -67,6 +71,8 @@ _NEGATIVE_MEDIUM = (
     "cae caen cayó caída caídas baja bajan bajó pierde pierden perdió pérdida pérdidas"
     " retrocede retroceso recorte recortes recorta rebaja rebajó despido despidos huelga"
     " multa sanción investigación crisis débil debilidad desaceleración incumple"
+    " golpea golpean golpeó castiga castigan desempleo preocupa preocupan"
+    " decepcionante decepciona decepcionan"
     " incumplimiento mínimo mínimos advertencia alerta preocupación preocupaciones temor temores"
     " falls fall fell drops drop dropped declines decline declined losses loss lost"
     " cuts cut downgrade downgraded underperform warns warned warning weak weaker"
@@ -155,10 +161,16 @@ def explain(text: str) -> dict:
         base = _FOLDED_LEXICON.get(token)
         if base is None:
             continue
+        # El modificador puede ir antes o después: en inglés "sharply fell", en español "cae fuerte".
+        vecinos = [tokens[i - 1]] if i > 0 else []
+        if i + 1 < len(tokens):
+            vecinos.append(tokens[i + 1])
         scale = 1.0
-        if i > 0:
-            previous = tokens[i - 1]
-            scale = _FOLDED_INTENSIFIERS.get(previous) or _FOLDED_DOWNTONERS.get(previous) or 1.0
+        for vecino in vecinos:
+            encontrado = _FOLDED_INTENSIFIERS.get(vecino) or _FOLDED_DOWNTONERS.get(vecino)
+            if encontrado:
+                scale = encontrado
+                break
         window = tokens[max(0, i - NEGATION_WINDOW) : i]
         negated = any(word in _FOLDED_NEGATORS for word in window)
         weight = base * scale * (-1.0 if negated else 1.0)

@@ -15,6 +15,7 @@ import html
 import re
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
+from html.entities import name2codepoint
 
 from kaizen_api.providers.yahoo.session import _session
 
@@ -119,6 +120,26 @@ def _link_of(node: ET.Element) -> str:
     return guid if guid.lower().startswith(("http://", "https://")) else ""
 
 
+_XML_ENTITIES = frozenset(("amp", "lt", "gt", "quot", "apos"))
+_NAMED_ENTITY_RE = re.compile(rb"&([A-Za-z][A-Za-z0-9]{1,31});")
+
+
+def numeric_entities(data: bytes) -> bytes:
+    """``&oacute;`` a ``&#243;``: XML solo conoce cinco entidades con nombre y varios feeds usan las de HTML.
+
+    Sin esto, un solo ``&nbsp;`` en un titular rompe el XML entero y el medio desaparece de la lista.
+    """
+
+    def replace(match: re.Match) -> bytes:
+        name = match.group(1).decode("ascii")
+        if name in _XML_ENTITIES:
+            return match.group(0)
+        code = name2codepoint.get(name)
+        return f"&#{code};".encode() if code else match.group(0)
+
+    return _NAMED_ENTITY_RE.sub(replace, data)
+
+
 def parse_feed(payload: bytes | str) -> dict:
     """XML de un feed a ``{"source": str, "items": [{title, url, summary, published}]}``.
 
@@ -129,7 +150,10 @@ def parse_feed(payload: bytes | str) -> dict:
     try:
         root = ET.fromstring(data)
     except ET.ParseError:
-        return {"source": "", "items": []}
+        try:
+            root = ET.fromstring(numeric_entities(data))
+        except ET.ParseError:
+            return {"source": "", "items": []}
     channel = root
     for child in root:
         if _local(child.tag) == "channel":
