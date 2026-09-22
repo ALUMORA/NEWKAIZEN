@@ -8,12 +8,26 @@
    "soft_failure": false,
    "recorded_at": "2026-09-22T22:58:39+00:00"
   },
+  "yf.download:[AAPL,WALMEX.MX,ZZZNOTREAL]?interval=1wk&period=2y": {
+   "file": "yf.download-AAPL-WALMEX.MX-ZZZNOTREAL-f15b9d8131031f9f.json",
+   "provider": "yfinance.download",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T23:02:51+00:00"
+  },
   "yf.download:[WALMEX.MX,FEMSAUBD.MX,KOFUBL.MX,BIMBOA.MX,CHDRAUIB.MX,AC.MX,GRUMAB.MX,KIMBERA.MX,GFNORTEO.MX,Q.MX,BBAJIOO.MX,GENTERA.MX,GMEXICOB.MX,CEMEXCPO.MX,ORBIA.MX,GAPB.MX,ASURB.MX,OMAB.MX,PINFRA.MX,AMXB.MX,TLEVISACPO.MX,ALSEA.MX,LIVEPOLC-1.MX]?interval=1wk&period=2y": {
    "file": "yf.download-WALMEX.MX-FEMSAUBD.MX-KOFUBL.MX-BIMBOA.MX-CHDRAU-b6eb5bc043daf850.json",
    "provider": "yfinance.download",
    "kind": "value",
    "soft_failure": false,
    "recorded_at": "2026-09-22T22:59:18+00:00"
+  },
+  "yf.download:[ZZZNOTREAL]?interval=1wk&period=2y": {
+   "file": "yf.download-ZZZNOTREAL-2539537d8e71afc7.json",
+   "provider": "yfinance.download",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T23:02:50+00:00"
   },
   "yf:AC.MX:balance_sheet": {
    "file": "yf-AC.MX-balance-sheet-9fb65baad3020a12.json",
@@ -413,6 +427,13 @@
    "kind": "value",
    "soft_failure": false,
    "recorded_at": "2026-09-22T22:59:13+00:00"
+  },
+  "yf:ZZZNOTREAL.MX:info": {
+   "file": "yf-ZZZNOTREAL.MX-info-571e7de7db90b161.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T23:03:18+00:00"
   }
  },
  "frozen_at": "2026-09-22T14:51:31+00:00",
@@ -426,14 +447,15 @@
   "2026-09-22"
  ],
  "summary": {
-  "keys_total": 59,
+  "keys_total": 62,
   "keys_by_provider": {
-   "yf": 57,
-   "yf.download": 2
+   "yf": 58,
+   "yf.download": 4
   },
   "exceptions_by_provider": {},
   "empty_by_provider": {
-   "yf": 2
+   "yf": 2,
+   "yf.download": 1
   },
   "symbols_with_failed_or_empty_calls": {
    "STORAGE18.MX": [
@@ -442,5 +464,5 @@
    ]
   }
  },
- "updated_at": "2026-09-22T23:00:32+00:00"
+ "updated_at": "2026-09-22T23:03:18+00:00"
 }
