@@ -1,0 +1,20 @@
+{
+  "id": "fibras-mx",
+  "name": "FIBRAs de la Bolsa Mexicana de Valores",
+  "currency": "MXN",
+  "asOf": "2026-09-22",
+  "source": "curated",
+  "note": "FIBRAs listadas que siguen cotizando con el símbolo indicado. Terrafina (TERRA13) la absorbió Fibra Prologis y LFPE dejó de cotizar, así que ya no aparecen. El tipo lo decide el activo subyacente: propiedades (renta de inmuebles), hipotecaria (cartera de créditos), energía (FIBRA E de infraestructura) u otro.",
+  "members": [
+    { "symbol": "FUNO11.MX", "name": "Fibra Uno", "type": "propiedades", "segment": "Diversificada" },
+    { "symbol": "FIBRAMQ12.MX", "name": "Fibra Macquarie México", "type": "propiedades", "segment": "Industrial y comercial" },
+    { "symbol": "FIBRAPL14.MX", "name": "Fibra Prologis", "type": "propiedades", "segment": "Industrial" },
+    { "symbol": "FNOVA17.MX", "name": "Fibra Nova", "type": "propiedades", "segment": "Industrial" },
+    { "symbol": "FINN13.MX", "name": "Fibra Inn", "type": "propiedades", "segment": "Hotelera" },
+    { "symbol": "DANHOS13.MX", "name": "Fibra Danhos", "type": "propiedades", "segment": "Comercial y oficinas" },
+    { "symbol": "FMTY14.MX", "name": "Fibra Mty", "type": "propiedades", "segment": "Industrial y oficinas" },
+    { "symbol": "FHIPO14.MX", "name": "Fibra Hipotecaria (FHipo)", "type": "hipotecaria", "segment": "Créditos hipotecarios" },
+    { "symbol": "STORAGE18.MX", "name": "Fibra Storage", "type": "propiedades", "segment": "Autoalmacenamiento" },
+    { "symbol": "FSHOP13.MX", "name": "Fibra Shop", "type": "propiedades", "segment": "Centros comerciales" }
+  ]
+}

@@ -1,0 +1,468 @@
+{
+ "set": "2026-09-22-b3c",
+ "entries": {
+  "yf.download:[AAPL,MSFT,NVDA,AVGO,ORCL,ADBE,LLY,JNJ,ABBV,MRK,AMGN,AMZN,HD,MCD,NKE,LOW,WMT,COST,PG,KO,PEP,CAT,HON,RTX,UNP,DE,XOM,CVX,COP,EOG,GOOGL,META,DIS,CMCSA,LIN,APD,SHW,FCX]?interval=1wk&period=2y": {
+   "file": "yf.download-AAPL-MSFT-NVDA-AVGO-ORCL-ADBE-LLY-JNJ-ABBV-MRK-A-6fc24168e804503c.json",
+   "provider": "yfinance.download",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:58:39+00:00"
+  },
+  "yf.download:[AAPL,WALMEX.MX,ZZZNOTREAL]?interval=1wk&period=2y": {
+   "file": "yf.download-AAPL-WALMEX.MX-ZZZNOTREAL-f15b9d8131031f9f.json",
+   "provider": "yfinance.download",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T23:02:51+00:00"
+  },
+  "yf.download:[WALMEX.MX,FEMSAUBD.MX,KOFUBL.MX,BIMBOA.MX,CHDRAUIB.MX,AC.MX,GRUMAB.MX,KIMBERA.MX,GFNORTEO.MX,Q.MX,BBAJIOO.MX,GENTERA.MX,GMEXICOB.MX,CEMEXCPO.MX,ORBIA.MX,GAPB.MX,ASURB.MX,OMAB.MX,PINFRA.MX,AMXB.MX,TLEVISACPO.MX,ALSEA.MX,LIVEPOLC-1.MX]?interval=1wk&period=2y": {
+   "file": "yf.download-WALMEX.MX-FEMSAUBD.MX-KOFUBL.MX-BIMBOA.MX-CHDRAU-b6eb5bc043daf850.json",
+   "provider": "yfinance.download",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:18+00:00"
+  },
+  "yf.download:[ZZZNOTREAL]?interval=1wk&period=2y": {
+   "file": "yf.download-ZZZNOTREAL-2539537d8e71afc7.json",
+   "provider": "yfinance.download",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T23:02:50+00:00"
+  },
+  "yf:AC.MX:balance_sheet": {
+   "file": "yf-AC.MX-balance-sheet-9fb65baad3020a12.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:42+00:00"
+  },
+  "yf:AC.MX:income_stmt": {
+   "file": "yf-AC.MX-income-stmt-51a99cae390014c6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:29+00:00"
+  },
+  "yf:AC.MX:info": {
+   "file": "yf-AC.MX-info-7f28d0f102b071ea.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:58:52+00:00"
+  },
+  "yf:ALSEA.MX:balance_sheet": {
+   "file": "yf-ALSEA.MX-balance-sheet-a46b605a042930a0.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T23:00:10+00:00"
+  },
+  "yf:ALSEA.MX:income_stmt": {
+   "file": "yf-ALSEA.MX-income-stmt-967c51a29d2d7cac.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:58+00:00"
+  },
+  "yf:ALSEA.MX:info": {
+   "file": "yf-ALSEA.MX-info-1a2a75cbd128b3c3.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:14+00:00"
+  },
+  "yf:AMXB.MX:balance_sheet": {
+   "file": "yf-AMXB.MX-balance-sheet-9484c9e791d7dccf.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T23:00:07+00:00"
+  },
+  "yf:AMXB.MX:income_stmt": {
+   "file": "yf-AMXB.MX-income-stmt-3b30ab6f9db114b5.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:55+00:00"
+  },
+  "yf:AMXB.MX:info": {
+   "file": "yf-AMXB.MX-info-d15e2083cddcb3a7.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:11+00:00"
+  },
+  "yf:ASURB.MX:balance_sheet": {
+   "file": "yf-ASURB.MX-balance-sheet-9d7dd1bce532e71d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T23:00:03+00:00"
+  },
+  "yf:ASURB.MX:income_stmt": {
+   "file": "yf-ASURB.MX-income-stmt-37b47e8c0ece74b4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:51+00:00"
+  },
+  "yf:ASURB.MX:info": {
+   "file": "yf-ASURB.MX-info-a40eca88d3adc345.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:07+00:00"
+  },
+  "yf:BBAJIOO.MX:info": {
+   "file": "yf-BBAJIOO.MX-info-f3979bcc5e1a55a2.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:58:59+00:00"
+  },
+  "yf:BIMBOA.MX:balance_sheet": {
+   "file": "yf-BIMBOA.MX-balance-sheet-db0eae52782a8c4f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:37+00:00"
+  },
+  "yf:BIMBOA.MX:income_stmt": {
+   "file": "yf-BIMBOA.MX-income-stmt-e32a6be4b7c91d6e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:25+00:00"
+  },
+  "yf:BIMBOA.MX:info": {
+   "file": "yf-BIMBOA.MX-info-ace2ad19658c9e7e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:58:49+00:00"
+  },
+  "yf:CHDRAUIB.MX:balance_sheet": {
+   "file": "yf-CHDRAUIB.MX-balance-sheet-9a8b9ae95ea46e97.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:45+00:00"
+  },
+  "yf:CHDRAUIB.MX:income_stmt": {
+   "file": "yf-CHDRAUIB.MX-income-stmt-c9d57a7428d7f370.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:33+00:00"
+  },
+  "yf:CHDRAUIB.MX:info": {
+   "file": "yf-CHDRAUIB.MX-info-9b5b56afcef32f38.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:58:50+00:00"
+  },
+  "yf:FEMSAUBD.MX:balance_sheet": {
+   "file": "yf-FEMSAUBD.MX-balance-sheet-7ac22e5dc6f1b15c.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:36+00:00"
+  },
+  "yf:FEMSAUBD.MX:income_stmt": {
+   "file": "yf-FEMSAUBD.MX-income-stmt-7c02605cea740cdb.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:24+00:00"
+  },
+  "yf:FEMSAUBD.MX:info": {
+   "file": "yf-FEMSAUBD.MX-info-1cecadf56b81c71e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:58:46+00:00"
+  },
+  "yf:GAPB.MX:balance_sheet": {
+   "file": "yf-GAPB.MX-balance-sheet-1d87c9cc0eba5168.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T23:00:01+00:00"
+  },
+  "yf:GAPB.MX:income_stmt": {
+   "file": "yf-GAPB.MX-income-stmt-1c1264653747d9cb.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:49+00:00"
+  },
+  "yf:GAPB.MX:info": {
+   "file": "yf-GAPB.MX-info-a0e68656932bf620.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:05+00:00"
+  },
+  "yf:GENTERA.MX:info": {
+   "file": "yf-GENTERA.MX-info-3ea8ae7af19b644d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:01+00:00"
+  },
+  "yf:GFNORTEO.MX:info": {
+   "file": "yf-GFNORTEO.MX-info-889d44fedfa8df89.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:58:56+00:00"
+  },
+  "yf:GMEXICOB.MX:balance_sheet": {
+   "file": "yf-GMEXICOB.MX-balance-sheet-b85ccad0e041e0ef.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:46+00:00"
+  },
+  "yf:GMEXICOB.MX:income_stmt": {
+   "file": "yf-GMEXICOB.MX-income-stmt-dce05d012c23b433.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:34+00:00"
+  },
+  "yf:GMEXICOB.MX:info": {
+   "file": "yf-GMEXICOB.MX-info-63f4300640bd1e17.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:02+00:00"
+  },
+  "yf:GRUMAB.MX:balance_sheet": {
+   "file": "yf-GRUMAB.MX-balance-sheet-f380b719b2d05475.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:38+00:00"
+  },
+  "yf:GRUMAB.MX:income_stmt": {
+   "file": "yf-GRUMAB.MX-income-stmt-425b4d1ab2a7cf74.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:27+00:00"
+  },
+  "yf:GRUMAB.MX:info": {
+   "file": "yf-GRUMAB.MX-info-8ba06c312de8076b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:58:53+00:00"
+  },
+  "yf:KIMBERA.MX:balance_sheet": {
+   "file": "yf-KIMBERA.MX-balance-sheet-a1075bf896cea60b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:43+00:00"
+  },
+  "yf:KIMBERA.MX:income_stmt": {
+   "file": "yf-KIMBERA.MX-income-stmt-4ee443d650079567.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:31+00:00"
+  },
+  "yf:KIMBERA.MX:info": {
+   "file": "yf-KIMBERA.MX-info-54afadb56df80fee.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:58:55+00:00"
+  },
+  "yf:KOFUBL.MX:balance_sheet": {
+   "file": "yf-KOFUBL.MX-balance-sheet-e2c9716bdcfbf2c2.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:40+00:00"
+  },
+  "yf:KOFUBL.MX:income_stmt": {
+   "file": "yf-KOFUBL.MX-income-stmt-1d8ef03cd8581c58.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:28+00:00"
+  },
+  "yf:KOFUBL.MX:info": {
+   "file": "yf-KOFUBL.MX-info-3952614b8f3540d9.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:58:47+00:00"
+  },
+  "yf:LIVEPOLC-1.MX:balance_sheet": {
+   "file": "yf-LIVEPOLC-1.MX-balance-sheet-b9903c7ba99de748.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T23:00:13+00:00"
+  },
+  "yf:LIVEPOLC-1.MX:income_stmt": {
+   "file": "yf-LIVEPOLC-1.MX-income-stmt-49c200f7289cde0d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T23:00:12+00:00"
+  },
+  "yf:LIVEPOLC-1.MX:info": {
+   "file": "yf-LIVEPOLC-1.MX-info-76afdb6eca4ebd9c.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:16+00:00"
+  },
+  "yf:OMAB.MX:balance_sheet": {
+   "file": "yf-OMAB.MX-balance-sheet-34d30ac63e9f2702.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T23:00:04+00:00"
+  },
+  "yf:OMAB.MX:income_stmt": {
+   "file": "yf-OMAB.MX-income-stmt-5b1dafed0027ce54.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:52+00:00"
+  },
+  "yf:OMAB.MX:info": {
+   "file": "yf-OMAB.MX-info-e9d26f7d879bfc04.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:08+00:00"
+  },
+  "yf:ORBIA.MX:balance_sheet": {
+   "file": "yf-ORBIA.MX-balance-sheet-675827210782b3a1.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T23:00:00+00:00"
+  },
+  "yf:ORBIA.MX:income_stmt": {
+   "file": "yf-ORBIA.MX-income-stmt-c6e99a15a4344730.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:47+00:00"
+  },
+  "yf:ORBIA.MX:info": {
+   "file": "yf-ORBIA.MX-info-ff229613e9909127.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:04+00:00"
+  },
+  "yf:PINFRA.MX:balance_sheet": {
+   "file": "yf-PINFRA.MX-balance-sheet-64f35d03fecbd3d7.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T23:00:06+00:00"
+  },
+  "yf:PINFRA.MX:income_stmt": {
+   "file": "yf-PINFRA.MX-income-stmt-6404e325afbc6bd9.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:54+00:00"
+  },
+  "yf:PINFRA.MX:info": {
+   "file": "yf-PINFRA.MX-info-03b05531e2066021.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:10+00:00"
+  },
+  "yf:Q.MX:info": {
+   "file": "yf-Q.MX-info-c294753915aa3917.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:58:58+00:00"
+  },
+  "yf:STORAGE18.MX:balance_sheet": {
+   "file": "yf-STORAGE18.MX-balance-sheet-48fa11b49f79d695.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T22:54:41+00:00"
+  },
+  "yf:STORAGE18.MX:income_stmt": {
+   "file": "yf-STORAGE18.MX-income-stmt-99f27bb57eb07dea.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-22T22:54:40+00:00"
+  },
+  "yf:TLEVISACPO.MX:balance_sheet": {
+   "file": "yf-TLEVISACPO.MX-balance-sheet-de3ee6ad2575ddc0.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T23:00:09+00:00"
+  },
+  "yf:TLEVISACPO.MX:income_stmt": {
+   "file": "yf-TLEVISACPO.MX-income-stmt-c4850974752db5ac.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:57+00:00"
+  },
+  "yf:TLEVISACPO.MX:info": {
+   "file": "yf-TLEVISACPO.MX-info-7f76e5398d18ecea.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T22:59:13+00:00"
+  },
+  "yf:ZZZNOTREAL.MX:info": {
+   "file": "yf-ZZZNOTREAL.MX-info-571e7de7db90b161.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-22T23:03:18+00:00"
+  }
+ },
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "created_at": "2026-09-22T22:54:39+00:00",
+ "yfinance_version": "1.7.0",
+ "layered_on": [
+  "2026-09-22"
+ ],
+ "lookup_order": [
+  "2026-09-22-b3c",
+  "2026-09-22"
+ ],
+ "summary": {
+  "keys_total": 62,
+  "keys_by_provider": {
+   "yf": 58,
+   "yf.download": 4
+  },
+  "exceptions_by_provider": {},
+  "empty_by_provider": {
+   "yf": 2,
+   "yf.download": 1
+  },
+  "symbols_with_failed_or_empty_calls": {
+   "STORAGE18.MX": [
+    "balance_sheet",
+    "income_stmt"
+   ]
+  }
+ },
+ "updated_at": "2026-09-22T23:03:18+00:00"
+}

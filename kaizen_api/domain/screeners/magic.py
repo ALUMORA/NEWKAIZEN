@@ -5,13 +5,31 @@ el v2 (``/v2/screeners/magic``) nunca mezcla EBIT estimado.
 
 Movido sin cambios desde backend.py (fase S1): los cuerpos son idénticos al legado y los
 goldens de tests/goldens_legacy lo prueban. La versión v2 se escribe al lado, no encima.
+
+Al final del archivo, después de la línea de separación, vive la versión v2 (stream B3c) que sirve
+``/v2/screeners/magic``. Convive con el legado en el mismo archivo porque ``scripts/ownership.json``
+le da a B3c este archivo completo, y los goldens del legado exigen que lo de arriba no cambie.
 """
+
+from __future__ import annotations
+
 
 from concurrent.futures import ThreadPoolExecutor
 
 from kaizen_api.cache import _cached
 from kaizen_api.domain import _log, r2, safe
-from kaizen_api.domain.universe import EXCLUDED_SECTORS, MAGIC_UNIVERSE
+from kaizen_api.domain.universe import (
+    EXCLUDED_SECTORS,
+    MAGIC_EXCLUDED_SECTORS,
+    MAGIC_UNIVERSE,
+    SymbolData,
+    Universe,
+    column_date,
+    fetch_symbols,
+    get_universe,
+    row_value,
+    sector_label,
+)
 from kaizen_api.providers.yahoo.session import yft
 
 
@@ -292,3 +310,251 @@ def get_magic_one(ticker: str) -> dict:
         }
     except Exception:
         return {"skip": True}
+
+
+# ─── v2 (B3c): la fórmula mágica honesta ──────────────────────────────────────
+#
+# Fórmula Mágica de Greenblatt para ``/v2/screeners/magic`` (stream B3c), sin EBIT inventado.
+#
+# La receta original de *The Little Book That Still Beats the Market* ordena por dos cosas y suma
+# los lugares:
+#
+# * **Rendimiento de utilidades** ``EY = EBIT / valor de empresa``, con
+#   ``valor de empresa = capitalización + deuda total + interés minoritario + acciones preferentes
+#   menos efectivo``. El interés minoritario y las preferentes entran porque son parte del precio que
+#   pagaría quien comprara la empresa completa.
+# * **Rendimiento sobre capital** ``ROC = EBIT / (capital de trabajo neto + propiedad, planta y
+#   equipo neta)``, donde el capital de trabajo neto **deja fuera el efectivo y la deuda de corto
+#   plazo**: ninguno de los dos es capital que el negocio necesite para operar.
+#
+# Lo que esta versión hace distinto al legado:
+#
+# * **El EBIT siempre es el reportado** en el estado de resultados. El legado, cuando no lo
+#   encontraba, usaba EBITDA por 0.85, que es un número inventado que después se ordenaba junto a
+#   los reales. Aquí, sin EBIT reportado, la emisora sale de la lista con el motivo escrito.
+# * **Se excluyen bancos, aseguradoras y servicios públicos**, como pide la fórmula: su balance no se
+#   compara con el de una empresa operativa.
+# * **Los empates son estables**: dos emisoras con el mismo valor reciben el mismo lugar (ranking de
+#   competencia, 1-2-2-4) y el orden final desempata por el lugar de EY y luego por símbolo en orden
+#   alfabético. En el legado los empates los decidía el orden en que contestaban los hilos.
+# * **Nunca se mezclan monedas**: si la emisora reporta en una moneda y cotiza en otra (CEMEXCPO.MX
+#   reporta en dólares y cotiza en pesos), no se puede dividir un EBIT en dólares entre un valor de
+#   empresa en pesos. Sale de la lista con el motivo, hasta que exista la costura de tipo de cambio.
+
+
+
+CACHE_TTL = 43200
+CACHE_FAIL_TTL = 300
+
+STATEMENTS = ("income_stmt", "balance_sheet")
+
+MIN_MARKET_CAP = {"us": 2_000_000_000.0, "mx": 5_000_000_000.0}
+"""Piso de capitalización por universo (USD para us, MXN para mx). Debajo, la cifra es ruido."""
+
+EBIT_ROWS = ("EBIT", "Ebit", "Operating Income", "Total Operating Income As Reported")
+TOTAL_DEBT_ROWS = ("Total Debt",)
+LONG_DEBT_ROWS = ("Long Term Debt And Capital Lease Obligation", "Long Term Debt")
+CURRENT_DEBT_ROWS = ("Current Debt And Capital Lease Obligation", "Current Debt")
+CASH_ROWS = ("Cash And Cash Equivalents", "Cash Cash Equivalents And Short Term Investments", "Cash Financial")
+MINORITY_ROWS = ("Minority Interest", "Minority Interests")
+PREFERRED_ROWS = ("Preferred Stock", "Preferred Securities Outside Stock Equity", "Preferred Stock Equity")
+CURRENT_ASSETS_ROWS = ("Current Assets", "Total Current Assets")
+CURRENT_LIABILITIES_ROWS = ("Current Liabilities", "Total Current Liabilities Net Minority Interest")
+PPE_ROWS = ("Net PPE", "Net Property Plant And Equipment", "Properties", "Investment Properties")
+
+UNIVERSE_DESCRIPTION = {
+    "us": (
+        "Emisoras grandes de Estados Unidos, sin bancos ni servicios públicos. El EBIT sale del "
+        "estado de resultados anual más reciente y el valor de empresa de la capitalización de hoy."
+    ),
+    "mx": (
+        "Emisoras grandes de la Bolsa Mexicana de Valores, sin bancos ni servicios públicos. El "
+        "EBIT sale del estado de resultados anual más reciente y el valor de empresa de la "
+        "capitalización de hoy."
+    ),
+}
+
+
+def competition_ranks(pairs: list[tuple[str, float]], reverse: bool = True) -> dict[str, int]:
+    """Lugares 1-2-2-4: el mismo valor recibe el mismo lugar y el siguiente salta.
+
+    Así el resultado depende solo de los números, nunca del orden en que llegaron los datos.
+    """
+    ordered = sorted(pairs, key=lambda p: (-p[1] if reverse else p[1], p[0]))
+    ranks: dict[str, int] = {}
+    last_value: float | None = None
+    last_rank = 0
+    for position, (symbol, value) in enumerate(ordered, start=1):
+        if last_value is not None and value == last_value:
+            ranks[symbol] = last_rank
+        else:
+            ranks[symbol] = position
+            last_rank = position
+            last_value = value
+    return ranks
+
+
+def enterprise_value(market_cap: float, balance) -> float | None:
+    """Capitalización + deuda + minoritario + preferentes menos efectivo, todo del mismo balance."""
+    debt = row_value(balance, TOTAL_DEBT_ROWS)
+    if debt is None:
+        long_debt = row_value(balance, LONG_DEBT_ROWS)
+        short_debt = row_value(balance, CURRENT_DEBT_ROWS)
+        if long_debt is None and short_debt is None:
+            return None
+        debt = (long_debt or 0.0) + (short_debt or 0.0)
+    cash = row_value(balance, CASH_ROWS) or 0.0
+    minority = row_value(balance, MINORITY_ROWS) or 0.0
+    preferred = row_value(balance, PREFERRED_ROWS) or 0.0
+    return market_cap + debt + minority + preferred - cash
+
+
+def capital_employed(balance) -> float | None:
+    """Capital de trabajo neto (sin efectivo ni deuda de corto plazo) más PP&E neta."""
+    current_assets = row_value(balance, CURRENT_ASSETS_ROWS)
+    current_liabilities = row_value(balance, CURRENT_LIABILITIES_ROWS)
+    ppe = row_value(balance, PPE_ROWS)
+    if current_assets is None or current_liabilities is None or ppe is None:
+        return None
+    cash = row_value(balance, CASH_ROWS) or 0.0
+    short_debt = row_value(balance, CURRENT_DEBT_ROWS) or 0.0
+    working_capital = (current_assets - cash) - (current_liabilities - short_debt)
+    return working_capital + ppe
+
+
+def _sector_of(symbol: str, universe: Universe, data: SymbolData) -> str | None:
+    member = universe.member(symbol)
+    if member and member.sector:
+        return member.sector
+    return data.info.get("sector") or None
+
+
+def _row_or_reason(symbol: str, universe: Universe, data: SymbolData, floor: float) -> tuple[dict | None, str | None]:
+    """Devuelve ``(renglón, None)`` o ``(None, motivo de exclusión)``. Nunca inventa un EBIT."""
+    if not data.ok:
+        return None, "El proveedor no respondió por esta emisora."
+
+    sector = _sector_of(symbol, universe, data)
+    if sector in MAGIC_EXCLUDED_SECTORS:
+        return None, f"La fórmula deja fuera el sector {sector_label(sector)}."
+
+    if not data.same_currency:
+        return None, (
+            f"Reporta en {data.financial_currency} y cotiza en {data.currency}: falta el tipo de "
+            "cambio para no mezclar monedas."
+        )
+
+    market_cap = safe(data.info.get("marketCap"))
+    if market_cap is None or market_cap <= 0:
+        return None, "Yahoo no trae la capitalización de mercado."
+    if market_cap < floor:
+        return None, "Capitalización por debajo del piso del universo."
+
+    ebit = row_value(data.income, EBIT_ROWS)
+    if ebit is None:
+        return None, "No hay EBIT reportado en el estado de resultados: no se estima."
+
+    ev = enterprise_value(market_cap, data.balance)
+    if ev is None:
+        return None, "Falta el balance para armar el valor de empresa."
+    if ev <= 0:
+        return None, "El valor de empresa no es positivo."
+
+    capital = capital_employed(data.balance)
+    if capital is None:
+        return None, "Falta el balance para calcular el capital empleado."
+    if capital <= 0:
+        return None, "El capital empleado no es positivo: la fórmula no aplica."
+
+    return {
+        "symbol": symbol,
+        "name": (universe.member(symbol).name if universe.member(symbol) else None)
+        or data.info.get("longName")
+        or data.info.get("shortName"),
+        "sector": sector_label(sector),
+        "ebit": ebit,
+        "enterpriseValue": ev,
+        "earningsYield": ebit / ev,
+        "returnOnCapital": ebit / capital,
+        "currency": data.financial_currency,
+        "fiscalPeriodEnd": column_date(data.income),
+    }, None
+
+
+def build(universe: Universe) -> dict:
+    """Arma la tabla de la fórmula mágica de un universo ya resuelto. Sin caché ni HTTP propio."""
+    # A las que el universo curado ya marca como banco o servicio público ni se les pregunta:
+    # la fórmula no las usa y cada una cuesta tres llamadas a Yahoo.
+    skipped = {
+        m.symbol: f"La fórmula deja fuera el sector {sector_label(m.sector)}."
+        for m in universe.members
+        if m.sector in MAGIC_EXCLUDED_SECTORS
+    }
+    asked = [s for s in universe.symbols if s not in skipped]
+    fetched, pending = fetch_symbols(asked, statements=STATEMENTS)
+    floor = MIN_MARKET_CAP.get(universe.id, 0.0)
+
+    rows: list[dict] = []
+    excluded: list[dict] = []
+    failures = 0
+    for symbol in universe.symbols:
+        if symbol in skipped:
+            excluded.append({"symbol": symbol, "reason": skipped[symbol]})
+            continue
+        data = fetched.get(symbol)
+        if data is None:
+            excluded.append({"symbol": symbol, "reason": "El proveedor no respondió a tiempo."})
+            failures += 1
+            continue
+        row, reason = _row_or_reason(symbol, universe, data, floor)
+        if row is None:
+            excluded.append({"symbol": symbol, "reason": reason})
+            if not data.ok:
+                failures += 1
+            continue
+        rows.append(row)
+
+    rank_ey = competition_ranks([(r["symbol"], r["earningsYield"]) for r in rows])
+    rank_roc = competition_ranks([(r["symbol"], r["returnOnCapital"]) for r in rows])
+    for row in rows:
+        row["rankEY"] = rank_ey[row["symbol"]]
+        row["rankROC"] = rank_roc[row["symbol"]]
+        row["rank"] = row["rankEY"] + row["rankROC"]
+    rows.sort(key=lambda r: (r["rank"], r["rankEY"], r["symbol"]))
+
+    partial = bool(pending) or failures > 0
+    notes: list[str] = []
+    if excluded:
+        notes.append(f"{len(excluded)} de {universe.size} emisoras quedaron fuera, cada una con su motivo.")
+    if partial:
+        notes.append("Faltaron datos de algunas emisoras, así que la tabla está incompleta.")
+    periods = sorted({r["fiscalPeriodEnd"] for r in rows if r["fiscalPeriodEnd"]})
+    if len(periods) > 1:
+        notes.append(
+            f"Los cierres fiscales van de {periods[0]} a {periods[-1]}: no todas comparan el mismo periodo."
+        )
+    return {
+        "universe": {
+            "id": universe.id,
+            "name": universe.name,
+            "size": universe.size,
+            "description": UNIVERSE_DESCRIPTION.get(universe.id, universe.name),
+        },
+        "rows": rows,
+        "excluded": excluded,
+        "partial": partial,
+        "notes": notes,
+        "asOf": periods[-1] if periods else None,
+    }
+
+
+def get_magic(universe_id: str) -> dict:
+    """Tabla de la fórmula mágica, cacheada 12 h por universo. Una tabla vacía solo se guarda 5 min."""
+    universe = get_universe(universe_id)
+    return _cached(
+        "v2:magic:" + universe_id,
+        lambda: build(universe),
+        ttl=CACHE_TTL,
+        fail_ttl=CACHE_FAIL_TTL,
+        ok=lambda r: bool(r["rows"]) and not r["partial"],
+    )
