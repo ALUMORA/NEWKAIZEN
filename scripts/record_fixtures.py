@@ -204,10 +204,13 @@ def phase_goldens(args: argparse.Namespace, specs: list[tuple[str, list, dict]],
                 if diffs:
                     golden["live_diff"] = diffs
                     _log(f"[golden] {name}: la repetición difiere de la llamada en vivo: {diffs[:3]}")
-            elif path.exists():
-                old = load_golden(path)
-                if "live_match" in old:
-                    golden["live_match"] = old["live_match"]
+            else:
+                # Sin llamada en vivo se conserva el live_match anterior (del destino o del commiteado)
+                previous = path if path.exists() else GOLDENS_DIR / name
+                if previous.exists():
+                    old = load_golden(previous)
+                    if "live_match" in old:
+                        golden["live_match"] = old["live_match"]
             write_golden(path, golden)
         _log(f"[golden] {len(specs)} goldens escritos en {args.goldens_dir}")
     return problems
