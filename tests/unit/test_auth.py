@@ -13,6 +13,7 @@ import kaizen_api
 from kaizen_api.errors import ApiError
 from kaizen_api.main import create_app
 from kaizen_api.security.auth import (
+    JWT_LEEWAY_SECONDS,
     authenticate,
     create_token,
     hash_password,
@@ -145,10 +146,15 @@ def test_token_expires_after_ttl(ana_hash):
         assert verify_token(token, settings).username == "ana"
     with time_machine.travel(T0 + dt.timedelta(hours=1, minutes=59), tick=False):
         assert verify_token(token, settings).username == "ana"
-    with time_machine.travel(T0 + dt.timedelta(hours=2, seconds=1), tick=False):
+    # Tolerancia de reloj: JWT_LEEWAY_SECONDS segundos después del vencimiento el token todavía pasa
+    # (es para el desfase entre el servidor y el navegador), y un segundo más tarde ya no.
+    with time_machine.travel(T0 + dt.timedelta(hours=2, seconds=JWT_LEEWAY_SECONDS - 1), tick=False):
+        assert verify_token(token, settings).username == "ana"
+    with time_machine.travel(T0 + dt.timedelta(hours=2, seconds=JWT_LEEWAY_SECONDS + 1), tick=False):
         with pytest.raises(ApiError) as err:
             verify_token(token, settings)
     assert err.value.status == 401 and err.value.details == {"reason": "token_expired"}
+    assert JWT_LEEWAY_SECONDS <= 30, "la tolerancia de reloj es para el desfase, no para alargar la sesión"
 
 
 def test_token_version_bump_revokes(ana_hash):
