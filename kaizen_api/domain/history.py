@@ -23,11 +23,24 @@ from dataclasses import dataclass, field
 import yfinance as yf
 
 from kaizen_api.cache import _cached
+from kaizen_api.domain import fx as fx_domain
+from kaizen_api.errors import ApiError, invalid_param
+from kaizen_api.providers.yahoo import prices
 from kaizen_api.providers.yahoo.session import yft
 
 RANGES = ("1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "max")
 INTERVALS = ("1d", "1wk", "1mo")
 CURRENCIES = ("native", "MXN", "USD")
+
+CURRENCY_BY_SUFFIX = (
+    (".MX", "MXN"),
+    ("-USD", "USD"),
+    ("=F", "USD"),
+)
+"""Moneda de cotización cuando Yahoo no la trae: sufijos que sí son inequívocos."""
+
+CURRENCY_BY_SYMBOL = {"^MXX": "MXN", "^GSPC": "USD", "^IXIC": "USD", "^DJI": "USD"}
+"""Índices que se usan de referencia y cuya moneda se conoce de fijo."""
 
 
 @dataclass(frozen=True)
@@ -51,9 +64,99 @@ class PriceSeries:
             raise ValueError("dates y close deben tener la misma longitud")
 
 
+def native_currency(symbol: str) -> tuple[str, bool]:
+    """``(moneda de cotización, se infirió)`` de un símbolo.
+
+    Lo normal es que Yahoo la diga en ``info.currency``; ahí es donde se arregla el defecto del
+    backend viejo, que etiquetaba ``^MXX`` en dólares por adivinar la moneda a partir del sufijo.
+    Si Yahoo no la trae se cae a sufijos inequívocos y, en último caso, a dólares avisando que fue
+    una inferencia, que es lo que la UI tiene que poder decir.
+    """
+    up = symbol.upper()
+    reported = (prices.fetch_info(up).get("currency") or "").strip().upper()
+    if len(reported) == 3 and reported.isalpha():
+        return reported, False
+    if up in CURRENCY_BY_SYMBOL:
+        return CURRENCY_BY_SYMBOL[up], False
+    for suffix, currency in CURRENCY_BY_SUFFIX:
+        if up.endswith(suffix):
+            return currency, True
+    return "USD", True
+
+
 def get_series(symbol: str, range: str = "1y", interval: str = "1d", ccy: str = "native") -> PriceSeries:
     """Costura CONGELADA de históricos v2 (ver el docstring del módulo). La implementa B2."""
-    raise NotImplementedError("get_series lo implementa el stream B2")
+    sym = str(symbol).upper()
+    if range not in RANGES:
+        raise invalid_param("query.range", "literal_error", f"El periodo tiene que ser uno de: {', '.join(RANGES)}.")
+    if interval not in INTERVALS:
+        raise invalid_param(
+            "query.interval", "literal_error", f"El intervalo tiene que ser uno de: {', '.join(INTERVALS)}."
+        )
+    if ccy not in CURRENCIES:
+        raise invalid_param("query.ccy", "literal_error", f"La moneda tiene que ser una de: {', '.join(CURRENCIES)}.")
+
+    dates, closes = prices.fetch_series(sym, range, interval)
+    if not dates:
+        raise ApiError(404, "NOT_FOUND", f"No encontramos histórico de {sym}. Revisa el símbolo.")
+
+    currency, inferred = native_currency(sym)
+    notes: list[str] = []
+    if inferred:
+        notes.append(f"Yahoo no reporta la moneda de {sym}; se tomó {currency} por el tipo de símbolo.")
+
+    target = currency if ccy == "native" else ccy
+    if target == currency:
+        return PriceSeries(
+            symbol=sym,
+            currency=currency,
+            interval=interval,
+            dates=dates,
+            close=closes,
+            source="yahoo",
+            as_of=dates[-1],
+            notes=notes,
+        )
+
+    fx_domain.check_pair(currency, target)
+    fx = fx_domain.series_for(range, interval)
+    rates = fx.as_map()
+    conv_dates: list[str] = []
+    conv_closes: list[float] = []
+    filled = 0
+    for date, value in zip(dates, closes, strict=True):
+        rate, back = fx_domain.rate_on(rates, date)
+        if rate is None:
+            continue
+        filled += 1 if back else 0
+        conv_dates.append(date)
+        conv_closes.append(fx_domain.apply_rate(value, rate, currency, target))
+    dropped = len(dates) - len(conv_dates)
+    if not conv_dates:
+        raise fx_domain.no_fx()
+
+    notes.extend(fx.notes)
+    notes.append(f"Cada cierre se convirtió de {currency} a {target} con el tipo de cambio de su misma fecha.")
+    if filled:
+        notes.append(
+            f"En {filled} fechas el tipo de cambio venía del día hábil anterior "
+            f"(relleno de a lo más {fx_domain.MAX_FORWARD_FILL_DAYS} días)."
+        )
+    if dropped:
+        notes.append(f"Se omitieron {dropped} fechas porque no había tipo de cambio cercano para convertirlas.")
+
+    return PriceSeries(
+        symbol=sym,
+        currency=target,
+        interval=interval,
+        dates=conv_dates,
+        close=conv_closes,
+        source="yahoo" if fx.source == fx_domain.YAHOO_SOURCE else "yahoo,banxico",
+        as_of=conv_dates[-1],
+        fx_pair=fx_domain.PAIR,
+        fx_source=fx.source,
+        notes=notes,
+    )
 
 
 def _fetch_hist(sym: str, period: str = "5d", interval: str = "1d"):
