@@ -115,6 +115,17 @@ describe('ventas, efectivo y objetivos', () => {
     expect(conPiso.trades).toEqual([])
     expect(conPiso.notes.join(' ')).toContain('Se omitieron los movimientos de menos de 1000')
   })
+
+  it('si minTrade no omite nada, no lo presume', () => {
+    const plan = wholeShareRebalance({
+      prices: { A: 300, B: 700 },
+      targets: { A: 0.5, B: 0.5 },
+      cash: 10000,
+      minTrade: 100,
+    })
+    expect(plan.after.holdings).toEqual({ A: 17, B: 7 })
+    expect(plan.notes.join(' ')).not.toContain('Se omitieron')
+  })
 })
 
 describe('texto y forma de la salida', () => {

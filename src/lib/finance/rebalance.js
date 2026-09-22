@@ -130,6 +130,7 @@ export function wholeShareRebalance({
   let left = value - tradable.reduce((acc, s) => acc + qty[s] * price[s], 0)
 
   const floor = isNum(minTrade) && minTrade > 0 ? /** @type {number} */ (minTrade) : 0
+  let omitted = 0
   if (floor > 0) {
     for (const symbol of tradable) {
       const delta = qty[symbol] - current[symbol]
@@ -138,6 +139,7 @@ export function wholeShareRebalance({
       if (left + freed < -EPS) continue // deshacer esa venta dejaría el efectivo en negativo
       qty[symbol] = current[symbol]
       left += freed
+      omitted += 1
     }
   }
 
@@ -166,8 +168,11 @@ export function wholeShareRebalance({
       if (delta <= 0 || delta * price[symbol] >= floor) continue
       qty[symbol] = current[symbol]
       left += delta * price[symbol]
+      omitted += 1
     }
-    notes.push(`Se omitieron los movimientos de menos de ${floor} en la moneda del portafolio.`)
+    if (omitted > 0) {
+      notes.push(`Se omitieron los movimientos de menos de ${floor} en la moneda del portafolio.`)
+    }
   }
 
   /** @type {Trade[]} */
