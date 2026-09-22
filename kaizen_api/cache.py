@@ -98,6 +98,31 @@ def _cached(key: str, fn, ttl: int = 300, ok=None, fail_ttl: int = 60):
         _release_key_lock(key, entry)
 
 
+PROVIDER_SIGNAL_TTL = 600
+"""Cuánto vale la última señal de un proveedor antes de volver a ser "no sé" (10 minutos)."""
+
+_provider_signals: dict[str, tuple[bool, float]] = {}  # proveedor -> (salió bien, instante)
+
+
+def record_provider_call(name: str, ok: bool) -> None:
+    """Anota cómo salió la ÚLTIMA llamada real a un proveedor (``yahoo``, ``sec``, ``banxico``...).
+
+    Es una señal barata y de paso: la registra quien ya iba a llamar al proveedor por otra razón.
+    ``/health`` solo la lee, nunca provoca una llamada, porque un health check que sale a Yahoo se
+    convierte en una llamada por sondeo (Render sondea cada pocos segundos) y en un camino perfecto
+    para que nos limiten por tasa.
+    """
+    _provider_signals[str(name)] = (bool(ok), time.time())
+
+
+def provider_ok(name: str, ttl: float = PROVIDER_SIGNAL_TTL) -> bool | None:
+    """La última señal de ``name`` si sigue fresca; ``None`` (no sé) si no hay o ya venció."""
+    signal = _provider_signals.get(name)
+    if signal is None or time.time() - signal[1] >= ttl:
+        return None
+    return signal[0]
+
+
 def register_reset(hook: Callable[[], None]) -> Callable[[], None]:
     """Registra una función que limpia estado de otro módulo; ``reset_state()`` la llama.
 
@@ -114,6 +139,7 @@ def reset_state() -> None:
     with _cache_lock:
         _cache.clear()
         _key_locks.clear()
+        _provider_signals.clear()
         _edgar_ticker_cache.update({"data": None, "ts": 0})
     for hook in list(_reset_hooks):
         hook()
@@ -122,4 +148,9 @@ def reset_state() -> None:
 def cache_stats() -> dict[str, Any]:
     """Tamaños actuales, para diagnóstico y pruebas."""
     with _cache_lock:
-        return {"entries": len(_cache), "inflight": len(_key_locks), "max": _CACHE_MAX}
+        return {
+            "entries": len(_cache),
+            "inflight": len(_key_locks),
+            "max": _CACHE_MAX,
+            "providerSignals": len(_provider_signals),
+        }
