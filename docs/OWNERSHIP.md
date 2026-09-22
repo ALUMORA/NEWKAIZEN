@@ -68,9 +68,11 @@ El modo `--coverage` responde las dos preguntas que importan antes de arrancar s
 2. **Traslapes.** Ningún archivo versionado, ninguna ruta declarada en `ownership.json` y ningún par
    de globs puede pertenecer a dos streams de la lista a la vez, porque eso es un conflicto de merge
    seguro. Para quitar un archivo de un glob amplio se usa una entrada con `!` al principio, que
-   excluye aunque otro glob del mismo stream lo incluya. Así se resolvió el único traslape que había:
-   `src/features/dev-ui/ChartsGallery.jsx` es de C2 y C1 lo excluye con
-   `"!src/features/dev-ui/ChartsGallery.jsx"`.
+   excluye aunque otro glob del mismo stream lo incluya. Así se resolvieron los dos traslapes que
+   había, los dos en C1: `src/features/dev-ui/ChartsGallery.jsx` es de C2 y
+   `public/manifest.webmanifest` es de F5, así que C1 los excluye con `"!..."`. El segundo solo
+   aparece si pides los streams de fase 3 en la lista, y por eso conviene correrla completa:
+   `--coverage A1,A2,A3,A4,A5,B1,B2a,B2b,B3a,B3b,B3c,C1,C2,C3,F1,F2,F3,F4,F5` (sale en 0 hoy).
 
 ## Cada ruta, su archivo y su dueño
 
@@ -113,7 +115,7 @@ se pide en `docs/requests/<stream>.md`:
 | Archivo | Por qué |
 | --- | --- |
 | `schemas.py` | El contrato v2. S1 lo congeló y va junto con `docs/api-v2.md` (regla 4) |
-| `routers/__init__.py` | Helpers que usan los doce routers: `ERROR_RESPONSES`, `Symbols`, `SymbolPath`, `IsoDateQuery`, `parse_symbols`, `check_date_range`. La caché HTTP ya no vive aquí: ver `http_cache.py` abajo |
+| `routers/__init__.py` | Helpers que usan los doce routers: `Symbols`, `SymbolPath`, `IsoDateQuery`, `parse_symbols`, `check_date_range` y el decorador `@stub`. La caché HTTP y las respuestas de error ya no viven aquí: ver `http_cache.py` y `http_responses.py` abajo |
 | `routers/legacy_v1.py` | Rutas v1 con paridad probada contra los 122 goldens. Los defectos del backend viejo se corrigen en v2, no aquí |
 | `domain/__init__.py` | Helpers compartidos `_log`, `pct`, `r2`, `safe` |
 | `providers/yahoo/session.py` | La sesión y `yft` que usan B2a, B2b, B3a, B3b y B3c |
@@ -121,14 +123,21 @@ se pide en `docs/requests/<stream>.md`:
 | `__init__.py` de `kaizen_api`, `providers`, `providers/yahoo` y `domain/screeners` | Paquetes vacíos |
 | `data/.gitkeep` | Solo mantiene la carpeta |
 
-**Lo que NO quedó congelado, a propósito:** `kaizen_api/http_cache.py` es de **B1**. Ahí viven
-`CACHE_SECONDS` (los segundos de `Cache-Control` por clase de dato), `cache_control()` y
-`no_store()`. Salieron de `routers/__init__.py` en M1 porque la tabla de arriba le encarga a B1
-"códigos y `Cache-Control`" y no se puede entregar eso desde un archivo congelado de otro. Los
-routers lo siguen importando como siempre (`from kaizen_api.routers import cache_control`, que lo
-reexporta), así que B1 puede cambiar tiempos o agregar una clase de dato sin abrir el archivo de
-ningún otro stream, y nadie tiene que actualizar imports. El OpenAPI no cambió ni un byte con la
-mudanza.
+**Lo que NO quedó congelado, a propósito:** dos archivos de **B1**, que salieron de
+`routers/__init__.py` en M1 porque la tabla de arriba le encarga a B1 "códigos, `Cache-Control` y
+límites de tasa" y eso no se puede entregar desde un archivo congelado de otro:
+
+| Archivo | Qué tiene | Para qué lo necesita B1 |
+| --- | --- | --- |
+| `kaizen_api/http_cache.py` | `CACHE_SECONDS` (segundos por clase de dato), `cache_control()`, `no_store()` | Afinar tiempos o agregar una clase de dato |
+| `kaizen_api/http_responses.py` | `ERROR_RESPONSES`: los códigos que cada ruta de datos anuncia en OpenAPI (400, 401, 422, 500, 501, 503) | Anunciar el **429 `RATE_LIMITED`** que documenta `docs/api-v2.md` cuando ponga el limitador de tasa, sin editar los doce routers |
+
+Los routers los siguen importando como siempre (`from kaizen_api.routers import cache_control,
+ERROR_RESPONSES`, que los reexporta), así que nadie tiene que actualizar imports. El OpenAPI no
+cambió ni un byte con la mudanza. Ojo, B1: agregar o quitar una entrada de `ERROR_RESPONSES` **sí**
+cambia el OpenAPI de las 22 rutas de datos, que es justamente el punto. La forma del cuerpo de error
+sigue congelada en `schemas.ErrorBody` (regla 4): aquí se decide qué códigos se anuncian, no cómo se
+ven.
 
 ## Costuras entre streams (quién lee a quién)
 
@@ -166,22 +175,23 @@ separados por coma, en orden de búsqueda**:
   primera capa es la **base**, así que si una llamada está en las dos, **manda la base**, no la
   capa del stream. Es a propósito: el set base es el dato común y revisado, y así ningún stream
   cambia por su cuenta lo que los demás ven. Tu capa sirve para **agregar** llamadas que la base no
-  tiene. Si de verdad necesitas otro valor para una llamada que ya está en la base, es un cambio al
-  set base y se pide al orquestador; el orden de la lista es lo único que manda (`top,base` daría
-  la precedencia contraria).
-- Al **grabar**, lo que ya existe en una capa anterior se sirve de ahí **sin tocarla** (las capas de
-  abajo son de solo lectura, ni con `--refresh` se reescriben) y lo nuevo se escribe **solo en la
-  última**, que se crea con su propio `index.json` y **hereda el `frozen_at` de la base**, para que
+  tiene. Lo único que manda es el orden de la lista, y se puede invertir a propósito: ver
+  "Corregir una llamada que la base ya tiene" más abajo.
+- Al **grabar**, lo que ya existe en una capa que contesta **antes** se sirve de ahí **sin tocarla**
+  (es de solo lectura, ni con `--refresh` se reescribe: escribirla arriba no cambiaría nada al
+  reproducir) y lo nuevo se escribe en **una sola capa**, la última salvo que `--grabar-en` nombre
+  otra. Esa capa se crea con su propio `index.json` y **hereda el `frozen_at` de la base**, para que
   las llamadas que dependen de "hoy" den la misma llave grabando y reproduciendo.
 - Un solo set se comporta exactamente igual que antes. Los espacios y las entradas vacías se
   ignoran, y un nombre desconocido o repetido da un error claro en español.
 - **Tres guardas para que nadie escriba en el set base por accidente:**
   1. Un `--set` con coma que se quedó en **una sola capa** no graba. Es el caso de
-     `--set "2026-09-22,$CAPA"` con `$CAPA` sin definir: como se graba siempre en la última capa,
-     eso escribiría en el set común. Sale con error en español en vez de hacerlo. Leer (replay)
-     sigue tolerante, porque leer no escribe nada.
-  2. Grabar con el **set base como última capa** pide `--permitir-base` (o `allow_base=True`). Lo
-     normal es grabar en tu capa; tocar la base es una decisión del orquestador.
+     `--set "2026-09-22,$CAPA"` con `$CAPA` sin definir: como se graba en la última capa, eso
+     escribiría en el set común. Sale con error en español en vez de hacerlo. Leer (replay) sigue
+     tolerante, porque leer no escribe nada.
+  2. Grabar con el **set base como capa de destino** pide `--permitir-base` (o `allow_base=True`),
+     vaya al final o al principio del orden. Lo normal es grabar en tu capa; tocar la base es una
+     decisión del orquestador.
   3. Una capa que **no grabó ninguna llamada no se crea**. Hoy las rutas de fase 2 responden 501,
      así que la primera corrida de cada stream no graba nada y no deja una carpeta con un
      `index.json` vacío para commitear. En cuanto graba algo, la capa aparece con su índice
@@ -189,6 +199,43 @@ separados por coma, en orden de búsqueda**:
 
 Acepta capas: `replaying()`, `recording()`, `install_replay()`, la variable `KAIZEN_REPLAY_SET`,
 `scripts/run_replay_backend.py --set` y `scripts/record_fixtures.py --set`.
+
+### Corregir una llamada que la base ya tiene
+
+`--set` mezclaba dos decisiones: el **orden de búsqueda** y a qué capa se **graba**. `--grabar-en`
+(o `record_layer=` en la API) las separa, así que un stream puede poner su capa primero y grabar ahí
+mismo, sin pedirle nada a nadie y sin tocar el set base:
+
+```bash
+python scripts/record_fixtures.py --set 2026-09-22-b3a,2026-09-22 --grabar-en 2026-09-22-b3a \
+    --get '/v2/insiders/WALMEX.MX'
+KAIZEN_REPLAY_SET=2026-09-22-b3a,2026-09-22 .venv/bin/python -m pytest -q
+```
+
+Al grabar así, una llamada que la base tiene **con valor bueno** se sigue sirviendo de la base (no
+se vuelve a pedir sin `--refresh`, que para eso está); una que la base tiene **vacía o con error**
+sí sale al proveedor y se graba en tu capa, que a partir de ahí gana. La capa nombrada tiene que
+estar en `--set`, y si es el set base sigue pidiendo `--permitir-base`.
+
+**Esto importa porque el set base trae 35 llamadas así**: 34 vacías (`soft_failure`) y 1 excepción,
+de 432. Las que le van a estorbar a alguien de fase 2:
+
+| Llaves | A quién le pegan |
+| --- | --- |
+| `yf:WALMEX.MX:insider_transactions`, `yf:CEMEXCPO.MX:insider_transactions`, `yf:FUNO11.MX:insider_transactions`, `yf:SPY:insider_transactions`, `yf:^MXX:insider_transactions` | B3a, `/v2/insiders` |
+| `yf:STORAGE18.MX:balance_sheet`, `cashflow`, `income_stmt` | B3a (estados) y B3c (FIBRAs) |
+| `yf:SPY:balance_sheet`, `cashflow`, `financials`, `income_stmt`, `yf:^MXX:balance_sheet`, `cashflow`, `financials`, `income_stmt` | B3a: son índices/ETF, no tienen estados. Probablemente esté bien que sigan vacías |
+| `yf:CEMEXCPO.MX:institutional_holders`, `yf:SPY:institutional_holders`, `yf:^MXX:institutional_holders` | B3a |
+| `http:GET https://data.sec.gov/api/xbrl/companyfacts/CIK0000884394.json` | B3a, EDGAR |
+| `yf:USDMXN=X:news` | B2b |
+| Las 11 de `ZZZNOTREAL` (y `yf:ZZZNOTREAL:fast_info.last_price`, la única excepción) | Nadie: el símbolo inexistente a propósito, tiene que seguir fallando |
+
+Sácala tú mismo cuando la necesites:
+
+```bash
+.venv/bin/python -c "import json;d=json.load(open('tests/fixtures/recorded/2026-09-22/index.json'))['entries'];\
+print('\n'.join(k for k,v in sorted(d.items()) if v.get('kind')!='value' or v.get('soft_failure')))"
+```
 
 **Receta por stream.** Cada stream de backend graba en su propia capa, encima del set base
 `2026-09-22`, y commitea solo su carpeta (ya está en su glob de `ownership.json`):
@@ -220,16 +267,30 @@ Los goldens del legado (`tests/goldens_legacy/`) se quedan fijos en el set base:
 
 ## Las pruebas que fase 2 va a cruzarse
 
-Tres archivos de pruebas afirmaban cosas que dejan de ser ciertas en cuanto un stream implementa su
-primera ruta, y ninguno es de los streams de fase 2. En M1 se hicieron **auto ajustables**, así que
-nadie tiene que abrir un archivo ajeno el día que implementa algo:
+Cuatro archivos de pruebas afirmaban cosas que dejan de ser ciertas en cuanto un stream implementa
+su primera ruta, y ninguno es de los streams de fase 2. En M1 se hicieron **auto ajustables**, así
+que nadie tiene que abrir un archivo ajeno el día que implementa algo:
 
-- `tests/contract/test_schemas.py` ya no da por hecho que las 22 rutas responden 501. Mira el código
-  de cada función: mientras levante `not_implemented` le exige el cuerpo de error del contrato; en
-  cuanto deja de hacerlo, le exige lo que sí aplica, que **su router anuncie su capacidad** en
-  `CAPABILITIES` (que es lo que publica `/health`). Si implementas una ruta y olvidas la capacidad,
-  la prueba te lo dice con el nombre del módulo. No se pide la ruta implementada: estas pruebas
-  corren sin red.
+- `tests/contract/test_schemas.py` ya no da por hecho que las 22 rutas responden 501. Lo decide por
+  **dato, no por el texto del código**: cada función que todavía es stub lleva `@stub` debajo del
+  decorador de su router (el decorador vive en el congelado `routers/__init__.py` y devuelve la
+  misma función, así que no cambia nada del OpenAPI). Mientras esté esa marca, la prueba le exige el
+  cuerpo de error 501 del contrato; en cuanto la borras, le exige lo que sí aplica: que **tu router
+  anuncie LA capacidad de esa ruta** en `CAPABILITIES`, no cualquiera. Son las dos líneas que se
+  tocan al implementar, y están juntas:
+
+  ```python
+  @router.get("/fx", response_model=FxResponse, dependencies=[cache_control("quotes")], summary="...")
+  @stub                                   # ← se borra al implementar
+  def fx(pair: FxPairQuery = "USDMXN") -> FxResponse:
+      raise not_implemented("GET /v2/fx")  # ← y este también
+  ```
+
+  Si dejas el `@stub` puesto y ya anunciaste la capacidad, la prueba te lo dice por nombre en vez de
+  llamar a la ruta; si lo quitas y olvidas la capacidad, te dice cuál falta y en qué módulo. Nunca
+  llama a una ruta ya implementada, porque estas pruebas corren sin red. La capacidad que espera
+  cada ruta está en la quinta columna de `SPEC`, y una prueba nueva comprueba que esa columna y
+  `schemas.KNOWN_CAPABILITIES` no se vayan por su lado.
 - `tests/unit/test_app.py` afirmaba la lista de capacidades completa (`== ["auth", "legacy.v1"]`).
   Ahora afirma lo que depende del legado y deja que la lista crezca.
 - `tests/unit/test_auth.py` y `tests/characterization/test_replay_server.py` usaban el 501 de
