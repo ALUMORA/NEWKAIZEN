@@ -7,9 +7,10 @@
 //       omisión analizavende, más lo que no está commiteado). P. ej. node scripts/check-ownership.mjs B2a
 //   node scripts/check-ownership.mjs --coverage A1,A2,B1,... [--table]
 //       Revisa que la lista de streams (más O, que congela archivos) se pueda correr en paralelo:
-//       (1) todo archivo versionado bajo kaizen_api/ tiene dueño (si no, falla); los de src/ sin
-//       dueño se listan solo como información; (2) ningún archivo versionado, ninguna ruta declarada
-//       y ningún par de globs pertenece a dos streams a la vez (sería un conflicto de merge seguro).
+//       (1) todo archivo versionado bajo kaizen_api/ tiene dueño (si no, falla); el resto del repo
+//       (src/, tests/, docs/, scripts/...) se lista solo como información, árbol por árbol;
+//       (2) ningún archivo versionado, ninguna ruta declarada y ningún par de globs pertenece a dos
+//       streams a la vez (sería un conflicto de merge seguro).
 //       --table imprime el dueño de cada archivo de kaizen_api/.
 //
 // Sintaxis de ownership.json: "*" es cualquier cosa dentro de un segmento, "**" cualquier cantidad
@@ -137,6 +138,9 @@ function checkCoverage(list, { table }) {
   const top = git(["rev-parse", "--show-toplevel"]).trim();
   const tracked = git(["ls-files", "-z"], { cwd: top }).split("\0").filter(Boolean);
   const ownersOf = (file) => participants.filter((r) => owns(r, file)).map((r) => r.stream);
+  const everyone = STREAMS.map(rulesOf);
+  /** Dueños del archivo en TODO ownership.json, no solo en la lista pedida. */
+  const ownersAnywhere = (file) => everyone.filter((r) => owns(r, file)).map((r) => r.stream);
   let failed = false;
 
   console.log(`Cobertura de ${requested.join(", ")} (+ ${FROZEN}, archivos congelados), ${tracked.length} archivos versionados`);
@@ -154,10 +158,38 @@ function checkCoverage(list, { table }) {
   if (table) {
     for (const f of backend) console.log(`    ${f} → ${ownersOf(f).join(" y ") || "SIN DUEÑO"}`);
   }
-  const front = tracked.filter((f) => f.startsWith("src/"));
-  const orphansFront = front.filter((f) => ownersOf(f).length === 0);
-  console.log(`ℹ src/: ${orphansFront.length} de ${front.length} archivo(s) sin dueño entre estos streams (informativo):`);
-  orphansFront.forEach((f) => console.log(`  - ${f}`));
+  // Informativo: el resto del repo. No falla, pero un árbol que varios streams van a editar y
+  // nadie declara (docs/overhaul/, tests/contract/...) es un conflicto de merge esperando su turno.
+  const MAX_LISTED = 12;
+  const trees = [...new Set(tracked.filter((f) => !f.startsWith("kaizen_api/")).map((f) => f.split("/")[0] + "/"))]
+    .filter((t) => t.includes("/"))
+    .sort();
+  const rootFiles = tracked.filter((f) => !f.includes("/"));
+  console.log("ℹ Fuera de kaizen_api/ (informativo, no falla): archivos sin dueño entre estos streams");
+  for (const tree of [...trees, "(raíz)"]) {
+    const files = tree === "(raíz)" ? rootFiles : tracked.filter((f) => f.startsWith(tree));
+    let orphans = files.filter((f) => ownersOf(f).length === 0);
+    if (!files.length) continue;
+    const elsewhere = orphans.filter((f) => ownersAnywhere(f).length);
+    const nobody = orphans.filter((f) => !ownersAnywhere(f).length);
+    const others = [...new Set(elsewhere.flatMap(ownersAnywhere))].sort();
+    const note = elsewhere.length ? `, ${elsewhere.length} de otro stream fuera de la lista (${others.join(", ")})` : "";
+    console.log(`  ${tree}: ${orphans.length} de ${files.length} sin dueño en esta lista${note}`);
+    orphans = nobody;
+    if (!orphans.length) continue;
+    if (orphans.length <= MAX_LISTED) {
+      orphans.forEach((f) => console.log(`      - ${f}`));
+      continue;
+    }
+    const byDir = new Map();
+    for (const f of orphans) {
+      const dir = f.split("/").slice(0, -1).join("/") + "/";
+      byDir.set(dir, (byDir.get(dir) ?? 0) + 1);
+    }
+    const dirs = [...byDir].sort((a, b) => b[1] - a[1]);
+    dirs.slice(0, MAX_LISTED).forEach(([dir, n]) => console.log(`      - ${dir} (${n} archivo(s))`));
+    if (dirs.length > MAX_LISTED) console.log(`      - ... y ${dirs.length - MAX_LISTED} carpeta(s) más`);
+  }
 
   // (2) traslapes
   const overlaps = new Map();

@@ -1,0 +1,7 @@
+Aquí va docs/requests/<stream>.md: lo que un stream necesita y no puede hacer solo.
+
+Una dependencia nueva, un cambio a una primitiva congelada (kaizen_api/schemas.py,
+kaizen_api/routers/__init__.py, docs/api-v2.md) o un cambio al set base de fixtures se piden aquí,
+con {necesidad, por qué, API propuesta}, y mientras tanto se trabaja alrededor. El archivo de cada
+stream ya está en sus globs de scripts/ownership.json; esta carpeta existe versionada para que
+nadie se tope con un "No such file or directory" justo cuando está bloqueado.
