@@ -11,7 +11,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 
 from kaizen_api.errors import not_implemented
-from kaizen_api.routers import ERROR_RESPONSES, Symbols, cache_control
+from kaizen_api.routers import ERROR_RESPONSES, Symbols, cache_control, stub
 from kaizen_api.schemas import FX_PAIR_PATTERN, FxResponse, QuotesResponse
 
 router = APIRouter(prefix="/v2", tags=["cotizaciones"], responses=ERROR_RESPONSES)
@@ -26,6 +26,7 @@ FxPairQuery = Annotated[str, Query(pattern=FX_PAIR_PATTERN, description="Par sin
     dependencies=[cache_control("quotes")],
     summary="Cotización de hasta 50 símbolos",
 )
+@stub
 def quotes(symbols: Symbols) -> QuotesResponse:
     raise not_implemented("GET /v2/quotes")
 
@@ -36,5 +37,6 @@ def quotes(symbols: Symbols) -> QuotesResponse:
     dependencies=[cache_control("quotes")],
     summary="Tipo de cambio spot (FIX de Banxico si hay token, si no Yahoo marcado)",
 )
+@stub
 def fx(pair: FxPairQuery = "USDMXN") -> FxResponse:
     raise not_implemented("GET /v2/fx")

@@ -7,7 +7,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Query
 
 from kaizen_api.errors import not_implemented
-from kaizen_api.routers import ERROR_RESPONSES, cache_control
+from kaizen_api.routers import ERROR_RESPONSES, cache_control, stub
 from kaizen_api.schemas import SYMBOL_PATTERN, NewsResponse
 
 router = APIRouter(prefix="/v2", tags=["noticias"], responses=ERROR_RESPONSES)
@@ -20,6 +20,7 @@ CAPABILITIES: list[str] = []
     dependencies=[cache_control("news")],
     summary="Titulares de mercado o de un símbolo, sin duplicados",
 )
+@stub
 def news(
     symbol: Annotated[str | None, Query(pattern=SYMBOL_PATTERN, description="Sin símbolo: noticias de mercado")] = None,
     lang: Annotated[Literal["es", "en", "all"], Query(description="Idioma de los titulares")] = "all",

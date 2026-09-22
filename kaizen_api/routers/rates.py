@@ -12,7 +12,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 
 from kaizen_api.errors import invalid_param, not_implemented
-from kaizen_api.routers import ERROR_RESPONSES, IsoDateQuery, cache_control, check_date_range
+from kaizen_api.routers import ERROR_RESPONSES, IsoDateQuery, cache_control, check_date_range, stub
 from kaizen_api.schemas import MxRatesResponse, RfSeriesResponse
 
 router = APIRouter(prefix="/v2", tags=["tasas y macro"], responses=ERROR_RESPONSES)
@@ -27,6 +27,7 @@ TENORS = (28, 91, 182, 364)
     dependencies=[cache_control("macro")],
     summary="Objetivo de Banxico, TIIE, CETES, Bono M, inflación, UDI y FIX",
 )
+@stub
 def rates_mx() -> MxRatesResponse:
     raise not_implemented("GET /v2/rates/mx")
 
@@ -37,6 +38,7 @@ def rates_mx() -> MxRatesResponse:
     dependencies=[cache_control("macro")],
     summary="Serie de la tasa libre de riesgo (CETES, simple act/360, fracción)",
 )
+@stub
 def rates_rf(
     start: IsoDateQuery = None,
     end: IsoDateQuery = None,

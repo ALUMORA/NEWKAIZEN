@@ -12,7 +12,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Query
 
 from kaizen_api.errors import not_implemented
-from kaizen_api.routers import ERROR_RESPONSES, SymbolPath, cache_control
+from kaizen_api.routers import ERROR_RESPONSES, SymbolPath, cache_control, stub
 from kaizen_api.schemas import DividendsResponse, InstrumentResponse, StatementsResponse
 
 router = APIRouter(prefix="/v2", tags=["investigación"], responses=ERROR_RESPONSES)
@@ -25,6 +25,7 @@ CAPABILITIES: list[str] = []
     dependencies=[cache_control("quotes")],
     summary="Ficha: cotización, fundamentales en la moneda del precio, beta y cobertura",
 )
+@stub
 def instrument(symbol: SymbolPath) -> InstrumentResponse:
     raise not_implemented("GET /v2/instrument/{symbol}")
 
@@ -35,6 +36,7 @@ def instrument(symbol: SymbolPath) -> InstrumentResponse:
     dependencies=[cache_control("fundamentals")],
     summary="Estados financieros reales (SEC o Yahoo), nunca sintetizados",
 )
+@stub
 def statements(
     symbol: SymbolPath,
     freq: Annotated[Literal["annual", "quarterly"], Query(description="Anual o trimestral")] = "annual",
@@ -48,5 +50,6 @@ def statements(
     dependencies=[cache_control("fundamentals")],
     summary="Dividendos pagados, suma de 12 meses y rendimiento",
 )
+@stub
 def dividends(symbol: SymbolPath) -> DividendsResponse:
     raise not_implemented("GET /v2/instrument/{symbol}/dividends")

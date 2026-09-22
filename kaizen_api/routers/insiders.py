@@ -10,7 +10,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from kaizen_api.errors import not_implemented
-from kaizen_api.routers import ERROR_RESPONSES, SymbolPath, cache_control
+from kaizen_api.routers import ERROR_RESPONSES, SymbolPath, cache_control, stub
 from kaizen_api.schemas import InsidersResponse
 
 router = APIRouter(prefix="/v2", tags=["screeners"], responses=ERROR_RESPONSES)
@@ -23,5 +23,6 @@ CAPABILITIES: list[str] = []
     dependencies=[cache_control("fundamentals")],
     summary="Operaciones de consejeros y directivos",
 )
+@stub
 def insiders(symbol: SymbolPath) -> InsidersResponse:
     raise not_implemented("GET /v2/insiders/{symbol}")

@@ -12,7 +12,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 
 from kaizen_api.errors import not_implemented
-from kaizen_api.routers import ERROR_RESPONSES, SymbolPath, cache_control
+from kaizen_api.routers import ERROR_RESPONSES, SymbolPath, cache_control, stub
 from kaizen_api.schemas import MomentumResponse, ValuationResponse
 
 router = APIRouter(prefix="/v2", tags=["investigación"], responses=ERROR_RESPONSES)
@@ -25,6 +25,7 @@ CAPABILITIES: list[str] = []
     dependencies=[cache_control("fundamentals")],
     summary="Múltiplos contra el sector, DCF con sensibilidad y P/B justificado para bancos",
 )
+@stub
 def valuation(
     symbol: SymbolPath,
     erp: Annotated[float | None, Query(ge=0, le=0.2, description="Prima de riesgo de mercado, fracción")] = None,
@@ -44,5 +45,6 @@ def valuation(
     dependencies=[cache_control("history")],
     summary="Rendimiento 12-1, 6 y 3 meses contra su referencia",
 )
+@stub
 def momentum(symbol: SymbolPath) -> MomentumResponse:
     raise not_implemented("GET /v2/momentum/{symbol}")

@@ -1,29 +1,39 @@
 """Routers HTTP. Aquí van las piezas compartidas por todos: validación de símbolos y fechas,
-respuestas de error para OpenAPI y el registro de capacidades.
+la marca de las rutas que todavía son stub y el registro de capacidades.
 
 Este archivo está congelado bajo O: lo leen los doce routers y cambiarlo se pide en
-``docs/requests/<stream>.md``. La caché HTTP (``CACHE_SECONDS``, ``cache_control``, ``no_store``)
-ya NO vive aquí, vive en ``kaizen_api/http_cache.py``, que es de B1 y sí puede cambiar durante la
-fase 2; se reexporta desde aquí para que los routers no cambien sus imports.
+``docs/requests/<stream>.md``. Dos cosas que SÍ cambian durante la fase 2 salieron de aquí a
+archivos de B1, y se reexportan para que ningún router cambie sus imports:
+
+* la caché HTTP (``CACHE_SECONDS``, ``cache_control``, ``no_store``) vive en
+  ``kaizen_api/http_cache.py``;
+* las respuestas de error de OpenAPI (``ERROR_RESPONSES``) viven en ``kaizen_api/http_responses.py``.
 
 Cada router v2 expone:
 
 * ``router``: el ``APIRouter`` con sus rutas (todas con ``response_model`` de ``schemas``).
 * ``CAPABILITIES``: lista de capacidades (``schemas.KNOWN_CAPABILITIES``) que YA funcionan en ese
   router. ``/health`` las anuncia. Una ruta que todavía responde 501 no se anuncia.
+
+Cada ruta que todavía responde 501 lleva ``@stub`` debajo del decorador del router. Es un dato, no
+un comentario: ``tests/contract/test_schemas.py`` lo lee para saber a qué rutas exigirles el cuerpo
+de error del contrato. Al implementar una ruta se borra esa línea junto con su
+``raise not_implemented(...)`` y se agrega la capacidad a ``CAPABILITIES``.
 """
 
 from __future__ import annotations
 
 import datetime as _dt
 import re
-from typing import Annotated
+from collections.abc import Callable
+from typing import Annotated, TypeVar
 
 from fastapi import Depends, Path, Query
 
 from kaizen_api.errors import ApiError, field_error, invalid_param
 from kaizen_api.http_cache import CACHE_SECONDS, cache_control, no_store
-from kaizen_api.schemas import ISO_DATE_PATTERN, SYMBOL_PATTERN, ErrorBody
+from kaizen_api.http_responses import ERROR_RESPONSES
+from kaizen_api.schemas import ISO_DATE_PATTERN, SYMBOL_PATTERN
 
 __all__ = [
     "CACHE_SECONDS",
@@ -34,26 +44,38 @@ __all__ = [
     "Symbols",
     "cache_control",
     "check_date_range",
+    "is_stub",
     "no_store",
     "parse_symbols",
+    "stub",
 ]
 
 MAX_SYMBOLS = 50
 _SYMBOL_RE = re.compile(SYMBOL_PATTERN)
 
-
-def _error(description: str) -> dict:
-    return {"model": ErrorBody, "description": description}
+_F = TypeVar("_F", bound=Callable)
 
 
-ERROR_RESPONSES: dict[int | str, dict] = {
-    400: _error("Símbolo inválido (INVALID_SYMBOL)"),
-    401: _error("Falta sesión o expiró (UNAUTHORIZED); solo con AUTH_REQUIRED"),
-    422: _error("Parámetro inválido (VALIDATION_ERROR)"),
-    500: _error("Error interno (INTERNAL)"),
-    501: _error("Todavía no implementado (NOT_IMPLEMENTED)"),
-    503: _error("Fuente caída o sin configurar (UPSTREAM_UNAVAILABLE, NOT_CONFIGURED)"),
-}
+def stub(endpoint: _F) -> _F:
+    """Marca la función de una ruta que todavía no está implementada (levanta ``not_implemented``).
+
+    Va debajo del ``@router.get(...)`` y devuelve la MISMA función, así que no cambia la firma ni el
+    OpenAPI: solo le cuelga ``__kaizen_stub__``. Las pruebas de contrato leen esa marca en vez de
+    adivinar por el texto del código, que daba un falso positivo si la ruta ya implementada
+    conservaba un ``not_implemented(...)`` para una rama no soportada.
+
+    Al implementar la ruta se borra esta línea y se agrega la capacidad a ``CAPABILITIES``; si se
+    deja puesta junto con la capacidad, la prueba de contrato lo dice con nombre y apellido en vez
+    de llamar a la ruta (que saldría a los proveedores).
+    """
+    endpoint.__kaizen_stub__ = True  # type: ignore[attr-defined]
+    return endpoint
+
+
+def is_stub(endpoint: Callable) -> bool:
+    """¿La función de esta ruta lleva la marca ``@stub``?"""
+    return getattr(endpoint, "__kaizen_stub__", False) is True
+
 
 SymbolPath = Annotated[
     str,

@@ -10,7 +10,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 
 from kaizen_api.errors import not_implemented
-from kaizen_api.routers import ERROR_RESPONSES, cache_control
+from kaizen_api.routers import ERROR_RESPONSES, cache_control, stub
 from kaizen_api.schemas import MarketsOverviewResponse, WorldResponse
 
 router = APIRouter(prefix="/v2", tags=["mercados"], responses=ERROR_RESPONSES)
@@ -23,6 +23,7 @@ CAPABILITIES: list[str] = []
     dependencies=[cache_control("quotes")],
     summary="Índices, divisas, materias primas y cripto, con estado de BMV y NYSE",
 )
+@stub
 def markets_overview() -> MarketsOverviewResponse:
     raise not_implemented("GET /v2/markets/overview")
 
@@ -33,5 +34,6 @@ def markets_overview() -> MarketsOverviewResponse:
     dependencies=[cache_control("quotes")],
     summary="Variación por país con ETF de iShares en USD",
 )
+@stub
 def markets_world() -> WorldResponse:
     raise not_implemented("GET /v2/markets/world")

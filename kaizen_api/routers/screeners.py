@@ -11,7 +11,7 @@ from typing import Annotated, Literal
 from fastapi import APIRouter, Query
 
 from kaizen_api.errors import invalid_param, not_implemented
-from kaizen_api.routers import ERROR_RESPONSES, cache_control, parse_symbols
+from kaizen_api.routers import ERROR_RESPONSES, cache_control, parse_symbols, stub
 from kaizen_api.schemas import FactorsResponse, FibrasResponse, MagicResponse
 
 router = APIRouter(prefix="/v2", tags=["screeners"], responses=ERROR_RESPONSES)
@@ -27,6 +27,7 @@ MAX_FIBRAS_EXTRA = 20
     dependencies=[cache_control("screeners")],
     summary="Puntajes por factor (valor, calidad, momentum, baja volatilidad, crecimiento)",
 )
+@stub
 def factors(
     universe: Annotated[Literal["mx", "us", "custom"], Query(description="custom exige symbols")] = "mx",
     symbols: Annotated[str | None, Query(max_length=MAX_CUSTOM_UNIVERSE * 21, description="Solo con universe=custom")] = None,
@@ -46,6 +47,7 @@ def factors(
     dependencies=[cache_control("screeners")],
     summary="Fórmula Mágica de Greenblatt con EBIT reportado",
 )
+@stub
 def magic(universe: Annotated[Literal["us", "mx"], Query(description="Universo")] = "us") -> MagicResponse:
     raise not_implemented("GET /v2/screeners/magic")
 
@@ -56,6 +58,7 @@ def magic(universe: Annotated[Literal["us", "mx"], Query(description="Universo")
     dependencies=[cache_control("screeners")],
     summary="FIBRAs: rendimiento de distribución, P/NAV, LTV y diferencial contra CETES",
 )
+@stub
 def fibras(
     extra: Annotated[str | None, Query(max_length=MAX_FIBRAS_EXTRA * 21, description="FIBRAs extra separadas por coma")] = None,
 ) -> FibrasResponse:
