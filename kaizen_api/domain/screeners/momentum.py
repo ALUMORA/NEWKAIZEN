@@ -192,8 +192,8 @@ def get_momentum_v2(symbol: str) -> dict:
 
     relative = None if (own is None or bench_value is None) else own - bench_value
     notes.append(
-        f"Referencia {benchmark}, en {currency}, la misma moneda del activo: comparar un precio en "
-        "pesos contra un índice en dólares mezcla rendimiento con tipo de cambio."
+        f"Referencia {benchmark}, en {currency}, la misma moneda del activo: comparar contra un "
+        "índice en otra moneda mezclaría el rendimiento con el tipo de cambio."
     )
     notes.append("Cierres ajustados de fin de mes; el mes en curso no cuenta porque todavía no cierra.")
 

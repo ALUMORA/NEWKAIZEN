@@ -256,3 +256,16 @@ def test_el_router_no_deja_ninguna_ruta_marcada_como_stub():
     assert not is_stub(valuation.valuation)
     assert not is_stub(valuation.momentum)
     assert valuation.CAPABILITIES == ["valuation.multiples", "valuation.dcf", "momentum"]
+
+
+def test_la_nota_del_dcf_dice_de_donde_salio_el_crecimiento(client):
+    """Un 18.7 % anual sin decir de dónde viene no es honesto: la nota nombra la fuente."""
+    base = client.get("/v2/valuation/AAPL").json()
+    nota = next(n for n in base["meta"]["notes"] if n.startswith("FCFF del último ejercicio"))
+    assert "Damodaran" in nota and "el sector Technology en el mercado US" in nota
+
+    pedido = client.get("/v2/valuation/AAPL?growth=0.05").json()
+    nota = next(n for n in pedido["meta"]["notes"] if n.startswith("FCFF del último ejercicio"))
+    assert "que pediste en la consulta" in nota
+    assert "Damodaran" not in nota
+    assert pedido["dcf"]["inputs"]["growth"] == 0.05

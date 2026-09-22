@@ -146,6 +146,12 @@ class SectorBenchmark:
     as_of: str = ""
     method: str = ""
 
+    def label(self) -> str:
+        """Cómo se nombra esta referencia en una nota: el sector, o el total del mercado."""
+        if self.sector:
+            return f"el sector {self.sector} en el mercado {self.market}"
+        return f"el total del mercado {self.market}"
+
 
 def _median(values: list[float | None]) -> float | None:
     clean = [v for v in values if isinstance(v, (int, float)) and v == v]

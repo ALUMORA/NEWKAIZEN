@@ -227,3 +227,9 @@ def test_el_archivo_es_json_valido_y_no_trae_guiones_largos():
     crudo = params.DATA_FILE.read_text(encoding="utf-8")
     json.loads(crudo)
     assert "—" not in crudo and "–" not in crudo
+
+
+def test_la_referencia_se_nombra_igual_en_las_notas():
+    """La nota del DCF dice de dónde salió el crecimiento, así que la etiqueta importa."""
+    assert params.sector_benchmark("Technology", "US").label() == "el sector Technology en el mercado US"
+    assert params.sector_benchmark("Criptomagia", "EM").label() == "el total del mercado EM"

@@ -127,3 +127,13 @@ def test_las_notas_explican_la_moneda_y_el_mes_en_curso(replay_b3b):
     assert any("mes en curso" in n for n in r["_notes"])
     for n in r["_notes"]:
         assert "—" not in n and "–" not in n
+
+
+def test_la_nota_de_moneda_no_habla_de_pesos_cuando_el_activo_va_en_dolares(replay_b3b):
+    """La nota es la misma para las dos plazas, así que no puede nombrar una sola moneda."""
+    usd = mom.get_momentum_v2("AAPL")
+    nota = next(n for n in usd["_notes"] if "la misma moneda" in n)
+    assert "en USD" in nota
+    assert "pesos" not in nota.lower() and "dólares" not in nota.lower()
+    mxn = mom.get_momentum_v2("WALMEX.MX")
+    assert "en MXN" in next(n for n in mxn["_notes"] if "la misma moneda" in n)

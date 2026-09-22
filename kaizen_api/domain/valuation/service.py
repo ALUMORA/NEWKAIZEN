@@ -309,9 +309,14 @@ def _dcf_block(
         minority_interest=data.minority_interest,
         shares=data.shares,
     )
+    origen_crecimiento = (
+        "que pediste en la consulta"
+        if growth is not None
+        else f"esperado a 5 años que Damodaran publica para {bench.label()}"
+    )
     notes.append(
         f"FCFF del último ejercicio {fcff0:,.0f} {data.financial_currency}, proyectado {years_value} años "
-        f"al {growth_value:.1%} y descontado al {wacc_value:.2%}."
+        f"al {growth_value:.1%} ({origen_crecimiento}) y descontado al {wacc_value:.2%}."
     )
     block = dict(empty)
     block["applicable"] = True
