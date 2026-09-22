@@ -66,8 +66,10 @@ def test_replay_server_serves_sample_routes(replay_server):
         golden = load_golden(GOLDENS_DIR / golden_file)
         diffs = compare(body, golden["output"], volatile=golden["volatile_paths"])
         assert not diffs, (route, diffs)
-    status, body = _get(base + "/v2/quotes?symbols=AAPL")
-    assert status == 501 and body["error"]["code"] == "NOT_IMPLEMENTED"
+    # La superficie v2 está montada y validando. No se pide una ruta v2 con parámetros buenos:
+    # en cuanto su stream la implemente saldría a los proveedores y esto es una prueba del legado.
+    status, body = _get(base + "/v2/quotes?symbols=,,,")
+    assert status == 422 and body["error"]["code"] == "VALIDATION_ERROR"
     assert session.misses == []
 
 

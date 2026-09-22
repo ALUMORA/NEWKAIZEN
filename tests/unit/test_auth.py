@@ -259,7 +259,10 @@ def test_auth_required_gates_v2_and_legacy_but_not_health(ana_hash):
     with replaying(golden["fixture_set"]) as rp:  # reloj congelado: el token se emite dentro
         token = client.post("/auth/login", json={"username": "ana", "password": "correcta-y-larga"}).json()["token"]
         auth = {"Authorization": f"Bearer {token}"}
-        assert client.get("/v2/quotes?symbols=AAPL", headers=auth).status_code == 501
+        # Símbolos inválidos a propósito: prueba que la sesión pasó sin ejecutar la ruta, que su
+        # stream puede implementar cualquier día (y entonces saldría a los proveedores).
+        authorized = client.get("/v2/quotes?symbols=,,,", headers=auth)
+        assert authorized.status_code == 422 and authorized.json()["error"]["code"] == "VALIDATION_ERROR"
         kaizen_api.reset_state()
         r = client.get("/rf", headers=auth)
     assert rp.misses == [] and r.status_code == 200
@@ -268,8 +271,11 @@ def test_auth_required_gates_v2_and_legacy_but_not_health(ana_hash):
 
 def test_auth_optional_when_not_required(ana_hash):
     client = client_for(make_settings(ana_hash))
-    assert client.get("/v2/quotes?symbols=AAPL").status_code == 501
-    assert client.get("/v2/quotes?symbols=AAPL", headers={"Authorization": "Bearer basura"}).status_code == 501
+    # Sin AUTH_REQUIRED la ruta se atiende con token o sin él: llega hasta la validación (422),
+    # que es lo que se puede afirmar sin ejecutar la ruta ni salir a los proveedores.
+    for headers in ({}, {"Authorization": "Bearer basura"}):
+        r = client.get("/v2/quotes?symbols=,,,", headers=headers)
+        assert r.status_code == 422 and r.json()["error"]["code"] == "VALIDATION_ERROR"
 
 
 def test_hash_password_script_prints_a_usable_hash(capsys):

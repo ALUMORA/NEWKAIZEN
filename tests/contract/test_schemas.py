@@ -1,8 +1,15 @@
 """Contrato v2: cada ruta del spec está registrada, valida sus parámetros, declara su modelo y,
-mientras no esté implementada, responde 501 con el cuerpo de error del contrato."""
+mientras no esté implementada, responde 501 con el cuerpo de error del contrato.
+
+Este archivo está congelado bajo O y se ajusta solo: en cuanto un stream de fase 2 implementa su
+ruta, la prueba del 501 deja de exigírselo y pasa a exigir lo que sí aplica (que su router anuncie
+la capacidad). Así nadie tiene que abrir un archivo que no es suyo el día que implementa algo.
+"""
 
 from __future__ import annotations
 
+import inspect
+import sys
 from pathlib import Path
 
 import pytest
@@ -68,6 +75,24 @@ def client(app):
     return TestClient(app, raise_server_exceptions=False)
 
 
+def router_module(rc) -> object:
+    """El módulo de ``kaizen_api/routers/`` donde vive la función de la ruta."""
+    return sys.modules[rc.endpoint.__module__]
+
+
+def is_stub(rc) -> bool:
+    """¿La ruta sigue siendo un stub? Lo es mientras su función levante ``not_implemented``.
+
+    Se lee del código fuente, no llamando a la ruta: una ruta ya implementada saldría a los
+    proveedores y estas pruebas corren sin red.
+    """
+    try:
+        source = inspect.getsource(inspect.unwrap(rc.endpoint))
+    except OSError:  # pragma: no cover - solo si el código no está en disco
+        return False
+    return "not_implemented(" in source
+
+
 def v2_routes(app) -> dict[tuple[str, str], object]:
     routes = {}
     for rc in iter_route_contexts(app.routes):
@@ -107,7 +132,17 @@ def test_openapi_generates_with_error_body(app):
 
 
 @pytest.mark.parametrize("method,path,model,url", STUBS, ids=[p for _, p, _, _ in STUBS])
-def test_stub_returns_501_error_body(client, method, path, model, url):
+def test_stub_returns_501_error_body(app, client, method, path, model, url):
+    """Mientras la ruta sea stub, su 501 es el del contrato; ya implementada, anuncia su capacidad."""
+    rc = v2_routes(app)[(method, path)]
+    if not is_stub(rc):
+        caps = list(getattr(router_module(rc), "CAPABILITIES", []))
+        assert caps, (
+            f"{method} {path} ya no es un stub pero su router no anuncia ninguna capacidad: "
+            f"agrégala a CAPABILITIES de {rc.endpoint.__module__} (la anuncia /health)"
+        )
+        assert set(caps) <= set(schemas.KNOWN_CAPABILITIES), caps
+        return
     r = client.request(method, url)
     assert r.status_code == 501, r.text
     body = schemas.ErrorBody.model_validate(r.json())
@@ -115,6 +150,16 @@ def test_stub_returns_501_error_body(client, method, path, model, url):
     assert body.error.message == "Esta función todavía no está disponible."
     assert body.error.details == {"endpoint": f"{method} {path}"}
     assert r.headers["cache-control"] == "no-store"
+
+
+def test_health_announces_every_capability_that_the_routers_declare(app, client):
+    """Lo que anuncia ``/health`` es exactamente lo que declaran los routers montados."""
+    declared: set[str] = set()
+    for rc in v2_routes(app).values():
+        declared |= set(getattr(router_module(rc), "CAPABILITIES", []))
+    announced = set(client.get("/health").json()["capabilities"])
+    assert declared <= announced, sorted(declared - announced)
+    assert announced <= set(schemas.KNOWN_CAPABILITIES), sorted(announced - set(schemas.KNOWN_CAPABILITIES))
 
 
 @pytest.mark.parametrize(
