@@ -79,6 +79,51 @@ function maxDrawdownOf(values) {
   return worst
 }
 
+const NOT_CONVERGED = 'El optimizador no convergió en este corte, los pesos son aproximados.'
+
+/**
+ * Nota del rebalanceo según si el optimizador convergió.
+ * @param {{ converged: boolean }} result
+ * @param {string | null} [base]
+ * @returns {string | null}
+ */
+function convergenceNote(result, base = null) {
+  if (result.converged) return base
+  return base ? `${base} ${NOT_CONVERGED}` : NOT_CONVERGED
+}
+
+/**
+ * Revisa los pesos que devolvió una estrategia propia: tienen que sumar 1 y respetar la caja,
+ * igual que los de los métodos con nombre. No se proyectan en silencio: una estrategia que
+ * devuelve otra cosa tiene un error, y un resultado apalancado sin aviso sería peor.
+ * @param {unknown} raw
+ * @param {number} n
+ * @param {number | number[]} l
+ * @param {number | number[]} u
+ * @returns {number[]}
+ */
+function checkStrategyWeights(raw, n, l, u) {
+  if (!Array.isArray(raw) || raw.length !== n || raw.some((x) => !Number.isFinite(x))) {
+    throw new InvalidInputError(`La estrategia devolvió algo que no son ${n} pesos numéricos.`)
+  }
+  const w = /** @type {number[]} */ (raw)
+  let sum = 0
+  for (const x of w) sum += x
+  if (Math.abs(sum - 1) > 1e-9) {
+    throw new InvalidInputError(`Los pesos de la estrategia suman ${sum.toFixed(6)} y tienen que sumar 1.`)
+  }
+  for (let i = 0; i < n; i += 1) {
+    const lo = typeof l === 'number' ? l : l[i]
+    const hi = typeof u === 'number' ? u : u[i]
+    if (w[i] < lo - 1e-9 || w[i] > hi + 1e-9) {
+      throw new InvalidInputError(
+        `El peso ${i + 1} de la estrategia (${w[i].toFixed(6)}) se sale de la caja: tiene que quedar entre ${lo} y ${hi}.`,
+      )
+    }
+  }
+  return w.slice()
+}
+
 /**
  * Pesos de la estrategia pedida, calculados SOLO con la ventana de estimación.
  * @param {number[][]} windowReturns
@@ -91,11 +136,7 @@ function strategyWeights(windowReturns, context, cfg) {
   const equal = () => projectBoxSimplex(new Array(n).fill(1 / n), cfg.l, cfg.u)
 
   if (typeof cfg.method === 'function') {
-    const raw = cfg.method(windowReturns, context)
-    if (!Array.isArray(raw) || raw.length !== n || raw.some((x) => !Number.isFinite(x))) {
-      throw new InvalidInputError(`La estrategia devolvió algo que no son ${n} pesos numéricos.`)
-    }
-    return { weights: raw.slice(), note: null }
+    return { weights: checkStrategyWeights(cfg.method(windowReturns, context), n, cfg.l, cfg.u), note: null }
   }
 
   if (cfg.method === 'equalWeight') return { weights: equal(), note: null }
@@ -111,12 +152,13 @@ function strategyWeights(windowReturns, context, cfg) {
   if (!estimated) return { weights: equal(), note: 'Sin covarianza estimable, se repartió parejo.' }
 
   if (cfg.method === 'minVariance') {
-    return { weights: minVariance(estimated, { l: cfg.l, u: cfg.u }).weights, note: null }
+    const mv = minVariance(estimated, { l: cfg.l, u: cfg.u })
+    return { weights: mv.weights, note: convergenceNote(mv) }
   }
   if (cfg.method === 'riskParity') {
     const rp = riskParity(estimated)
     if (!rp) return { weights: equal(), note: 'Algún activo tuvo varianza cero, se repartió parejo.' }
-    return { weights: rp.weights, note: null }
+    return { weights: rp.weights, note: convergenceNote(rp) }
   }
   if (cfg.method === 'maxSharpe') {
     const T = windowReturns.length
@@ -126,12 +168,10 @@ function strategyWeights(windowReturns, context, cfg) {
     }
     const ms = maxSharpe(mu, estimated, cfg.rf, { l: cfg.l, u: cfg.u })
     if (!ms) {
-      return {
-        weights: minVariance(estimated, { l: cfg.l, u: cfg.u }).weights,
-        note: 'No hubo portafolio tangente, se usó mínima varianza.',
-      }
+      const mv = minVariance(estimated, { l: cfg.l, u: cfg.u })
+      return { weights: mv.weights, note: convergenceNote(mv, 'No hubo portafolio tangente, se usó mínima varianza.') }
     }
-    return { weights: ms.weights, note: null }
+    return { weights: ms.weights, note: convergenceNote(ms) }
   }
   throw new InvalidInputError(
     `Método desconocido: "${cfg.method}". Usa minVariance, maxSharpe, riskParity, equalWeight o una función.`,
@@ -184,8 +224,14 @@ function strategyWeights(windowReturns, context, cfg) {
  *   },
  * } | null}
  *   `null` si no alcanza para un solo periodo fuera de muestra, o sea T < estimationWindow + 1
- * @throws {InvalidInputError} si la matriz no es rectangular, trae NaN, las fechas no casan o
- *   los parámetros de ventana no son enteros positivos
+ *   Cada rebalanceo trae `note` en español cuando hubo algo que avisar: un respaldo (sin
+ *   covarianza, sin tangente, varianza cero) o que el optimizador no convergió en ese corte.
+ *   Con n de 40 activos y `maxSharpe` el barrido cuesta del orden de un segundo en el hilo
+ *   principal (ver docs/requests/A2.md): arriba de unos 25 activos conviene estado de carga o
+ *   un worker.
+ * @throws {InvalidInputError} si la matriz no es rectangular, trae NaN, las fechas no casan,
+ *   los parámetros de ventana no son enteros positivos, o una estrategia propia devuelve pesos
+ *   que no suman 1 o se salen de la caja `l`/`u` (no se corrigen en silencio)
  */
 export function walkForward(returnMatrix, dates, options = {}) {
   const X = assertMatrix(returnMatrix, 'la matriz de rendimientos')

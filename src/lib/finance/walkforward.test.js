@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { InvalidInputError } from './linalg.js'
 import { walkForward } from './walkforward.js'
@@ -296,6 +296,67 @@ describe('walkForward, casos de borde y validación', () => {
     expect(() => walkForward(returns, dates, { estimationWindow: 10, method: () => [1, Number.NaN, 0] })).toThrow(
       InvalidInputError,
     )
+  })
+})
+
+describe('walkForward, estrategias propias y avisos del optimizador', () => {
+  it('rechaza una estrategia que devuelve pesos que no suman 1 (apalancada o incompleta)', () => {
+    const { returns, dates } = panel(40, 2, 11)
+    const opts = { estimationWindow: 20, holdPeriods: 5 }
+    expect(() => walkForward(returns, dates, { ...opts, method: () => [0.8, 0.8] })).toThrow(InvalidInputError)
+    expect(() => walkForward(returns, dates, { ...opts, method: () => [0.3, 0.3] })).toThrow(InvalidInputError)
+    expect(() => walkForward(returns, dates, { ...opts, method: () => [0.5, 0.5] })).not.toThrow()
+  })
+
+  it('rechaza una estrategia que se sale de la caja l ≤ w ≤ u', () => {
+    const { returns, dates } = panel(40, 3, 12)
+    const opts = { estimationWindow: 20, holdPeriods: 5 }
+    expect(() => walkForward(returns, dates, { ...opts, method: () => [1.2, -0.1, -0.1] })).toThrow(InvalidInputError)
+    expect(() => walkForward(returns, dates, { ...opts, u: 0.4, method: () => [0.5, 0.3, 0.2] })).toThrow(
+      InvalidInputError,
+    )
+    expect(() => walkForward(returns, dates, { ...opts, u: 0.4, method: () => [0.4, 0.35, 0.25] })).not.toThrow()
+  })
+
+  it('si el optimizador no convergió en un corte, el rebalanceo lo dice en la nota', async () => {
+    // Con datos reales es casi imposible hacer que FISTA o la paridad de riesgo topen con su límite
+    // de iteraciones, así que se sustituye el optimizador por uno que reporta converged=false.
+    vi.resetModules()
+    vi.doMock('./optimize.js', async (importOriginal) => {
+      const real = /** @type {any} */ (await importOriginal())
+      /** @param {(...args: any[]) => any} fn */
+      const unconverged = (fn) => (/** @type {any[]} */ ...args) => {
+        const r = fn(...args)
+        return r ? { ...r, converged: false } : r
+      }
+      return {
+        ...real,
+        minVariance: unconverged(real.minVariance),
+        riskParity: unconverged(real.riskParity),
+        maxSharpe: unconverged(real.maxSharpe),
+      }
+    })
+    try {
+      const mod = await import('./walkforward.js')
+      const { returns, dates } = panel(90, 3, 77)
+      for (const method of /** @type {const} */ (['minVariance', 'riskParity', 'maxSharpe'])) {
+        const r = /** @type {any} */ (mod.walkForward(returns, dates, { estimationWindow: 52, holdPeriods: 13, method }))
+        for (const rebalance of r.rebalances) {
+          expect(rebalance.note).toContain('El optimizador no convergió en este corte, los pesos son aproximados.')
+        }
+      }
+    } finally {
+      vi.doUnmock('./optimize.js')
+      vi.resetModules()
+    }
+  })
+
+  it('cuando el optimizador sí convergió no hay nota', () => {
+    const { returns, dates } = panel(90, 3, 77)
+    for (const method of /** @type {const} */ (['minVariance', 'riskParity', 'maxSharpe'])) {
+      const r = /** @type {any} */ (walkForward(returns, dates, { estimationWindow: 52, holdPeriods: 13, method }))
+      for (const rebalance of r.rebalances) expect(rebalance.note).toBeNull()
+    }
   })
 })
 
