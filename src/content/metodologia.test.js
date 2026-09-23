@@ -273,3 +273,28 @@ describe('riesgo y backtest: lo que la librería supone y lo que no', () => {
     expect(plano('backtest.md')).not.toMatch(/Histórico y paramétrico, los dos etiquetados/)
   })
 })
+
+// Las páginas de valuación, factores, fórmula mágica y FIBRAs describen al backend en Python
+// (kaizen_api), que vitest no ejecuta. Estas guardas solo impiden que regresen afirmaciones que
+// se comprobaron falsas contra ese código; la línea exacta está al lado de cada una.
+describe('páginas del backend: afirmaciones que el código de kaizen_api contradice', () => {
+  it.each([
+    // dcf.py:27: la guarda recorta el crecimiento terminal y la valuación sigue saliendo
+    ['valuacion-dcf.md', /la pantalla no deja salir de ellas/],
+    // service.py:26 DEFAULT_LAMBDA = 1.0 y el router no acepta λ
+    ['valuacion-dcf.md', /y ese campo es editable/],
+    // multiples.py:315: no hay rendimiento por dividendo en el bloque de múltiplos
+    ['valuacion-dcf.md', /rendimiento por dividendo, cada uno/],
+    // magic.py:379: lugares de competencia 1-2-2-4, no promedio
+    ['formula-magica.md', /comparten la posición promedio/],
+    // factors.py:328: la cobertura saca a la emisora, no al factor
+    ['screener-de-factores.md', /ese factor se excluye del puntaje total/],
+    // factors.py:95: los criterios de cumple o no cumple son fijos
+    ['screener-de-factores.md', /criterios que tú configuras/],
+    // fibras.py:231: el flujo no se llama FFO y no hay AFFO
+    ['fibras.md', /La pantalla muestra la razón distribución sobre AFFO/],
+    ['README.md', /FFO y AFFO de verdad/],
+  ])('%s no dice %s', (pagina, patron) => {
+    expect(plano(pagina)).not.toMatch(patron)
+  })
+})

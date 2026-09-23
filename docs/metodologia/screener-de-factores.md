@@ -32,6 +32,10 @@ Se usa la versión robusta, y no promedio con desviación estándar, porque una 
 múltiplo absurdo mueve el promedio y la desviación de todo el sector y desordena el ranking
 completo. La mediana no se inmuta.
 
+Hay un caso de respaldo: si más de la mitad de los valores son idénticos, la MAD sale cero aunque
+la muestra no sea constante. Ahí la escala pasa a ser la desviación estándar muestral, que sí
+distingue las colas. Si tampoco hay dispersión, todos los puntajes salen cero.
+
 Caso probado: la serie 10, 12, 14, 16, 18 tiene mediana 14 y MAD 2, así que el puntaje de 18 es
 `(18 − 14) / (1.4826 × 2) = 1.349`.
 
@@ -44,11 +48,13 @@ una empresa de software no informa nada.
 
 Dos reglas cuando el sector es chico:
 
-- **Menos de 5 emisoras con dato en el sector**: se compara contra todo el universo y la pantalla lo
-  marca, porque una mediana de tres datos no es una mediana de nada.
-- **Cobertura menor al 50 por ciento del universo** para una métrica: ese factor se excluye del
-  puntaje total y se dice por qué. Promediar puntajes donde la mitad de las emisoras no tiene dato
-  premia a quien simplemente reporta más.
+- **Menos de 5 emisoras en el sector**: se compara contra todo el universo y la pantalla lo marca,
+  porque una mediana de tres datos no es una mediana de nada. Lo que se cuenta son las emisoras del
+  sector que siguen en el tablero, no las que tienen dato en cada métrica: un sector de 6 emisoras
+  donde solo 2 reportan una métrica se sigue comparando contra su sector en esa métrica.
+- **Cobertura menor al 50 por ciento de las métricas de una emisora**: la emisora sale del tablero
+  con la razón escrita. De las doce métricas, tiene que traer al menos seis. No hay una regla de
+  cobertura por métrica en todo el universo.
 
 ## Múltiplos convertidos a rendimientos
 
@@ -56,38 +62,45 @@ Todos los múltiplos se invierten antes de ordenar:
 
 | En vez de | Se usa |
 | --- | --- |
-| P/U | Earnings yield, utilidad entre precio |
-| P/VL | Valor en libros entre precio |
-| P/FCF | Rendimiento de flujo libre |
+| P/U | Earnings yield, utilidad por acción entre precio |
+| P/VL | Valor en libros por acción entre precio |
+| P/FCF | Rendimiento de flujo libre, flujo libre entre capitalización |
 | EV/EBITDA | EBITDA entre valor empresa |
 
 La razón es concreta: si ordenas por P/U de menor a mayor, las empresas con pérdidas tienen P/U
 negativo y aparecen como las más baratas del universo. Con el rendimiento invertido, una empresa que
 pierde dinero tiene rendimiento negativo y queda hasta abajo, que es donde corresponde.
 
-Un múltiplo negativo se muestra como `n/s`, no significativo, no como un número.
+Por eso un rendimiento negativo se publica como número negativo, no se oculta: su lugar al fondo
+del orden es parte de la información.
 
 ## Los factores
 
 | Factor | Cómo se arma |
 | --- | --- |
-| Valor | Promedio de los puntajes sectoriales de earnings yield, libros a precio y flujo libre a precio |
-| Calidad | Promedio de ROIC, margen operativo y su estabilidad, menos deuda a capital |
-| Momentum | Puntaje sectorial del rendimiento de 12 meses saltándose el más reciente, contra un referente en la misma moneda |
-| Baja volatilidad | Puntaje sectorial de la volatilidad anualizada, con signo invertido |
+| Valor | Promedio de los puntajes de earnings yield, flujo libre a capitalización, EBITDA a valor empresa y libros a precio |
+| Calidad | Promedio de los puntajes de ROE, ROA y margen operativo, y de deuda a capital con signo invertido |
+| Momentum | Puntaje del rendimiento de 12 meses saltándose el más reciente, sobre cierres de fin de mes, de la emisora sola y en su moneda de cotización, sin restar un referente |
+| Baja volatilidad | Puntaje de la volatilidad anualizada de rendimientos semanales de dos años, con signo invertido |
+| Crecimiento | Promedio de los puntajes de crecimiento de ingresos y de utilidades contra el mismo periodo del año anterior |
 
-El puntaje compuesto es el promedio de los factores disponibles, no su suma, para que una emisora a
-la que le falta un factor no salga castigada por el simple hecho de tener menos datos.
+Cada factor promedia los puntajes de las métricas que sí tienen dato. El puntaje compuesto es el
+promedio de los factores disponibles, no su suma, para que una emisora a la que le falta un factor
+no salga castigada por el simple hecho de tener menos datos. Pero hace falta un mínimo: con menos
+de tres factores con puntaje, el compuesto no se publica y sale `s/d`.
 
 ## Cómo se presenta
 
 - Una tabla ordenable con el puntaje compuesto y cada factor por separado, siempre con el valor
   crudo al lado del puntaje.
 - Una columna de cobertura: cuántas de las métricas tenían dato para esa emisora.
-- Marcas de "cumple" y "no cumple" contra los criterios que tú configuras, por ejemplo ROIC arriba
-  de 12 por ciento o deuda a capital debajo de 1.
-- La fecha de los fundamentales, que no es la de hoy: los estados financieros salen con semanas de
-  retraso.
+- Marcas de "cumple" y "no cumple" contra seis criterios fijos, que hoy no se pueden cambiar:
+  earnings yield de 6 por ciento o más, ROE de 15 por ciento o más, margen operativo de 10 por
+  ciento o más, deuda a capital de 1 o menos, ingresos creciendo 5 por ciento o más y momentum
+  12-1 positivo.
+- La fecha del tablero, que es la del último cierre de precio. Los fundamentales pueden ser
+  bastante más viejos: los estados financieros salen con semanas de retraso, y esa fecha no se
+  publica aquí.
 
 Nunca hay una columna que diga qué hacer.
 
@@ -105,8 +118,9 @@ Nunca hay una columna que diga qué hacer.
 - **Los fundamentales vienen de una fuente pública** y pueden traer errores o renglones faltantes.
   Donde no hay dato se muestra `s/d`, nunca un valor estimado.
 - **Moneda.** Los múltiplos comparan precio en moneda de cotización contra fundamentales en moneda
-  de reporte. Kaizen convierte antes de dividir y publica las dos monedas en la pantalla de la
-  emisora.
+  de reporte. Cuando las dos monedas no coinciden, este tablero no convierte: las cuatro métricas
+  de valor quedan en `s/d` y la razón queda escrita. La emisora sigue en el tablero con sus otras
+  métricas.
 
 ## Fuentes
 

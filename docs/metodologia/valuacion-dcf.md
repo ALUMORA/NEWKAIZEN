@@ -18,17 +18,23 @@ DCF de verdad con sus insumos editables.
 
 ## Múltiplos
 
-Se muestran P/U, P/VL, EV/EBITDA, rendimiento de flujo libre y rendimiento por dividendo, cada uno
-con:
+Se calculan P/U, P/VL y EV/EBITDA, cada uno con su valor actual, el múltiplo de referencia de su
+sector en los datos de Damodaran y el precio implícito que resulta de aplicar esa referencia. El
+precio entre flujo libre (P/FCF) se publica solo como valor actual, sin referencia ni precio
+implícito. No hay rendimiento por dividendo en este bloque. Además:
 
-- **Su valor crudo** y la mediana de su sector.
-- **La fecha de los fundamentales** con que se calculó, que no es la de hoy.
+- **La fecha** que acompaña a los múltiplos es la de los datos de Damodaran. La fecha general de la
+  valuación es la más reciente entre el cierre fiscal de los estados, la tasa libre de riesgo y el
+  tipo de cambio.
 - **Las dos monedas**: la de cotización y la de reporte. Si la emisora cotiza en pesos y reporta en
-  dólares, la conversión se hace antes de dividir, con el tipo de cambio de la fecha del reporte.
-- **Si aplica o no** al tipo de emisora. EV/EBITDA no aplica a bancos, y se dice en vez de mostrar
-  un número sin sentido.
+  dólares, las cifras de los estados se convierten antes de dividir, con el tipo de cambio más
+  reciente, no con el de la fecha del reporte.
+- **Si aplica o no** al tipo de emisora. En bancos, aseguradoras, FIBRAs y fondos, o cuando la
+  utilidad de los últimos doce meses es negativa, todo el bloque se marca como no aplicable, con
+  la razón escrita. Los valores actuales se siguen publicando, pero sin precio implícito ni rango.
 
-Un múltiplo negativo se muestra como `n/s`, no significativo, porque un P/U negativo no es barato.
+Un P/U sobre una utilidad negativa no se calcula: queda vacío y la pantalla muestra `s/d`, porque
+un P/U negativo no es barato.
 
 ## DCF de dos etapas
 
@@ -42,7 +48,8 @@ EV = Σ_(t=1..n) FCFF_t / (1 + WACC)^t
 ```
 
 Se descuenta al WACC porque el flujo es para todos los proveedores de capital. Del valor empresa se
-resta la deuda neta para llegar al valor del capital, y se divide entre las acciones en circulación.
+restan la deuda neta y el interés minoritario para llegar al valor del capital del accionista, y se
+divide entre las acciones en circulación.
 
 Caso probado: `FCFF₀ = 100`, crecimiento de 10 por ciento durante 5 años, crecimiento terminal de
 3 por ciento y WACC de 9 por ciento dan 513.93 de la primera etapa, 1,796.87 de valor terminal
@@ -67,7 +74,9 @@ prima de mercado de 4.5 por ciento, prima país de 2.5 por ciento y `λ = 1`, el
 **11.56 por ciento**.
 
 El coeficiente `λ` es la exposición de la empresa al riesgo país. Una emisora mexicana que factura
-la mitad en dólares fuera de México no carga la prima completa, y ese campo es editable.
+la mitad en dólares fuera de México no debería cargar la prima completa, pero hoy `λ` está fijo en
+1 y no es editable: la prima país entra completa. Lo que sí se puede mover son la prima de mercado,
+la prima país, el crecimiento terminal, los años de proyección y el crecimiento del flujo.
 
 ## WACC
 
@@ -78,21 +87,26 @@ WACC = (E/V) × Re + (D/V) × Rd × (1 − t)
 Caso probado: con `Re = 11.56%`, `Rd = 7%`, `t = 30%` y dos tercios de capital, el WACC es
 **9.34 por ciento**.
 
-Para valuar flujos en pesos con un WACC estimado en dólares, la conversión es por diferencial de
-inflación esperada, multiplicando:
+Cuando no hay tasa libre de riesgo en la moneda de los flujos, el WACC se estima en dólares y se
+convierte por diferencial de inflación esperada, multiplicando. Si hay tasa en esa moneda, no se
+convierte nada:
 
 ```
 WACC_mxn = (1 + WACC_usd) × (1 + π_mx) / (1 + π_us) − 1
 ```
 
-Caso probado: 9.34 por ciento con inflación de 3.5 y 2.3 por ciento da **10.62 por ciento**.
+Caso probado: 9.34 por ciento con inflación de 3.5 y 2.3 por ciento da **10.62 por ciento**. En
+producción las inflaciones son supuestos fijos y marcados como tales: 3 por ciento para México, el
+objetivo de Banxico, y 2 por ciento para Estados Unidos, la meta de la Reserva Federal.
 
 Sumar la diferencia de inflación al WACC, que es el atajo común, da un número parecido pero no el
 mismo, y el error crece con el nivel de las tasas.
 
 ## Las dos guardas
 
-Estas no son opcionales y la pantalla no deja salir de ellas:
+Estas no son opcionales. Cuando un supuesto rompe una, el crecimiento terminal se recorta al
+límite y la valuación sale con ese valor recortado, con un aviso que dice cuál guarda se activó, qué
+valor se pidió y a cuánto se bajó:
 
 1. **El crecimiento terminal no puede superar la tasa libre de riesgo de esa moneda.** Ninguna
    empresa crece para siempre más rápido que la economía en la que vive, y la tasa libre de riesgo
@@ -104,23 +118,30 @@ Estas no son opcionales y la pantalla no deja salir de ellas:
    décima de punto (`g = 8.9%`) se va a 1,089 veces el flujo: el resultado deja de depender del
    negocio y pasa a depender de la resta del denominador.
 
-Cuando un supuesto rompe una guarda, la pantalla explica cuál y por qué, en vez de mostrar un
-número.
+Por ejemplo, con tasa libre de riesgo de 4.2 por ciento y un crecimiento terminal pedido de 5 por
+ciento, la valuación sale con 4.2 por ciento y el aviso lo explica. El número que se ve nunca usa el
+supuesto que rompió la guarda. Además, el crecimiento terminal que se puede pedir va de −2 a 6 por
+ciento.
 
 ## Sensibilidad
 
 El valor central de un DCF no es el resultado: el rango lo es. Se muestra una malla de valor por
 acción variando WACC y crecimiento terminal alrededor de los supuestos, para que se vea de
-inmediato cuánto se mueve el resultado con cambios chicos.
+inmediato cuánto se mueve el resultado con cambios chicos: cinco valores de WACC, de 1.5 puntos
+abajo a 1.5 arriba, por cinco de crecimiento terminal, de 1 punto abajo a 1 arriba. Las celdas donde
+`WACC − g` queda a menos de 2 puntos salen vacías, como `s/d`, en vez de recortarse. La guarda de la
+tasa libre de riesgo no se aplica dentro de la malla, así que sus celdas de crecimiento más alto
+pueden pasar de esa tasa.
 
 Si la malla va de 30 a 90 pesos, el mensaje es que el DCF no está diciendo mucho con esos insumos, y
 eso es información útil, no un fracaso del método.
 
 ## Bancos
 
-No se valúan con DCF de FCFF. En un banco la deuda es materia prima del negocio, no financiamiento,
-así que separar flujo de la empresa y flujo del accionista no funciona igual. Se usa el P/VL
-justificado:
+Bancos y aseguradoras no se valúan con DCF de FCFF. En ellos la deuda es materia prima del
+negocio, no financiamiento, así que separar flujo de la empresa y flujo del accionista no funciona
+igual. Se usa el P/VL justificado, y el costo del capital sale de la beta de regresión del sector,
+que ya viene apalancada, en vez de reapalancar con Hamada:
 
 ```
 P/VL justificado = (ROE − g) / (Re − g)
@@ -128,8 +149,8 @@ P/VL justificado = (ROE − g) / (Re − g)
 
 Caso probado: `ROE = 15%`, `g = 5%` y `Re = 12%` dan **1.4286**.
 
-Las FIBRAs tampoco: su pantalla usa FFO, AFFO, cap rate y NAV, y está en
-[fibras.md](fibras.md).
+Las FIBRAs tampoco: su pantalla usa el rendimiento por distribución, el flujo de operación, el cap
+rate implícito, el LTV y el precio contra valor en libros, y está en [fibras.md](fibras.md).
 
 ## Supuestos y límites
 
