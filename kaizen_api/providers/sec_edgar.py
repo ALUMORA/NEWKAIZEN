@@ -316,19 +316,45 @@ def raw_document_name(document: str) -> str:
     return str(document)
 
 
-def get_form4_documents(symbol: str, limit: int = FORM4_MAX) -> list[dict]:
-    """Las Formas 4 recientes del emisor con su XML ya descargado.
+def form4_lookup(symbol: str, limit: int = FORM4_MAX) -> dict:
+    """Las Formas 4 recientes del emisor con su XML, y cuánto NO se pudo leer.
 
-    Devuelve ``[{accession, filingDate, xml}]``. Lista vacía cuando el símbolo no es de un emisor
-    registrado ante la SEC (toda la BMV) o cuando EDGAR no respondió.
+    Devuelve ``{"documents", "listed", "unreadable", "unavailable"}``:
+
+    * ``documents``: ``[{accession, filingDate, xml}]`` de los expedientes que sí se leyeron.
+    * ``listed``: cuántas Formas 4 recientes lista la SEC para el emisor (hasta ``limit``).
+    * ``unreadable``: cuántas de esas no se pudieron descargar.
+    * ``unavailable``: ``True`` si ni siquiera se pudo leer la lista de expedientes. Entonces no se
+      sabe si la emisora tiene Formas 4, y decir que no tiene sería falso.
+
+    Un símbolo que no reporta ante la SEC (toda la BMV) sale con todo en cero y ``False``.
     """
+    empty = {"documents": [], "listed": 0, "unreadable": 0, "unavailable": False}
+    cik = cik_for(symbol)
+    if not cik:
+        return empty
+    if not _submissions(cik):
+        return {**empty, "unavailable": True}
     out: list[dict] = []
+    listed = unreadable = 0
     for filing in recent_filings(symbol, "4", limit):
         document = raw_document_name(filing["document"])
         if not document.lower().endswith(".xml"):
             continue
+        listed += 1
         xml = get_filing_document(filing["cik"], filing["accession"], document)
         if not xml:
+            unreadable += 1
             continue
         out.append({"accession": filing["accession"], "filingDate": filing["filingDate"], "xml": xml})
-    return out
+    return {"documents": out, "listed": listed, "unreadable": unreadable, "unavailable": False}
+
+
+def get_form4_documents(symbol: str, limit: int = FORM4_MAX) -> list[dict]:
+    """Las Formas 4 recientes del emisor con su XML ya descargado.
+
+    Devuelve ``[{accession, filingDate, xml}]``. Lista vacía cuando el símbolo no es de un emisor
+    registrado ante la SEC (toda la BMV) o cuando EDGAR no respondió; ``form4_lookup`` distingue
+    los dos casos.
+    """
+    return form4_lookup(symbol, limit)["documents"]

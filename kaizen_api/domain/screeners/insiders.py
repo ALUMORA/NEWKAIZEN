@@ -9,7 +9,7 @@ import math
 import xml.etree.ElementTree as ET
 
 from kaizen_api.domain import safe
-from kaizen_api.providers.sec_edgar import FORM4_MAX, cik_for, get_form4_documents
+from kaizen_api.providers.sec_edgar import FORM4_MAX, cik_for, form4_lookup
 from kaizen_api.providers.yahoo import fundamentals as _yahoo
 from kaizen_api.providers.yahoo.session import yft
 
@@ -290,9 +290,20 @@ def get_insiders_v2(symbol: str) -> dict:
     items: list[dict] = []
     sources = ["sec"]
     if cik_for(symbol):
-        for filing in get_form4_documents(symbol, FORM4_MAX):
+        lookup = form4_lookup(symbol, FORM4_MAX)
+        for filing in lookup["documents"]:
             items.extend(parse_form4(filing["xml"]))
-        if items:
+        if lookup["unreadable"]:
+            notes.append(
+                f"No se pudieron leer {lookup['unreadable']} de los {lookup['listed']} expedientes "
+                "recientes en la SEC, así que la lista y el resumen pueden quedarse cortos."
+            )
+        if lookup["unavailable"]:
+            notes.append(
+                "No se pudo consultar a la SEC, así que no sabemos si hay Formas 4 recientes. "
+                "Intenta más tarde."
+            )
+        elif items:
             shown = min(len(items), MAX_ITEMS)
             notes.append(
                 f"Códigos de la Forma 4 ante la SEC: P es compra y S venta en mercado abierto; "
@@ -302,7 +313,7 @@ def get_insiders_v2(symbol: str) -> dict:
             )
             if all(item["planned10b5_1"] is None for item in items):
                 notes.append("Ninguno de estos expedientes marca la casilla del plan 10b5-1.")
-        else:
+        elif not lookup["unreadable"]:
             notes.append("La SEC no tiene Formas 4 recientes de esta emisora.")
     else:
         sources = ["yahoo"]

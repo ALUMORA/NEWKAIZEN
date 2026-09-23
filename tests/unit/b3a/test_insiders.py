@@ -146,7 +146,11 @@ def test_yahoo_rows_are_classified_and_never_counted_as_open_market_by_default(m
 
 def test_the_summary_ignores_compensation(monkeypatch):
     monkeypatch.setattr(mod, "cik_for", lambda symbol: "0000000001")
-    monkeypatch.setattr(mod, "get_form4_documents", lambda symbol, limit=20: [{"xml": FORM4}])
+    monkeypatch.setattr(
+        mod,
+        "form4_lookup",
+        lambda symbol, limit=20: {"documents": [{"xml": FORM4}], "listed": 1, "unreadable": 0, "unavailable": False},
+    )
     data = mod.get_insiders_v2("AAPL")
     assert data["summary"] == {"openMarketBuys": 1, "openMarketSells": 1}
     assert len(data["items"]) == 5, "el otorgamiento y el ejercicio se muestran, pero no cuentan"
@@ -250,3 +254,35 @@ def test_the_summary_counts_every_filing_read_not_only_the_rows_shown(replay_b3a
     assert len(data["items"]) == mod.MAX_ITEMS
     assert data["summary"]["openMarketSells"] == sells == 20
     assert any("40 movimientos más recientes" in note for note in data["notes"])
+
+
+class _Down:
+    status_code = 503
+    text = ""
+
+
+def _sec_down_for(monkeypatch, fragment: str) -> None:
+    from kaizen_api.providers import sec_edgar
+
+    original = sec_edgar._edgar_session.get
+    monkeypatch.setattr(
+        sec_edgar._edgar_session,
+        "get",
+        lambda url, *a, **kw: _Down() if fragment in url else original(url, *a, **kw),
+    )
+
+
+def test_when_the_sec_does_not_answer_the_issuer_is_not_blamed(replay_b3a, monkeypatch):
+    """Si no se pudo leer la lista de expedientes, no se afirma que la emisora no tiene Formas 4."""
+    _sec_down_for(monkeypatch, "submissions")
+    data = mod.get_insiders_v2("AAPL")
+    assert data["items"] == []
+    assert "La SEC no tiene Formas 4 recientes de esta emisora." not in data["notes"]
+    assert any("No se pudo consultar a la SEC" in note for note in data["notes"])
+
+
+def test_filings_that_could_not_be_read_are_counted_in_the_notes(replay_b3a, monkeypatch):
+    _sec_down_for(monkeypatch, "Archives/edgar")
+    data = mod.get_insiders_v2("AAPL")
+    assert data["items"] == []
+    assert any("No se pudieron leer 20 de los 20 expedientes" in note for note in data["notes"])
