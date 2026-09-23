@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import itertools
 import json
+import math
 from pathlib import Path
 
 OUT = Path(__file__).resolve().parents[2] / "tests" / "golden" / "rebalance.json"
@@ -37,7 +38,9 @@ def plan(holdings, prices, targets, cash, allow_sell=True):
 
     qty = {}
     for s in symbols:
-        qty[s] = int(target[s] * value / prices[s] + EPS) if allow_sell else current[s]
+        base = int(target[s] * value / prices[s] + EPS) if allow_sell else current[s]
+        # el delta va en enteros: la cola fraccionaria de lo que ya se tiene se queda quieta
+        qty[s] = current[s] + math.trunc(base - current[s])
     left = value - sum(qty[s] * prices[s] for s in symbols)
 
     while True:
@@ -53,6 +56,31 @@ def plan(holdings, prices, targets, cash, allow_sell=True):
             break
         qty[best] += 1
         left -= prices[best]
+
+    # mejora local por pares: vender uno de y para comprar uno de x
+    def pair_gain(s, delta):
+        w = qty[s] * prices[s] / value
+        return abs(w - target[s]) - abs(w + delta * prices[s] / value - target[s])
+
+    if allow_sell:
+        while True:
+            pair, best_gain = None, 1e-12
+            units = 0
+            for x in symbols:
+                for y in symbols:
+                    if x == y:
+                        continue
+                    k = math.ceil((prices[x] - left - EPS) / prices[y])
+                    if k < 1 or qty[y] < k - EPS:
+                        continue
+                    gain = pair_gain(x, 1) + pair_gain(y, -k)
+                    if gain > best_gain + 1e-15:
+                        pair, best_gain, units = (x, y), gain, k
+            if pair is None:
+                break
+            qty[pair[0]] += 1
+            qty[pair[1]] -= units
+            left += units * prices[pair[1]] - prices[pair[0]]
 
     return {
         "holdings": qty,
