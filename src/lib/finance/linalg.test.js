@@ -294,6 +294,22 @@ describe('eigenvalores', () => {
     expect(r.value).toBeCloseTo(0.16, 12)
   })
 
+  it('largestEigenvalue no se engaña con la escala: el criterio de paro es relativo', () => {
+    // Antes la tolerancia era absoluta para matrices chicas (tol · max(1, |λ|)) y con s = 1e-15
+    // declaraba convergencia en la primera iteración con λ = 1.6e-15 en vez de 4e-15.
+    for (const s of [1, 1e-6, 1e-12, 1e-15, 1e-20]) {
+      const r = /** @type {any} */ (
+        largestEigenvalue([
+          [s, 0],
+          [0, 4 * s],
+        ])
+      )
+      expect(r.converged).toBe(true)
+      expect(r.iterations).toBeGreaterThanOrEqual(2)
+      expect(Math.abs(r.value - 4 * s) / (4 * s)).toBeLessThan(1e-10)
+    }
+  })
+
   it('largestEigenvalue devuelve null con la matriz cero', () => {
     expect(
       largestEigenvalue([

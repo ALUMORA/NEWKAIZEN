@@ -184,6 +184,19 @@ describe('minVariance', () => {
     expect(r.volatility).toBeCloseTo(0.2, 12)
   })
 
+  it('da la misma respuesta a cualquier escala de la covarianza', () => {
+    // Σ = diag(s, 4s) → w₁ = .8. Con s = 1e-15 el paso de FISTA salía 2.5 veces grande (λmax mal
+    // estimado) y minVariance devolvía w₁ = .2859 con converged=false.
+    for (const s of [1, 1e-6, 1e-12, 1e-15, 1e-18]) {
+      const r = minVariance([
+        [s, 0],
+        [0, 4 * s],
+      ])
+      expect(r.weights[0]).toBeCloseTo(0.8, 12)
+      expect(r.converged).toBe(true)
+    }
+  })
+
   it('lanza InfeasibleError con n=2 y tope .35, como dice el spec', () => {
     expect(() => minVariance(cov2(0.2, 0.3, 0), { u: 0.35 })).toThrow(InfeasibleError)
   })

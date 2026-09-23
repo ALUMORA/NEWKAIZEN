@@ -457,7 +457,11 @@ export function largestEigenvalue(a, { maxIter = 2000, tol = 1e-14 } = {}) {
     const next = w.map((x) => x / norm)
     // Cociente de Rayleigh: más preciso que la norma y con el signo correcto.
     const rayleigh = dot(v, w)
-    if (Math.abs(rayleigh - lambda) <= tol * Math.max(1, Math.abs(rayleigh))) {
+    // Tolerancia RELATIVA a la magnitud de la matriz (no max(1, |λ|), que la volvía absoluta con
+    // matrices chicas y paraba en la primera vuelta con λ ~ 1e-15). `scale` = max |a_ij| ≤ |λmax|,
+    // así que el piso nunca es más holgado que el valor que se busca. Y al menos dos vueltas: la
+    // primera compara contra el λ = 0 inicial.
+    if (it >= 2 && Math.abs(rayleigh - lambda) <= tol * Math.max(Math.abs(rayleigh), scale)) {
       lambda = rayleigh
       v = next
       converged = true
