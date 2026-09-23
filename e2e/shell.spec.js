@@ -12,6 +12,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { test, expect } from './support/guards.js'
 import { API_URL_RE, HEALTH_V2, setupApp } from './support/app.js'
 import { trackNetwork, waitForSettled } from './support/legacy.js'
+import { RESEARCH_ROUTES } from './support/research-data.js'
 
 const WCAG_AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const THEMES = /** @type {const} */ (['light', 'dark'])
@@ -70,6 +71,7 @@ function searchResponse(q) {
 }
 
 const V2_ROUTES = {
+  ...Object.fromEntries(Object.entries(RESEARCH_ROUTES).filter(([k]) => /instrument|history|valuation|momentum|news/.test(k))),
   'GET /v2/markets/overview': { json: OVERVIEW },
   'GET /v2/rates/mx': { json: RATES },
   'GET /v2/search': ({ url }) => ({ json: searchResponse(url.searchParams.get('q')) }),
@@ -207,7 +209,7 @@ test.describe('shell: navegación', () => {
 
     await nav.getByRole('link', { name: 'Watchlist' }).click()
     await expect(page).toHaveTitle('Watchlist · Kaizen')
-    await expect(page.getByRole('heading', { level: 1, name: 'Watchlist' })).toBeFocused()
+    await expect(page.getByRole('heading', { level: 1, name: 'Lista de seguimiento' })).toBeFocused()
 
     await page.getByRole('button', { name: 'Plegar barra lateral' }).click()
     await expect(page.locator('.kz-side')).toHaveCSS('width', '64px')
@@ -255,7 +257,7 @@ test.describe('shell: navegación', () => {
     await sheet.getByRole('link', { name: 'Watchlist' }).click()
     await expect(sheet).toBeHidden()
     await expect(page).toHaveURL(/\/watchlist$/)
-    await expect(page.getByRole('heading', { level: 1, name: 'Watchlist' })).toBeFocused()
+    await expect(page.getByRole('heading', { level: 1, name: 'Lista de seguimiento' })).toBeFocused()
 
     // El contenido nunca queda debajo de la barra inferior: al fondo, el pie termina arriba de ella.
     await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
@@ -335,7 +337,7 @@ test.describe('shell: paleta de comandos', () => {
     await dialog.getByRole('combobox').pressSequentially('WALMEX')
     await page.keyboard.press('Enter')
     await expect(page).toHaveURL(/\/investigar\/WALMEX\.MX$/)
-    await expect(page.getByRole('heading', { level: 1, name: 'Ficha de la emisora' })).toBeFocused()
+    await expect(page.getByRole('heading', { level: 1, name: /WALMEX\.MX/ })).toBeFocused()
     expect(api.calls.some((c) => c.startsWith('GET /v2/search?') && c.includes('q=WALMEX'))).toBe(true)
 
     await page.keyboard.press('Control+k')
