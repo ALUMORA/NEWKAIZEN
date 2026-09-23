@@ -138,6 +138,21 @@ cinco streams de backend se consolidaron en el set base, que pasó de 432 a 566 
 
 ## Trampas conocidas
 
+- **Correr `npm run check` antes de cada push, no solo las pruebas.** El 22 de septiembre se empujó
+  un cambio con las pruebas en verde y el lint sin correr: `process` no está declarado como global
+  para `src/`, y la CI se cayó por dos errores de `no-undef`. Las cinco compuertas son un solo
+  comando y tardan menos de un minuto.
+- **Nada de topes de tiempo duros en pruebas unitarias.** La prueba de desempeño de Monte Carlo
+  exigía menos de 400 ms y el corredor de GitHub midió 613. La meta del spec se conserva en
+  desarrollo, en CI el techo es de 2,000 ms (ajustable con `KAIZEN_PERF_MS`) y el tiempo medido se
+  imprime siempre, para que una regresión real se vea en el log.
+- **El verde de Vercel en esta rama no significa que haya construido.** El proyecto tiene activada la
+  casilla "Ignored Build Step", así que cancela despliegues y los reporta como `success`. Lo que de
+  verdad mide el código son los dos jobs de GitHub Actions. Aparte, el proyecto tenía el directorio
+  de salida en `build` (de Create React App) y Vite escribe en `dist`: por eso los despliegues que sí
+  corrían morían al final. Quedó fijado en `vercel.json` con `framework`, `buildCommand` y
+  `outputDirectory`, que manda sobre el panel, pero **falta verlo construir de verdad una vez**.
+
 - La herramienta Write está bloqueada para subagentes cuando escriben reportes; que usen heredoc.
 - Playwright tiene que quedarse en 1.62.1: la 1.63 pide un Chromium que no está en caché.
 - Yahoo limita por tasa: grabar una vez y reproducir en replay para todo lo demás.
