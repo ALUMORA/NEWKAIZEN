@@ -135,6 +135,32 @@ def _period_fiscal_year(end: str) -> int:
     return year - 1 if (month == 1 and day <= 7) else year
 
 
+SEC_ORIGINAL_FILING_DAYS = 150
+"""Un hecho presentado a más de 150 días de su cierre ya no es el del expediente que lo estrenó."""
+
+
+def _fiscal_year(source_fact: dict | None, end: str) -> int:
+    """Año fiscal del periodo: el ``fy`` de la SEC si el hecho es del expediente original.
+
+    En ``companyfacts`` el ``fy`` es el ejercicio del DOCUMENTO, no del periodo. En el expediente
+    que estrena un cierre los dos coinciden (el 10-Q de Apple a diciembre de 2024 dice fy 2025, fp
+    Q1), pero un cierre que solo aparece como comparativo en el 10-K del año siguiente trae el fy
+    de ese 10-K. Por eso solo se confía en ``fy`` si el hecho se presentó a 150 días o menos del
+    cierre (un 10-K se presenta a más tardar a 90 días y un 10-Q a 45); si no, se usa la regla de
+    la fecha, que es lo único que queda.
+    """
+    fact = source_fact or {}
+    fy, filed = fact.get("fy"), fact.get("filed")
+    if isinstance(fy, int) and not isinstance(fy, bool) and isinstance(filed, str):
+        try:
+            lag = (_dt.date.fromisoformat(filed[:10]) - _dt.date.fromisoformat(end)).days
+        except ValueError:
+            lag = None
+        if lag is not None and 0 <= lag <= SEC_ORIGINAL_FILING_DAYS:
+            return fy
+    return _period_fiscal_year(end)
+
+
 def _duration_days(fact: dict) -> int | None:
     start, end = fact.get("start"), fact.get("end")
     if not start or not end:
@@ -253,7 +279,7 @@ def _sec_statements(symbol: str, freq: str) -> dict[str, Any] | None:
         quarter = int(fp[1]) if len(fp) == 2 and fp[0] == "Q" and fp[1].isdigit() else None
         periods.append({
             "end": end,
-            "fiscalYear": _period_fiscal_year(end),
+            "fiscalYear": _fiscal_year(source_fact, end),
             "fiscalQuarter": quarter if freq == "quarterly" else None,
             "form": (source_fact or {}).get("form"),
         })

@@ -135,3 +135,41 @@ def test_fiscal_year_of_an_early_january_close_is_the_previous_year():
     assert mod._period_fiscal_year("2026-01-03") == 2025
     assert mod._period_fiscal_year("2026-01-31") == 2026
     assert mod._period_fiscal_year("2025-09-27") == 2025
+
+
+def test_quarterly_fiscal_year_is_the_one_the_sec_gives(replay_b3a):
+    """Apple cierra su ejercicio en septiembre: el trimestre a diciembre de 2024 es el 1T de FY2025.
+
+    Así lo etiqueta el 10-Q que la estrenó (fy 2025, fp Q1, presentado el 2025-01-31). Sacar el año
+    de la fecha de cierre lo dejaba como 1T de 2024 y el mismo "2024" significaba dos cosas.
+    """
+    periods = {p["end"]: (p["fiscalYear"], p["fiscalQuarter"]) for p in mod.get_statements("AAPL", "quarterly")["periods"]}
+    assert periods["2024-12-28"] == (2025, 1)
+    assert periods["2025-03-29"] == (2025, 2)
+    assert periods["2025-06-28"] == (2025, 3)
+    assert periods["2025-12-27"] == (2026, 1)
+    ordered = sorted(periods.values())
+    assert ordered == sorted(set(ordered)), "cada (año, trimestre) aparece una sola vez"
+
+
+def test_annual_fiscal_years_do_not_move(replay_b3a):
+    periods = mod.get_statements("AAPL", "annual")["periods"]
+    assert [(p["end"], p["fiscalYear"]) for p in periods] == [
+        ("2020-09-26", 2020),
+        ("2021-09-25", 2021),
+        ("2022-09-24", 2022),
+        ("2023-09-30", 2023),
+        ("2024-09-28", 2024),
+        ("2025-09-27", 2025),
+    ]
+
+
+def test_a_comparative_fact_filed_long_after_the_close_does_not_lend_its_fy():
+    """Un cierre que solo aparece como comparativo en el expediente del año siguiente trae el fy de
+    ESE expediente. Pasados 150 días del cierre no se confía en él y se usa la regla de la fecha."""
+    original = {"fy": 2025, "fp": "Q1", "form": "10-Q", "filed": "2025-01-31", "end": "2024-12-28"}
+    comparative = {"fy": 2019, "fp": "FY", "form": "10-K", "filed": "2019-10-31", "end": "2018-09-29"}
+    assert mod._fiscal_year(original, "2024-12-28") == 2025
+    assert mod._fiscal_year(comparative, "2018-09-29") == 2018
+    assert mod._fiscal_year(None, "2026-01-03") == 2025
+    assert mod._fiscal_year({"fy": None, "filed": "2025-01-31"}, "2024-12-28") == 2024
