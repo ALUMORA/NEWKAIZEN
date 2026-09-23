@@ -355,8 +355,8 @@ class MxRateItem(ContractModel):
     verified: bool = Field(
         default=False,
         description=(
-            "true solo si la serie es del SIE, tiene revisión humana en el catálogo y el SIE la confirmó hoy;"
-            " los respaldos de FRED van en false"
+            "true solo si la serie es del SIE, tiene revisión humana en el catálogo y el SIE la confirmó en"
+            " las últimas 24 horas (la verificación se guarda un día); los respaldos de FRED van en false"
         ),
     )
     stale: bool = Field(

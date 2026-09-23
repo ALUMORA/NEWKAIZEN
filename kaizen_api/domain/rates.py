@@ -232,7 +232,7 @@ def _gate_notes(checked: dict[str, list[str]]) -> list[str]:
 
 
 def _banxico_items() -> tuple[list[dict], list[str]]:
-    """Renglones del SIE: solo los ids revisados a mano que el propio SIE vuelve a confirmar hoy."""
+    """Renglones del SIE: solo los ids revisados a mano que el propio SIE confirmó en las últimas 24 h."""
     catalog = banxico.catalog()
     checked = banxico.verification(list(catalog))
     usable = [sid for sid, reasons in checked.items() if not reasons and banxico.reviewed(sid)]
@@ -248,7 +248,8 @@ def _banxico_items() -> tuple[list[dict], list[str]]:
         if not data.get("values"):
             continue
         scale = 0.01 if info["sieUnit"] == "percent" else 1.0
-        # ``usable`` ya exige las dos cosas: revisión humana en el catálogo y confirmación del SIE hoy.
+        # ``usable`` ya exige las dos cosas: revisión humana en el catálogo y confirmación del SIE en las
+        # últimas 24 horas (``banxico.verification`` la guarda un día).
         verified = banxico.reviewed(sid) and not checked[sid]
         items.append(
             _item(

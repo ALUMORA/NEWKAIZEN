@@ -98,11 +98,11 @@
 // ─── Tasas y macro ──────────────────────────────────────────────────────────
 
 /**
- * Por serie: `verified` es true solo si viene del SIE con revisión humana y el SIE la confirmó hoy
- * (el respaldo de FRED va en false); `stale` dice si ESTA serie ya es vieja para su periodicidad
- * (`meta.stale` es que alguna lo sea); `tenorDays` es el plazo de los CETES y null en lo demás.
- * Los tres faltan en un API anterior a la fase 3: sin `verified` no se da la serie por verificada
- * y sin `stale` se usa `meta.stale`.
+ * Por serie: `verified` es true solo si viene del SIE con revisión humana y el SIE la confirmó en
+ * las últimas 24 horas, no necesariamente hoy (el respaldo de FRED va en false); `stale` dice si
+ * ESTA serie ya es vieja para su periodicidad (`meta.stale` es que alguna lo sea); `tenorDays` es
+ * el plazo de los CETES y null en lo demás. Los tres faltan en un API anterior a la fase 3: sin
+ * `verified` no se da la serie por verificada y sin `stale` se usa `meta.stale`.
  * @typedef {{
  *   id: string, label: string, value: number | null, unit: 'fraction' | 'index' | 'mxn',
  *   asOf: string | null, seriesId: string, source: string, previous: number | null, changeBp: number | null,

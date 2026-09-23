@@ -165,10 +165,13 @@ están en `docs/OWNERSHIP.md`).
   contra el endpoint de metadatos del SIE en una prueba antes de usarse. Desde la fase 3 (pedidos 2
   y 3 de F2) cada renglón dice tres cosas por serie:
   - `verified`: `true` solo si la serie viene del SIE, tiene revisión humana en el catálogo
-    (`verified: true` en `kaizen_api/data/banxico_series.json`) y el SIE la confirmó hoy con su
-    título, periodicidad y unidad. Una serie del SIE que no pase ese candado no se publica (su id y
-    la razón quedan en `meta.notes`), así que hoy `verified: false` solo lo lleva el respaldo de FRED
-    (`bonoM10` con `source: "fred"`), que nunca pasa por el SIE. La UI lo marca como no verificado.
+    (`verified: true` en `kaizen_api/data/banxico_series.json`) y el SIE la confirmó en las
+    últimas 24 horas con su título, periodicidad y unidad. No es "hoy": la verificación se guarda un
+    día, así que una serie confirmada ayer a las 10:00 cuenta como confirmada hasta hoy a las 10:00.
+    Una serie del SIE que no pase ese candado no se publica (su id y la razón quedan en
+    `meta.notes`), así que en la práctica `verified` equivale a `source: "banxico"` y hoy
+    `verified: false` solo lo lleva el respaldo de FRED (`bonoM10` con `source: "fred"`), que nunca
+    pasa por el SIE. La UI lo marca como no verificado.
   - `stale`: el último dato de ESA serie es más viejo de lo que se tolera para su periodicidad
     (`maxAgeDays` del catálogo: 5 días naturales para objetivo, TIIE, FIX y UDI; 14 a 35 para los
     CETES; 7 para el Bono M del SIE; 45 para la inflación quincenal; y 70 para el Bono M mensual de
@@ -617,7 +620,7 @@ Precios alineados por fecha (INNER JOIN, sin rellenar precios).
 | `source` | string | sí |  |
 | `previous` | number \| null | sí |  |
 | `changeBp` | number \| null | sí |  |
-| `verified` | boolean | no | true solo si la serie es del SIE, tiene revisión humana en el catálogo y el SIE la confirmó hoy; los respaldos de FRED van en false |
+| `verified` | boolean | no | true solo si la serie es del SIE, tiene revisión humana en el catálogo y el SIE la confirmó en las últimas 24 horas (la verificación se guarda un día); los respaldos de FRED van en false |
 | `stale` | boolean | no | El último dato de ESTA serie es más viejo de lo que se tolera para su periodicidad |
 | `tenorDays` | 28 \| 91 \| 182 \| 364 \| null | no | Plazo en días de los CETES (el mismo de /v2/rates/rf); null en las demás series |
 

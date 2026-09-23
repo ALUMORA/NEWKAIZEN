@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import datetime as _dt
 import re
+from pathlib import Path
 
 import pytest
 import responses
@@ -144,3 +145,27 @@ def test_los_campos_nuevos_son_opcionales_y_una_respuesta_vieja_sigue_valiendo()
     item = MxRateItem.model_validate(vieja)
     assert item.verified is False, "sin el dato, una serie no se da por verificada"
     assert item.tenorDays is None
+
+
+def test_verified_promete_solo_lo_que_dura_la_verificacion_del_sie(monkeypatch):
+    """Revisión de PB: la confirmación del SIE se guarda 24 horas. Una serie confirmada ayer a las
+    10:00 sigue como confirmada hasta hoy a las 10:00, así que "el SIE la confirmó hoy" no es cierto."""
+    capturado: dict = {}
+
+    def cache(key, fn, ttl, **kwargs):
+        capturado["ttl"] = ttl
+        return {}
+
+    monkeypatch.setattr(banxico, "_cached", cache)
+    banxico.verification(["SF43936"])
+    assert capturado["ttl"] == 24 * 3600
+    raiz = Path(__file__).resolve().parents[3]
+    textos = {
+        "schemas.py": MxRateItem.model_fields["verified"].description,
+        "docs/api-v2.md": (raiz / "docs" / "api-v2.md").read_text(encoding="utf-8"),
+        "src/lib/api/types.js": (raiz / "src" / "lib" / "api" / "types.js").read_text(encoding="utf-8"),
+    }
+    for nombre, texto in textos.items():
+        plano = " ".join(re.sub(r"\n\s*\*\s", " ", texto).split())
+        assert "la confirmó hoy" not in plano, nombre
+        assert "la confirmó en las últimas 24 horas" in plano, nombre
