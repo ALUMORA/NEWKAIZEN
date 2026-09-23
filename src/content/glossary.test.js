@@ -70,6 +70,16 @@ describe('cobertura del glosario', () => {
     expect(faltantes).toEqual([])
   })
 
+  it('el rendimiento por dividendo de acciones es distinto del de distribución de FIBRAs', () => {
+    const dividendo = glossary['rendimiento-por-dividendo']
+    expect(dividendo).toBeDefined()
+    expect(dividendo.titulo).toBe('Rendimiento por dividendo')
+    expect(dividendo.fuente).toContain('art. 140')
+    expect(glossary['rendimiento-por-distribucion'].fuente).toContain('art. 188')
+    expect(dividendo.relacionados).toContain('rendimiento-por-distribucion')
+    expect(glossarySearch('dividend yield')[0].slug).toBe('rendimiento-por-dividendo')
+  })
+
   it('no repite slugs y los ordena por título en glossaryTerms', () => {
     expect(new Set(glossarySlugs).size).toBe(glossarySlugs.length)
     const titulos = glossaryTerms.map((t) => t.titulo)
