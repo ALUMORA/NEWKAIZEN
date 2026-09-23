@@ -148,9 +148,10 @@ están en `docs/OWNERSHIP.md`).
   de la MISMA fecha, con relleno hacia adelante de a lo más 3 días en huecos del FX, anotado en
   `meta.notes`.
 - `GET /v2/panel?symbols=A,B&range=1y&interval=1d&ccy=MXN` → `PanelResponse`. INNER JOIN por fecha,
-  sin rellenar precios; los símbolos que no se pudieron alinear van en `dropped` con su motivo. Los
-  rendimientos se calculan en el cliente. Para separar efecto precio y efecto tipo de cambio, ver
-  "Panel en moneda nativa y en MXN" en las recetas para el cliente, más abajo.
+  sin rellenar precios; los símbolos que no se pudieron alinear van en `dropped` con su motivo.
+  Mismos cierres ajustados que `/v2/history`: un cierre anterior a un dividendo no sirve como precio
+  de compra. Los rendimientos se calculan en el cliente. Para separar efecto precio y efecto tipo de
+  cambio, ver "Panel en moneda nativa y en MXN" en las recetas para el cliente, más abajo.
 - `GET /v2/fx?pair=USDMXN` → `FxResponse`. FIX de Banxico (`banxico_fix`) si hay token, si no Yahoo
   marcado en `meta`.
 - `GET /v2/fx/history?pair=USDMXN&start=&end=` → `FxHistoryResponse`. Banxico FIX SF43718 con token,
@@ -291,22 +292,51 @@ Pedido 2 de F1. No hay una ruta que devuelva las dos monedas juntas y no hace fa
 llamadas, casi siempre, el cliente tiene todo, y el tipo de cambio le sale exacto, el mismo que usó
 el servidor para convertir.
 
+Antes de la receta, lo que el panel NO da: sus cierres están ajustados por splits y dividendos
+(rendimiento total), igual que `/v2/history`. Todo cierre anterior a una fecha ex dividendo queda
+por debajo del precio al que de verdad cotizó la emisora. Con las grabaciones del 22 de septiembre
+de 2026, el primer cierre de AAPL en la ventana de un año sale 255.14 dólares en el panel contra
+256.08 de mercado, por los 1.06 dólares de dividendos que pagó en esa ventana. El último cierre no
+tiene ajuste por delante y ese sí es el de mercado. De ahí salen dos usos distintos:
+
+- **Una posición desde su compra.** `price0` y `fx0` son el precio y el tipo de cambio del
+  movimiento, como dice `docs/metodologia/portafolio.md`, nunca los del panel: el cierre ajustado
+  metería los dividendos al efecto precio, y el tipo de cambio del movimiento es el FIX de esa
+  fecha que la persona pudo corregir. Si el movimiento no trae tipo de cambio, la separación sale
+  `s/d`; el panel no lo suple. Del panel salen solo `price1` y `fx1`, de la última fecha común. Los
+  dividendos cobrados son efectivo aparte, como en la metodología.
+- **Una ventana de fechas** (el último año, por ejemplo). Ahí `price0` y `price1` salen del panel
+  nativo, y el efecto "precio" es rendimiento total en la moneda original: ya trae los dividendos
+  de la ventana como si se hubieran reinvertido. La UI lo nombra así, y no le suma los dividendos
+  cobrados en esas fechas, porque los contaría dos veces.
+
+La receta:
+
 1. La moneda de cada posición sale del `currency` de `/v2/quotes`.
 2. `GET /v2/panel?symbols=<todas>&ccy=MXN` da los precios en pesos, que es lo que ya usa el riesgo.
-3. `GET /v2/panel?symbols=<las de una moneda>&ccy=native`, una llamada por cada moneda distinta del
-   peso (en la práctica, una con las emisoras en dólares). Pedir `ccy=native` con monedas mezcladas
-   responde `400 BAD_REQUEST` a propósito, porque un panel tiene un solo `currency`. Las emisoras en
-   pesos no necesitan el panel nativo: en MXN su precio es el mismo.
+   Revisa `dropped`: hoy el servidor solo publica el tipo de cambio USDMXN, así que una emisora en
+   euros, libras, dólares canadienses o cualquier otra moneda que no sea peso ni dólar sale ahí,
+   con su motivo, y no en `prices`. Esa posición queda con la separación en `s/d` y el motivo del
+   servidor a la vista, y no se pide su panel nativo: sin precio en pesos no hay tipo de cambio que
+   sacar.
+3. `GET /v2/panel?symbols=<las emisoras en dólares>&ccy=native`, una sola llamada con las emisoras
+   en dólares. Pedir `ccy=native` con monedas mezcladas responde `400 BAD_REQUEST` a propósito,
+   porque un panel tiene un solo `currency`. Las emisoras en pesos no necesitan el panel nativo: en
+   MXN su precio es el mismo.
 4. Cruza por fecha y usa solo las fechas que estén en los dos paneles. No coinciden: cada panel es
    un INNER JOIN de sus propios símbolos, y la conversión omite las fechas sin tipo de cambio
    cercano.
 5. El tipo de cambio de cada fecha es `X = precio en MXN / precio nativo`. Es exactamente el que usó
    el servidor (FIX de Banxico o Yahoo, con el mismo relleno de hasta 3 días), así que para esto no
    hace falta `/v2/fx/history`, que sirve para mostrar la serie del tipo de cambio pero no reproduce
-   la conversión fecha por fecha.
-6. La separación la hace `pnlDecomposition` de `src/lib/finance/fx.js`: `price0` y `price1` del panel
-   nativo, `fx0` y `fx1` del paso 5 (en 1 para las posiciones en pesos). El efecto precio va a tipo
-   de cambio inicial y el efecto cambiario a precio final, y suman exactamente el resultado en pesos.
+   la conversión fecha por fecha. Como el ajuste por dividendos multiplica igual el precio nativo y
+   el precio en pesos, el cociente no se ve afectado.
+6. La separación la hace `pnlDecomposition` de `src/lib/finance/fx.js`. `price1` es el cierre del
+   panel nativo en la última fecha común y `fx1` el del paso 5 en esa fecha. `price0` y `fx0` son
+   los del movimiento para una posición, o los de la primera fecha común para una ventana. Para las
+   posiciones en pesos, `fx0` y `fx1` van en 1. El efecto precio va a tipo de cambio inicial y el
+   efecto cambiario a precio final, y los dos suman exactamente `q × P₁ × X₁ − q × P₀ × X₀` con esos
+   mismos cuatro datos.
 
 Procedencia: el efecto cambiario hereda el `meta` del panel en MXN. Si ahí `meta.fallback` es
 `true`, el tipo de cambio vino de Yahoo y no del FIX, y la UI lo dice junto al efecto cambiario; el

@@ -59,3 +59,25 @@ def test_las_secciones_nuevas_no_traen_guiones_largos():
     for titulo in (SECTOR, PANEL):
         texto = _seccion(titulo)
         assert "—" not in texto and "–" not in texto
+
+
+def test_la_receta_del_panel_avisa_que_sus_cierres_estan_ajustados_y_no_dan_el_costo():
+    """Revisión de PB: la receta decía sacar ``price0`` del panel nativo, que viene ajustado por
+    dividendos. Eso metía los dividendos al efecto precio y cambiaba el precio y el FIX del
+    movimiento por los del panel, contra lo que dice docs/metodologia/portafolio.md."""
+    texto = " ".join(_seccion(PANEL).split())
+    assert "`price0` y `price1` del panel nativo" not in texto, "la receta vieja tomaba P0 del panel"
+    for frase in ("ajustados por splits y dividendos", "rendimiento total", "del movimiento",
+                  "docs/metodologia/portafolio.md", "dos veces", "s/d"):
+        assert frase in texto, frase
+    metodologia = " ".join((ROOT / "docs" / "metodologia" / "portafolio.md").read_text(encoding="utf-8").split())
+    assert "el precio en la moneda original" in metodologia
+    assert "Suma efectivo en la moneda del pago, sin tocar el costo" in metodologia
+
+
+def test_la_receta_del_panel_dice_que_hacer_con_lo_que_sale_en_dropped():
+    """El servidor solo convierte USDMXN: una emisora en EUR sale en ``dropped`` del panel en pesos."""
+    texto = " ".join(_seccion(PANEL).split())
+    assert "una llamada por cada moneda distinta del" not in texto
+    for frase in ("`dropped`", "USDMXN", "una sola llamada con las emisoras en dólares"):
+        assert frase in texto, frase
