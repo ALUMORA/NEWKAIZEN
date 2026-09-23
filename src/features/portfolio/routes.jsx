@@ -7,6 +7,7 @@ import { PATHS, route } from '../../app/paths.js'
 
 const Pages = {
   Transactions: lazy(() => import('./pages/Transactions.jsx')),
+  Rebalance: lazy(() => import('./pages/Rebalance.jsx')),
 }
 
 export const routes = [
@@ -28,7 +29,7 @@ export const routes = [
   },
   {
     path: route(PATHS.portfolioRebalance),
-    element: <ComingSoon />,
+    element: <Pages.Rebalance />,
     handle: { title: 'Rebalanceo', description: 'Qué tan lejos está tu portafolio de los pesos objetivo que definiste.' },
   },
 ]

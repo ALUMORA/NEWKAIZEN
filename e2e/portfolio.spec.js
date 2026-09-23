@@ -44,11 +44,16 @@ const FX_HISTORY = {
   meta: meta({ asOf: '2026-09-21', source: 'banxico_fix', delayMinutes: null }),
 }
 
+const quote = (symbol, name, price) => ({ symbol, name, price, previousClose: price, change: 0, changePct: 0, currency: 'MXN', exchange: 'BMV', type: 'equity', marketState: 'REGULAR', asOf: '2026-09-22T14:40:00Z' })
+const QUOTES = { quotes: [quote('WALMEX.MX', 'Walmex', 65), quote('NAFTRAC.MX', 'Naftrac', 55.2)], missing: [], meta: meta() }
+
 const V2_ROUTES = {
   'GET /v2/markets/overview': { json: OVERVIEW },
   'GET /v2/rates/mx': { json: RATES },
   'GET /v2/fx/history': { json: FX_HISTORY },
   'GET /v2/search': { json: { results: [], meta: meta({ source: 'kaizen', delayMinutes: null }) } },
+  'GET /v2/fx': { json: { pair: 'USDMXN', rate: 18.4321, asOf: '2026-09-22T14:40:00Z', source: 'yahoo', stale: false, meta: meta() } },
+  'GET /v2/quotes': { json: QUOTES },
 }
 
 const tx = (over) => ({ fees: 0, currency: 'MXN', fxRate: null, amount: null, ratio: null, price: null, quantity: null, symbol: null, note: '', ...over })
@@ -181,6 +186,44 @@ test.describe('portafolio: movimientos', () => {
   })
 })
 
+const REBALANCE_STATE = { ...STATE, portfolios: [{ ...STATE.portfolios[0], targets: { 'WALMEX.MX': 0.6, 'NAFTRAC.MX': 0.4 } }] }
+const planTable = (page) => page.getByRole('table', { name: 'Movimientos del plan' })
+
+test.describe('portafolio: rebalanceo', () => {
+  for (const theme of THEMES) {
+    test(`carga con su h1, metas y plan sin violaciones (${theme})`, async ({ page, baseURL }) => {
+      await open(page, baseURL, { theme, state: REBALANCE_STATE })
+      await page.goto('/portafolio/rebalanceo')
+      await expect(page.getByRole('heading', { level: 1, name: 'Rebalanceo' })).toBeVisible()
+      await expect(page.locator('h1')).toHaveCount(1)
+      await expect(page.getByLabel('Meta de WALMEX.MX en porcentaje')).toHaveValue(/60/)
+      await expect(planTable(page).getByRole('row', { name: /NAFTRAC\.MX/ })).toContainText('Aumentar')
+      await expect(planTable(page).getByRole('row', { name: /WALMEX\.MX/ })).toContainText('Reducir')
+      await noHorizontalScroll(page)
+      await expectNoAxeViolations(page, `rebalanceo ${theme}`)
+    })
+  }
+
+  test('registrar el plan escribe al libro y Deshacer lo quita', async ({ page, baseURL }) => {
+    await open(page, baseURL, { state: REBALANCE_STATE })
+    await page.goto('/portafolio/rebalanceo')
+    await page.getByRole('button', { name: 'Registrar en el libro' }).click()
+    await page.getByRole('alertdialog', { name: '¿Registrar el plan en tu libro?' }).getByRole('button', { name: 'Registrar' }).click()
+    await expect(page.getByText('Movimientos registrados')).toBeVisible()
+    const count = () => page.evaluate(() => JSON.parse(window.localStorage.getItem('kaizen:v2') ?? '{}').portfolios[0].transactions.length)
+    await expect.poll(count).toBe(5)
+    await page.getByRole('button', { name: 'Deshacer' }).click()
+    await expect.poll(count).toBe(3)
+  })
+
+  test('metas que no suman 100% no calculan plan', async ({ page, baseURL }) => {
+    await open(page, baseURL)
+    await page.goto('/portafolio/rebalanceo')
+    await expect(page.getByText('Ajusta las metas hasta que sumen 100%.')).toBeVisible()
+    await expect(planTable(page)).toHaveCount(0)
+  })
+})
+
 // Capturas para revisión: con F1_CAPTURE_DIR=/ruta guarda cada página nueva; sin la variable se salta.
 test('capturas', async ({ page, baseURL }, testInfo) => {
   const dir = process.env.F1_CAPTURE_DIR ?? ''
@@ -190,4 +233,10 @@ test('capturas', async ({ page, baseURL }, testInfo) => {
   await expect(page.getByRole('heading', { level: 1, name: 'Movimientos' })).toBeVisible()
   await settleAnimations(page)
   await page.screenshot({ path: `${dir}/movimientos-${testInfo.project.name}.png`, fullPage: true })
+  await page.addInitScript((st) => window.localStorage.setItem('kaizen:v2', st), JSON.stringify(REBALANCE_STATE))
+  await page.goto('/portafolio/rebalanceo')
+  await expect(page.getByRole('heading', { level: 1, name: 'Rebalanceo' })).toBeVisible()
+  await expect(planTable(page)).toBeVisible()
+  await settleAnimations(page)
+  await page.screenshot({ path: `${dir}/rebalanceo-${testInfo.project.name}.png`, fullPage: true })
 })
