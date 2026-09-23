@@ -270,6 +270,28 @@ test.describe('investigar: ficha de la emisora', () => {
   })
 })
 
+test.describe('investigar: supuestos del DCF', () => {
+  test('Recalcular manda los supuestos como fracción y conserva los avisos', async ({ page, baseURL }) => {
+    /** @type {URLSearchParams[]} */
+    const seen = []
+    await open(page, /** @type {string} */ (baseURL), {
+      routes: {
+        'GET /v2/valuation/:symbol': ({ url }) => {
+          seen.push(url.searchParams)
+          return { json: VALUATION }
+        },
+      },
+    })
+    await page.goto('/investigar/WALMEX.MX')
+    await instrumentReady(page)
+    await page.getByRole('textbox', { name: 'Prima de mercado' }).fill('6')
+    await page.getByRole('textbox', { name: 'Años de proyección' }).fill('7')
+    await page.getByRole('button', { name: 'Recalcular' }).click()
+    await expect.poll(() => seen.some((q) => q.get('erp') === '0.06' && q.get('years') === '7')).toBe(true)
+    await expect(page.getByText('El valor terminal pesa 62%')).toBeVisible()
+  })
+})
+
 // Sin la fixture automática: esta prueba adjunta sus guardas con permisos explícitos para los 503.
 plainTest('investigar: una sección caída no tumba la ficha', async ({ page, baseURL }) => {
   const guards = attachGuards(page, {
@@ -342,4 +364,20 @@ test.describe('capturas para revisión', () => {
       await page.screenshot({ path: `${CAPTURE_DIR}/${p.name}-${testInfo.project.name}.png`, fullPage: true })
     })
   }
+})
+
+// Sin la fixture automática: una emisora del comparador falla y las demás siguen.
+plainTest('investigar: en el comparador, una emisora que no existe queda como s/d', async ({ page, baseURL }) => {
+  const guards = attachGuards(page, { allow: expectedHttpError(404, 'GET', '/v2/instrument/NOPE', 'la prueba pide una emisora que no existe') })
+  await open(page, /** @type {string} */ (baseURL), {
+    routes: {
+      'GET /v2/instrument/:symbol': ({ params }) =>
+        params.symbol === 'NOPE' ? { status: 404, json: { error: { code: 'NOT_FOUND', message: 'No encontramos esa emisora.' } } } : { json: INSTRUMENT },
+    },
+  })
+  await page.goto('/investigar/comparar?symbols=WALMEX.MX,NOPE')
+  await expect(page.getByRole('heading', { level: 1, name: 'Comparar emisoras' })).toBeVisible()
+  await expect(page.getByText('No pudimos cargar NOPE. Sus columnas quedan como s/d.')).toBeVisible()
+  await expect(page.getByRole('table', { name: 'Múltiplos y rentabilidad lado a lado' }).getByText('21.4x')).toBeVisible()
+  guards.assertClean()
 })
