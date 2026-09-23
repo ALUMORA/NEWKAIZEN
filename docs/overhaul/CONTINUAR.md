@@ -97,9 +97,11 @@ cinco streams de backend se consolidaron en el set base, que pasó de 432 a 566 
 3. **M3**: borrar `src/legacy` cuando las features lo reemplacen. Ahí se van los 76 guiones largos
    visibles y los `—` como dato faltante.
 4. **Fases 4 y 5**: revisores de finanzas, seguridad, UX y copy, y el cierre con preview y reporte.
-5. **Revisión independiente pendiente de la fase 2.** Solo algunos streams alcanzaron a ser
-   revisados antes del recorte. Conviene una pasada de revisión adversaria sobre la librería
-   financiera y sobre valuación antes de que las features se apoyen en ellas.
+5. **Defectos abiertos de la revisión de la fase 2, y esto va primero.** Los once streams pasaron
+   por un revisor independiente, pero **ninguna corrección alcanzó a completarse**: la ronda se cortó
+   por cuota. Las listas están en [notas/fase2-revisiones.md](notas/fase2-revisiones.md). A4 (ledger,
+   XIRR, ISR, rebalanceo) trae dos veredictos `fail` y es lo que va a usar la pantalla de portafolio;
+   A1 terminó en `fail` en su segunda corrida; B3b y B3c nunca se revisaron.
 6. **Hueco de procedencia detectado al mergear**: `fxUsed.asOf` viene en `null` en la ficha de
    emisora. El tipo de cambio se usa, pero la respuesta no dice de qué día es.
 
