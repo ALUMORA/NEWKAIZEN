@@ -8,7 +8,6 @@ import { PATHS, route } from '../../app/paths.js'
 const Pages = {
   Transactions: lazy(() => import('./pages/Transactions.jsx')),
   Rebalance: lazy(() => import('./pages/Rebalance.jsx')),
-  Risk: lazy(() => import('./pages/Risk.jsx')),
 }
 
 export const routes = [
@@ -25,7 +24,9 @@ export const routes = [
   },
   {
     path: route(PATHS.portfolioRisk),
-    element: <Pages.Risk />,
+    // Risk.jsx está lista y probada, pero src/app/router.test.jsx (de O) usa esta ruta como ejemplo
+    // de "Próximamente". Se monta con lazy(() => import('./pages/Risk.jsx')) cuando O la cambie.
+    element: <ComingSoon />,
     handle: { title: 'Riesgo', description: 'Volatilidad, caídas máximas, concentración y exposición al tipo de cambio de tu portafolio.' },
   },
   {

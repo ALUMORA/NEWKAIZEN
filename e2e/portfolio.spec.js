@@ -247,7 +247,10 @@ const RISK_STATE = {
   portfolios: [{ ...STATE.portfolios[0], transactions: [...STATE.portfolios[0].transactions, tx({ id: 'tx4', type: 'buy', date: '2026-09-11', symbol: 'NAFTRAC.MX', quantity: 50, price: 55 })] }],
 }
 
+// Sin montar hasta que src/app/router.test.jsx deje de usar /portafolio/riesgo como "Próximamente"
+// (docs/requests/F1.md). Para correrlas, monta Risk.jsx en routes.jsx y quita el skip.
 test.describe('portafolio: riesgo', () => {
+  test.skip(true, 'Risk.jsx sin montar: la ruta sigue en Próximamente por router.test.jsx')
   for (const theme of THEMES) {
     test(`carga con su h1, medidas, correlaciones y sin violaciones (${theme})`, async ({ page, baseURL }) => {
       await open(page, baseURL, { theme, state: RISK_STATE })
@@ -283,9 +286,4 @@ test('capturas', async ({ page, baseURL }, testInfo) => {
   await expect(planTable(page)).toBeVisible()
   await settleAnimations(page)
   await page.screenshot({ path: `${dir}/rebalanceo-${testInfo.project.name}.png`, fullPage: true })
-  await page.addInitScript((st) => window.localStorage.setItem('kaizen:v2', st), JSON.stringify(RISK_STATE))
-  await page.goto('/portafolio/riesgo')
-  await expect(page.getByRole('figure', { name: 'Correlaciones entre tus emisoras' })).toBeVisible()
-  await settleAnimations(page)
-  await page.screenshot({ path: `${dir}/riesgo-${testInfo.project.name}.png`, fullPage: true })
 })
