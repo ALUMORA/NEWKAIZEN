@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MAX_EXTRA, describeRate, parseExtra, rateSource, splitRateNotes, spreadBars } from './fibras.js'
+import { MAX_EXTRA, describeRate, missingFields, parseExtra, rateSource, splitRateNotes, spreadBars } from './fibras.js'
 
 describe('parseExtra', () => {
   it('normaliza y corta en el máximo que acepta el API', () => {
@@ -19,6 +19,7 @@ describe('rateSource y describeRate', () => {
   it('con FRED es una tasa sustituta, nunca "CETES 28 días"', () => {
     const r = describeRate({ source: 'yahoo,computed,fred', fallback: true }, 0.0679)
     expect(r).toMatchObject({ substitute: true, missing: false, source: 'fred', label: 'Tasa sustituta de corto plazo' })
+    expect(r.against).toMatch(/no son CETES de 28 días/)
   })
   it('Banxico sin respaldo sí son CETES 28 días; marcada como respaldo, no', () => {
     expect(describeRate({ source: 'yahoo,computed,banxico', fallback: false }, 0.0725)).toMatchObject({ substitute: false, label: 'CETES 28 días' })
@@ -51,5 +52,14 @@ describe('spreadBars', () => {
       { label: 'FSHOP13.MX', value: -0.0045 },
       { label: 'FIBRAPL14.MX', value: null },
     ])
+  })
+})
+
+describe('missingFields', () => {
+  it('nombra las métricas en s/d en el orden de la tabla', () => {
+    // FMTY14.MX del 22 sep 2026: estados del fiduciario descartados.
+    const row = { price: 13.2, pNav: 1.059, distributionYield: 0.0704, spreadVsCetes: 0.0025, ltv: null, debtToMarketCap: null, capRate: null, cashFlowYield: null }
+    expect(missingFields(row)).toEqual(['LTV', 'deuda entre capitalización', 'cap rate', 'rendimiento de flujo'])
+    expect(missingFields({ ...row, ltv: 0.3, debtToMarketCap: 0.5, capRate: 0.07, cashFlowYield: 0.09 })).toEqual([])
   })
 })

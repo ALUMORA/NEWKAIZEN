@@ -9,6 +9,12 @@ const Pages = {
   Compare: lazy(() => import('./pages/Compare.jsx')),
 }
 
+// Screeners de la segunda tanda (F3c).
+const Screeners = {
+  MagicFormula: lazy(() => import('./pages/MagicFormula.jsx')),
+  Fibras: lazy(() => import('./pages/Fibras.jsx')),
+}
+
 export const routes = [
   legacyRoute(PATHS.research, { title: 'Investigar' }),
   {
@@ -22,6 +28,14 @@ export const routes = [
     handle: { title: 'Ficha de la emisora', description: 'Precio, fundamentales, estados financieros, dividendos y valuación de una emisora.' },
   },
   legacyRoute(PATHS.screener, { title: 'Screener' }),
-  legacyRoute(PATHS.screenerMagic, { title: 'Fórmula Mágica' }),
-  legacyRoute(PATHS.screenerFibras, { title: 'FIBRAs' }),
+  {
+    path: route(PATHS.screenerMagic),
+    element: <Screeners.MagicFormula />,
+    handle: { title: 'Fórmula Mágica', description: 'Ranking de Greenblatt por rendimiento de utilidades y rendimiento sobre capital, con sus exclusiones y empates.' },
+  },
+  {
+    path: route(PATHS.screenerFibras),
+    element: <Screeners.Fibras />,
+    handle: { title: 'FIBRAs', description: 'LTV, cap rate implícito, flujo, distribución pagada, P/NAV y diferencial contra la tasa de cada FIBRA.' },
+  },
 ]

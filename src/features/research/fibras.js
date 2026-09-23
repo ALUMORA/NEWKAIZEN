@@ -57,11 +57,17 @@ export function describeRate(meta, rate) {
   const source = rateSource(meta?.source)
   const missing = rate == null || !Number.isFinite(rate)
   const substitute = !missing && (Boolean(meta?.fallback) || source !== 'banxico')
-  const sourceLabel = source === 'banxico' ? 'Banxico' : source === 'fred' ? 'FRED, serie de la OCDE' : 'fuente sin indicar'
+  const sourceLabel = source === 'banxico' ? 'Banxico' : source === 'fred' ? 'FRED, serie de la OCDE' : 'sin indicar'
   let label = 'CETES 28 días'
-  if (missing) label = 'Tasa de referencia'
-  else if (substitute) label = 'Tasa sustituta de corto plazo'
-  return { label, missing, substitute, source, sourceLabel }
+  let against = 'CETES a 28 días'
+  if (missing) {
+    label = 'Tasa de referencia'
+    against = 'la tasa de referencia'
+  } else if (substitute) {
+    label = 'Tasa sustituta de corto plazo'
+    against = 'la tasa sustituta de corto plazo, que no son CETES de 28 días'
+  }
+  return { label, against, missing, substitute, source, sourceLabel }
 }
 
 const RATE_NOTE_RE = /sustitut|token de Banxico|BANXICO_TOKEN|^Respaldo:/i
@@ -85,4 +91,27 @@ export function spreadBars(rows) {
   return [...rows]
     .map((r) => ({ label: r.symbol, value: Number.isFinite(r.spreadVsCetes) ? r.spreadVsCetes : null }))
     .sort((a, b) => Number(a.value == null) - Number(b.value == null) || (b.value ?? 0) - (a.value ?? 0) || a.label.localeCompare(b.label))
+}
+
+/** Métricas de la tabla que pueden salir como s/d, con el nombre que lleva su columna. */
+export const METRIC_LABEL = Object.freeze({
+  price: 'precio',
+  pNav: 'P/NAV',
+  distributionYield: 'distribución pagada',
+  spreadVsCetes: 'diferencial',
+  ltv: 'LTV',
+  debtToMarketCap: 'deuda entre capitalización',
+  capRate: 'cap rate',
+  cashFlowYield: 'rendimiento de flujo',
+})
+
+/**
+ * Nombres de las métricas que faltan en un renglón, en el orden de la tabla.
+ * @param {Record<string, unknown>} row
+ * @returns {string[]}
+ */
+export function missingFields(row) {
+  return Object.entries(METRIC_LABEL)
+    .filter(([key]) => !Number.isFinite(row?.[key]))
+    .map(([, label]) => label)
 }
