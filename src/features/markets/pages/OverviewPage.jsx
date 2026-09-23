@@ -46,8 +46,8 @@ export default function OverviewPage() {
         description="Cómo van hoy México, Estados Unidos y el mundo. Cada cifra trae su fuente, su fecha y su retraso; si algo falta, lo decimos."
       />
       <div className="markets-top">
-        <ExchangesCard />
         <SummaryCard />
+        <ExchangesCard />
       </div>
       <GroupsSection />
       <div className="markets-duo">

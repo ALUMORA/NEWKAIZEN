@@ -103,17 +103,18 @@ const WORLD = {
   meta: meta({ asOf: '2026-09-22' }),
 }
 
-/** Cinco años de cierres diarios del VIX, deterministas (caminata con reversión a 18). */
+/** Cinco años de cierres diarios del VIX, deterministas (caminata con reversión a 16.5 y saltos esporádicos). */
 function vixHistory() {
   const dates = []
   const close = []
   let seed = 7
-  let v = 18
+  let v = 16.5
   for (let t = Date.UTC(2021, 8, 22); t <= Date.UTC(2026, 8, 21); t += 86_400_000) {
     const wd = new Date(t).getUTCDay()
     if (wd === 0 || wd === 6) continue
     seed = (seed * 16807) % 2147483647
-    v = Math.max(10.5, v + 0.06 * (18 - v) + (seed / 2147483647 - 0.5) * 2.4)
+    const u = seed / 2147483647
+    v = Math.max(11, v + 0.08 * (16.5 - v) + (u - 0.5) * 2.2 + (u > 0.985 ? 6 : 0))
     dates.push(new Date(t).toISOString().slice(0, 10))
     close.push(Math.round(v * 100) / 100)
   }

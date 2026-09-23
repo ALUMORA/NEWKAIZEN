@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Card, DataTable, Delta, EmptyState, ErrorState, SectionHeading, Skeleton } from '../../../components/ui/index.js'
 import { marketsOverviewQuery } from '../../../lib/api/queries.js'
 import { MISSING } from '../../../lib/format.js'
-import { EXCHANGES, dedupeMarkets, fmtItemPrice, fmtSessionDay, fxHint, isFxLike } from '../pages/overview-model.js'
+import { DXY_SYMBOL, EXCHANGES, dedupeMarkets, fmtItemPrice, fmtSessionDay, fxHint, isFxLike } from '../pages/overview-model.js'
 import { useFeature } from './useFeature.js'
 
 const DESCRIPTIONS = {
@@ -19,6 +19,7 @@ const DESCRIPTIONS = {
 const TZ_BY_GROUP = { mx: EXCHANGES.bmv.tz, us: EXCHANGES.nyse.tz }
 
 function columnsFor(groupId) {
+  const tz = TZ_BY_GROUP[groupId]
   return [
     {
       key: 'label',
@@ -26,34 +27,32 @@ function columnsFor(groupId) {
       format: (v, row) => (
         <span className="markets-instrument">
           <span>{v}</span>
-          <span className="markets-instrument__symbol mono">{row.symbol}</span>
+          <span className="markets-instrument__symbol">
+            <span className="mono">{row.symbol}</span> ·{' '}
+            <span className="markets-nowrap">{row.asOf ? `dato del ${fmtSessionDay(String(row.asOf), tz)}` : `fecha ${MISSING}`}</span>
+          </span>
         </span>
       ),
     },
     { key: 'price', header: 'Último', numeric: true, format: (_, row) => fmtItemPrice(row, groupId) },
     {
-      key: 'change',
+      key: 'changePct',
       header: 'Cambio',
       numeric: true,
-      format: (v, row) =>
-        v == null ? (
-          <span className="kz-missing">{MISSING}</span>
-        ) : (
-          <Delta value={v} kind="number" decimals={isFxLike(row, groupId) && row.symbol !== 'DX-Y.NYB' ? 4 : 2} direction={isFxLike(row, groupId) ? 'neutral' : 'auto'} />
-        ),
+      format: (v, row) => {
+        if (v == null && row.change == null) return <span className="kz-missing">{MISSING}</span>
+        const fx = isFxLike(row, groupId)
+        const direction = fx ? 'neutral' : 'auto'
+        const hint = fx ? fxHint(row.symbol, v) : undefined
+        return (
+          <span className="markets-change">
+            <Delta value={v} kind="pct" direction={direction} />
+            <Delta className="markets-change__abs" value={row.change} kind="number" decimals={fx && row.symbol !== DXY_SYMBOL ? 4 : 2} direction={direction} />
+            {hint ? <span className="markets-change__hint">{hint}</span> : null}
+          </span>
+        )
+      },
     },
-    {
-      key: 'changePct',
-      header: 'Cambio %',
-      numeric: true,
-      format: (v, row) =>
-        v == null ? (
-          <span className="kz-missing">{MISSING}</span>
-        ) : (
-          <Delta value={v} kind="pct" direction={isFxLike(row, groupId) ? 'neutral' : 'auto'} hint={isFxLike(row, groupId) ? fxHint(row.symbol, v) : undefined} />
-        ),
-    },
-    { key: 'asOf', header: 'Dato del', format: (v) => (v ? fmtSessionDay(String(v), TZ_BY_GROUP[groupId]) : <span className="kz-missing">{MISSING}</span>) },
   ]
 }
 
@@ -64,7 +63,7 @@ export function GroupsSection() {
   const groups = q.data ? dedupeMarkets({ overview: q.data }).groups : []
   return (
     <section className="kz-col" aria-labelledby="markets-groups-title">
-      <SectionHeading id="markets-groups-title" title="Panorama" description="Último precio y cambio contra el cierre anterior. Cada símbolo aparece una sola vez." />
+      <SectionHeading id="markets-groups-title" title="Panorama" description="Último precio y cambio contra el cierre anterior, en porcentaje y en unidades. Cada símbolo aparece una sola vez." />
       {loading ? (
         <div className="markets-groups" aria-busy="true">
           <span className="sr-only">Cargando</span>

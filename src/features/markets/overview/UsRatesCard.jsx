@@ -9,8 +9,8 @@ import { ApiNotes } from '../pages/ApiNotes.jsx'
 import { useFeature } from './useFeature.js'
 
 function RateDelta({ item }) {
-  if (item.changeBp != null) return <Delta value={item.changeBp} kind="bp" direction="neutral" hint="contra el dato anterior" />
-  if (item.change != null) return <Delta value={item.change} kind="number" direction="neutral" hint="contra el dato anterior" />
+  if (item.changeBp != null) return <Delta value={item.changeBp} kind="bp" direction="neutral" />
+  if (item.change != null) return <Delta value={item.change} kind="number" direction="neutral" />
   return null
 }
 
@@ -25,7 +25,7 @@ export function UsRatesCard() {
   return (
     <Card
       title="Tasas de EE. UU."
-      description="Bonos del Tesoro y diferenciales. Los cambios van en puntos base (pb): 100 pb son un punto porcentual."
+      description="Bonos del Tesoro y diferenciales. El cambio es contra el dato anterior, en puntos base (pb): 100 pb son un punto porcentual."
       info={{ termKey: 'puntos-base', term: 'Puntos base' }}
       status={meta}
     >
