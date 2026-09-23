@@ -162,6 +162,13 @@
    "soft_failure": false,
    "recorded_at": "2026-09-22T22:58:50+00:00"
   },
+  "yf:DANHOS13.MX:dividends": {
+   "file": "yf-DANHOS13.MX-dividends-ecdaaee67d8bfc49.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-23T04:58:35+00:00"
+  },
   "yf:FEMSAUBD.MX:balance_sheet": {
    "file": "yf-FEMSAUBD.MX-balance-sheet-7ac22e5dc6f1b15c.json",
    "provider": "yfinance",
@@ -182,6 +189,55 @@
    "kind": "value",
    "soft_failure": false,
    "recorded_at": "2026-09-22T22:58:46+00:00"
+  },
+  "yf:FHIPO14.MX:dividends": {
+   "file": "yf-FHIPO14.MX-dividends-480db8c105b2c481.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-23T04:58:37+00:00"
+  },
+  "yf:FIBRAMQ12.MX:dividends": {
+   "file": "yf-FIBRAMQ12.MX-dividends-0c9a960d98ba3bf1.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-23T04:58:31+00:00"
+  },
+  "yf:FIBRAPL14.MX:dividends": {
+   "file": "yf-FIBRAPL14.MX-dividends-90a7fecaef01ef40.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-23T04:58:32+00:00"
+  },
+  "yf:FINN13.MX:dividends": {
+   "file": "yf-FINN13.MX-dividends-2346b5cd2768aed4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-23T04:58:34+00:00"
+  },
+  "yf:FMTY14.MX:dividends": {
+   "file": "yf-FMTY14.MX-dividends-03d8729744c57219.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-23T04:58:36+00:00"
+  },
+  "yf:FNOVA17.MX:dividends": {
+   "file": "yf-FNOVA17.MX-dividends-b45267b249db9949.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-23T04:58:33+00:00"
+  },
+  "yf:FSHOP13.MX:dividends": {
+   "file": "yf-FSHOP13.MX-dividends-39412954fee46af4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-23T04:58:39+00:00"
   },
   "yf:GAPB.MX:balance_sheet": {
    "file": "yf-GAPB.MX-balance-sheet-1d87c9cc0eba5168.json",
@@ -398,14 +454,28 @@
    "provider": "yfinance",
    "kind": "value",
    "soft_failure": true,
-   "recorded_at": "2026-09-22T22:54:41+00:00"
+   "recorded_at": "2026-09-23T04:58:29+00:00"
+  },
+  "yf:STORAGE18.MX:cashflow": {
+   "file": "yf-STORAGE18.MX-cashflow-efef64bb5ccb0ec6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-09-23T04:58:30+00:00"
+  },
+  "yf:STORAGE18.MX:dividends": {
+   "file": "yf-STORAGE18.MX-dividends-8addfe8d6e98e6b7.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-23T04:58:38+00:00"
   },
   "yf:STORAGE18.MX:income_stmt": {
    "file": "yf-STORAGE18.MX-income-stmt-99f27bb57eb07dea.json",
    "provider": "yfinance",
    "kind": "value",
    "soft_failure": true,
-   "recorded_at": "2026-09-22T22:54:40+00:00"
+   "recorded_at": "2026-09-23T04:58:29+00:00"
   },
   "yf:TLEVISACPO.MX:balance_sheet": {
    "file": "yf-TLEVISACPO.MX-balance-sheet-de3ee6ad2575ddc0.json",
@@ -447,22 +517,23 @@
   "2026-09-22"
  ],
  "summary": {
-  "keys_total": 62,
+  "keys_total": 72,
   "keys_by_provider": {
-   "yf": 58,
+   "yf": 68,
    "yf.download": 4
   },
   "exceptions_by_provider": {},
   "empty_by_provider": {
-   "yf": 2,
+   "yf": 3,
    "yf.download": 1
   },
   "symbols_with_failed_or_empty_calls": {
    "STORAGE18.MX": [
     "balance_sheet",
+    "cashflow",
     "income_stmt"
    ]
   }
  },
- "updated_at": "2026-09-22T23:03:18+00:00"
+ "updated_at": "2026-09-23T04:58:39+00:00"
 }

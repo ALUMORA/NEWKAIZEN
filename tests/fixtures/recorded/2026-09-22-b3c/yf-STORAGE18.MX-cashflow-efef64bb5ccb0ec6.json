@@ -1,8 +1,8 @@
 {
- "key": "yf:STORAGE18.MX:balance_sheet",
+ "key": "yf:STORAGE18.MX:cashflow",
  "provider": "yfinance",
  "symbol": "STORAGE18.MX",
- "attr": "balance_sheet",
+ "attr": "cashflow",
  "kwargs": {},
  "kind": "value",
  "payload": {
@@ -27,7 +27,7 @@
   "data": []
  },
  "soft_failure": true,
- "recorded_at": "2026-09-23T04:58:29+00:00",
+ "recorded_at": "2026-09-23T04:58:30+00:00",
  "frozen_at": "2026-09-22T14:51:31+00:00",
  "run_id": "5c67642f638a"
 }

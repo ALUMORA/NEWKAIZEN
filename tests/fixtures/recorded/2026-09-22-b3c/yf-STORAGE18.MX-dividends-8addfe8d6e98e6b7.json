@@ -1,0 +1,43 @@
+{
+ "key": "yf:STORAGE18.MX:dividends",
+ "provider": "yfinance",
+ "symbol": "STORAGE18.MX",
+ "attr": "dividends",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "__rp__": "Series",
+  "name": "Dividends",
+  "index": {
+   "__rp__": "Index",
+   "name": "Date",
+   "data": {
+    "dtype": "datetime64[s, America/Mexico_City]",
+    "v": [
+     1615383000,
+     1647005400,
+     1678714200,
+     1710336600,
+     1741872600,
+     1773322200
+    ]
+   }
+  },
+  "data": {
+   "dtype": "float64",
+   "np": true,
+   "v": [
+    0.216358,
+    0.353187,
+    0.36206,
+    0.314549,
+    0.83385,
+    0.905182
+   ]
+  }
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-09-23T04:58:38+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "5c67642f638a"
+}
