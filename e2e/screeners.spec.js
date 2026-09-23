@@ -440,6 +440,23 @@ plainTest('screener: FIBRAs caídas muestran el error con reintento', async ({ p
   guards.assertClean()
 })
 
+test('desde la barra lateral: título de la pestaña y foco en el h1 de cada screener', async ({ page, baseURL }, testInfo) => {
+  test.skip(testInfo.project.name === 'mobile', 'En móvil la navegación va por la barra inferior.')
+  await open(page, /** @type {string} */ (baseURL))
+  await page.goto('/screener/fibras')
+  await fibrasReady(page)
+  const nav = page.getByRole('navigation', { name: 'Principal' })
+  await nav.getByRole('link', { name: 'Fórmula mágica' }).click()
+  await expect(page).toHaveURL(/\/screener\/formula-magica$/)
+  await expect(page).toHaveTitle('Fórmula Mágica · Kaizen')
+  await expect(page.getByRole('heading', { level: 1, name: 'Fórmula Mágica' })).toBeFocused()
+  await magicReady(page)
+  await nav.getByRole('link', { name: 'FIBRAs' }).click()
+  await expect(page).toHaveTitle('FIBRAs · Kaizen')
+  await expect(page.getByRole('heading', { level: 1, name: 'FIBRAs' })).toBeFocused()
+  await fibrasReady(page)
+})
+
 // ─── Accesibilidad y capturas ────────────────────────────────────────────────
 
 test.describe('screeners: accesibilidad (WCAG 2.1 AA)', () => {
