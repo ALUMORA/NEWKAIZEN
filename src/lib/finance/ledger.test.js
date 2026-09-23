@@ -432,3 +432,17 @@ describe('los flujos externos llevan el tipo de cambio que se capturó', () => {
     expect(externalFlows([buy('AAPL', 1, 100, { date: '2026-01-05' })])[0].fxRate).toBeNull()
   })
 })
+
+describe('una venta recortada lo dice en vez de callárselo', () => {
+  it('vender más de lo que hay se recorta y queda marcado', () => {
+    const [venta] = realizedSales([buy('A', 10, 100), sell('A', 25, 130)])
+    expect(venta.quantity).toBe(10)
+    expect(venta.trimmed).toBe(true)
+  })
+
+  it('una venta normal no queda marcada', () => {
+    const [venta] = realizedSales([buy('A', 10, 100), sell('A', 4, 130)])
+    expect(venta.quantity).toBe(4)
+    expect(venta.trimmed).toBe(false)
+  })
+})

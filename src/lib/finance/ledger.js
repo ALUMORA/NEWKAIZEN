@@ -47,6 +47,9 @@
  * Venta realizada, con el costo promedio vigente al momento de venderla.
  *   costDate: fecha de la primera compra del lote vendido. Con costo promedio no existe una
  *     fecha de adquisición única, así que esta es una aproximación y así la reporta tax-mx.
+ *   trimmed: true cuando el movimiento pedía vender más de lo que había y se recortó a lo que
+ *     había. validateTransaction lo rechaza en la captura, pero los datos migrados y lo que entre
+ *     por importJSON no pasan por ahí, y recortar en silencio deja un número sin explicación.
  * @typedef {{
  *   symbol: string,
  *   saleDate: string | null,
@@ -56,6 +59,7 @@
  *   costDate: string | null,
  *   gain: number | null,
  *   currency: Currency,
+ *   trimmed: boolean,
  * }} Sale
  */
 
@@ -273,8 +277,10 @@ function runLedger(transactions, { asOf = null, dates = null } = {}) {
     }
 
     if (type === 'sell') {
-      const qty = Math.min(num(tx.quantity), lot.quantity)
+      const asked = num(tx.quantity)
+      const qty = Math.min(asked, lot.quantity)
       if (qty <= 0) continue
+      const trimmed = asked > qty + EPSILON
       const avg = lot.cost === null ? null : lot.cost / lot.quantity
       const price = isNum(tx.price) ? /** @type {number} */ (tx.price) : null
       const proceeds = price === null ? null : qty * price - fees
@@ -289,6 +295,7 @@ function runLedger(transactions, { asOf = null, dates = null } = {}) {
         costDate: lot.firstBuyDate,
         gain,
         currency: lot.currency,
+        trimmed,
       })
       const before = realizedBySymbol.has(symbol) ? realizedBySymbol.get(symbol) ?? null : 0
       realizedBySymbol.set(symbol, before === null || gain === null ? null : before + gain)
