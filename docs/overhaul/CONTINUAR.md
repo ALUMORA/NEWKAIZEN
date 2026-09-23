@@ -1,6 +1,6 @@
 # CONTINUAR: rehacer NEWKAIZEN como "Bloomberg-lite"
 
-Actualizado el **22 de septiembre de 2026**, al cerrar la fase 1 y el punto de merge M1. Este archivo
+Actualizado el **23 de septiembre de 2026**, al cerrar la revisión de la fase 2. Este archivo
 es el punto de entrada para la siguiente sesión. Todo lo que hace falta está en `docs/overhaul/`.
 
 ## Qué es esto
@@ -85,6 +85,46 @@ afirmaban cosas que dejaron de ser ciertas (por ejemplo "sin la costura de hist�
 vacía", cuando ya existe). Se arreglaron las pruebas, no el código, y las capas de fixtures de los
 cinco streams de backend se consolidaron en el set base, que pasó de 432 a 566 llamadas.
 
+### Revisión de la fase 2 cerrada (23 de septiembre de 2026)
+
+Todos los defectos blocker y major de la revisión independiente quedaron cerrados, cada uno con una
+prueba que falló antes y pasa después. Detalle por stream en
+[notas/fase2-correcciones.md](notas/fase2-correcciones.md) (A1, A4 y B2a, ronda del 22) y en los
+commits `merge: correcciones de la revisión, stream X` de esta ronda:
+
+- **A2**: 13 de 13 (caída máxima del walk-forward, James y Stein invariante a la periodicidad y por
+  omisión hacia el promedio como pide el spec, maxSharpe en null si nada le gana a rf, paridad de
+  riesgo con Newton, covarianza asimétrica rechazada).
+- **A5**: los abiertos de la lista más unas 45 diferencias entre la metodología y el código.
+- **B1**: bloqueo de cuenta ajena, X-Forwarded-For repetida, NAT, CORS de producción cerrado a
+  `newkaizen.vercel.app` (los previews necesitan `VERCEL_TEAM_SLUG` en Render).
+- **B2b**: candado del SIE por título, periodicidad, unidad y flag `verified`; noticias sin cuerpo;
+  `tenorDays` real del respaldo de rf; bandas de cordura.
+- **B3a**: `fxUsed.asOf` lleno, año fiscal de la SEC, SEC caída marcada como respaldo, insiders sin
+  duplicados, beta por intervalos completos, `stale` real en la ficha.
+- **B3b y B3c** se revisaron por primera vez ([notas/fase2-revision-b3.md](notas/fase2-revision-b3.md),
+  B3c salió **fail**) y se corrigieron: FIBRAs sin el balance del fiduciario, distribuciones pagadas,
+  tasa sustituta declarada, fórmula mágica con utilidad de operación y sin EBIT negativo ni FIBRAs,
+  momentum por fechas, supuestos del DCF anclados a inflación con desvanecimiento y aviso de valor
+  terminal, caché de insumos. El 12-1 del screener de factores ahora delega en
+  `momentum.momentum_12_1`: una sola definición en la app.
+- La metodología (`docs/metodologia/`) se sincronizó con todos esos cambios.
+
+Compuerta después de integrar todo: `npm run check` 1,547 pruebas, pytest 1,366 y 3 omitidas, ruff
+limpio, `e2e:baseline` 16 de 16 sin actualizar capturas, `e2e` 75 de 75.
+
+Pendientes que dejó esta ronda y NO bloquean la fase 3:
+
+- **Decisiones del dueño**: en B1, un ataque repartido entre muchas IPs ya no tiene tope global por
+  usuario (10 fallas por hora por IP); en B3b, el contrato congelado necesita `dcf.currency`,
+  `benchmark: str | None` y supuestos opcionales sin tasa (`docs/requests/B3b.md` §5).
+- **Con red**: confirmar contra el SIE real las palabras nuevas del candado de B2b ("bancari",
+  "rendimiento") y marcar `verified: true`; leer los términos de uso de Expansión y El Financiero.
+- **Criterio fiscal**: la retención de FIBRAs al 30 por ciento sobre la parte del resultado fiscal.
+- Calendarios BMV y NYSE solo cubren 2026 y 2027; hay que agregar 2025 desde la fuente oficial.
+- Para la fase 3: quien calcule rf diaria tiene que usar el `tenorDays` de la respuesta, no el pedido.
+- A3 sigue con 6 minors sin tocar.
+
 ### Lo que falta, en orden
 
 1. **C1, C2 y C3, el sistema de diseño.** No se hicieron. C1 alcanzó a dejar doce primitivas en la
@@ -97,13 +137,8 @@ cinco streams de backend se consolidaron en el set base, que pasó de 432 a 566 
 3. **M3**: borrar `src/legacy` cuando las features lo reemplacen. Ahí se van los 76 guiones largos
    visibles y los `—` como dato faltante.
 4. **Fases 4 y 5**: revisores de finanzas, seguridad, UX y copy, y el cierre con preview y reporte.
-5. **Defectos abiertos de la revisión de la fase 2, y esto va primero.** Los once streams pasaron
-   por un revisor independiente, pero **ninguna corrección alcanzó a completarse**: la ronda se cortó
-   por cuota. Las listas están en [notas/fase2-revisiones.md](notas/fase2-revisiones.md). A4 (ledger,
-   XIRR, ISR, rebalanceo) trae dos veredictos `fail` y es lo que va a usar la pantalla de portafolio;
-   A1 terminó en `fail` en su segunda corrida; B3b y B3c nunca se revisaron.
-6. **Hueco de procedencia detectado al mergear**: `fxUsed.asOf` viene en `null` en la ficha de
-   emisora. El tipo de cambio se usa, pero la respuesta no dice de qué día es.
+5. ~~Defectos abiertos de la revisión de la fase 2~~ y 6. ~~`fxUsed.asOf` en null~~: cerrados el 23 de
+   septiembre, ver arriba.
 
 ## Cómo trabajar aquí
 
