@@ -350,3 +350,77 @@ def test_el_catalogo_es_json_valido_en_disco():
     datos = json.loads(banxico.CATALOG_PATH.read_text(encoding="utf-8"))
     assert datos["verificadas"] == ["SF43718", "SF61745"]
     assert len(datos["series"]) == len(MxRateId.__args__)
+
+
+# ─── el candado del SIE mira título, periodicidad y unidad ───────────────────
+#
+# Antes solo se comparaba el título por subcadenas, así que una tasa de DESCUENTO mensual pasaba
+# como el rendimiento semanal de CETES 28, y un precio en pesos del Bono M pasaba como su
+# rendimiento. Estas pruebas son el repro de la revisión de fase 2.
+
+
+def _meta_sie(sid: str, titulo: str, unidad: str, periodicidad: str) -> dict:
+    return {"bmx": {"series": [{"idSerie": sid, "titulo": titulo, "unidad": unidad, "periodicidad": periodicidad,
+                                "fechaInicio": "01/01/2000", "fechaFin": "18/09/2026"}]}}
+
+
+@responses.activate
+@pytest.mark.parametrize(
+    "sid,titulo,unidad,periodicidad",
+    [
+        # Tasa de descuento, promedio mensual: el título trae "cetes" y "28", pero es otra serie.
+        ("SF43936", "Cetes a 28 dias, Tasa de descuento, Promedio mensual", "Por ciento anual", "Mensual"),
+        # El título correcto con la periodicidad equivocada tampoco pasa.
+        ("SF43936", "Cetes a 28 días, Tasa de rendimiento", "Por ciento anual", "Mensual"),
+        # Un precio limpio en pesos no es un rendimiento en por ciento.
+        ("SF43881", "Bonos M a 10 años, precio limpio", "Pesos", "Diaria"),
+        # El fondeo gubernamental no es la TIIE de Fondeo bancario.
+        ("SF331451", "Tasa de fondeo gubernamental a un día", "Por ciento anual", "Diaria"),
+    ],
+)
+def test_verified_ids_rechaza_la_serie_equivocada_aunque_el_titulo_se_parezca(con_token, sid, titulo, unidad,
+                                                                              periodicidad):
+    responses.add(responses.GET, f"{banxico.SIE_BASE_URL}/series/{sid}",
+                  json=_meta_sie(sid, titulo, unidad, periodicidad), status=200)
+    assert banxico.verified_ids([sid]) == {sid: False}
+
+
+@responses.activate
+def test_verified_ids_acepta_la_serie_correcta_con_su_periodicidad_y_unidad(con_token):
+    responses.add(responses.GET, f"{banxico.SIE_BASE_URL}/series/SF43936",
+                  json=_meta_sie("SF43936", "Valores gubernamentales, subasta semanal, Cetes a 28 días, "
+                                 "Tasa de rendimiento", "Porcentaje", "Semanal"), status=200)
+    assert banxico.verified_ids(["SF43936"]) == {"SF43936": True}
+
+
+def test_mismatches_dice_por_que_no_cuadra_una_serie():
+    item = banxico.catalog()["SF43936"]
+    razones = banxico.mismatches(
+        {"titulo": "Cetes a 28 dias, Tasa de descuento", "unidad": "Pesos", "periodicidad": "Mensual"}, item
+    )
+    texto = " ".join(razones)
+    assert "periodicidad" in texto and "Mensual" in texto and "Semanal" in texto
+    assert "unidad" in texto and "Pesos" in texto
+    assert "descuento" in texto
+    assert banxico.mismatches(None, item) == ["el SIE no devolvió esta serie"]
+    buena = {"titulo": "Cetes a 28 días, Tasa de rendimiento", "unidad": "Por ciento anual", "periodicidad": "Semanal"}
+    assert banxico.mismatches(buena, item) == []
+
+
+def test_classify_es_lo_que_usa_la_prueba_en_vivo_y_no_da_ok_por_el_titulo_solo():
+    """La prueba con token decide qué se marca ``verified: true``: tiene que usar el mismo candado."""
+    catalogo = {sid: banxico.catalog()[sid] for sid in ("SF43718", "SF43936", "SF43939")}
+    metadatos = {
+        "SF43718": {"titulo": "Tipo de cambio FIX", "unidad": "Pesos por Dólar", "periodicidad": "Diaria"},
+        "SF43936": {"titulo": "Cetes a 28 días, Tasa de rendimiento", "unidad": "Por ciento anual",
+                    "periodicidad": "Mensual"},
+    }
+    resultado = banxico.classify(catalogo, metadatos)
+    assert resultado["confirmados"] == ["SF43718"]
+    assert resultado["desconocidos"] == ["SF43939"]
+    assert [sid for sid, _ in resultado["distintos"]] == ["SF43936"]
+    import inspect
+
+    from tests.unit.b2b import test_banxico_live
+
+    assert "banxico.classify(" in inspect.getsource(test_banxico_live), "la prueba en vivo usa el candado entero"

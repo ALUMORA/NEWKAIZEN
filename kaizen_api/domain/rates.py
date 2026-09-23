@@ -142,19 +142,33 @@ def _item(rate_id: str, label: str, unit: str, series_id: str, source: str, date
     }
 
 
-def _banxico_items() -> tuple[list[dict], list[str]]:
-    """Renglones del SIE, solo con los ids que el propio SIE confirma en sus metadatos."""
-    catalog = banxico.catalog()
-    checked = banxico.verified_ids(list(catalog))
-    usable = [sid for sid, ok in checked.items() if ok]
+def _gate_notes(checked: dict[str, list[str]]) -> list[str]:
+    """Avisos de las series que no se publicaron, con la razón: el SIE no las confirmó o nadie las revisó."""
     notes: list[str] = []
-    rejected = sorted(sid for sid, ok in checked.items() if not ok)
-    if rejected:
+    missing = sorted(sid for sid, reasons in checked.items() if reasons == [banxico.NOT_RETURNED])
+    if missing:
+        notes.append("No se publicaron estas series porque el SIE no las devolvió: " + ", ".join(missing) + ".")
+    for sid in sorted(checked):
+        if checked[sid] and sid not in missing:
+            notes.append(f"No se publicó {sid} porque el SIE no confirmó que sea lo que dice el catálogo: "
+                         + "; ".join(checked[sid]) + ".")
+    pending = sorted(sid for sid, reasons in checked.items() if not reasons and not banxico.reviewed(sid))
+    if pending:
         notes.append(
-            "No se publicaron estas series porque el SIE no confirmó que sean lo que dice el catálogo: "
-            + ", ".join(rejected)
+            "Estas series del SIE todavía no tienen revisión humana (verified: false en el catálogo) y no se"
+            " publican hasta que alguien corra tests/unit/b2b/test_banxico_live.py con token: "
+            + ", ".join(pending)
             + "."
         )
+    return notes
+
+
+def _banxico_items() -> tuple[list[dict], list[str]]:
+    """Renglones del SIE: solo los ids revisados a mano que el propio SIE vuelve a confirmar hoy."""
+    catalog = banxico.catalog()
+    checked = banxico.verification(list(catalog))
+    usable = [sid for sid, reasons in checked.items() if not reasons and banxico.reviewed(sid)]
+    notes = _gate_notes(checked)
     if not usable:
         return [], notes
     end = _today()
@@ -269,7 +283,8 @@ def get_rf_series(start: str | None = None, end: str | None = None, tenor_days: 
         try:
             # Se pregunta por TODO el catálogo, no solo por esta serie, para compartir la misma
             # entrada de caché que /v2/rates/mx: así el SIE recibe una consulta de metadatos, no dos.
-            if banxico.verified_ids(list(banxico.catalog())).get(series_id):
+            reasons = banxico.verification(list(banxico.catalog())).get(series_id, ["sin respuesta del SIE"])
+            if not reasons and banxico.reviewed(series_id):
                 data = banxico.fetch_series([series_id], start_date.isoformat(), end_date.isoformat()).get(series_id)
                 if data and data["values"]:
                     return {
@@ -283,8 +298,13 @@ def get_rf_series(start: str | None = None, end: str | None = None, tenor_days: 
                         "notes": notes,
                     }
                 notes.append("Banxico no tiene datos de CETES en ese rango de fechas.")
+            elif reasons:
+                notes.append(f"El SIE no confirmó la serie {series_id}, así que no se usó: " + "; ".join(reasons) + ".")
             else:
-                notes.append(f"El SIE no confirmó la serie {series_id}, así que no se usó.")
+                notes.append(
+                    f"La serie {series_id} todavía no tiene revisión humana (verified: false en el catálogo),"
+                    " así que no se usó."
+                )
         except ApiError as exc:
             notes.append(f"Banxico no respondió ({exc.code}).")
     elif not banxico.configured():

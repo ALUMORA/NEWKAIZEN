@@ -33,10 +33,16 @@ TITULOS = {
 """Solo tres series se dan por buenas en la simulación: las demás no las confirma el SIE."""
 
 
-def _metadatos(ids=None) -> dict:
-    return {"bmx": {"series": [{"idSerie": sid, "titulo": titulo, "unidad": "n/a", "periodicidad": "Diaria",
+def _unidad(sid: str) -> str:
+    return "Por ciento anual" if banxico.catalog()[sid]["sieUnit"] == "percent" else "Pesos por Dólar"
+
+
+def _metadatos(ids=None, titulos=None) -> dict:
+    """Metadatos como los devuelve el SIE: título, unidad y periodicidad de cada serie."""
+    return {"bmx": {"series": [{"idSerie": sid, "titulo": titulo, "unidad": _unidad(sid),
+                                "periodicidad": banxico.catalog()[sid]["periodicidad"],
                                 "fechaInicio": "01/01/2000", "fechaFin": "18/09/2026"}
-                               for sid, titulo in TITULOS.items() if ids is None or sid in ids]}}
+                               for sid, titulo in (titulos or TITULOS).items() if ids is None or sid in ids]}}
 
 
 def _datos() -> dict:
@@ -51,11 +57,20 @@ def _datos() -> dict:
 
 
 @pytest.fixture
+def cetes28_revisada(clean_state, monkeypatch):
+    """Simula que el dueño ya corrió la prueba en vivo y dejó ``verified: true`` en CETES 28."""
+    monkeypatch.setitem(banxico.catalog()["SF43936"], "verified", True)
+
+
+@pytest.fixture
 def cliente_con_token(clean_state):
     """Cliente de la app con BANXICO_TOKEN puesto y el SIE simulado; sin replay, porque no hay token real."""
     with responses.RequestsMock(assert_all_requests_are_fired=False) as mock:
         mock.add(responses.GET, SIE_DATOS_RE, json=_datos(), status=200)
         mock.add(responses.GET, SIE_METADATOS_RE, json=_metadatos(), status=200)
+        mock.add(responses.GET, re.compile(r"https://fred\.stlouisfed\.org/graph/fredgraph\.csv.*"),
+                 body="observation_date,IR3TIB01MXM156N\n2026-07-01,6.81\n2026-08-01,6.79\n",
+                 status=200, content_type="text/csv")
         with TestClient(build_app(BANXICO_TOKEN="token-de-prueba"), raise_server_exceptions=False) as http:
             yield http, mock
 
@@ -153,7 +168,7 @@ def test_sin_token_y_sin_fred_la_ruta_dice_qué_falta(client, monkeypatch):
 # ─── con token: las series del SIE ───────────────────────────────────────────
 
 
-def test_rates_mx_con_token_publica_solo_lo_que_el_sie_confirma(cliente_con_token):
+def test_rates_mx_con_token_publica_solo_lo_que_el_sie_confirma(cetes28_revisada, cliente_con_token):
     http, _mock = cliente_con_token
     r = http.get("/v2/rates/mx")
     assert r.status_code == 200, r.text
@@ -184,7 +199,7 @@ def test_rates_mx_con_token_avisa_de_las_series_que_no_confirmo(cliente_con_toke
     assert "SF43718" not in aviso
 
 
-def test_rates_rf_con_token_usa_cetes_de_banxico(cliente_con_token):
+def test_rates_rf_con_token_usa_cetes_de_banxico(cetes28_revisada, cliente_con_token):
     http, _mock = cliente_con_token
     body = RfSeriesResponse.model_validate(http.get("/v2/rates/rf?tenorDays=28").json())
     assert body.source == "banxico"
@@ -238,10 +253,54 @@ def test_health_anuncia_las_capacidades_de_b2b(client):
     assert {"rates.mx", "rf.series", "macro.us", "news"} <= capacidades
 
 
-def test_las_dos_rutas_comparten_una_sola_consulta_de_metadatos(cliente_con_token):
+def test_las_dos_rutas_comparten_una_sola_consulta_de_metadatos(cetes28_revisada, cliente_con_token):
     """Verificar ids cuesta una llamada al SIE, no una por ruta: la caché es del catálogo completo."""
     http, mock = cliente_con_token
     assert http.get("/v2/rates/mx").status_code == 200
     assert http.get("/v2/rates/rf?tenorDays=28").status_code == 200
     metadatos = [llamada for llamada in mock.calls if SIE_METADATOS_RE.match(llamada.request.url)]
     assert len(metadatos) == 1, [llamada.request.url for llamada in metadatos]
+
+
+# ─── con token: el flag de revisión humana y el candado completo ─────────────
+
+
+def test_con_token_una_serie_sin_revision_humana_no_se_publica(cliente_con_token):
+    """El spec pide verificar cada id del SIE en una prueba antes de usarlo.
+
+    CETES 28 viene ``verified: false`` en el catálogo. Aunque el SIE la confirme en caliente, no se
+    publica como dato en vivo hasta que alguien corra la prueba con token y cambie el flag.
+    """
+    http, _mock = cliente_con_token
+    mx = MxRatesResponse.model_validate(http.get("/v2/rates/mx").json())
+    assert [item.id for item in mx.items] == ["target", "fix"]
+    aviso = " ".join(mx.meta.notes)
+    assert "SF43936" in aviso and "revisión" in aviso
+    rf = RfSeriesResponse.model_validate(http.get("/v2/rates/rf?tenorDays=28").json())
+    assert rf.source == "fred_ir3tib" and rf.fallback is True
+    assert any("SF43936" in nota for nota in rf.meta.notes)
+
+
+def test_con_token_una_tasa_de_descuento_mensual_no_sale_como_rf(cetes28_revisada, clean_state):
+    """El repro de la revisión: el SIE devuelve otra serie de CETES bajo el mismo id.
+
+    Aunque CETES 28 ya esté revisada a mano, el candado en caliente la rechaza si el SIE dice que
+    hoy es una tasa de descuento mensual, y la ruta cae al respaldo marcado en vez de servirla.
+    """
+    titulos = dict(TITULOS, SF43936="Cetes a 28 dias, Tasa de descuento, Promedio mensual")
+    meta = _metadatos(titulos=titulos)
+    for serie in meta["bmx"]["series"]:
+        if serie["idSerie"] == "SF43936":
+            serie["periodicidad"] = "Mensual"
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as mock:
+        mock.add(responses.GET, SIE_DATOS_RE, json=_datos(), status=200)
+        mock.add(responses.GET, SIE_METADATOS_RE, json=meta, status=200)
+        mock.add(responses.GET, re.compile(r"https://fred\.stlouisfed\.org/graph/fredgraph\.csv.*"),
+                 body="observation_date,IR3TIB01MXM156N\n2026-07-01,6.81\n2026-08-01,6.79\n",
+                 status=200, content_type="text/csv")
+        with TestClient(build_app(BANXICO_TOKEN="token-de-prueba"), raise_server_exceptions=False) as http:
+            mx = MxRatesResponse.model_validate(http.get("/v2/rates/mx").json())
+            rf = RfSeriesResponse.model_validate(http.get("/v2/rates/rf?tenorDays=28").json())
+    assert "cetes28" not in {item.id for item in mx.items}
+    assert any("SF43936" in nota and "Mensual" in nota for nota in mx.meta.notes), mx.meta.notes
+    assert rf.source == "fred_ir3tib" and rf.fallback is True
