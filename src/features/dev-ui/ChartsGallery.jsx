@@ -169,7 +169,7 @@ export default function ChartsGallery() {
       <h3 className="dev-note" style={{ margin: 0 }}><strong>Casos borde</strong></h3>
       <div className="dev-grid dev-grid--2">
         <Card>
-          <TimeSeries title="Serie con hueco y negativos" description="Sin dato entre el 20 y el 28 de octubre; dinero con signo." format="money" zeroBaseline
+          <TimeSeries title="Serie con hueco y negativos" description="Sin dato del 20 al 29 de octubre; dinero con signo." format="money" zeroBaseline
             series={[{ label: 'Resultado', points: GAPPY }]} height={200} />
         </Card>
         <Card>
