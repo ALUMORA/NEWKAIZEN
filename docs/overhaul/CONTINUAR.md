@@ -125,13 +125,32 @@ Pendientes que dejó esta ronda y NO bloquean la fase 3:
 - Para la fase 3: quien calcule rf diaria tiene que usar el `tenorDays` de la respuesta, no el pedido.
 - A3 sigue con 6 minors sin tocar.
 
+### Sistema de diseño cerrado: C1, C2 y C3 (23 de septiembre de 2026)
+
+- **C1**: tokens en los dos temas (136 pares de contraste medidos, todos AA, y la medición corre en
+  `npm run test`), unas 30 primitivas con un barril en `src/components/ui/index.js`, galería
+  `/dev/ui` fuera de producción. **API congelada en `docs/design.md`.**
+- **C2**: gráficas SVG sin dependencias en `src/components/charts/` (TimeSeries con cruceta por
+  teclado, FanChart, DrawdownChart, Donut, Bars, Heatmap, FrontierChart, Sparkline, todas con "Ver
+  tabla"). Props en `docs/design.md`, sección Gráficas. Cargarlas con `lazy()` desde la ruta.
+- **C3**: shell con barra lateral plegable, tira de mercado, estado del servidor, menú de usuario,
+  barra inferior y hoja "Más" en móvil, pie con aviso, paleta ⌘K, liga de salto y foco al h1. El
+  legado va incrustado sin su cromo. El baseline ahora recorta solo el contenido del legado; antes de
+  regenerar se comprobó con recorte y comparación que el contenido no cambió.
+- Ajustes del orquestador al integrar: `/dev/ui` en el build de e2e, `app.spec.js` con la
+  navegación nueva, ComingSoon sin `main` anidado, y el legado con consulta de contenedor en vez
+  de viewport (se recortaba entre 820 y 1240 px junto a la barra lateral).
+
+Compuerta: `npm run check` 1,816 pruebas y bundle al 69 %, `e2e:baseline` 16 de 16, `e2e` 126 y 8
+omitidas (las de un solo viewport), Lighthouse 100 en accesibilidad y buenas prácticas en `/mercados`
+escritorio y móvil, sin errores de consola.
+
+Abierto: el contenido del legado no pasa por axe (se va en M3); el Heatmap esconde los valores de
+celda a 390 px (siguen en "Ver tabla").
+
 ### Lo que falta, en orden
 
-1. **C1, C2 y C3, el sistema de diseño.** No se hicieron. C1 alcanzó a dejar doce primitivas en la
-   rama local `ws/C1`, en el commit `wip` `bab3d5f`, sin revisar ni probar. Ahí están tokens, Button,
-   Card, Badge, Tabs, SegmentedControl, Field, Stat, DataStatus, InfoTip, Popover y el arranque de
-   `src/styles/`. El encargo completo de los tres sigue escrito en `workflows/fase2.js` (constantes
-   `LATE` y la entrada de C1 en el historial de git de ese archivo).
+1. ~~C1, C2 y C3, el sistema de diseño~~: cerrado el 23 de septiembre, ver arriba.
 2. **Fase 3, las features F1 a F5**, que es lo que de verdad cambia lo que el usuario ve: hoy la
    interfaz sigue siendo la del legado, aunque abajo ya esté el API v2 honesto.
 3. **M3**: borrar `src/legacy` cuando las features lo reemplacen. Ahí se van los 76 guiones largos
