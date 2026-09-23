@@ -1,0 +1,55 @@
+/* Paleta de comandos (C3), sobre el Dialog de C1. Solo tokens. */
+.kz-palette.kz-dialog { align-self: start; margin-top: 12vh; max-height: min(640px, 76vh); }
+.kz-palette .kz-dialog__head { padding-bottom: var(--space-2); }
+.kz-palette .kz-dialog__title { font-size: var(--text-md); color: var(--muted); font-weight: var(--weight-semibold); }
+.kz-palette .kz-dialog__body { display: flex; flex-direction: column; min-height: 0; padding-top: 0; }
+.kz-palette__input {
+  background: var(--surface);
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-lg);
+  flex-shrink: 0;
+  height: 44px;
+  /* Deja lugar al anillo de foco: el cuerpo del diálogo recorta lo que se sale. */
+  margin-top: 4px;
+  padding: 0 var(--space-3);
+  width: 100%;
+}
+.kz-palette__input::placeholder { color: var(--muted); }
+.kz-palette__input:focus-visible { border-color: var(--focus); outline: 2px solid var(--focus); outline-offset: 1px; }
+.kz-palette__status { color: var(--muted); font-size: var(--text-xs); margin: var(--space-2) 0 var(--space-1); }
+.kz-palette__list { max-height: 48vh; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.kz-palette__group + .kz-palette__group { margin-top: var(--space-2); }
+.kz-palette__group-label { color: var(--muted); margin: var(--space-2) 0 var(--space-1); padding-inline: var(--space-2); }
+.kz-palette__option {
+  align-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  font-size: var(--text-md);
+  gap: var(--space-3);
+  min-height: 40px;
+  padding: 0 var(--space-2);
+}
+.kz-palette__option svg { color: var(--muted); flex-shrink: 0; }
+.kz-palette__option[aria-selected="true"] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.kz-palette__option[aria-selected="true"] svg { color: var(--ink); }
+.kz-palette__label { font-weight: var(--weight-semibold); white-space: nowrap; }
+.kz-palette__detail { color: var(--muted); flex: 1; font-size: var(--text-sm); min-width: 0; overflow: hidden; text-align: right; text-overflow: ellipsis; white-space: nowrap; }
+.kz-palette__ticker-dot { background: var(--muted-2); border-radius: var(--radius-full); flex-shrink: 0; height: 6px; margin-inline: 5px; width: 6px; }
+.kz-palette__hint { border-top: 1px solid var(--border); color: var(--muted); font-size: var(--text-xs); margin: var(--space-3) 0 0; padding-top: var(--space-2); }
+.kz-palette__hint kbd {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  padding: 0 4px;
+}
+@media (max-width: 767.98px) {
+  .kz-palette.kz-dialog { margin-top: var(--space-4); max-height: calc(100dvh - var(--space-8)); }
+  .kz-palette__hint { display: none; }
+}

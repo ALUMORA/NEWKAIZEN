@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useTheme } from '../theme.js';
 import { Badge, Button, IconButton, Card, KpiTile, Mark, ThemeToggle } from '../ui.jsx';
 import { cn } from '../cn.js';
+import { useShell } from '../app/shell/shell-context.js';
 // Todo request al backend pasa por authorizedFetch: lleva el token de la sesión (el API v2 exige
 // sesión también en sus rutas v1) y un 401 cierra la sesión y manda a /login. Nunca fetch directo.
 import { authorizedFetch } from '../lib/api/client.js';
@@ -907,7 +908,12 @@ function MonteCarloChart({ portStats, spyStats, weeks }) {
 // la URL la siga.
 // Workspace se monta solo cuando BACKEND ya está resuelto: sus efectos de montaje piden datos
 // al backend y antes corrían contra "null/...".
-export function LegacyWorkspaceHost({ tab = "news", apiBase, onLogout, onTabChange }) {
+export function LegacyWorkspaceHost({ tab = "news", apiBase, onLogout, onTabChange, embedded: embeddedProp }) {
+  // Dentro del shell nuevo (C3) el legado esconde su barra lateral, su encabezado y su barra
+  // inferior: la navegación, la tira de mercado y el tema los pone el shell. La prop manda; sin
+  // ella se toma de ShellContext, que AppShell pone alrededor de todas las rutas privadas.
+  const shell = useShell();
+  const embedded = embeddedProp ?? shell.embedded;
   const [backendUrl, setBackendUrl] = useState(null);
   const [backendSearching, setBackendSearching] = useState(true);
 
@@ -941,10 +947,17 @@ export function LegacyWorkspaceHost({ tab = "news", apiBase, onLogout, onTabChan
     </div>
   );
 
-  return <Workspace backendUrl={backendUrl} initialTab={tab} onLogout={onLogout} onTabChange={onTabChange} />;
+  return <Workspace backendUrl={backendUrl} embedded={embedded} initialTab={tab} onLogout={onLogout} onTabChange={onTabChange} />;
 }
 
-function Workspace({ backendUrl, initialTab = "news", onLogout, onTabChange }) {
+// Título (h1, solo para lector de pantalla) de cada tab cuando va incrustado: el mismo
+// handle.title de la ruta que la monta, para que el foco del shell caiga en algo con sentido.
+const EMBEDDED_TITLES = {
+  news: "Mercados", portfolio: "Mi portafolio", analytics: "Backtest", optimize: "Optimizador",
+  screener: "Screener", analisis: "Investigar", fibras: "FIBRAs", magic: "Fórmula Mágica",
+};
+
+function Workspace({ backendUrl, initialTab = "news", onLogout, onTabChange, embedded = false }) {
   const { dark, toggle: toggleTheme } = useTheme();
   const [tab, setTab] = useState(initialTab);
   // Si la ruta cambia con el Workspace montado, se abre la tab nueva (ajuste de estado en render).
@@ -1953,7 +1966,7 @@ function Workspace({ backendUrl, initialTab = "news", onLogout, onTabChange }) {
   // ── RENDER ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-embedded={embedded || undefined}>
       <style>{`
         @keyframes spin      { to { transform: rotate(360deg); } }
         @keyframes fadeIn    { from { opacity:0; transform:translateY(6px); }  to { opacity:1; transform:translateY(0); } }
@@ -2063,6 +2076,7 @@ function Workspace({ backendUrl, initialTab = "news", onLogout, onTabChange }) {
       `}</style>
 
       {/* ══ SIDEBAR ══ */}
+      {!embedded && (
       <aside className="app-sidebar">
         {/* Logo */}
         <div className="sidebar-head" style={{ padding: "3px 8px 16px" }}>
@@ -2122,11 +2136,13 @@ function Workspace({ backendUrl, initialTab = "news", onLogout, onTabChange }) {
           </Button>
         </div>
       </aside>
+      )}
 
       {/* ══ MAIN AREA ══ */}
       <div className="app-frame">
 
         {/* ── Top bar ── */}
+        {!embedded && (
         <header className="app-topbar">
           {/* Breadcrumb + tab móvil */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--muted)", flexShrink: 0 }}>
@@ -2174,9 +2190,10 @@ function Workspace({ backendUrl, initialTab = "news", onLogout, onTabChange }) {
             <ThemeToggle dark={dark} onToggle={toggleTheme} />
           </div>
         </header>
+        )}
 
         {/* Bottom nav — solo móvil */}
-        {(() => {
+        {!embedded && (() => {
           const TABS = [
             { id:"news",label:"Noticias" },{ id:"portfolio",label:"Portfolio" },
             { id:"optimize",label:"Sharpe" },{ id:"screener",label:"ML Screener" },
@@ -2202,6 +2219,7 @@ function Workspace({ backendUrl, initialTab = "news", onLogout, onTabChange }) {
 
         {/* Content */}
         <div className="workspace-page">
+          {embedded && <h1 className="sr-only" data-page-title="" tabIndex={-1}>{EMBEDDED_TITLES[tab] ?? "Kaizen"}</h1>}
 
         {/* ─── TAB: PORTFOLIO ─── */}
         {tab === "portfolio" && (
