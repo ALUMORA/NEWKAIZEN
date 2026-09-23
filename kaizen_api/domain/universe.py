@@ -13,6 +13,7 @@ con ``SECTOR_ES``.
 
 from __future__ import annotations
 
+import datetime as _dt
 import json
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -98,10 +99,13 @@ SECTOR_ES = {
 }
 """Sector de Yahoo a español de México. Lo que no esté aquí se muestra tal cual llegó."""
 
-MAGIC_EXCLUDED_SECTORS = frozenset({"Financial Services", "Financials", "Utilities"})
-"""Greenblatt deja fuera bancos, aseguradoras y servicios públicos: su balance no se compara.
+MAGIC_EXCLUDED_SECTORS = frozenset({"Financial Services", "Financials", "Utilities", "Real Estate"})
+"""Greenblatt deja fuera bancos, aseguradoras, servicios públicos y bienes raíces (las FIBRAs).
 
-Ojo, no es el ``EXCLUDED_SECTORS`` del legado, que además quitaba ``Real Estate``.
+Su balance no se compara con el de una empresa operativa: en una FIBRA la utilidad de operación
+incluye rentas de inmuebles a valor razonable y el capital empleado es casi todo propiedad de
+inversión, así que el rendimiento sobre capital no mide lo mismo. Las FIBRAs tienen su propio
+screener (``/v2/screeners/fibras``).
 """
 
 FIBRA_TYPES = ("propiedades", "hipotecaria", "energia", "otro")
@@ -267,6 +271,27 @@ class SymbolData:
         """¿Los estados y la cotización están en la misma moneda? Si no, no se pueden mezclar."""
         return bool(self.currency) and self.currency == self.financial_currency
 
+    @property
+    def not_found(self) -> bool:
+        """¿Yahoo contestó que no conoce el símbolo? (``info`` vacío, no una caída)."""
+        return self.error == EMPTY_INFO
+
+    @property
+    def quote_date(self) -> str | None:
+        """Fecha (UTC, ``YYYY-MM-DD``) del precio que trae el ``info``, o ``None`` si no la dice."""
+        stamp = safe(self.info.get("regularMarketTime")) if self.info else None
+        if stamp is None or stamp <= 0:
+            return None
+        try:
+            return _dt.datetime.fromtimestamp(stamp, tz=_dt.UTC).date().isoformat()
+        except (OverflowError, OSError, ValueError):
+            return None
+
+
+EMPTY_INFO = "Yahoo devolvió un info vacío"
+"""El error de una emisora cuyo ``info`` llegó casi vacío. Así contesta Yahoo a un símbolo que no
+existe: sin excepción y con uno o dos campos. Una caída del proveedor, en cambio, sí levanta."""
+
 
 def _read_info(symbol: str) -> dict:
     """``Ticker.info`` con las guardas del legado: Yahoo a veces devuelve un dict casi vacío."""
@@ -275,7 +300,7 @@ def _read_info(symbol: str) -> dict:
     except Exception as exc:
         raise RuntimeError(str(exc)[:200]) from exc
     if not raw or not isinstance(raw, dict) or len(raw) <= 5:
-        raise RuntimeError("Yahoo devolvió un info vacío")
+        raise RuntimeError(EMPTY_INFO)
     return raw
 
 
@@ -387,19 +412,31 @@ def fetch_closes(symbols: list[str], period: str = "2y", interval: str = "1wk") 
     return out
 
 
-def row_value(frame, labels: tuple[str, ...], column: int = 0) -> float | None:
-    """Primer renglón de ``labels`` que exista en el estado financiero, en la columna pedida."""
+def row_pick(frame, labels: tuple[str, ...], column: int = 0) -> tuple[float | None, str | None]:
+    """``(valor, renglón)`` del primer renglón de ``labels`` que exista y traiga número.
+
+    Un renglón que existe pero viene en NaN no cuenta: se sigue con el siguiente. yfinance deja
+    renglones en NaN cuando el emisor no reporta ese concepto en ese año, y quedarse con el primero
+    tiraba un dato que sí estaba en el renglón de al lado.
+    """
     if frame is None:
-        return None
+        return None, None
     try:
         if column >= len(frame.columns):
-            return None
+            return None, None
         for label in labels:
             if label in frame.index:
-                return safe(frame.loc[label].iloc[column])
+                value = safe(frame.loc[label].iloc[column])
+                if value is not None:
+                    return value, label
     except Exception:
-        return None
-    return None
+        return None, None
+    return None, None
+
+
+def row_value(frame, labels: tuple[str, ...], column: int = 0) -> float | None:
+    """Valor del primer renglón de ``labels`` que exista y traiga número, en la columna pedida."""
+    return row_pick(frame, labels, column)[0]
 
 
 def column_date(frame, column: int = 0) -> str | None:

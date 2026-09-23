@@ -34,8 +34,11 @@ def _sin_costura_rf(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
-def _clean_cache():
+def _clean_cache(monkeypatch):
     cache.reset_state()
+    # Ni la costura de dividendos de B3a ni la fecha de hoy salen del proceso en estas pruebas.
+    monkeypatch.setattr(FB, "get_dividends", lambda sym: {"ttm": 2.4, "yield": 0.08, "history": [{}]})
+    monkeypatch.setattr(FB, "_today", lambda: __import__("datetime").date(2026, 9, 22))
     yield
     cache.reset_state()
 
@@ -126,7 +129,9 @@ def test_factors_universo_desconocido_es_422(client):
 
 
 def test_factors_sin_datos_de_nadie_es_503(client, monkeypatch):
-    monkeypatch.setattr(F, "fetch_symbols", lambda syms, **kw: ({s: fakes.symbol(s, error="caída") for s in syms}, []))
+    caida = lambda syms, **kw: ({s: fakes.symbol(s, error="caída") for s in syms}, [])  # noqa: E731
+    monkeypatch.setattr(F, "fetch_symbols", caida)
+    monkeypatch.setattr(screeners, "fetch_symbols", caida)
     monkeypatch.setattr(F, "fetch_closes", lambda syms, **kw: {})
     r = client.get("/v2/screeners/factors?universe=custom&symbols=AAPL,MSFT")
     assert r.status_code == 503

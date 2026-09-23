@@ -12,11 +12,14 @@ le da a B3c este archivo completo, y los goldens del legado exigen que lo de arr
 
 from __future__ import annotations
 
+import datetime as _dt
 import re
+import time
+from concurrent.futures import ThreadPoolExecutor
 
 from kaizen_api.cache import _cached
 from kaizen_api.domain import _log, r2, safe
-from kaizen_api.domain.fundamentals import _div_yield_pct
+from kaizen_api.domain.fundamentals import _div_yield_pct, get_dividends
 from kaizen_api.domain.history import _fetch_hist
 from kaizen_api.domain.universe import (
     FIBRAS_LIST,
@@ -26,6 +29,7 @@ from kaizen_api.domain.universe import (
     get_fibras_universe,
     row_value,
 )
+from kaizen_api.provenance import utc_now
 from kaizen_api.providers.yahoo.session import yft
 from kaizen_api.schemas import SYMBOL_PATTERN
 
@@ -235,7 +239,19 @@ def get_fibras(extra: str = "") -> dict:
 #   libre, si no hay de operación) con la base escrita en ``cashFlowBasis``.
 # * **Nada se inventa.** Rendimiento por distribución, cap rate y NAV salen solo cuando hay dato
 #   real; si no, van en ``null`` y la interfaz muestra "s/d".
-# * **El diferencial contra CETES** usa la tasa de CETES 28 del servidor, no una referencia fija.
+# * **El rendimiento por distribución es lo que se pagó**: la suma de los pagos de los últimos 12
+#   meses entre el precio, con la costura de dividendos de B3a (la misma de
+#   ``/v2/instrument/{sym}/dividends``). No el ``dividendYield`` de Yahoo, que va hacia adelante.
+# * **El diferencial contra CETES** usa la tasa libre de riesgo del servidor (``/v2/rates/rf``), no
+#   una referencia fija. Si esa tasa no son CETES de Banxico (hoy, sin token, es la interbancaria a
+#   3 meses de la OCDE en FRED), la fuente entra a ``meta.source``, ``meta.fallback`` va en
+#   ``true`` y ``meta.notes`` lo dice. El campo se sigue llamando ``cetes28`` porque así lo fija
+#   el contrato.
+# * **Estados ajenos o viejos no se publican.** Yahoo le sirve a varias FIBRAs los estados de su
+#   fiduciario (FMTY14 y FHIPO14 traían el balance de Banco Invex al 2023-12-31) o cifras con otra
+#   escala (DANHOS13, deuda mil veces menor). Antes de usar un estado se revisa contra lo que el
+#   propio Yahoo dice de la FIBRA; si no cuadra, las métricas que salen de él van en ``null`` y
+#   ``meta.notes`` dice por qué. Ver ``statement_problems``.
 #
 # La señal es descriptiva, no una recomendación: ``descuento`` cuando el precio está debajo del
 # 90 % del valor en libros por CBFI, ``prima`` arriba del 110 %, ``en_linea`` entre los dos y
@@ -264,7 +280,29 @@ OCF_ROWS = ("Operating Cash Flow", "Cash Flow From Continuing Operating Activiti
 FCF_ROWS = ("Free Cash Flow",)
 
 RATE_SOURCES = frozenset({"banxico", "fred"})
-"""Fuentes que puede traer la tasa; cualquier otra cosa no se copia a ``meta.source``."""
+"""Fuentes que puede traer la tasa, como token de ``meta.source``. B2b las nombra con más detalle
+(``fred_ir3tib``), así que se toma el prefijo."""
+
+STALE_STATEMENT_DAYS = 548
+"""18 meses. Un cierre anual más viejo que esto no describe a la FIBRA de hoy."""
+
+SHARES_TOLERANCE = 0.20
+"""CBFIs del balance contra los de Yahoo: más de 20 % de diferencia es otra entidad."""
+
+DEBT_TOLERANCE = 0.50
+"""Deuda del balance contra ``info.totalDebt``. El info es trimestral y el balance anual, así que se
+deja holgura; más de 50 % ya no es el paso del tiempo sino otra escala u otra entidad."""
+
+FIDUCIARY_WORDS = ("bank", "banco")
+"""Si Yahoo clasifica la industria de una FIBRA como banco, los datos que sirve son del fiduciario.
+
+El ``shortName`` no sirve para esto: en todas las FIBRAs es el banco fiduciario (Actinver, Invex,
+CIBanco), sanas o no. La industria sí distingue: las sanas dicen "REIT - ..." y las que traen
+estados ajenos dicen "Banks - Regional".
+"""
+
+DIVIDEND_WORKERS = 4
+DIVIDEND_TIMEOUT = 30.0
 
 RF_FUNCTIONS = ("get_cetes28", "get_rf_current", "get_rf_series", "get_rf_v2")
 """Nombres con los que B2b puede publicar el CETES 28 en ``domain/rates.py``.
@@ -282,15 +320,19 @@ NO_RATE = {
     "asOf": None,
     "source": None,
     "fallback": False,
+    "stale": False,
     "note": "Todavía no hay tasa de CETES 28 en este servidor, así que el diferencial va en s/d.",
+    "notes": [],
 }
 
 
 def cetes28() -> dict:
-    """Tasa anual de CETES 28 como fracción, con su fecha, su fuente y si es un sustituto.
+    """Tasa de referencia de corto plazo como fracción, con fecha, fuente y si es sustituta.
 
-    Devuelve ``{"rate", "asOf", "source", "fallback", "note"}``. ``rate`` en ``None`` significa que
-    la costura de B2b todavía no existe: el diferencial sale en s/d y la nota lo explica.
+    Devuelve ``{"rate", "asOf", "source", "fallback", "stale", "note", "notes"}``. ``rate`` en
+    ``None`` significa que la costura de B2b no dio tasa: el diferencial sale en s/d. ``notes`` son
+    las de B2b, tal cual; ``note`` es la de este screener. Si la fuente no es Banxico la tasa se
+    publica marcada como sustituta: no son CETES de 28 días y se dice.
     """
     from kaizen_api.domain import rates
 
@@ -306,14 +348,47 @@ def cetes28() -> dict:
         rate, as_of = _read_rate(raw)
         if rate is None:
             continue
-        source, fallback = None, False
+        source, fallback, stale, tenor, upstream = None, False, False, None, []
         if isinstance(raw, dict):
-            candidate = str(raw.get("source") or "").lower()
-            if candidate in RATE_SOURCES:
-                source = candidate
+            source = _source_token(raw.get("source"))
             fallback = bool(raw.get("fallback"))
-        return {"rate": rate, "asOf": as_of, "source": source, "fallback": fallback, "note": None}
+            stale = bool(raw.get("stale"))
+            tenor = safe(raw.get("tenorDays"))
+            upstream = [n for n in (raw.get("notes") or []) if isinstance(n, str) and n]
+        note = None
+        if source != "banxico":
+            fallback = True
+            note = _substitute_note(source, tenor, as_of)
+        return {
+            "rate": rate, "asOf": as_of, "source": source, "fallback": fallback,
+            "stale": stale, "note": note, "notes": upstream,
+        }
     return dict(NO_RATE)
+
+
+def _source_token(raw) -> str | None:
+    """``fred_ir3tib`` a ``fred``, ``banxico`` a ``banxico``; lo que no se reconozca, ``None``."""
+    text = str(raw or "").lower()
+    for token in RATE_SOURCES:
+        if text == token or text.startswith(token + "_"):
+            return token
+    return None
+
+
+def _substitute_note(source: str | None, tenor: float | None, as_of: str | None) -> str:
+    """La nota de que ``cetes28`` no son CETES de 28 días, con la serie que sí es."""
+    fecha = f", dato del {as_of}" if as_of else ""
+    if source == "fred":
+        plazo = f"a {int(tenor)} días" if tenor else "de corto plazo"
+        return (
+            f"El campo cetes28 y el diferencial usan una tasa sustituta, no CETES de 28 días: la tasa "
+            f"interbancaria de México {plazo} de la OCDE en FRED, promedio mensual{fecha}. Sirve como "
+            "referencia de corto plazo mientras el servidor no tenga CETES de Banxico."
+        )
+    return (
+        "El servidor no dijo de dónde sale la tasa de referencia, así que no se puede afirmar que "
+        f"sean CETES de 28 días{fecha}. El diferencial se calcula contra ella."
+    )
 
 
 def _read_rate(raw) -> tuple[float | None, str | None]:
@@ -359,11 +434,16 @@ def total_debt(balance) -> float | None:
     return (long_debt or 0.0) + (short_debt or 0.0)
 
 
-def nav_per_cbfi(data: SymbolData) -> float | None:
-    """Valor en libros por CBFI: el ``bookValue`` de Yahoo y, si falta, capital entre CBFIs."""
+def nav_per_cbfi(data: SymbolData, use_balance: bool = True) -> float | None:
+    """Valor en libros por CBFI: el ``bookValue`` de Yahoo y, si falta, capital entre CBFIs.
+
+    Con ``use_balance`` en ``False`` (balance ajeno o viejo) solo vale el ``bookValue``.
+    """
     book = safe(data.info.get("bookValue"))
     if book is not None and book > 0:
         return book
+    if not use_balance:
+        return None
     equity = row_value(data.balance, EQUITY_ROWS)
     shares = safe(data.info.get("sharesOutstanding")) or row_value(data.balance, SHARES_ROWS)
     if equity and shares and shares > 100 and equity > 0:
@@ -382,6 +462,135 @@ def cash_flow_yield(data: SymbolData, market_cap: float | None) -> tuple[float |
     if fcf is not None:
         return fcf / market_cap, "fcf"
     return None, None
+
+
+def _today():
+    """Fecha de hoy en UTC. Con el reloj congelado del replay, la del replay."""
+    return utc_now().date()
+
+
+def info_shares(info: dict) -> float | None:
+    """CBFIs en circulación según Yahoo: ``sharesOutstanding`` y, si viene en 0, el implícito."""
+    for key in ("sharesOutstanding", "impliedSharesOutstanding"):
+        value = safe(info.get(key))
+        if value is not None and value > 0:
+            return value
+    return None
+
+
+def _millions(value: float) -> str:
+    return f"{value / 1e6:,.1f} millones"
+
+
+def _differs(a: float, b: float, tolerance: float) -> bool:
+    """¿``a`` se aleja de ``b`` más que ``tolerance`` (fracción de ``b``)?"""
+    return b > 0 and abs(a - b) / b > tolerance
+
+
+def statement_problems(symbol: str, data: SymbolData, twins: list[str] | None = None) -> dict:
+    """Revisa que los estados de Yahoo sean de esta FIBRA y de ahora.
+
+    Devuelve ``{"foreign": [motivos], "debt": [motivos]}``. Con algún motivo en ``foreign`` no se usa
+    ningún estado (ni balance, ni resultados, ni flujos): son de otra entidad o de otra época. Con
+    motivos solo en ``debt``, lo que falla es la deuda del balance, así que salen en ``null`` las
+    métricas que la usan (LTV, deuda entre capitalización y cap rate) y el flujo se queda.
+
+    Criterios, del más directo al más indirecto:
+
+    * Yahoo clasifica a la FIBRA como banco: sirve los datos del fiduciario.
+    * Su balance es idéntico al de otra FIBRA de la tabla (``twins``): es el del fiduciario común.
+    * El último cierre anual tiene más de 18 meses.
+    * Los CBFIs del balance difieren más de 20 % de los que Yahoo reporta para la FIBRA.
+    * La deuda del balance difiere más de 50 % de ``info.totalDebt``.
+    """
+    foreign: list[str] = []
+    debt_issues: list[str] = []
+    if data.balance is None and data.income is None and data.cashflow is None:
+        return {"foreign": foreign, "debt": debt_issues}
+    info = data.info
+    industry = str(info.get("industry") or "")
+    if any(word in industry.lower() for word in FIDUCIARY_WORDS):
+        foreign.append(f"Yahoo la clasifica como banco ({industry}), así que sirve los datos del fiduciario")
+    if twins:
+        foreign.append(
+            "su balance es idéntico al de " + ", ".join(twins) + ", así que es el del fiduciario que comparten"
+        )
+    closing = column_date(data.balance) or column_date(data.income) or column_date(data.cashflow)
+    if closing:
+        try:
+            age = (_today() - _dt.date.fromisoformat(closing[:10])).days
+        except ValueError:
+            age = None
+        if age is not None and age > STALE_STATEMENT_DAYS:
+            foreign.append(f"su último cierre anual es del {closing}, de hace más de 18 meses")
+    stmt_shares = row_value(data.balance, SHARES_ROWS)
+    yahoo_shares = info_shares(info)
+    if stmt_shares and yahoo_shares and _differs(stmt_shares, yahoo_shares, SHARES_TOLERANCE):
+        foreign.append(
+            f"su balance reporta {_millions(stmt_shares)} de CBFIs contra {_millions(yahoo_shares)} "
+            "que Yahoo le cuenta a la FIBRA"
+        )
+    stmt_debt = total_debt(data.balance)
+    yahoo_debt = safe(info.get("totalDebt"))
+    if stmt_debt is not None and yahoo_debt and _differs(stmt_debt, yahoo_debt, DEBT_TOLERANCE):
+        debt_issues.append(
+            f"la deuda de su balance ({_millions(stmt_debt)}) no cuadra con la que Yahoo le reporta "
+            f"({_millions(yahoo_debt)})"
+        )
+    return {"foreign": foreign, "debt": debt_issues}
+
+
+def _twins(fetched: dict[str, SymbolData]) -> dict[str, list[str]]:
+    """Para cada FIBRA, las otras de la tabla que traen exactamente el mismo balance."""
+    usable = [
+        (sym, data.balance) for sym, data in fetched.items()
+        if data.ok and data.balance is not None and not getattr(data.balance, "empty", True)
+    ]
+    out: dict[str, list[str]] = {}
+    for i, (sym_a, bal_a) in enumerate(usable):
+        for sym_b, bal_b in usable[i + 1:]:
+            try:
+                same = bal_a.equals(bal_b)
+            except Exception:
+                same = False
+            if same:
+                out.setdefault(sym_a, []).append(sym_b)
+                out.setdefault(sym_b, []).append(sym_a)
+    return {sym: sorted(others) for sym, others in out.items()}
+
+
+def _sentence(text: str) -> str:
+    """Primera letra en mayúscula y punto final."""
+    text = text.strip()
+    if not text:
+        return text
+    return text[0].upper() + text[1:] + ("" if text.endswith(".") else ".")
+
+
+def distributions(symbols: list[str]) -> tuple[dict[str, dict | None], list[str]]:
+    """Pagos de 12 meses por FIBRA con la costura de dividendos de B3a (``get_dividends``).
+
+    Devuelve ``({símbolo: respuesta o None}, [símbolos que fallaron])``. Una FIBRA que falla no
+    tumba la tabla: su rendimiento va en ``null`` y la nota lo dice.
+    """
+    out: dict[str, dict | None] = {}
+    failed: list[str] = []
+    if not symbols:
+        return out, failed
+    pool = ThreadPoolExecutor(max_workers=max(1, min(DIVIDEND_WORKERS, len(symbols))))
+    futures = [(sym, pool.submit(get_dividends, sym)) for sym in symbols]
+    deadline = time.monotonic() + DIVIDEND_TIMEOUT
+    try:
+        for sym, fut in futures:
+            try:
+                out[sym] = fut.result(timeout=max(0.0, deadline - time.monotonic()))
+            except Exception as exc:
+                _log(f"fibras: dividendos de {sym} fallaron ({type(exc).__name__}: {str(exc)[:120]})")
+                out[sym] = None
+                failed.append(sym)
+    finally:
+        pool.shutdown(wait=False, cancel_futures=True)
+    return out, failed
 
 
 def classify(data: SymbolData, curated_type: str | None) -> str:
@@ -423,7 +632,14 @@ def _price_of(data: SymbolData) -> float | None:
     return None
 
 
-def _row(symbol: str, data: SymbolData | None, curated, rate: float | None) -> dict:
+def _row(
+    symbol: str,
+    data: SymbolData | None,
+    curated,
+    rate: float | None,
+    dividend: dict | None = None,
+    problems: dict | None = None,
+) -> dict:
     name = curated.name if curated else None
     if data is None or not data.ok:
         return {
@@ -444,30 +660,39 @@ def _row(symbol: str, data: SymbolData | None, curated, rate: float | None) -> d
     price = _price_of(data)
     market_cap = safe(info.get("marketCap"))
 
-    div = _div_yield_pct(info)
-    distribution_yield = div / 100.0 if div is not None else None
+    # Lo que se pagó en 12 meses entre el precio (costura de B3a), no el dividendYield de Yahoo.
+    distribution_yield = safe(dividend.get("yield")) if dividend else None
 
-    assets = row_value(data.balance, TOTAL_ASSETS_ROWS)
-    debt = total_debt(data.balance)
+    problems = problems or {}
+    trusted = not problems.get("foreign")
+    debt_ok = trusted and not problems.get("debt")
+    balance = data.balance if trusted else None
+    income = data.income if trusted else None
+    cashflow = data.cashflow if trusted else None
+
+    assets = row_value(balance, TOTAL_ASSETS_ROWS)
+    debt = total_debt(balance) if debt_ok else None
     ltv = debt / assets if (debt is not None and assets and assets > 0) else None
 
     debt_to_cap = None
     if same and debt is not None and market_cap and market_cap > 0:
         debt_to_cap = debt / market_cap
 
-    nav = nav_per_cbfi(data) if same else None
+    nav = nav_per_cbfi(data, use_balance=trusted) if same else None
     p_nav = price / nav if (price and nav and nav > 0) else None
 
     cap_rate = None
     if same:
-        noi = row_value(data.income, NOI_ROWS)
-        cash = row_value(data.balance, CASH_ROWS) or 0.0
+        noi = row_value(income, NOI_ROWS)
+        cash = row_value(balance, CASH_ROWS) or 0.0
         if noi is not None and market_cap and debt is not None:
             ev = market_cap + debt - cash
             if ev > 0:
                 cap_rate = noi / ev
 
-    cf_yield, cf_basis = cash_flow_yield(data, market_cap) if same else (None, None)
+    cf_yield, cf_basis = (None, None)
+    if same and cashflow is not None:
+        cf_yield, cf_basis = cash_flow_yield(data, market_cap)
 
     spread = None
     if distribution_yield is not None and rate is not None:
@@ -508,8 +733,15 @@ def build(extra: list[str] | None = None) -> dict:
     fetched, pending = fetch_symbols(symbols, statements=STATEMENTS)
     cetes = cetes28()
     rate = cetes["rate"]
+    answered = [s for s in symbols if fetched.get(s) is not None and fetched[s].ok]
+    dividends, failed = distributions(answered)
+    twins = _twins({s: fetched[s] for s in answered})
+    problems = {s: statement_problems(s, fetched[s], twins.get(s)) for s in answered}
 
-    rows = [_row(sym, fetched.get(sym), universe.member(sym), rate) for sym in symbols]
+    rows = [
+        _row(sym, fetched.get(sym), universe.member(sym), rate, dividends.get(sym), problems.get(sym))
+        for sym in symbols
+    ]
     rows.sort(key=lambda r: (r["pNav"] is None, r["pNav"] or 0.0, r["symbol"]))
 
     notes: list[str] = [
@@ -517,9 +749,39 @@ def build(extra: list[str] | None = None) -> dict:
         "Bajo IFRS los inmuebles ya van a valor razonable, así que se le parece, pero no es lo mismo.",
         "Señal por P/NAV: descuento abajo de 0.90, prima arriba de 1.10 y en línea entre las dos. "
         "Es una descripción del precio contra libros, no una recomendación de inversión.",
+        "El rendimiento por distribución suma lo que cada FIBRA pagó en los últimos 12 meses y lo "
+        "divide entre el precio de hoy; no es el rendimiento proyectado que publica Yahoo.",
     ]
     if cetes["note"]:
         notes.append(cetes["note"])
+    notes.extend(n for n in cetes.get("notes") or [] if n not in notes)
+    for sym in answered:
+        found = problems[sym]
+        if found["foreign"]:
+            notes.append(
+                f"{sym}: LTV, deuda entre capitalización, cap rate y flujo van en s/d porque los "
+                "estados financieros que publica Yahoo no son de esta FIBRA o ya no la describen. "
+                + _sentence("; ".join(found["foreign"]))
+            )
+        elif found["debt"]:
+            notes.append(
+                f"{sym}: LTV, deuda entre capitalización y cap rate van en s/d porque "
+                + "; ".join(found["debt"]) + "."
+            )
+    if failed:
+        notes.append(
+            "No se pudo leer la historia de pagos, así que el rendimiento por distribución y el "
+            "diferencial van en s/d: " + ", ".join(sorted(failed)) + "."
+        )
+    no_history = [
+        s for s in answered
+        if s not in failed and (not dividends.get(s) or dividends[s].get("yield") is None)
+    ]
+    if no_history:
+        notes.append(
+            "Yahoo no publica pagos de estas FIBRAs, así que su rendimiento por distribución y su "
+            "diferencial van en s/d: " + ", ".join(sorted(no_history)) + "."
+        )
     if pending:
         notes.append("El proveedor no respondió por: " + ", ".join(sorted(pending)) + ".")
     missing = [r["symbol"] for r in rows if r["signal"] == "sin_datos"]
@@ -540,14 +802,26 @@ def build(extra: list[str] | None = None) -> dict:
             "Donde no hubo flujo de operación se usó el flujo libre de caja; la base va en cada renglón."
         )
 
-    periods = sorted({d for d in (column_date(v.balance) for v in fetched.values() if v.ok) if d})
+    periods = sorted({
+        d for d in (column_date(fetched[s].balance) for s in answered if not problems[s]["foreign"]) if d
+    })
+    quotes = sorted({d for d in (fetched[s].quote_date for s in answered) if d})
+    as_of = quotes[-1] if quotes else (cetes["asOf"] or (periods[-1] if periods else None))
+    if quotes and (cetes["asOf"] or periods):
+        parts = [f"Los precios son del {quotes[-1]}"]
+        if cetes["asOf"]:
+            parts.append(f"la tasa de referencia, del {cetes['asOf']}")
+        if periods:
+            parts.append(f"los estados financieros cierran a más tardar el {periods[-1]}")
+        notes.append("; ".join(parts) + ".")
     return {
         "rows": rows,
         "cetes28": rate,
         "notes": notes,
-        "asOf": cetes["asOf"] or (periods[-1] if periods else None),
+        "asOf": as_of,
         "rateSource": cetes["source"],
         "rateFallback": cetes["fallback"],
+        "rateStale": bool(cetes.get("stale")),
     }
 
 

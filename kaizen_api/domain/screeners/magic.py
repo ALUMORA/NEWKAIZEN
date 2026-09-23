@@ -27,6 +27,7 @@ from kaizen_api.domain.universe import (
     column_date,
     fetch_symbols,
     get_universe,
+    row_pick,
     row_value,
     sector_label,
 )
@@ -329,11 +330,18 @@ def get_magic_one(ticker: str) -> dict:
 #
 # Lo que esta versión hace distinto al legado:
 #
-# * **El EBIT siempre es el reportado** en el estado de resultados. El legado, cuando no lo
-#   encontraba, usaba EBITDA por 0.85, que es un número inventado que después se ordenaba junto a
-#   los reales. Aquí, sin EBIT reportado, la emisora sale de la lista con el motivo escrito.
-# * **Se excluyen bancos, aseguradoras y servicios públicos**, como pide la fórmula: su balance no se
-#   compara con el de una empresa operativa.
+# * **El EBIT es la utilidad de operación reportada** en el estado de resultados (renglón
+#   "Operating Income"). El renglón "EBIT" de Yahoo es otra cosa: utilidad antes de impuestos más
+#   intereses, que arrastra partidas no operativas (CMCSA 30.2 mil M contra 20.7 mil M de utilidad
+#   de operación, APD negativo contra 2.89 mil M positivos). Solo se usa cuando la emisora no trae
+#   utilidad de operación, y ``meta.notes`` dice cuáles fueron. El legado, cuando no encontraba
+#   ninguno de los dos, usaba EBITDA por 0.85, que es un número inventado; aquí la emisora sale de
+#   la lista con el motivo escrito.
+# * **Un EBIT de cero o negativo sale de la lista**: con él, el rendimiento de utilidades y el
+#   rendimiento sobre capital son negativos y ordenarlos junto a los positivos no significa nada.
+#   Greenblatt tampoco los considera.
+# * **Se excluyen bancos, aseguradoras, servicios públicos y bienes raíces (FIBRAs)**, como pide la
+#   fórmula: su balance no se compara con el de una empresa operativa.
 # * **Los empates son estables**: dos emisoras con el mismo valor reciben el mismo lugar (ranking de
 #   competencia, 1-2-2-4) y el orden final desempata por el lugar de EY y luego por símbolo en orden
 #   alfabético. En el legado los empates los decidía el orden en que contestaban los hilos.
@@ -351,7 +359,11 @@ STATEMENTS = ("income_stmt", "balance_sheet")
 MIN_MARKET_CAP = {"us": 2_000_000_000.0, "mx": 5_000_000_000.0}
 """Piso de capitalización por universo (USD para us, MXN para mx). Debajo, la cifra es ruido."""
 
-EBIT_ROWS = ("EBIT", "Ebit", "Operating Income", "Total Operating Income As Reported")
+OPERATING_INCOME_ROWS = ("Operating Income", "Total Operating Income As Reported")
+"""La utilidad de operación: lo que Greenblatt llama EBIT. Siempre se prefiere."""
+EBIT_FALLBACK_ROWS = ("EBIT", "Ebit")
+"""El renglón "EBIT" de Yahoo (antes de impuestos más intereses). Solo de respaldo y anotado."""
+EBIT_ROWS = OPERATING_INCOME_ROWS + EBIT_FALLBACK_ROWS
 TOTAL_DEBT_ROWS = ("Total Debt",)
 LONG_DEBT_ROWS = ("Long Term Debt And Capital Lease Obligation", "Long Term Debt")
 CURRENT_DEBT_ROWS = ("Current Debt And Capital Lease Obligation", "Current Debt")
@@ -364,13 +376,14 @@ PPE_ROWS = ("Net PPE", "Net Property Plant And Equipment", "Properties", "Invest
 
 UNIVERSE_DESCRIPTION = {
     "us": (
-        "Emisoras grandes de Estados Unidos, sin bancos ni servicios públicos. El EBIT sale del "
-        "estado de resultados anual más reciente y el valor de empresa de la capitalización de hoy."
+        "Emisoras grandes de Estados Unidos, sin bancos, servicios públicos ni bienes raíces. El "
+        "EBIT es la utilidad de operación del estado de resultados anual más reciente y el valor "
+        "de empresa sale de la capitalización de hoy."
     ),
     "mx": (
-        "Emisoras grandes de la Bolsa Mexicana de Valores, sin bancos ni servicios públicos. El "
-        "EBIT sale del estado de resultados anual más reciente y el valor de empresa de la "
-        "capitalización de hoy."
+        "Emisoras grandes de la Bolsa Mexicana de Valores, sin bancos, servicios públicos ni "
+        "FIBRAs. El EBIT es la utilidad de operación del estado de resultados anual más reciente "
+        "y el valor de empresa sale de la capitalización de hoy."
     ),
 }
 
@@ -450,9 +463,11 @@ def _row_or_reason(symbol: str, universe: Universe, data: SymbolData, floor: flo
     if market_cap < floor:
         return None, "Capitalización por debajo del piso del universo."
 
-    ebit = row_value(data.income, EBIT_ROWS)
+    ebit, ebit_row = row_pick(data.income, EBIT_ROWS)
     if ebit is None:
         return None, "No hay EBIT reportado en el estado de resultados: no se estima."
+    if ebit <= 0:
+        return None, "La utilidad de operación no es positiva: la fórmula no aplica."
 
     ev = enterprise_value(market_cap, data.balance)
     if ev is None:
@@ -478,6 +493,8 @@ def _row_or_reason(symbol: str, universe: Universe, data: SymbolData, floor: flo
         "returnOnCapital": ebit / capital,
         "currency": data.financial_currency,
         "fiscalPeriodEnd": column_date(data.income),
+        "_ebitRow": ebit_row,
+        "_quoteDate": data.quote_date,
     }, None
 
 
@@ -523,15 +540,31 @@ def build(universe: Universe) -> dict:
     rows.sort(key=lambda r: (r["rank"], r["rankEY"], r["symbol"]))
 
     partial = bool(pending) or failures > 0
+    ebit_fallback = sorted(r["symbol"] for r in rows if r["_ebitRow"] in EBIT_FALLBACK_ROWS)
+    quote_dates = sorted({r["_quoteDate"] for r in rows if r["_quoteDate"]})
+    for row in rows:
+        row.pop("_ebitRow", None)
+        row.pop("_quoteDate", None)
     notes: list[str] = []
     if excluded:
         notes.append(f"{len(excluded)} de {universe.size} emisoras quedaron fuera, cada una con su motivo.")
     if partial:
         notes.append("Faltaron datos de algunas emisoras, así que la tabla está incompleta.")
+    if ebit_fallback:
+        notes.append(
+            "Sin utilidad de operación reportada, se usó el renglón EBIT de Yahoo (antes de impuestos "
+            "más intereses), que puede incluir partidas no operativas: " + ", ".join(ebit_fallback) + "."
+        )
     periods = sorted({r["fiscalPeriodEnd"] for r in rows if r["fiscalPeriodEnd"]})
     if len(periods) > 1:
         notes.append(
             f"Los cierres fiscales van de {periods[0]} a {periods[-1]}: no todas comparan el mismo periodo."
+        )
+    as_of = quote_dates[-1] if quote_dates else (periods[-1] if periods else None)
+    if quote_dates and periods:
+        notes.append(
+            f"La capitalización es del {quote_dates[-1]} y la utilidad de operación del cierre fiscal "
+            f"más reciente de cada emisora (el último, {periods[-1]})."
         )
     return {
         "universe": {
@@ -544,7 +577,7 @@ def build(universe: Universe) -> dict:
         "excluded": excluded,
         "partial": partial,
         "notes": notes,
-        "asOf": periods[-1] if periods else None,
+        "asOf": as_of,
     }
 
 

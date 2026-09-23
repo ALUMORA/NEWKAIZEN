@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import datetime as dt
+import zlib
+
 import pytest
 
 from kaizen_api import cache
@@ -13,8 +16,12 @@ AÑOS = ["2025-12-31", "2024-12-31"]
 
 
 @pytest.fixture(autouse=True)
-def _clean_cache():
+def _clean_cache(monkeypatch):
     cache.reset_state()
+    # Fecha fija para que la regla de "estado de más de 18 meses" no dependa de cuándo se corre.
+    monkeypatch.setattr(FB, "_today", lambda: dt.date(2026, 9, 22))
+    # La costura de dividendos de B3a iría a Yahoo: aquí pagó 8 % en 12 meses.
+    monkeypatch.setattr(FB, "get_dividends", lambda sym: {"ttm": 2.4, "yield": 0.08, "history": [{}]})
     yield
     cache.reset_state()
 
@@ -45,13 +52,16 @@ def income(noi: float = 90.0):
 
 
 def fibra(sym="FUNO11.MX", **over):
+    """Una FIBRA de prueba. Su balance lleva un renglón propio del símbolo: dos FIBRAs con el balance
+    idéntico delatan que es el de su fiduciario, y eso ya se descarta."""
     base = dict(
         currency="MXN", financialCurrency="MXN", sector="Real Estate", industry="REIT - Diversified",
         currentPrice=30.0, marketCap=500.0, bookValue=40.0, dividendYield=8.0,
         trailingAnnualDividendYield=0.08, longName="Fibra de prueba",
     )
     base.update(over)
-    return fakes.symbol(sym, income=income(), balance=balance(), cashflow=cashflow(), **base)
+    propio = balance(**{"Other Non Current Assets": float(zlib.crc32(sym.encode()))})
+    return fakes.symbol(sym, income=income(), balance=propio, cashflow=cashflow(), **base)
 
 
 def _build(monkeypatch, datos, extra=None, rate=None):
@@ -155,9 +165,11 @@ def test_sin_ingreso_operativo_no_hay_cap_rate():
 
 
 def test_rendimiento_por_distribucion_en_fraccion():
-    """La costura de B3a entrega porcentaje (8.0); el contrato v2 pide fracción (0.08)."""
-    fila = FB._row("FUNO11.MX", fibra(), None, None)
-    assert fila["distributionYield"] == pytest.approx(0.08)
+    """Sale de los pagos de 12 meses (costura de dividendos de B3a), ya en fracción; no del
+    dividendYield de Yahoo (8.0 en porcentaje, hacia adelante)."""
+    fila = FB._row("FUNO11.MX", fibra(dividendYield=8.71), None, None, {"ttm": 2.5348, "yield": 0.085954})
+    assert fila["distributionYield"] == pytest.approx(0.085954)
+    assert FB._row("FUNO11.MX", fibra(), None, None)["distributionYield"] is None
 
 
 # ─── señal y tipo ────────────────────────────────────────────────────────────
