@@ -183,3 +183,70 @@ def test_the_rendered_form4_url_is_turned_into_the_raw_xml():
     assert raw_document_name("xslF345X06/form4.xml") == "form4.xml"
     assert raw_document_name("xslF345X05/wk-form4_177.xml") == "wk-form4_177.xml"
     assert raw_document_name("form4.xml") == "form4.xml"
+
+
+FORM4_VESTING = """<?xml version="1.0"?>
+<ownershipDocument>
+  <reportingOwner>
+    <reportingOwnerId><rptOwnerName>Newstead Jennifer</rptOwnerName></reportingOwnerId>
+    <reportingOwnerRelationship><isOfficer>1</isOfficer></reportingOwnerRelationship>
+  </reportingOwner>
+  <nonDerivativeTable>
+    <nonDerivativeTransaction>
+      <securityTitle><value>Common Stock</value></securityTitle>
+      <transactionDate><value>2026-09-15</value></transactionDate>
+      <transactionCoding><transactionCode>M</transactionCode></transactionCoding>
+      <transactionAmounts><transactionShares><value>30104</value></transactionShares></transactionAmounts>
+    </nonDerivativeTransaction>
+    <nonDerivativeTransaction>
+      <securityTitle><value>Common Stock</value></securityTitle>
+      <transactionDate><value>2026-09-15</value></transactionDate>
+      <transactionCoding><transactionCode>F</transactionCode></transactionCoding>
+      <transactionAmounts><transactionShares><value>16228</value></transactionShares></transactionAmounts>
+    </nonDerivativeTransaction>
+  </nonDerivativeTable>
+  <derivativeTable>
+    <derivativeTransaction>
+      <securityTitle><value>Restricted Stock Unit</value></securityTitle>
+      <transactionDate><value>2026-09-15</value></transactionDate>
+      <transactionCoding><transactionCode>M</transactionCode></transactionCoding>
+      <transactionAmounts><transactionShares><value>30104</value></transactionShares></transactionAmounts>
+    </derivativeTransaction>
+    <derivativeTransaction>
+      <securityTitle><value>Restricted Stock Unit</value></securityTitle>
+      <transactionDate><value>2026-09-15</value></transactionDate>
+      <transactionCoding><transactionCode>M</transactionCode></transactionCoding>
+      <transactionAmounts><transactionShares><value>500</value></transactionShares></transactionAmounts>
+    </derivativeTransaction>
+  </derivativeTable>
+</ownershipDocument>
+"""
+
+
+def test_a_vesting_is_one_exercise_not_two():
+    """La SEC anota la adquisición de acciones y la baja de la RSU: es UN movimiento de 30,104."""
+    rows = [row for row in mod.parse_form4(FORM4_VESTING) if row["type"] == "ejercicio"]
+    assert [row["shares"] for row in rows] == [30104.0, 500.0], "la pata derivada sin gemela se queda"
+
+
+def test_real_apple_vestings_are_not_doubled(replay_b3a):
+    from collections import Counter
+
+    data = mod.get_insiders_v2("AAPL")
+    keys = Counter(
+        (row["date"], row["insider"], row["shares"]) for row in data["items"] if row["type"] == "ejercicio"
+    )
+    assert [key for key, count in keys.items() if count > 1] == []
+
+
+def test_the_summary_counts_every_filing_read_not_only_the_rows_shown(replay_b3a):
+    """Los 20 expedientes grabados de Apple traen 20 ventas en mercado abierto; la tabla se corta
+    en 40 renglones, pero el resumen dice lo que dice la nota: lo de los 20 expedientes."""
+    from kaizen_api.providers.sec_edgar import get_form4_documents
+
+    every = [row for filing in get_form4_documents("AAPL", 20) for row in mod.parse_form4(filing["xml"])]
+    sells = sum(1 for row in every if row["type"] == "venta")
+    data = mod.get_insiders_v2("AAPL")
+    assert len(data["items"]) == mod.MAX_ITEMS
+    assert data["summary"]["openMarketSells"] == sells == 20
+    assert any("40 movimientos más recientes" in note for note in data["notes"])

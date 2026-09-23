@@ -192,13 +192,19 @@ def _planned(transaction, root) -> bool | None:
 
 
 def parse_form4(xml: str) -> list[dict]:
-    """Operaciones no derivadas y derivadas de una Forma 4, ya clasificadas."""
+    """Operaciones no derivadas y derivadas de una Forma 4, ya clasificadas.
+
+    Un ejercicio o una conversión (códigos M, C y X) se anota DOS veces en la Forma 4: la entrada
+    de acciones comunes en la tabla no derivada y la baja del derivado (la RSU o la opción) en la
+    derivada, con la misma fecha y las mismas acciones. Es un solo movimiento, así que la pata
+    derivada que tiene gemela no derivada se descarta; la que no la tiene se queda.
+    """
     try:
         root = ET.fromstring(xml)
     except ET.ParseError:
         return []
     insider, role = _owner(root)
-    out: list[dict] = []
+    parsed: list[tuple[str, str, dict]] = []
     for node in root.iter():
         tag = _local(node.tag)
         if tag not in ("nonDerivativeTransaction", "derivativeTransaction"):
@@ -210,7 +216,7 @@ def parse_form4(xml: str) -> list[dict]:
             kind = "ejercicio" if code == "M" else "otro"
         shares = safe(_value_of(node, "transactionShares"))
         price = safe(_value_of(node, "transactionPricePerShare"))
-        out.append({
+        parsed.append((tag, code, {
             "date": _value_of(node, "transactionDate")[:10] or None,
             "insider": insider,
             "role": role,
@@ -218,7 +224,19 @@ def parse_form4(xml: str) -> list[dict]:
             "shares": shares,
             "value": None if shares is None or price is None else round(shares * price, 2),
             "planned10b5_1": _planned(node, root),
-        })
+        }))
+    twins: dict[tuple, int] = {}
+    for tag, code, row in parsed:
+        if tag == "nonDerivativeTransaction" and row["type"] == "ejercicio":
+            key = (code, row["date"], row["shares"])
+            twins[key] = twins.get(key, 0) + 1
+    out: list[dict] = []
+    for tag, code, row in parsed:
+        key = (code, row["date"], row["shares"])
+        if tag == "derivativeTransaction" and row["type"] == "ejercicio" and twins.get(key):
+            twins[key] -= 1
+            continue
+        out.append(row)
     return out
 
 
@@ -275,10 +293,12 @@ def get_insiders_v2(symbol: str) -> dict:
         for filing in get_form4_documents(symbol, FORM4_MAX):
             items.extend(parse_form4(filing["xml"]))
         if items:
+            shown = min(len(items), MAX_ITEMS)
             notes.append(
                 f"Códigos de la Forma 4 ante la SEC: P es compra y S venta en mercado abierto; "
                 f"A otorgamiento y M ejercicio son compensación. Se leyeron los últimos "
-                f"{FORM4_MAX} expedientes."
+                f"{FORM4_MAX} expedientes y el resumen cuenta todos sus movimientos; la tabla "
+                f"muestra los {shown} movimientos más recientes de {len(items)}."
             )
             if all(item["planned10b5_1"] is None for item in items):
                 notes.append("Ninguno de estos expedientes marca la casilla del plan 10b5-1.")
@@ -300,11 +320,12 @@ def get_insiders_v2(symbol: str) -> dict:
         else:
             notes.append("No hay operaciones de consejeros publicadas para este símbolo.")
     items.sort(key=lambda row: (row["date"] or "", row["insider"]), reverse=True)
-    items = items[:MAX_ITEMS]
+    # El resumen se cuenta ANTES de recortar la tabla: la nota promete lo de los expedientes leídos.
     summary = {
         "openMarketBuys": sum(1 for item in items if item["type"] == "compra"),
         "openMarketSells": sum(1 for item in items if item["type"] == "venta"),
     }
+    items = items[:MAX_ITEMS]
     dates = [item["date"] for item in items if item["date"]]
     return {
         "items": items,
