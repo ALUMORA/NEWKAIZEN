@@ -1,8 +1,13 @@
 // Investigar (F3). /investigar y los tres screeners montan la app legada hasta que existan las
 // páginas nuevas; la ficha por emisora y el comparador son rutas nuevas.
+import { lazy } from 'react'
 import ComingSoon from '../../app/ComingSoon.jsx'
 import { legacyRoute } from '../../app/legacyRoute.jsx'
 import { PATHS, route } from '../../app/paths.js'
+
+const Pages = {
+  Instrument: lazy(() => import('./pages/Instrument.jsx')),
+}
 
 export const routes = [
   legacyRoute(PATHS.research, { title: 'Investigar' }),
@@ -13,7 +18,7 @@ export const routes = [
   },
   {
     path: route(PATHS.instrument),
-    element: <ComingSoon />,
+    element: <Pages.Instrument />,
     handle: { title: 'Ficha de la emisora', description: 'Precio, fundamentales, estados financieros, dividendos y valuación de una emisora.' },
   },
   legacyRoute(PATHS.screener, { title: 'Screener' }),
