@@ -21,8 +21,8 @@ export const CUSTOM_MAX = 50
 export const METRICS = /** @type {const} */ ([
   { key: 'earningsYield', label: 'Rendimiento de utilidades', kind: 'pct', termKey: 'earnings-yield' },
   { key: 'fcfYield', label: 'Flujo libre / capitalización', kind: 'pct', termKey: 'fcf-yield' },
-  { key: 'ebitdaToEv', label: 'EBITDA / valor empresa', kind: 'pct', termKey: 'ev-ebitda' },
-  { key: 'bookToPrice', label: 'Libros / precio', kind: 'pct', termKey: 'p-vl' },
+  { key: 'ebitdaToEv', label: 'EBITDA / valor empresa', kind: 'pct', text: 'EBITDA entre valor empresa: el inverso de VE/EBITDA. Más alto quiere decir que pagas menos por cada peso de EBITDA.' },
+  { key: 'bookToPrice', label: 'Libros / precio', kind: 'pct', text: 'Valor en libros por acción entre precio: el inverso de P/VL. Más alto quiere decir que pagas menos por cada peso de capital contable.' },
   { key: 'returnOnEquity', label: 'ROE', kind: 'pct', termKey: 'roe' },
   { key: 'returnOnAssets', label: 'ROA', kind: 'pct', text: 'Utilidad neta entre activos totales: cuánto gana la empresa por cada peso de activos.' },
   { key: 'operatingMargin', label: 'Margen operativo', kind: 'pct', termKey: 'margen-operativo' },

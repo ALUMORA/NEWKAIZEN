@@ -140,6 +140,7 @@ export default function Search() {
   }
 
   const offline = status === 'legacy' || status === 'down'
+  const waking = !canSearch && !offline
   const hint = offline
     ? 'La búsqueda por nombre no está disponible con este servidor. Escribe la clave exacta y presiona Enter.'
     : 'Por ejemplo walmart, FEMSA o AAPL. Flecha abajo recorre los resultados; Enter abre el que mejor coincide.'
@@ -181,6 +182,8 @@ export default function Search() {
             <Card title="Resultados" status={search.data?.meta}>
               {offline ? (
                 <EmptyState size="sm" title="Sin búsqueda por nombre" text="Presiona Enter para abrir la ficha con la clave tal como la escribiste." />
+              ) : waking ? (
+                <EmptyState size="sm" title="Conectando con el servidor…" text="La búsqueda empieza en cuanto conteste. Si ya sabes la clave, presiona Enter para abrir su ficha." />
               ) : (
                 <QueryBlock
                   query={{ ...search, isPending: searching && !search.data }}

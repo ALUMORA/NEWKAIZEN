@@ -232,6 +232,17 @@ test.describe('investigar: buscador', () => {
     await expect(page).toHaveURL(/\/investigar\?q=/)
   })
 
+  test('con un servidor viejo lo dice, no busca y Enter abre la clave tal cual', async ({ page, baseURL }) => {
+    const api = await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: 'legacy', routes: V2_ROUTES })
+    await page.goto('/investigar')
+    await expect(page.getByText('La búsqueda por nombre no está disponible con este servidor', { exact: false })).toBeVisible()
+    await searchBox(page).fill('walmex.mx')
+    await expect(page.getByText('Sin búsqueda por nombre')).toBeVisible()
+    await searchBox(page).press('Enter')
+    await expect(page).toHaveURL(/\/investigar\/WALMEX\.MX$/)
+    expect(api.calls.some((c) => c.startsWith('GET /v2/search'))).toBe(false)
+  })
+
   test('ejemplos llenan el campo y los recientes se pueden borrar', async ({ page, baseURL }) => {
     await open(page, /** @type {string} */ (baseURL))
     await page.addInitScript(() => window.localStorage.setItem('kaizen.recent-symbols', JSON.stringify([{ symbol: 'AMXB.MX', name: 'América Móvil' }])))
