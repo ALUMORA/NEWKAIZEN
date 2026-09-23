@@ -36,13 +36,13 @@ function MexicoRates() {
       {rates.isError ? <ErrorState message="No pudimos traer las tasas de Banxico." onRetry={() => rates.refetch()} retrying={rates.isFetching} /> : null}
       {rates.data ? (
         rates.data.items.length ? (
-          <div className="kz-col" data-gap="md">
+          <div className="kz-col">
             <div className="markets-grid">
               {rates.data.items.map((item) => (
                 <Stat
                   key={item.id}
                   label={item.label}
-                  value={fmtByUnit(item.value, item.unit)}
+                  value={fmtByUnit(item.value, item.unit, item.id)}
                   delta={item.unit === 'fraction' ? rateDelta(item) : null}
                   info={termFor(item.id) ? { termKey: termFor(item.id), term: item.label } : undefined}
                   status={itemStatus(item, meta)}
@@ -81,13 +81,13 @@ function UsRates() {
       {q.isError ? <ErrorState message="No pudimos traer las tasas de EE. UU." onRetry={() => q.refetch()} retrying={q.isFetching} /> : null}
       {q.data ? (
         q.data.items.length ? (
-          <div className="kz-col" data-gap="md">
+          <div className="kz-col">
             <div className="markets-grid">
               {q.data.items.map((item) => (
                 <Stat
                   key={item.id}
                   label={item.label}
-                  value={fmtByUnit(item.value, item.unit)}
+                  value={fmtByUnit(item.value, item.unit, item.id)}
                   delta={
                     item.changeBp != null ? (
                       <Delta value={item.changeBp} kind="bp" direction="neutral" hint="contra el dato anterior" />
@@ -118,7 +118,7 @@ function RiskFreeChart() {
   const points = d.dates.map((date, i) => ({ date, value: d.values[i] ?? null }))
   if (points.length < 2) return <Card title="CETES 28 días en el tiempo"><EmptyState title="Todavía no hay historia suficiente" /></Card>
   return (
-    <div className="kz-col" data-gap="sm">
+    <div className="kz-col" data-gap="2">
       <Suspense fallback={<Skeleton height={280} />}>
         <TimeSeries
           title="CETES 28 días en el tiempo"
@@ -137,7 +137,7 @@ function RiskFreeChart() {
 
 export default function MexicoPage() {
   return (
-    <div className="markets-page">
+    <div className="markets-page kz-container">
       <PageHeader
         eyebrow="Mercados"
         title="México: tasas, CETES e inflación"

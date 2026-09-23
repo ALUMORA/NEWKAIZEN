@@ -81,7 +81,7 @@ function Calculator({ rows }) {
 
   return (
     <Card title="Calculadora de CETES" description="Estima cuánto rinde un plazo. La tasa viene de la última subasta y la puedes cambiar.">
-      <div className="kz-col" data-gap="md">
+      <div className="kz-col">
         <div className="markets-calc">
           <NumberInput label="Monto a invertir" prefix="$" suffix="MXN" value={amount} onChange={setAmount} decimals={2} />
           <Select
@@ -129,7 +129,7 @@ function Calculator({ rows }) {
 export default function CetesPage() {
   const { q, rows } = useCetesRows()
   return (
-    <div className="markets-page">
+    <div className="markets-page kz-container">
       <PageHeader
         eyebrow="Mercados"
         title="Calculadora de CETES"

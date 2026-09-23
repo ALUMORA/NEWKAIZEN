@@ -22,11 +22,12 @@ export function termFor(id) {
 }
 
 /** Valor de una serie según su unidad del API: fracción, índice, pesos o puntos base. */
-export function fmtByUnit(value, unit) {
+export function fmtByUnit(value, unit, id = '') {
   if (unit === 'fraction') return fmtPct(value, { decimals: 2 })
   if (unit === 'mxn') return fmtMoney(value, 'MXN', { decimals: 4 })
   if (unit === 'bp') return `${fmtNumber(value, { decimals: 0 })} pb`
-  return fmtNumber(value, { decimals: 4 })
+  // Índices: el INPC se publica con 3 decimales; VIX, DXY y el resto con 2.
+  return fmtNumber(value, { decimals: /inpc/i.test(id) ? 3 : 2 })
 }
 
 /** Meta de DataStatus para un dato con su propia fecha y fuente dentro de una respuesta. */

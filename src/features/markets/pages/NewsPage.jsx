@@ -49,7 +49,7 @@ export default function NewsPage() {
   const q = useQuery(newsQuery({ lang, limit: 30 }))
   const items = q.data?.items ?? []
   return (
-    <div className="markets-page">
+    <div className="markets-page kz-container">
       <PageHeader
         eyebrow="Mercados"
         title="Noticias"
@@ -70,7 +70,7 @@ export default function NewsPage() {
         {q.isError ? <ErrorState message="No pudimos traer los titulares." onRetry={() => q.refetch()} retrying={q.isFetching} /> : null}
         {q.data ? (
           items.length ? (
-            <div className="kz-col" data-gap="md">
+            <div className="kz-col">
               <ul className="markets-news">
                 {items.map((item) => (
                   <Headline key={item.id} item={item} />
