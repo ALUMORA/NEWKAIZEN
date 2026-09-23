@@ -16,12 +16,25 @@ const WCAG_AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const THEMES = /** @type {const} */ (['light', 'dark'])
 
 /** Abre /dev/ui con el tema pedido ya guardado (la llave es la de src/theme.js). */
+const SEARCH_RESULTS = [
+  { symbol: 'WALMEX.MX', name: 'Wal-Mart de México', exchange: 'BMV', type: 'equity', currency: 'MXN', aliases: ['Walmart de México'] },
+  { symbol: 'WMT', name: 'Walmart Inc.', exchange: 'NYSE', type: 'equity', currency: 'USD', aliases: ['Walmart'] },
+]
+const SEARCH_META = { asOf: null, source: 'kaizen', delayMinutes: null, stale: false, fallback: false, generatedAt: '2026-09-22T14:52:00Z', notes: [] }
+const ROUTES = {
+  'GET /v2/search': ({ url }) => {
+    const q = String(url.searchParams.get('q') ?? '').toLowerCase()
+    return { json: { results: SEARCH_RESULTS.filter((r) => r.symbol.toLowerCase().includes(q) || r.name.toLowerCase().includes(q)), meta: SEARCH_META } }
+  },
+}
+
 async function openGallery(page, baseURL, theme = 'light') {
-  await setupApp(page, { baseURL })
+  const api = await setupApp(page, { baseURL, routes: ROUTES })
   await page.addInitScript((t) => window.localStorage.setItem('kaizen_theme', t), theme)
   await page.goto('/dev/ui')
   await expect(page.getByRole('heading', { level: 1, name: 'Sistema de diseño' })).toBeVisible()
   await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
+  return api
 }
 
 /** Corre axe y falla con la lista legible de violaciones. Antes espera a que terminen las
@@ -229,6 +242,86 @@ test('aviso: borrar con confirmación y Deshacer lo regresa, anunciado con aria-
   await expect(page.getByRole('button', { name: 'Borrar Compra de 100 WALMEX.MX' })).toBeVisible()
   await expect(region).toContainText('Movimiento restaurado')
   await expect(region).not.toContainText('Movimiento borrado')
+})
+
+test('SearchCombobox: espera, /v2/search, aria-activedescendant, Enter elige y lo elegido ya no se ofrece', async ({ page, baseURL }) => {
+  const api = await openGallery(page, baseURL)
+  const input = page.getByRole('combobox', { name: 'Agregar emisora' })
+  await expect(input).toHaveAttribute('aria-expanded', 'false')
+  await input.pressSequentially('wal')
+  const listbox = page.locator(`#${await input.getAttribute('aria-controls')}`)
+  const first = listbox.getByRole('option', { name: /WALMEX\.MX/ })
+  await expect(first).toBeVisible()
+  await expect(input).toHaveAttribute('aria-expanded', 'true')
+  await expect(input).toHaveAttribute('aria-activedescendant', /** @type {string} */ (await first.getAttribute('id')))
+  expect(api.calls.filter((c) => c.startsWith('GET /v2/search?')), 'una búsqueda por pausa, no una por tecla').toHaveLength(1)
+  await expectNoAxeViolations(page, 'buscador abierto')
+
+  await page.keyboard.press('ArrowDown')
+  const second = listbox.getByRole('option', { name: /WMT/ })
+  await expect(second).toHaveAttribute('aria-selected', 'true')
+  await expect(input).toHaveAttribute('aria-activedescendant', /** @type {string} */ (await second.getAttribute('id')))
+  await page.keyboard.press('Enter')
+  await expect(page.getByTestId('combobox-picked')).toHaveText('Elegidas: WMT')
+  await expect(input).toHaveValue('')
+  await expect(input).toBeFocused()
+
+  // Lo elegido sale de la lista; con el mouse también se elige.
+  await input.pressSequentially('wal')
+  await expect(listbox.getByRole('option')).toHaveCount(1)
+  await listbox.getByRole('option', { name: /WALMEX\.MX/ }).click()
+  await expect(page.getByTestId('combobox-picked')).toHaveText('Elegidas: WMT, WALMEX.MX')
+
+  // Sin coincidencias lo dice, y Esc cierra.
+  await input.pressSequentially('zzz')
+  const combobox = page.locator('.kz-combobox').filter({ has: input })
+  await expect(combobox.locator('.kz-combobox__empty')).toHaveText('Sin resultados')
+  await expect(combobox.getByRole('status')).toHaveText('Sin resultados')
+  await page.keyboard.press('Escape')
+  await expect(combobox.locator('.kz-combobox__empty')).toBeHidden()
+  await expect(input).toHaveValue('zzz')
+})
+
+test('InlineLink: acento y subrayado; la externa abre otra pestaña con rel seguro y lo avisa', async ({ page, baseURL }) => {
+  await openGallery(page, baseURL)
+  const inner = page.getByRole('link', { name: 'metodología de la volatilidad' })
+  await expect(inner).toHaveAttribute('href', '/aprender/volatilidad')
+  await expect(inner).not.toHaveAttribute('target', /./)
+  const outer = page.getByRole('link', { name: 'sitio de Banxico (se abre en otra pestaña)' })
+  await expect(outer).toHaveAttribute('target', '_blank')
+  await expect(outer).toHaveAttribute('rel', 'noopener noreferrer')
+  const look = await inner.evaluate((el) => {
+    const probe = document.createElement('span')
+    probe.style.color = 'var(--accent)'
+    document.body.append(probe)
+    const accent = getComputedStyle(probe).color
+    probe.remove()
+    const cs = getComputedStyle(el)
+    return { color: cs.color, accent, line: cs.textDecorationLine }
+  })
+  expect(look.color, 'color de acento').toBe(look.accent)
+  expect(look.line, 'subrayada: no depende solo del color').toBe('underline')
+  // Con teclado se llega y se sigue con Enter, como cualquier liga.
+  await inner.focus()
+  await page.keyboard.press('Enter')
+  await expect(page).toHaveURL(/\/aprender\/volatilidad$/)
+})
+
+test('.kz-page: medianil de 16 px en teléfono y 24 px desde 820 px, con tope --content-max', async ({ page, baseURL }, testInfo) => {
+  await openGallery(page, baseURL)
+  const main = page.locator('main.kz-page')
+  await expect(main).toHaveCount(1)
+  const css = await main.evaluate((el) => {
+    const cs = getComputedStyle(el)
+    return { left: cs.paddingLeft, right: cs.paddingRight, max: cs.maxWidth, token: getComputedStyle(document.documentElement).getPropertyValue('--content-max').trim() }
+  })
+  const gutter = testInfo.project.name === 'mobile' ? '16px' : '24px'
+  expect(css).toEqual({ left: gutter, right: gutter, max: css.token, token: '1440px' })
+  // En el corte exacto ya es de 24 px, y un píxel antes sigue en 16.
+  await page.setViewportSize({ width: 820, height: 900 })
+  await expect.poll(() => main.evaluate((el) => getComputedStyle(el).paddingLeft)).toBe('24px')
+  await page.setViewportSize({ width: 819, height: 900 })
+  await expect.poll(() => main.evaluate((el) => getComputedStyle(el).paddingLeft)).toBe('16px')
 })
 
 test('sin scroll horizontal de página; la tabla hace scroll dentro de su marco', async ({ page, baseURL }, testInfo) => {

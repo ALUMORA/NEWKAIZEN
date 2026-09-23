@@ -817,7 +817,7 @@ const TERMS = {
     comoLeer: 'El rendimiento por dividendo que ves publicado es bruto. Lo que llega a tu cuenta viene ya con la retención descontada.',
     ejemplo: 'Un dividendo bruto de 1,000 pesos de una emisora mexicana deja 900 pesos en la cuenta.',
     fuente: 'Ley del Impuesto sobre la Renta, art. 140. Para extranjeras, el tratado para evitar la doble imposición que aplique.',
-    relacionados: ['isr-ganancia-de-capital', 'rendimiento-por-distribucion', 'sic', 'fibra'],
+    relacionados: ['isr-ganancia-de-capital', 'rendimiento-por-dividendo', 'rendimiento-por-distribucion', 'sic', 'fibra'],
     alias: ['impuesto a dividendos', 'retención 10 por ciento'],
   },
 
@@ -1125,6 +1125,22 @@ const TERMS = {
     fuente: 'Damodaran, Investment Valuation, capítulo de flujos de efectivo.',
     relacionados: ['fcff', 'earnings-yield', 'ev-ebitda', 'dcf', 'factor-calidad'],
     alias: ['FCF yield', 'flujo libre'],
+  },
+
+  'rendimiento-por-dividendo': {
+    titulo: 'Rendimiento por dividendo',
+    corto: 'Los dividendos que pagó una acción en los últimos doce meses entre su precio. Es bruto, antes de retención.',
+    largo: [
+      'Se calcula con los dividendos por acción pagados en los últimos doce meses divididos entre el precio actual. Es un dato de acciones: las FIBRAs reparten distribuciones, no dividendos, y para ellas Kaizen usa el rendimiento por distribución, que sigue otra regla fiscal.',
+      'Un rendimiento alto puede venir de un dividendo que creció o de un precio que cayó. Antes de leerlo como algo bueno hay que ver cuál de las dos cosas pasó y si la empresa genera el flujo libre para sostener el pago.',
+      'Los dividendos no están garantizados: la asamblea de accionistas los decreta cada vez y pueden bajar o suspenderse. Un dividendo extraordinario de un solo pago infla el dato de doce meses sin decir nada del pago recurrente.',
+    ],
+    formula: 'Rendimiento = dividendos por acción de los últimos 12 meses / precio por acción',
+    comoLeer: 'Es bruto: a los dividendos de emisoras mexicanas se les retiene 10 por ciento como pago definitivo, y los del extranjero siguen el tratado que aplique. No incluye el cambio de precio; para eso está el rendimiento total.',
+    ejemplo: 'Dividendos de 1.80 pesos por acción en doce meses con un precio de 60 pesos dan 3 por ciento bruto. Después de la retención de 10 por ciento quedan 2.7 por ciento.',
+    fuente: 'Derechos decretados que publican las emisoras en la BMV. Retención: Ley del Impuesto sobre la Renta, art. 140.',
+    relacionados: ['retencion-por-dividendos', 'rendimiento-por-distribucion', 'rendimiento-total', 'fcf-yield', 'earnings-yield'],
+    alias: ['dividend yield', 'rendimiento de dividendos'],
   },
 
   roe: {
@@ -1494,7 +1510,7 @@ const TERMS = {
     comoLeer: 'Es bruto: a la parte que viene del resultado fiscal se le retiene ISR a la tasa del artículo 9, 30 por ciento, como pago a cuenta de la declaración anual. Y no está garantizado: baja cuando baja el resultado fiscal.',
     ejemplo: 'Distribuciones de 2.40 pesos en doce meses con un precio de 24 pesos dan un rendimiento de 10 por ciento bruto.',
     fuente: 'Reportes trimestrales de las FIBRAs. Retención: art. 188 de la Ley del ISR, a la tasa de su art. 9.',
-    relacionados: ['fibra', 'ffo-affo', 'retencion-por-dividendos', 'cap-rate', 'rendimiento-total'],
+    relacionados: ['fibra', 'ffo-affo', 'rendimiento-por-dividendo', 'retencion-por-dividendos', 'cap-rate', 'rendimiento-total'],
     alias: ['dividend yield de FIBRA', 'distribución'],
   },
 

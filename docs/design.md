@@ -81,6 +81,27 @@ extremo claro 2.18:1 y 2.05:1).
 `.kz-metric-grid`, `.kz-split`, `.kz-divider` (`layout.css`, con `data-gap`, `data-align`,
 `data-justify`, `data-ratio` donde aplica).
 
+### `.kz-page`: el medianil de una página
+
+El `<main>` del shell no tiene relleno ni ancho máximo a propósito: el legado incrustado trae el suyo.
+Cada página nueva envuelve su contenido en **`.kz-page`** (`layout.css`) en vez de inventar su regla:
+
+| | Móvil (< 820px) | Desde 820px |
+| --- | --- | --- |
+| `padding-inline` | 16px (`--space-4`) | 24px (`--space-6`) |
+| `max-width` | `--content-max` (1440px), centrado con `margin-inline: auto` | igual |
+
+Solo da ancho y medianil; el ritmo vertical (`padding-block`, `gap`) lo pone cada página, por ejemplo
+`<div className="kz-page kz-col" data-gap="6">`. Va una sola vez por página, en su raíz: anidarla
+suma dos medianiles. `/dev/ui` la usa en su `<main>`.
+
+`.kz-container` sigue igual (24px desde 900px) para no mover lo que ya la usa; lo nuevo va con
+`.kz-page`.
+
+Un `.sr-only` es absoluto: dentro de algo con scroll horizontal, ese algo necesita `position:
+relative` (como `.kz-table-scroll`) o el texto oculto se sale del scroll y ensancha la página en
+móvil (ver la prueba "shell: avisos" de `e2e/shell.spec.js`).
+
 ## Componentes
 
 Todas las props no listadas se pasan al elemento raíz (`...rest`) salvo donde se indica. "Nodo" es
@@ -298,6 +319,73 @@ actual), `className`.
 'segmented': Claro, Oscuro, Sistema), `className`.
 `Mark`: `size` (32), `on` `'auto' | 'light' | 'dark'` (auto sigue al tema; fija para fondos que no
 cambian), `label` (con texto es imagen con nombre; sin él, decorativa), `className`.
+
+### InlineLink
+
+Liga dentro de un párrafo (`.kz-link`): `--accent` (hover `--accent-strong`, los dos medidos en
+`contrast.check.js`) y **siempre subrayada**, para que no dependa solo del color. Para acciones usa
+`Button`; para navegación del shell, lo del shell.
+
+| Prop | Tipo | Por omisión | Notas |
+| --- | --- | --- | --- |
+| `to` | string | | ruta interna: `<Link>` de react-router con router, `<a href>` sin él |
+| `href` | string | | liga cruda (ancla, `mailto:`, sitio de fuera); gana sobre `to` |
+| `external` | boolean | `true` si `href` es absoluta (`https://...`) | fuerza (`true`) o evita (`false`) otra pestaña |
+| `rel` | string | | con otra pestaña se le suman `noopener noreferrer` sin repetir |
+| `className`, `children`, `...rest` | | | `rest` va al `<a>` |
+
+Externa: `target="_blank"`, `rel` seguro, icono decorativo (`aria-hidden`) y "(se abre en otra
+pestaña)" solo para lectores de pantalla, así que su nombre accesible es "Banxico (se abre en otra
+pestaña)". Un `target="_blank"` suelto también recibe el `rel` seguro.
+
+```jsx
+<p>Lee la <InlineLink to={pathLearnTerm('volatilidad')}>metodología</InlineLink> o la fuente en el{' '}
+<InlineLink href="https://www.banxico.org.mx/">sitio de Banxico</InlineLink>.</p>
+```
+
+### SearchCombobox
+
+Buscador de emisoras: combobox con lista (ARIA 1.2). El foco se queda en el campo y la opción activa
+se anuncia con `aria-activedescendant`; flechas (con vuelta), Ctrl+Inicio y Ctrl+Fin mueven, Enter
+elige, el clic elige sin sacar el foco. Busca en `/v2/search` **200 ms** después de la última tecla
+(`SEARCH_DEBOUNCE_MS`), una búsqueda por pausa, y solo si `useCapabilities()` ya dice `ready`: con
+un servidor viejo no llama y lo dice. Necesita el `QueryClientProvider` de `AppRoot`. Es el mismo
+buscador de la paleta ⌘K del shell, que lo usa en modo `inline` con sus grupos de rutas y acciones.
+
+| Prop | Tipo | Por omisión | Notas |
+| --- | --- | --- | --- |
+| `label` | string | | obligatorio; nombre del campo |
+| `hideLabel` | boolean | false | true: sin `<label>` visible, el nombre va en `aria-label` |
+| `hint` | nodo | | ayuda debajo, conectada con `aria-describedby` |
+| `value`, `defaultValue`, `onValueChange` | string, string, `(v) => void` | `''` | texto controlado o no |
+| `onSelect` | `(option, { q, results }) => void` | | opción elegida; `option.symbol` y `option.result` (el resultado de `/v2/search`) en las de emisora |
+| `exclude` | `string[]` | | símbolos que no se ofrecen (sin importar mayúsculas), p. ej. los ya agregados |
+| `limit` | number | 8 | `limit` de `/v2/search` |
+| `inline` | boolean | false | lista siempre visible y en el flujo (la paleta); si no, panel desplegable |
+| `clearOnSelect` | boolean | `!inline` | borra el texto al elegir |
+| `getGroups` | `({ q, results }) => { id, label, options }[]` | un grupo "Emisoras" | grupos propios; cada opción `{ id, label, detail? }` con `id` único |
+| `onEnter` | `({ q, activeOption, searching, results }) => boolean` | | true si ya resolvió el Enter (la paleta abre un ticker tecleado) |
+| `renderOption` | `(option, { selected }) => nodo` | etiqueta y detalle | contenido de cada opción (la paleta le pone icono) |
+| `placeholder` | string | "Nombre o clave, por ejemplo WALMEX" | |
+| `inputRef`, `id`, `className`, `inputClassName`, `disabled` | | | el campo lleva `.kz-input` |
+
+Estados, en una región `role="status"` (visible en línea, solo para lectores en el desplegable, que
+además los pinta en el panel): "Buscando emisoras…", "Sin resultados", "N resultados", "No se pudo
+buscar ahora. Intenta de nuevo en un momento." y "La búsqueda de emisoras no está disponible por
+ahora.". Desplegable: Esc cierra la lista y un segundo Esc borra el texto; al salir del campo se
+cierra. En línea, Esc no se detiene (le toca al diálogo). El panel es absoluto con `--z-sticky`:
+no lo metas en un contenedor con `overflow: hidden`.
+
+Utilidades puras (`search-combobox.js`, con pruebas): `resultOptions(results, { exclude })` arma las
+opciones de emisora y `symbolOptionId(symbol)` da su id ("WALMEX.MX" → "sym-WALMEX_MX").
+
+```jsx
+<SearchCombobox
+  label="Agregar emisora"
+  exclude={symbols}
+  onSelect={(option) => setSymbols((list) => [...list, option.symbol])}
+/>
+```
 
 ## Galería /dev/ui
 

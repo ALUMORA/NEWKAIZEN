@@ -2,6 +2,8 @@
 .kz-bottom { display: none; }
 
 @media (max-width: 767.98px) {
+  /* Los avisos (Toaster, fuera del shell) suben por encima de la barra para no taparla. */
+  :root:has(.kz-bottom) { --toast-offset: calc(var(--bottomnav-h) + env(safe-area-inset-bottom, 0px) + var(--space-3)); }
   .kz-shell__frame { padding-bottom: calc(var(--bottomnav-h) + env(safe-area-inset-bottom, 0px)); }
   .kz-bottom {
     background: var(--surface);

@@ -20,12 +20,14 @@ import {
   ErrorState,
   IconButton,
   InfoTip,
+  InlineLink,
   Input,
   Mark,
   Money,
   NumberInput,
   PageHeader,
   SectionHeading,
+  SearchCombobox,
   SegmentedControl,
   Select,
   Sheet,
@@ -356,6 +358,26 @@ function FiguresSection() {
 
 // ─── Formularios ────────────────────────────────────────────────────────────
 
+/** Buscador de emisoras: lo elegido sale de la lista (exclude) para no repetirlo. */
+function ComboboxDemo() {
+  const [picked, setPicked] = useState(/** @type {string[]} */ ([]))
+  return (
+    <Card title="Buscador de emisoras" titleAs="h3">
+      <div className="dev-stack">
+        <SearchCombobox
+          label="Agregar emisora"
+          hint="Nombre o clave. Busca en /v2/search 200 ms después de la última tecla."
+          exclude={picked}
+          onSelect={(option) => setPicked((list) => [...list, String(option.symbol)])}
+        />
+        <p className="dev-note" data-testid="combobox-picked">
+          {picked.length ? `Elegidas: ${picked.join(', ')}` : 'Todavía no eliges ninguna emisora.'}
+        </p>
+      </div>
+    </Card>
+  )
+}
+
 function FormsSection() {
   const [amount, setAmount] = useState(/** @type {number | null} */ (25000))
   const [rate, setRate] = useState(/** @type {number | null} */ (null))
@@ -399,6 +421,7 @@ function FormsSection() {
             <Input label="Nota (deshabilitado)" value="Saldo inicial migrado" disabled readOnly />
           </div>
         </Card>
+        <ComboboxDemo />
         <Card title="Selección" titleAs="h3">
           <div className="dev-stack">
             <SegmentedControl
@@ -734,6 +757,12 @@ function TextsSection() {
                 Texto propio <InfoTip term="Costo promedio" text="Lo que pagaste por título en promedio, con comisiones." link={false} />
               </span>
             </Specimen>
+            <Specimen label="InlineLink">
+              <p className="dev-note">
+                Lee la <InlineLink to="/aprender/volatilidad">metodología de la volatilidad</InlineLink> o consulta la fuente en el{' '}
+                <InlineLink href="https://www.banxico.org.mx/">sitio de Banxico</InlineLink>.
+              </p>
+            </Specimen>
           </div>
         </Card>
         <Card title="Marca y avisos" titleAs="h3">
@@ -754,7 +783,7 @@ function TextsSection() {
 
 export default function DevUiPage() {
   return (
-    <main className="dev-page kz-container" id="contenido">
+    <main className="dev-page kz-page" id="contenido">
       <PageHeader
         eyebrow="Solo desarrollo"
         title="Sistema de diseño"

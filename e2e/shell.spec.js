@@ -70,11 +70,21 @@ function searchResponse(q) {
   return { results: all.filter((r) => r.symbol.toLowerCase().startsWith(needle.slice(0, 3)) || r.name.toLowerCase().includes(needle)), meta: meta({ source: 'kaizen', delayMinutes: null }) }
 }
 
+/** Cotizaciones para /watchlist (la prueba de avisos la usa porque ahí hay "Deshacer"). */
+const QUOTES = {
+  'WALMEX.MX': { symbol: 'WALMEX.MX', name: 'Wal-Mart de México', price: 58.12, previousClose: 57.5, change: 0.62, changePct: 0.01078, currency: 'MXN', exchange: 'BMV', type: 'equity', marketState: 'REGULAR', asOf: '2026-09-22T14:40:00Z' },
+  WMT: { symbol: 'WMT', name: 'Walmart Inc.', price: 97.4, previousClose: 98.1, change: -0.7, changePct: -0.00714, currency: 'USD', exchange: 'NYSE', type: 'equity', marketState: 'REGULAR', asOf: '2026-09-22T14:40:00Z' },
+}
+
 const V2_ROUTES = {
   ...Object.fromEntries(Object.entries(RESEARCH_ROUTES).filter(([k]) => /instrument|history|valuation|momentum|news/.test(k))),
   'GET /v2/markets/overview': { json: OVERVIEW },
   'GET /v2/rates/mx': { json: RATES },
   'GET /v2/search': ({ url }) => ({ json: searchResponse(url.searchParams.get('q')) }),
+  'GET /v2/quotes': ({ url }) => {
+    const wanted = url.searchParams.getAll('symbols').flatMap((s) => s.split(',')).filter(Boolean)
+    return { json: { quotes: wanted.map((s) => QUOTES[s]).filter(Boolean), missing: wanted.filter((s) => !QUOTES[s]), meta: meta() } }
+  },
 }
 
 // ─── Ayudas ──────────────────────────────────────────────────────────────────
@@ -129,9 +139,18 @@ async function expectNoAxeViolations(page, context, { exclude = [] } = {}) {
   expect(results.violations, `${context}:\n${detail}`).toEqual([])
 }
 
+/**
+ * Sin scroll a lo ancho, medido contra el ancho EMULADO y no contra window.innerWidth: en un
+ * teléfono (viewport con width=device-width) Chrome agranda el viewport de diseño hasta donde
+ * llegue el contenido, así que innerWidth crece junto con scrollWidth y la comparación entre los
+ * dos sale verde aunque la página se salga. Así se escondió el aviso tapado de docs/requests/F5.md.
+ * @param {import('@playwright/test').Page} page
+ */
 async function noHorizontalScroll(page) {
+  const width = /** @type {{ width: number }} */ (page.viewportSize()).width
   const { scrollWidth, innerWidth } = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }))
-  expect(scrollWidth, 'la página no se desplaza a lo ancho').toBeLessThanOrEqual(innerWidth)
+  expect(innerWidth, 'el viewport de diseño no se ensancha').toBe(width)
+  expect(scrollWidth, 'la página no se desplaza a lo ancho').toBeLessThanOrEqual(width)
 }
 
 const isMobile = (testInfo) => testInfo.project.name === 'mobile'
@@ -347,6 +366,55 @@ test.describe('shell: paleta de comandos', () => {
     // Resultado de /v2/search con la espera de 200 ms: el grupo Emisoras lo muestra.
     await dialog.getByRole('combobox').fill('walmart')
     await expect(emisoras.getByRole('option', { name: /WMT/ })).toBeVisible()
+  })
+})
+
+test.describe('shell: avisos', () => {
+  // docs/requests/F5.md: en móvil "Deshacer" no recibía el clic y Playwright culpaba a
+  // .kz-shell__frame. No era el z-index (avisos 1200, barra 200, marco sin capa): los .sr-only de
+  // una tabla ancha se salían de su scroll, el viewport de diseño crecía a 557 px y el aviso, que
+  // es fijo, se iba fuera de la pantalla. Aquí se hace clic de verdad, sin force ni teclado.
+  test('el aviso queda encima del marco y de la barra inferior, y "Deshacer" recibe el clic', async ({ page, baseURL }, testInfo) => {
+    await openShell(page, /** @type {string} */ (baseURL))
+    await page.goto('/watchlist')
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Lista de seguimiento')
+
+    // Dos altas y una baja: tres avisos apilados y una tabla más ancha que el teléfono.
+    const search = page.getByRole('searchbox', { name: /Agregar una emisora/ })
+    for (const [q, symbol] of [['walmex', 'WALMEX.MX'], ['wmt', 'WMT']]) {
+      await search.fill(q)
+      await page.getByRole('button', { name: `Agregar ${symbol}` }).click()
+    }
+    const table = page.getByRole('table', { name: 'Emisoras en seguimiento' })
+    await expect(table.getByRole('row')).toHaveCount(3)
+    await table.getByRole('button', { name: 'Quitar WALMEX.MX' }).click()
+    await expect(table.getByRole('row')).toHaveCount(2)
+
+    const region = page.getByRole('region', { name: 'Avisos', exact: true })
+    const undo = region.getByRole('button', { name: 'Deshacer' })
+    await expect(undo).toBeVisible()
+    await settleAnimations(page)
+    await noHorizontalScroll(page)
+
+    const width = /** @type {{ width: number }} */ (page.viewportSize()).width
+    const box = /** @type {{ x: number, y: number, width: number, height: number }} */ (await page.locator('.kz-toaster').boundingBox())
+    expect(box.x, 'el aviso empieza dentro de la pantalla').toBeGreaterThanOrEqual(0)
+    expect(box.x + box.width, 'el aviso termina dentro de la pantalla').toBeLessThanOrEqual(width)
+    if (isMobile(testInfo)) {
+      const nav = /** @type {{ y: number }} */ (await page.getByRole('navigation', { name: 'Secciones' }).boundingBox())
+      expect(box.y + box.height, 'el aviso no tapa la barra inferior').toBeLessThanOrEqual(nav.y)
+    }
+    // Lo que el puntero encuentra en el centro del botón es el botón, no el marco.
+    const onTop = await undo.evaluate((button) => {
+      const r = button.getBoundingClientRect()
+      const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)
+      return hit !== null && button.contains(hit)
+    })
+    expect(onTop, 'nada tapa a "Deshacer"').toBe(true)
+
+    await undo.click()
+    await expect(table.getByRole('row')).toHaveCount(3)
+    await expect(table.getByRole('row').nth(1)).toContainText('WALMEX.MX')
   })
 })
 
