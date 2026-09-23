@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest'
 import { glossary } from './glossary.js'
 import { MAX_STALE_DAYS, rfSeriesForDates } from '../lib/finance/rates.js'
 import { drawdowns, parametricCVaR, parametricVaR } from '../lib/finance/performance.js'
+import { lognormalParams, simulate } from '../lib/finance/montecarlo.js'
 
 const leer = (nombre) => readFileSync(new URL(`../../docs/metodologia/${nombre}`, import.meta.url), 'utf8')
 /** El texto de una página con los saltos de línea colapsados, para buscar frases partidas. */
@@ -110,5 +111,61 @@ describe('backtest: la caída máxima se escribe con el máximo que incluye t', 
     const texto = plano('backtest.md')
     expect(texto).not.toMatch(/máximo hasta t − 1/)
     expect(texto).toContain('máx(V_0..V_t)')
+  })
+})
+
+describe('simulador: la página describe el motor que existe', () => {
+  it('los parámetros lognormales del ejemplo son los de lognormalParams', () => {
+    const p = lognormalParams(0.08, 0.15)
+    expect(plano('simulador.md')).toContain(`μ_l = ${p?.mu.toFixed(7)}`)
+    expect(plano('simulador.md')).toContain(`σ_l = ${p?.sigma.toFixed(6)}`)
+  })
+
+  it('las dos pruebas de sanidad salen de simulate', () => {
+    const base = { initial: 100000, contribution: 5000, years: 1, mu: 1.01 ** 12 - 1, sigma: 0, paths: 10 }
+    const constante = simulate({ ...base, contributionGrowth: 0 })?.terminal.p50 ?? NaN
+    const crece = simulate({ ...base, contributionGrowth: 1.01 ** 12 - 1 })?.terminal.p50 ?? NaN
+    expect(plano('simulador.md')).toContain(`Aportación constante: ${cifra(constante)}`)
+    expect(plano('simulador.md')).toContain(`1 por ciento al mes: ${cifra(crece)}`)
+  })
+
+  it('por omisión la aportación crece con la inflación, y la página no dice que sea opcional', () => {
+    const base = { initial: 0, contribution: 1000, years: 2, mu: 0, sigma: 0, paths: 1, inflation: 0.04 }
+    const sim = simulate(base)
+    expect(sim?.contributedTotal).toBeGreaterThan(24000)
+    expect(plano('simulador.md')).not.toMatch(/si eliges indexarlas/)
+    expect(plano('simulador.md')).toMatch(/[Pp]or omisión, las aportaciones crecen con la inflación/)
+  })
+
+  it('el resumen final lista los campos que simulate devuelve, sin un peor decil que no existe', () => {
+    const sim = simulate({ initial: 1000, years: 1, mu: 0.05, sigma: 0.1, paths: 50 })
+    expect(Object.keys(sim?.terminal ?? {})).toEqual(['mean', 'sd', 'min', 'max', 'p5', 'p25', 'p50', 'p75', 'p95'])
+    expect(plano('simulador.md')).not.toMatch(/peor decil/)
+  })
+
+  it('el retiro es un escenario determinista, no una probabilidad de que el capital dure', () => {
+    expect(plano('simulador.md')).not.toMatch(/probabilidad de que el capital dure/)
+    expect(plano('simulador.md')).toMatch(/determinista/)
+  })
+
+  it('el rendimiento ya no se describe como algo sin implementar', () => {
+    expect(plano('simulador.md')).not.toMatch(/mientras no esté implementado el motor/)
+  })
+})
+
+describe('remuestreo por bloques: los bloques son circulares', () => {
+  it('con 12 meses de historia y bloques de 6 hay 12 arranques posibles, no 7', () => {
+    // Rendimientos distintos por mes para leer de qué mes arrancó cada camino en el primer paso.
+    const history = Array.from({ length: 12 }, (_, i) => (i + 1) / 1000)
+    const sim = simulate({
+      initial: 1, years: 1, method: 'bootstrap', history, blockSize: 6, paths: 2000, samplePaths: 2000, seed: 'bloques',
+    })
+    const arranques = new Set(sim?.samples.map((camino) => Math.round((camino[1] / camino[0] - 1) * 1000) - 1))
+    expect(arranques.size).toBe(history.length)
+  })
+
+  it('el glosario cuenta los bloques posibles como la librería los sortea', () => {
+    expect(glossary['bootstrap-por-bloques'].ejemplo).toContain('240 bloques posibles')
+    expect(plano('simulador.md')).toMatch(/bloques son circulares/)
   })
 })

@@ -31,14 +31,18 @@ Los parámetros se escalan a la frecuencia del paso, 12 pasos por año por omisi
 W_(t+1) = (W_t + C_t) · e^(ℓ_t)
 ```
 
-o sea, la aportación entra al inicio del periodo y rinde ese periodo completo. Las aportaciones
-crecen con la inflación que pongas, si eliges indexarlas.
+o sea, la aportación entra al inicio del periodo y rinde ese periodo completo. Por omisión, las
+aportaciones crecen con la inflación que pongas, para que conserven su poder de compra:
+`C_t = C · (1 + g)^(t/12)` con `g` igual a la inflación. Se puede fijar otra tasa de crecimiento,
+incluida cero para una aportación constante en pesos corrientes.
 
 ## Alternativa: remuestreo por bloques
 
 En vez de sacar números de una normal, se toman bloques de periodos consecutivos de la historia real
-del activo, por omisión de 6 meses, y se pegan en orden aleatorio hasta cubrir el horizonte. Eso
-conserva colas gordas y volatilidad agrupada, que el modelo lognormal no tiene.
+del activo, por omisión de 6 meses, y se pegan en orden aleatorio hasta cubrir el horizonte. Los
+bloques son circulares: cualquier mes de la historia puede ser el arranque, y el que empieza en los
+últimos meses da la vuelta al principio. Así los extremos de la muestra salen tan seguido como el
+centro. Eso conserva colas gordas y volatilidad agrupada, que el modelo lognormal no tiene.
 
 Su límite es honesto y está escrito en la pantalla: solo puede generar futuros parecidos a lo que ya
 pasó en la muestra. Si en tu historia no hubo una crisis, el remuestreo tampoco la va a producir.
@@ -62,18 +66,20 @@ estadístico.
 
 - Percentiles 5, 25, 50, 75 y 95 en cada paso, en términos nominales y en términos reales, o sea
   en pesos de hoy descontando la inflación que pusiste.
-- Resumen de la distribución final: mediana, media, percentiles y peor decil.
-- Probabilidad de alcanzar una meta, que es simplemente la proporción de caminos que terminan
-  arriba del objetivo.
+- Resumen de la distribución final: media, desviación estándar, mínimo, máximo y los mismos
+  percentiles 5, 25, 50, 75 y 95, también en nominal y en real.
+- Probabilidad de alcanzar una meta, que es simplemente la proporción de caminos que terminan en
+  el objetivo o arriba de él.
 - Aportación requerida para una probabilidad dada, por bisección sobre la aportación.
 
 Los caminos individuales no se devuelven por omisión: son 10,000 por 360 pasos y no aportan nada a
 la lectura.
 
-Rendimiento: el objetivo es que 10,000 caminos por 360 pasos corran en menos de 400 ms en node. Es
-un requisito de diseño, no una medición: mientras no esté implementado el motor no hay número que
-reportar. Si no se alcanza, la simulación se mueve a un worker para que la pantalla no se trabe
-mientras corre.
+Rendimiento: la meta es que 10,000 caminos por 360 pasos corran en menos de 400 ms en node, y hay
+una prueba que lo vigila con el mejor de tres corridas (en integración continua el techo es de
+2,000 ms, porque ahí se vigila el algoritmo y no el hardware del corredor). En una Mac de desarrollo
+la corrida tarda alrededor de 200 ms. Aun así la librería trae un worker para correrla fuera del
+hilo principal, porque 200 ms ahí bastan para que la pantalla se sienta trabada.
 
 ## Cómo leer los percentiles
 
@@ -88,11 +94,17 @@ mientras corre.
 
 ## Retiro
 
-La vista de retiro presenta un escenario de retiros, con la regla del 4 por ciento como una
-referencia histórica estadounidense y no como una prescripción. Se muestra la probabilidad de que el
-capital dure el horizonte con la tasa de retiro que pongas, y se dice explícitamente que esa regla
-se calibró con datos de Estados Unidos del siglo veinte, con su inflación y sus rendimientos, que no
-son los de México.
+La vista de retiro es un escenario determinista, no una simulación: no hay caminos ni
+probabilidades. El primer año se retira el porcentaje que pongas del saldo inicial, 4 por ciento
+por omisión, y ese monto se ajusta cada año por la inflación. El retiro ocurre al inicio del año y
+lo que queda rinde el rendimiento nominal que captures. Si en algún año el saldo no alcanza, se
+retira lo que queda y se marca el año en que el capital se agotó. El escenario también da el total
+retirado y el saldo final, en nominal y en pesos de hoy.
+
+El 4 por ciento es una referencia histórica estadounidense y no una prescripción: esa regla se
+calibró con datos de Estados Unidos del siglo veinte, con su inflación y sus rendimientos, que no
+son los de México. Como el escenario usa un rendimiento fijo, no muestra el riesgo de secuencia: el
+mismo promedio con años malos al principio agota el capital antes.
 
 ## Supuestos y límites
 
@@ -110,7 +122,8 @@ son los de México.
 - Metropolis y Ulam (1949) para el método. Boyle (1977) para su uso en finanzas.
 - Osborne (1959) y Black y Scholes (1973) para el modelo lognormal de precios.
 - Künsch (1989), The Jackknife and the Bootstrap for General Stationary Observations, para el
-  remuestreo por bloques.
+  remuestreo por bloques, y Politis y Romano (1992), A Circular Block-Resampling Procedure for
+  Stationary Data, para la variante circular.
 - Blackman y Vigna, xoshiro128**, para el generador pseudoaleatorio.
 - Bengen (1994) y el estudio Trinity (1998) para el origen de la regla del 4 por ciento, con la
   advertencia de que son datos estadounidenses.
