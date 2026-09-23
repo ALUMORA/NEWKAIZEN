@@ -359,9 +359,12 @@ class MxRateItem(ContractModel):
             " las últimas 24 horas (la verificación se guarda un día); los respaldos de FRED van en false"
         ),
     )
-    stale: bool = Field(
-        default=False,
-        description="El último dato de ESTA serie es más viejo de lo que se tolera para su periodicidad",
+    stale: bool | None = Field(
+        default=None,
+        description=(
+            "El último dato de ESTA serie es más viejo de lo que se tolera para su periodicidad. El servidor"
+            " siempre lo manda; null o ausente es un API anterior a la fase 3 y el cliente usa meta.stale"
+        ),
     )
     tenorDays: Literal[28, 91, 182, 364] | None = Field(
         default=None,

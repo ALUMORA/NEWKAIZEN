@@ -144,7 +144,16 @@ def test_los_campos_nuevos_son_opcionales_y_una_respuesta_vieja_sigue_valiendo()
              "seriesId": "SF43936", "source": "banxico", "previous": None, "changeBp": None}
     item = MxRateItem.model_validate(vieja)
     assert item.verified is False, "sin el dato, una serie no se da por verificada"
+    assert item.stale is None, "sin el dato, una serie no se da por fresca: el cliente usa meta.stale"
     assert item.tenorDays is None
+
+
+def test_el_openapi_no_anuncia_que_una_serie_sin_stale_esta_fresca(client):
+    """Revisión de PB: con ``default: false`` en el esquema, un cliente que lea los valores por
+    omisión daría por fresca la serie de un API anterior a la fase 3."""
+    campo = client.get("/openapi.json").json()["components"]["schemas"]["MxRateItem"]["properties"]["stale"]
+    assert campo.get("default") is None
+    assert {"type": "null"} in campo.get("anyOf", []), campo
 
 
 def test_verified_promete_solo_lo_que_dura_la_verificacion_del_sie(monkeypatch):

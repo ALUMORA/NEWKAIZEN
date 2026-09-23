@@ -183,7 +183,8 @@ están en `docs/OWNERSHIP.md`).
 
   El servidor siempre manda los tres campos; son opcionales en el contrato solo para que un cliente
   tolere un API desplegado antes de este cambio (ahí, sin `verified`, la serie no se da por
-  verificada, y sin `stale` se usa `meta.stale`).
+  verificada, y sin `stale` se usa `meta.stale`). Por eso `stale` es `boolean | null` con `null` por
+  omisión: la ausencia es "sin dato", nunca "fresca".
 - `GET /v2/rates/rf?start=&end=&tenorDays=28` (`tenorDays`: 28, 91, 182 o 364) →
   `RfSeriesResponse`. Rendimientos anualizados simples act/360 como fracción. El cliente convierte a
   tasa por periodo: `rf_d = (1 + y * 28 / 360)^(d / 28) - 1`. Fuente `banxico`, o `fred_ir3tib`
@@ -621,7 +622,7 @@ Precios alineados por fecha (INNER JOIN, sin rellenar precios).
 | `previous` | number \| null | sí |  |
 | `changeBp` | number \| null | sí |  |
 | `verified` | boolean | no | true solo si la serie es del SIE, tiene revisión humana en el catálogo y el SIE la confirmó en las últimas 24 horas (la verificación se guarda un día); los respaldos de FRED van en false |
-| `stale` | boolean | no | El último dato de ESTA serie es más viejo de lo que se tolera para su periodicidad |
+| `stale` | boolean \| null | no | El último dato de ESTA serie es más viejo de lo que se tolera para su periodicidad. El servidor siempre lo manda; null o ausente es un API anterior a la fase 3 y el cliente usa meta.stale |
 | `tenorDays` | 28 \| 91 \| 182 \| 364 \| null | no | Plazo en días de los CETES (el mismo de /v2/rates/rf); null en las demás series |
 
 #### RfSeriesResponse
