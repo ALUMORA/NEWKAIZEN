@@ -1,7 +1,5 @@
-// Investigar (F3). /investigar y los tres screeners montan la app legada hasta que existan las
-// páginas nuevas; la ficha por emisora y el comparador son rutas nuevas.
+// Investigar (F3): buscador, ficha, comparador y los tres screeners.
 import { lazy } from 'react'
-import { legacyRoute } from '../../app/legacyRoute.jsx'
 import { PATHS, route } from '../../app/paths.js'
 
 const Pages = {
@@ -9,6 +7,12 @@ const Pages = {
   Screener: lazy(() => import('./pages/Screener.jsx')),
   Instrument: lazy(() => import('./pages/Instrument.jsx')),
   Compare: lazy(() => import('./pages/Compare.jsx')),
+}
+
+// Screeners de la segunda tanda (F3c).
+const Screeners = {
+  MagicFormula: lazy(() => import('./pages/MagicFormula.jsx')),
+  Fibras: lazy(() => import('./pages/Fibras.jsx')),
 }
 
 export const routes = [
@@ -32,6 +36,14 @@ export const routes = [
     element: <Pages.Screener />,
     handle: { title: 'Screener', description: 'Emisoras ordenadas por factores relativos a su sector, con cobertura y pruebas cumple o no cumple.' },
   },
-  legacyRoute(PATHS.screenerMagic, { title: 'Fórmula Mágica' }),
-  legacyRoute(PATHS.screenerFibras, { title: 'FIBRAs' }),
+  {
+    path: route(PATHS.screenerMagic),
+    element: <Screeners.MagicFormula />,
+    handle: { title: 'Fórmula Mágica', description: 'Ranking de Greenblatt por rendimiento de utilidades y rendimiento sobre capital, con sus exclusiones y empates.' },
+  },
+  {
+    path: route(PATHS.screenerFibras),
+    element: <Screeners.Fibras />,
+    handle: { title: 'FIBRAs', description: 'LTV, cap rate implícito, flujo, distribución pagada, P/NAV y diferencial contra la tasa de cada FIBRA.' },
+  },
 ]
