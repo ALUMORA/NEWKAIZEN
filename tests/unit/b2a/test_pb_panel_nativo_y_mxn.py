@@ -115,6 +115,8 @@ def test_los_numeros_de_aapl_que_cita_la_receta(client):
     assert primero == "2025-09-22"
     assert round(panel[primero], 2) == 255.14
     assert round(mercado[primero], 2) == 256.08
+    dividendos = prices.fetch_history("AAPL", "1y", "1d")["Dividends"]
+    assert round(float(dividendos.sum()), 2) == 1.06
 
 
 def test_una_emisora_fuera_de_dolares_y_pesos_sale_en_dropped_del_panel_en_pesos(client, monkeypatch):
