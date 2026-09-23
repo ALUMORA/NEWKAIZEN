@@ -47,8 +47,9 @@ const featureRoutes = [
   ...onboardingRoutes,
   ...authRoutes,
   ...legalRoutes,
-  // El catálogo de primitivas solo existe en `npm run dev`.
-  ...(import.meta.env.DEV ? devUiRoutes : []),
+  // El catálogo de primitivas existe fuera de producción (dev y el build de e2e); routes.jsx trae
+  // su propio candado por MODE, así que en producción esta lista viene vacía.
+  ...devUiRoutes,
 ]
 
 const isPublic = (r) => r.handle?.public === true
