@@ -1,0 +1,88 @@
+// Utilidades puras de la página de FIBRAs (/screener/fibras). Las métricas las calcula el API
+// (kaizen_api/domain/screeners/fibras.py); aquí se etiquetan y se reparten sus avisos.
+import { parseSymbols } from './symbols.js'
+
+/** Máximo de FIBRAs extra que acepta /v2/screeners/fibras?extra=. */
+export const MAX_EXTRA = 20
+
+/** La señal describe el precio contra el valor en libros; no es una recomendación. */
+export const SIGNAL_LABEL = Object.freeze({
+  descuento: 'Descuento',
+  en_linea: 'En línea',
+  prima: 'Prima',
+  sin_datos: 'Sin NAV',
+})
+
+export const TYPE_LABEL = Object.freeze({
+  propiedades: 'Propiedades',
+  hipotecaria: 'Hipotecaria',
+  energia: 'Energía',
+  otro: 'Otro tipo',
+})
+
+/** Base del rendimiento de flujo: nunca se le llama FFO si no lo es. */
+export const BASIS_LABEL = Object.freeze({
+  ocf: 'flujo de operación',
+  fcf: 'flujo libre',
+  ffo_approx: 'FFO aproximado',
+})
+
+/**
+ * "wALMEX, fibrapl14.mx" → ["WALMEX", "FIBRAPL14.MX"], sin repetidos y a lo más MAX_EXTRA.
+ * @param {string | null | undefined} text
+ */
+export function parseExtra(text) {
+  return parseSymbols(text).slice(0, MAX_EXTRA)
+}
+
+/**
+ * De dónde salió la tasa del diferencial, según meta.source ("yahoo,computed,fred").
+ * @param {string | null | undefined} source
+ * @returns {'banxico' | 'fred' | null}
+ */
+export function rateSource(source) {
+  const tokens = String(source ?? '').toLowerCase().split(',').map((t) => t.trim())
+  if (tokens.some((t) => t === 'banxico' || t.startsWith('banxico_'))) return 'banxico'
+  if (tokens.some((t) => t === 'fred' || t.startsWith('fred_'))) return 'fred'
+  return null
+}
+
+/**
+ * Cómo nombrar la tasa contra la que se mide el diferencial. Solo son "CETES 28 días" si vienen de
+ * Banxico y el servidor no las marcó como respaldo; si no, es una tasa sustituta y se dice.
+ * @param {{ source?: string | null, fallback?: boolean } | null | undefined} meta
+ * @param {number | null | undefined} rate
+ */
+export function describeRate(meta, rate) {
+  const source = rateSource(meta?.source)
+  const missing = rate == null || !Number.isFinite(rate)
+  const substitute = !missing && (Boolean(meta?.fallback) || source !== 'banxico')
+  const sourceLabel = source === 'banxico' ? 'Banxico' : source === 'fred' ? 'FRED, serie de la OCDE' : 'fuente sin indicar'
+  let label = 'CETES 28 días'
+  if (missing) label = 'Tasa de referencia'
+  else if (substitute) label = 'Tasa sustituta de corto plazo'
+  return { label, missing, substitute, source, sourceLabel }
+}
+
+const RATE_NOTE_RE = /sustitut|token de Banxico|BANXICO_TOKEN|^Respaldo:/i
+
+/**
+ * Separa las notas generales en las que explican la tasa de referencia y el resto.
+ * @param {readonly string[]} notes
+ */
+export function splitRateNotes(notes) {
+  const rate = []
+  const rest = []
+  for (const note of notes) (RATE_NOTE_RE.test(note) ? rate : rest).push(note)
+  return { rate, rest }
+}
+
+/**
+ * Datos de la gráfica de diferencial: de mayor a menor, las que no tienen dato al final.
+ * @param {readonly { symbol: string, spreadVsCetes: number | null }[]} rows
+ */
+export function spreadBars(rows) {
+  return [...rows]
+    .map((r) => ({ label: r.symbol, value: Number.isFinite(r.spreadVsCetes) ? r.spreadVsCetes : null }))
+    .sort((a, b) => Number(a.value == null) - Number(b.value == null) || (b.value ?? 0) - (a.value ?? 0) || a.label.localeCompare(b.label))
+}
