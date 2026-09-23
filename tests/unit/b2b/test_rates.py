@@ -316,3 +316,30 @@ def test_el_respaldo_declara_el_plazo_que_sirve_y_no_el_pedido(client, tenor):
     assert body.tenorDays == rates_domain.FRED_RF_TENOR_DAYS == 91
     if tenor != 91:
         assert any(f"se pidió el plazo de {tenor} días" in n.lower() for n in body.meta.notes), body.meta.notes
+
+
+# ─── banda de cordura ────────────────────────────────────────────────────────
+
+
+def test_un_bono_m_fuera_de_rango_no_se_publica(client, monkeypatch):
+    """Un precio de 102.5 multiplicado por 0.01 no es un rendimiento de 102.5 %: no se publica."""
+    monkeypatch.setattr(rates_domain.fred, "fetch_series",
+                        lambda *a, **k: {"dates": ["2026-07-01", "2026-08-01"], "values": [9.02, 102.5]})
+    r = client.get("/v2/rates/mx")
+    assert r.status_code == 503, r.text
+    assert "bonoM10" not in r.text
+
+
+def test_con_token_una_tasa_fuera_de_rango_del_sie_no_se_publica(cetes28_revisada, clean_state):
+    datos = _datos()
+    for serie in datos["bmx"]["series"]:
+        if serie["idSerie"] == "SF43936":
+            serie["datos"][-1]["dato"] = "745"
+    with responses.RequestsMock(assert_all_requests_are_fired=False) as mock:
+        mock.add(responses.GET, SIE_DATOS_RE, json=datos, status=200)
+        mock.add(responses.GET, SIE_METADATOS_RE, json=_metadatos(), status=200)
+        with TestClient(build_app(BANXICO_TOKEN="token-de-prueba"), raise_server_exceptions=False) as http:
+            body = MxRatesResponse.model_validate(http.get("/v2/rates/mx").json())
+    assert [item.id for item in body.items] == ["target", "fix"]
+    assert any("cetes28" in nota.lower() or "CETES 28" in nota for nota in body.meta.notes), body.meta.notes
+    assert any("rango" in nota for nota in body.meta.notes)

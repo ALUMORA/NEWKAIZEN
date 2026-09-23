@@ -135,6 +135,31 @@ SPREAD_SPEC = (
 FED_FUNDS_SERIES = "DFF"
 VIX_FRED_SERIES = "VIXCLS"
 
+PLAUSIBLE = {
+    "ust3m": (-0.01, 0.25),
+    "ust2y": (-0.01, 0.25),
+    "ust10y": (-0.01, 0.25),
+    "fedFunds": (-0.01, 0.25),
+    "vix": (5.0, 150.0),
+    "dxy": (60.0, 160.0),
+}
+"""Banda de cordura del último valor, en la unidad del contrato (tasas como fracción, niveles tal cual).
+
+Si FRED cambia la unidad de una serie o Yahoo devuelve otra cosa, el renglón no se publica y la
+razón queda en ``meta.notes``, en vez de salir un 450 % o un DXY de 1.
+"""
+
+
+def _implausible(entry: dict, series_id: str) -> str | None:
+    band = PLAUSIBLE.get(entry["id"])
+    if band is None or band[0] <= entry["value"] <= band[1]:
+        return None
+    return (
+        f"No se publicó {entry['label']} ({series_id}): el último dato salió en {entry['value']:g},"
+        f" fuera del rango creíble de {band[0]:g} a {band[1]:g}."
+    )
+
+
 MAX_AGE_DAYS = 7
 """Más de una semana sin dato nuevo en una serie diaria: se marca ``stale``."""
 
@@ -254,6 +279,14 @@ def _aligned_tail(a: dict[str, list], b: dict[str, list], count: int = 2) -> tup
     return dates[-count:], left[-count:], right[-count:]
 
 
+def _append_plausible(items: list[dict], notes: list[str], entry: dict, series_id: str) -> None:
+    reason = _implausible(entry, series_id)
+    if reason:
+        notes.append(reason)
+    else:
+        items.append(entry)
+
+
 def get_us_macro() -> dict:
     """``/v2/macro/us``: ``{"items", "source", "asOf", "stale", "fallback", "notes"}``.
 
@@ -269,8 +302,13 @@ def get_us_macro() -> dict:
         if not serie["values"]:
             notes.append(f"FRED no devolvió la serie {series_id}.")
             continue
+        entry = _entry(item_id, label, "fraction", "fred", serie["dates"], serie["values"], 0.01)
+        reason = _implausible(entry, series_id)
+        if reason:
+            notes.append(reason)
+            continue
         curves[item_id] = serie
-        items.append(_entry(item_id, label, "fraction", "fred", serie["dates"], serie["values"], 0.01))
+        items.append(entry)
     for item_id, label, long_id, short_id in SPREAD_SPEC:
         long_serie, short_serie = curves.get(long_id), curves.get(short_id)
         if not long_serie or not short_serie:
@@ -290,19 +328,21 @@ def get_us_macro() -> dict:
             fallback = True
             notes.append("El VIX salió de FRED (VIXCLS) porque CBOE no respondió.")
     if vix["values"]:
-        items.append(_entry("vix", "VIX (volatilidad implícita del S&P 500)", "index", vix_source,
-                            vix["dates"], vix["values"]))
+        _append_plausible(items, notes, _entry("vix", "VIX (volatilidad implícita del S&P 500)", "index",
+                                               vix_source, vix["dates"], vix["values"]),
+                          "VIX_History" if vix_source == "cboe" else VIX_FRED_SERIES)
     else:
         notes.append("Ni CBOE ni FRED devolvieron el VIX.")
     dxy = _yahoo_close_series(DXY_SYMBOL)
     if dxy["values"]:
-        items.append(_entry("dxy", "Índice del dólar (DXY)", "index", "yahoo", dxy["dates"], dxy["values"]))
+        _append_plausible(items, notes, _entry("dxy", "Índice del dólar (DXY)", "index", "yahoo", dxy["dates"],
+                                               dxy["values"]), DXY_SYMBOL)
     else:
         notes.append("Yahoo no devolvió el índice del dólar.")
     funds = fred.fetch_series(FED_FUNDS_SERIES)
     if funds["values"]:
-        items.append(_entry("fedFunds", "Tasa efectiva de fondos federales", "fraction", "fred",
-                            funds["dates"], funds["values"], 0.01))
+        _append_plausible(items, notes, _entry("fedFunds", "Tasa efectiva de fondos federales", "fraction", "fred",
+                                               funds["dates"], funds["values"], 0.01), FED_FUNDS_SERIES)
     else:
         notes.append(f"FRED no devolvió la serie {FED_FUNDS_SERIES}.")
     if not items:

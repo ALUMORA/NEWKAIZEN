@@ -118,6 +118,43 @@ def rf_fallback_note(tenor_days: int) -> str:
     return note
 
 
+PLAUSIBLE = {
+    "fraction": (0.0, 0.40),
+    "inflationYoY": (-0.05, 0.40),
+    "coreInflationYoY": (-0.05, 0.40),
+    "fix": (5.0, 60.0),
+    "udi": (1.0, 30.0),
+}
+"""Banda de cordura del último valor publicado, ya en la unidad del contrato.
+
+Igual que el legado (que descartaba un Bono M fuera de 3 % a 20 %), pero por renglón: si una fuente
+cambia de unidad o un id apunta a otra serie, un precio de 102.5 saldría como un rendimiento de
+102.5 %. Un renglón fuera de su banda no se publica y la razón queda en ``meta.notes``.
+"""
+
+
+def _implausible(item: dict) -> str | None:
+    """Aviso si el valor del renglón está fuera de su banda; ``None`` si es creíble."""
+    low, high = PLAUSIBLE.get(item["id"]) or PLAUSIBLE.get(item["unit"]) or (float("-inf"), float("inf"))
+    if low <= item["value"] <= high:
+        return None
+    return (
+        f"No se publicó {item['label']} ({item['seriesId']}): el último dato salió en {item['value']:g},"
+        f" fuera del rango creíble de {low:g} a {high:g}."
+    )
+
+
+def _keep_plausible(items: list[dict], notes: list[str]) -> list[dict]:
+    kept = []
+    for item in items:
+        reason = _implausible(item)
+        if reason:
+            notes.append(reason)
+        else:
+            kept.append(item)
+    return kept
+
+
 def _today() -> _dt.date:
     return utc_now().date()
 
@@ -196,10 +233,10 @@ def _banxico_items() -> tuple[list[dict], list[str]]:
         items.append(
             _item(info["rateId"], info["label"], info["unit"], sid, "banxico", data["dates"], data["values"], scale)
         )
-    return items, notes
+    return _keep_plausible(items, notes), notes
 
 
-def _fred_items() -> list[dict]:
+def _fred_items(notes: list[str]) -> list[dict]:
     """Los pocos renglones que FRED puede dar honestamente, todos marcados como respaldo."""
     items = []
     for rate_id, spec in FRED_MX_FALLBACK.items():
@@ -218,7 +255,7 @@ def _fred_items() -> list[dict]:
                 spec["scale"],
             )
         )
-    return items
+    return _keep_plausible(items, notes)
 
 
 def _max_age(rate_id: str, fallback: bool) -> int:
@@ -249,7 +286,7 @@ def get_mx_rates() -> dict:
             items = []
     if not items:
         fallback = True
-        items = _fred_items()
+        items = _fred_items(notes)
         if configured:
             notes.append("Estos datos son de respaldo: no se pudo leer ninguna serie del SIE de Banxico.")
         else:
@@ -262,9 +299,9 @@ def get_mx_rates() -> dict:
             raise ApiError(
                 503,
                 "NOT_CONFIGURED",
-                "Las tasas de México necesitan el token de Banxico, y el respaldo de FRED tampoco respondió.",
+                "Las tasas de México necesitan el token de Banxico, y el respaldo de FRED no dio un dato utilizable.",
             )
-        raise ApiError(503, "UPSTREAM_UNAVAILABLE", "Ni Banxico ni FRED respondieron. Intenta más tarde.")
+        raise ApiError(503, "UPSTREAM_UNAVAILABLE", "Ni Banxico ni FRED dieron un dato utilizable. Intenta más tarde.")
     order = {rid: i for i, rid in enumerate(RATE_ORDER)}
     items.sort(key=lambda it: order.get(it["id"], len(order)))
     as_of = max(it["asOf"] for it in items)
