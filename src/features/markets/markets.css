@@ -8,7 +8,7 @@
 }
 .markets-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 140px), 1fr));
   gap: var(--space-4);
 }
 .markets-notes {
@@ -30,7 +30,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
   gap: var(--space-4);
-  align-items: end;
+  align-items: start;
 }
 .markets-formula {
   font-size: var(--text-sm);

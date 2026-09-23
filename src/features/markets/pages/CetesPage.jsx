@@ -103,7 +103,11 @@ function Calculator({ rows }) {
           />
           <NumberInput label="Retención anual de ISR" suffix="%" value={retentionPct} onChange={setRetentionPct} decimals={2} hint="0.90 % en 2026, según la Ley de Ingresos de la Federación." />
         </div>
-        {apiRow ? <DataStatus {...itemStatus(apiRow, null)} /> : null}
+        {apiRow ? (
+          <div>
+            <DataStatus {...itemStatus(apiRow, null)} />
+          </div>
+        ) : null}
         <div className="markets-grid" aria-live="polite">
           <Stat label="Intereses brutos" value={result ? fmtMoney(result.gross) : null} sublabel={result ? `${fmtPct(result.periodYield, { decimals: 4 })} en el plazo` : undefined} />
           <Stat label="Retención de ISR" value={result ? fmtMoney(-result.retention) : null} />
