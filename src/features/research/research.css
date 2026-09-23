@@ -20,3 +20,8 @@
 .kz-research-foot { padding: var(--space-3) var(--space-4); }
 .kz-research-compare-form > :first-child { flex: 1 1 260px; min-width: 0; }
 .kz-research-compare-form > button { margin-top: calc(var(--text-sm) * 1.6); }
+/* Rejilla de cifras más apretada que .kz-metric-grid: en 390 px caben dos por renglón. */
+.kz-research-stats { display: grid; gap: var(--space-4) var(--space-3); grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+.kz-research-stats > * { min-width: 0; }
+.kz-research-stats > :first-child { grid-column: 1 / -1; }
+@media (min-width: 900px) { .kz-research-stats > :first-child { grid-column: auto; } }

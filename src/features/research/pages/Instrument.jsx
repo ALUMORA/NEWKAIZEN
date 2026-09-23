@@ -3,25 +3,9 @@
 import { Suspense, useState } from 'react'
 import { useParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
-import {
-  dividendsQuery,
-  historyQuery,
-  instrumentQuery,
-  momentumQuery,
-  newsQuery,
-  statementsQuery,
-} from '../../../lib/api/queries.js'
+import { dividendsQuery, historyQuery, instrumentQuery, momentumQuery, newsQuery, statementsQuery } from '../../../lib/api/queries.js'
 import { fmtDate, fmtDateTime, fmtMoney, fmtMultiple, fmtNumber, fmtPct } from '../../../lib/format.js'
-import {
-  Card,
-  DataStatus,
-  DataTable,
-  Delta,
-  PageHeader,
-  SegmentedControl,
-  Skeleton,
-  Stat,
-} from '../../../components/ui/index.js'
+import { Card, DataTable, Delta, PageHeader, SegmentedControl, Skeleton, Stat } from '../../../components/ui/index.js'
 import { PATHS } from '../../../app/paths.js'
 import { QueryBlock } from '../components/QueryBlock.jsx'
 import { TimeSeries } from '../components/charts.js'
@@ -45,7 +29,7 @@ function Overview({ query }) {
       <QueryBlock query={query} lines={5}>
         {() => (
           <div className="kz-col" data-gap="3">
-            <div className="kz-metric-grid">
+            <div className="kz-research-stats">
               <Stat
                 size="lg"
                 label="Precio"
@@ -90,27 +74,28 @@ function History({ symbol, name }) {
   const [range, setRange] = useState('1y')
   const query = useQuery(historyQuery(symbol, { range }))
   const data = query.data
-  const points = (data?.dates ?? []).map((date, i) => ({ date, value: data.close[i] ?? null }))
+  const points = (data?.dates ?? []).map((date, i) => ({
+    date,
+    value: data.close[i] ?? null,
+  }))
   return (
-    <Card
-      title="Precio histórico"
-      description="Cierres ajustados por splits y dividendos."
-      status={data?.meta}
-      actions={<SegmentedControl label="Periodo" hideLabel items={RANGES} value={range} onChange={setRange} />}
-    >
-      <QueryBlock query={query} isEmpty={points.length === 0} emptyTitle="Sin historia para este periodo" lines={6}>
-        {() => (
-          <Suspense fallback={<Skeleton height={280} />}>
-            <TimeSeries
-              title={`Precio de ${name ?? symbol}`}
-              titleAs="h3"
-              series={[{ id: symbol, label: symbol, points }]}
-              format="money"
-              currency={data.currency}
-            />
-          </Suspense>
-        )}
-      </QueryBlock>
+    <Card title="Precio histórico" description="Cierres ajustados por splits y dividendos." status={data?.meta}>
+      <div className="kz-col" data-gap="3">
+        <SegmentedControl label="Periodo" hideLabel items={RANGES} value={range} onChange={setRange} />
+        <QueryBlock query={query} isEmpty={points.length === 0} emptyTitle="Sin historia para este periodo" lines={6}>
+          {() => (
+            <Suspense fallback={<Skeleton height={280} />}>
+              <TimeSeries
+                title={`Precio de ${name ?? symbol}`}
+                titleAs="h3"
+                series={[{ id: symbol, label: symbol, points }]}
+                format="money"
+                currency={data.currency}
+              />
+            </Suspense>
+          )}
+        </QueryBlock>
+      </div>
     </Card>
   )
 }
@@ -157,7 +142,16 @@ function Statements({ symbol }) {
       }
     >
       <QueryBlock query={query} isEmpty={periods.length === 0 || rows.length === 0} emptyTitle="Sin estados financieros disponibles" lines={6}>
-        {() => <DataTable columns={columns} rows={rows} rowKey="id" caption={`Estados financieros ${freq === 'annual' ? 'anuales' : 'trimestrales'}`} captionHidden density="compact" />}
+        {() => (
+          <DataTable
+            columns={columns}
+            rows={rows}
+            rowKey="id"
+            caption={`Estados financieros ${freq === 'annual' ? 'anuales' : 'trimestrales'}`}
+            captionHidden
+            density="compact"
+          />
+        )}
       </QueryBlock>
     </Card>
   )
@@ -170,7 +164,7 @@ function Momentum({ symbol }) {
     <Card title="Momentum" info={{ termKey: 'momentum-12-1', term: 'Momentum 12-1' }} status={d?.meta}>
       <QueryBlock query={query} lines={3}>
         {() => (
-          <div className="kz-metric-grid">
+          <div className="kz-research-stats">
             <Stat label="12 meses sin el último" value={<Delta value={d.r12m1} />} />
             <Stat label={`Referencia (${d.benchmark})`} value={<Delta value={d.benchmarkR12m1} />} />
             <Stat label="Diferencia contra la referencia" value={<Delta value={d.relative12m1} kind="pp" />} />
@@ -189,7 +183,13 @@ function Dividends({ symbol }) {
   const history = [...(d?.history ?? [])].reverse().slice(0, 12)
   return (
     <Card title="Dividendos" status={d?.meta}>
-      <QueryBlock query={query} isEmpty={!d?.history?.length} emptyTitle="Sin dividendos registrados" emptyText="Esta emisora no ha pagado dividendos en el periodo disponible." lines={4}>
+      <QueryBlock
+        query={query}
+        isEmpty={!d?.history?.length}
+        emptyTitle="Sin dividendos registrados"
+        emptyText="Esta emisora no ha pagado dividendos en el periodo disponible."
+        lines={4}
+      >
         {() => (
           <div className="kz-col" data-gap="3">
             <div className="kz-metric-grid">
@@ -199,7 +199,12 @@ function Dividends({ symbol }) {
             <DataTable
               columns={[
                 { key: 'date', header: 'Fecha', format: (v) => fmtDate(v) },
-                { key: 'amount', header: 'Monto por acción', numeric: true, format: (v) => fmtMoney(v, d.currency, { decimals: 4 }) },
+                {
+                  key: 'amount',
+                  header: 'Monto por acción',
+                  numeric: true,
+                  format: (v) => fmtMoney(v, d.currency, { decimals: 4 }),
+                },
               ]}
               rows={history}
               rowKey="date"
@@ -251,7 +256,6 @@ export default function Instrument() {
         eyebrow="Ficha de la emisora"
         description="Precio, fundamentales, estados financieros, valuación y noticias. Es información para entender a la emisora, no una recomendación."
         breadcrumbs={[{ label: 'Investigar', to: PATHS.research }, { label: symbol }]}
-        actions={info.data?.meta ? <DataStatus {...info.data.meta} /> : null}
       />
       <Overview query={info} />
       <History symbol={symbol} name={name} />
