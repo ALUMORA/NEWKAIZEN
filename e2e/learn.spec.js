@@ -188,7 +188,7 @@ test.describe('F5: bienvenida', () => {
   test('importar un CSV valida filas y guarda onboardingDone', async ({ page, baseURL }) => {
     await open(page, baseURL, '/bienvenida', { session: true, legacyApi: true })
     const csv = 'tipo,fecha,símbolo,cantidad,precio,moneda\ncompra,2026-03-02,WALMEX.MX,10,60.5,MXN\ncompra,2026-03-02,,5,10,MXN\n'
-    await page.getByLabel('Archivo CSV').setInputFiles({ name: 'movimientos.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) })
+    await page.getByLabel('Elegir archivo CSV').setInputFiles({ name: 'movimientos.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) })
     await expect(page.getByRole('status').filter({ hasText: 'movimientos.csv' })).toContainText('1 movimiento válido, 1 con problemas')
     await expect(page.getByText('Fila 3: falta el símbolo')).toBeVisible()
     await page.getByRole('button', { name: 'Crear portafolio con 1 movimientos' }).click()

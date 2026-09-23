@@ -4,8 +4,10 @@
 .ob-option { display: flex; flex-direction: column; gap: var(--space-3); height: 100%; }
 .ob-option p { margin: 0; line-height: var(--leading-normal); color: var(--muted); font-size: var(--text-md); }
 .ob-option ul { margin: 0; padding-left: var(--space-5); color: var(--muted); font-size: var(--text-sm); display: grid; gap: var(--space-1); }
-.ob-file { display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--text-sm); }
-.ob-file input { font: inherit; color: var(--ink); min-height: 44px; }
+.ob-file { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); font-size: var(--text-sm); }
+.ob-file-button { cursor: pointer; }
+.ob-file input:focus-visible + .ob-file-button { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ob-file-name { color: var(--muted); overflow-wrap: anywhere; min-width: 0; }
 .ob-summary { font-size: var(--text-sm); margin: 0; }
 .ob-errors { color: var(--muted); font-size: var(--text-sm); margin: 0; padding-left: var(--space-5); }
 .ob-push { margin-top: auto; }

@@ -68,10 +68,11 @@ export default function Onboarding() {
         <Card title="Importar un CSV" titleAs="h2">
           <div className="ob-option">
             <p>Sube tus movimientos con columnas tipo, fecha, símbolo, cantidad, precio y moneda. El tipo puede ser compra, venta, dividendo, depósito o retiro.</p>
-            <label className="ob-file">
-              <span>Archivo CSV</span>
-              <input type="file" accept=".csv,text/csv" onChange={onFile} />
-            </label>
+            <div className="ob-file">
+              <input id="ob-csv" className="sr-only" type="file" accept=".csv,text/csv" onChange={onFile} />
+              <label htmlFor="ob-csv" className="button button-secondary button-md ob-file-button">Elegir archivo CSV</label>
+              <span className="ob-file-name">{csv?.name ?? 'Ningún archivo elegido'}</span>
+            </div>
             {csv && (
               <>
                 <p className="ob-summary" role="status">
