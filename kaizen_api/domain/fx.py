@@ -36,7 +36,7 @@ from dataclasses import dataclass, field
 
 from kaizen_api.cache import _cached
 from kaizen_api.domain import _log
-from kaizen_api.errors import ApiError
+from kaizen_api.errors import ApiError, invalid_param
 from kaizen_api.providers.yahoo.session import yft
 
 USD = "USD"
@@ -253,6 +253,14 @@ def daily_range(start: _dt.date | None, end: _dt.date | None, pair: str = PAIR) 
     today = _today()
     last = end or today
     first = start or (last - _dt.timedelta(days=365))
+    if first > today:
+        # Culpar al proveedor de una fecha que todavía no ocurre manda al usuario a "intenta más
+        # tarde", que nunca va a funcionar. El 503 se queda para cuando la fuente sí falló.
+        raise invalid_param(
+            "query.start",
+            "date_future",
+            f"La fecha inicial ({_iso(first)}) todavía no ocurre, así que no hay tipo de cambio que dar.",
+        )
     points = _banxico_points(_iso(first), _iso(last))
     source, fallback, notes = BANXICO_FIX_SOURCE, False, []
     if not points:
@@ -263,13 +271,29 @@ def daily_range(start: _dt.date | None, end: _dt.date | None, pair: str = PAIR) 
     inside = [(d, v) for d, v in points if _iso(first) <= d <= _iso(last)]
     if not inside:
         raise no_fx()
+    dates = [d for d, _ in inside]
     return FxSeries(
-        dates=[d for d, _ in inside],
+        dates=dates,
         values=[v for _, v in inside],
         source=source,
         fallback=fallback,
-        notes=notes,
+        notes=notes + _forming_bar_note(dates, source),
     )
+
+
+def _forming_bar_note(dates: list[str], source: str) -> list[str]:
+    """Aviso cuando el último punto es la barra de HOY, que todavía se mueve.
+
+    Yahoo sirve la barra del día en curso y su valor cambia con el mercado abierto, así que dos
+    ventanas distintas de la misma serie pueden traer números distintos para hoy. El FIX de Banxico
+    no tiene ese problema: se publica una vez y ya no se mueve.
+    """
+    if source != YAHOO_SOURCE or not dates or dates[-1] != _iso(_today()):
+        return []
+    return [
+        "El último punto es la barra de hoy, que todavía se está formando: su valor puede cambiar "
+        "mientras el mercado siga abierto."
+    ]
 
 
 def series_for(period: str, interval: str = "1d", pair: str = PAIR) -> FxSeries:
@@ -282,7 +306,9 @@ def series_for(period: str, interval: str = "1d", pair: str = PAIR) -> FxSeries:
     if pair.upper() != PAIR:
         raise unsupported_pair(pair)
     if interval == "1d":
-        first = _today() - _dt.timedelta(days=_period_days(period))
+        # Margen antes del inicio: si la primera barra de precio cae en un día sin FX, ``rate_on``
+        # necesita días hábiles anteriores hacia dónde mirar.
+        first = _today() - _dt.timedelta(days=_period_days(period) + MAX_FORWARD_FILL_DAYS + 7)
         points = _banxico_points(_iso(first), _iso(_today()))
         if points:
             return FxSeries([d for d, _ in points], [v for _, v in points], BANXICO_FIX_SOURCE, False, [])
@@ -377,14 +403,27 @@ def _convert_series(series, origin: str, target: str):
     dates = [_index_date(key) for key in series.index]
     first = _dt.date.fromisoformat(min(dates)) if dates else None
     last = _dt.date.fromisoformat(max(dates)) if dates else None
-    rates = daily_range(first, last).as_map()
+    # El FX se pide con margen ANTES del primer punto: pedirlo recortado al rango de la serie
+    # dejaba a ``rate_on`` sin días hábiles previos hacia dónde mirar, así que la primera fecha sin
+    # barra de tipo de cambio se caía en silencio en vez de rellenarse como dice el contrato. Es el
+    # mismo margen que ``_rate_for_date`` ya usa para el caso escalar.
+    window = first - _dt.timedelta(days=MAX_FORWARD_FILL_DAYS + 7) if first else None
+    rates = daily_range(window, last).as_map()
     keys, values = [], []
+    filled = dropped = 0
     for key, date, value in zip(series.index, dates, series.tolist(), strict=True):
-        rate, _ = rate_on(rates, date)
+        rate, back = rate_on(rates, date)
         if rate is None:
+            dropped += 1
             continue
+        filled += 1 if back else 0
         keys.append(key)
         values.append(apply_rate(float(value), rate, origin, target))
+    if filled or dropped:
+        _log(
+            f"fx: convert() arrastró el tipo de cambio en {filled} fechas "
+            f"(a lo más {MAX_FORWARD_FILL_DAYS} días) y omitió {dropped} por no tener uno cercano"
+        )
     return pd.Series(values, index=pd.Index(keys, name=series.index.name), name=series.name)
 
 
