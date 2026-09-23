@@ -52,3 +52,20 @@ Dos cosas que se resolvieron dentro de lo que ya permite el modelo, por si a O l
 símbolo, nombre, sector canónico de Yahoo y, en las FIBRAs, el tipo de activo. Se van a quedar
 viejos solos (fusiones, cambios de clave, deslistes: ya pasó con TERRA13 y LFPE). No hay pedido
 concreto todavía, solo dejar escrito que alguien tiene que revisarlos cada tanto.
+
+## 5. Grabar los dividendos de las FIBRAs (necesita red, lo hace quien integre)
+
+Desde la corrección de la revisión, `distributionYield` sale de la costura de dividendos de B3a
+(`get_dividends`, la de `/v2/instrument/{sym}/dividends`) y ya no del `dividendYield` de Yahoo. En
+las capas grabadas solo existe `yf:FUNO11.MX:dividends`, así que en replay `/v2/screeners/fibras`
+responde 500 `ReplayMiss` en `yf:FIBRAMQ12.MX:dividends` (la primera que falta) hasta grabar las
+otras nueve. Con red, en la capa de B3c y sin tocar el set base:
+
+```
+python scripts/record_fixtures.py --set 2026-09-22-b3c,2026-09-22,2026-09-22-b2b,2026-09-22-b3a \
+    --grabar-en 2026-09-22-b3c --get '/v2/screeners/fibras' --get '/v2/screeners/fibras?extra=FMTY14.MX'
+```
+
+**Mientras:** las pruebas unitarias no dependen de esas grabaciones (usan datos de mentira) y la
+ruta en producción no cambia: si Yahoo no contesta los dividendos de una FIBRA, su rendimiento y su
+diferencial van en `null` con la nota escrita.
