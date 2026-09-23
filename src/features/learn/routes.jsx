@@ -5,6 +5,7 @@ import { PATHS, route } from '../../app/paths.js'
 const Pages = {
   LearnIndex: lazy(() => import('./pages/LearnIndex.jsx')),
   LearnTerm: lazy(() => import('./pages/LearnTerm.jsx')),
+  LearnGuide: lazy(() => import('./pages/LearnGuide.jsx')),
 }
 
 export const routes = [
@@ -17,5 +18,12 @@ export const routes = [
     path: route(PATHS.learnTerm),
     element: <Pages.LearnTerm />,
     handle: { title: 'Aprender', public: true, description: 'Explicación de este concepto con ejemplos en pesos.' },
+  },
+  {
+    // Guías de docs/metodologia. Ruta propia de F5 (no está en PATHS, que es de C3); es más
+    // específica que /aprender/:termino, así que el router la prefiere.
+    path: route('/aprender/metodologia/:guia'),
+    element: <Pages.LearnGuide />,
+    handle: { title: 'Metodología', public: true, description: 'Cómo calcula Kaizen cada número, con qué datos y con qué supuestos.' },
   },
 ]

@@ -1,0 +1,2 @@
+/* Envoltura de las páginas públicas de F5 (fuera del shell). Solo tokens. */
+.f5-public { padding-block: var(--space-7) var(--space-10); }

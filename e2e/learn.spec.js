@@ -97,6 +97,8 @@ async function open(page, baseURL, path, { theme = 'light', session = false, rou
 const PUBLIC_PAGES = [
   { path: '/aprender', h1: 'Glosario' },
   { path: '/aprender/sharpe', h1: /Sharpe/ },
+  { path: '/aprender/metodologia/riesgo', h1: 'Metodología de riesgo' },
+  { path: '/aprender/metodologia/fuentes-de-datos', h1: /./ },
   { path: '/legal/terminos', h1: 'Términos de uso' },
   { path: '/legal/privacidad', h1: 'Aviso de privacidad' },
   { path: '/legal/aviso', h1: 'Aviso legal' },
