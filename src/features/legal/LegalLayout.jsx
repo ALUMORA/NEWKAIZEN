@@ -2,6 +2,7 @@
 import { Link } from 'react-router'
 import { Badge, PageHeader } from '../../components/ui/index.js'
 import { PATHS } from '../../app/paths.js'
+import { PublicPage } from '../learn/PublicPage.jsx'
 import './legal.css'
 
 const LINKS = [
@@ -12,7 +13,7 @@ const LINKS = [
 
 export function LegalLayout({ title, description, updated = '23 de septiembre de 2026', children }) {
   return (
-    <article className="legal-page">
+    <PublicPage className="legal-page">
       <PageHeader eyebrow="Legales" title={title} description={description} />
       <p className="legal-draft">
         <Badge tone="warning">Borrador</Badge>
@@ -28,6 +29,6 @@ export function LegalLayout({ title, description, updated = '23 de septiembre de
           ))}
         </ul>
       </nav>
-    </article>
+    </PublicPage>
   )
 }

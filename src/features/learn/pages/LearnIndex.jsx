@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 import { Disclaimer, EmptyState, Input, PageHeader } from '../../../components/ui/index.js'
 import { glossaryCount, glossarySearch, glossaryTerms } from '../../../content/glossary.js'
 import { pathLearnTerm } from '../../../app/paths.js'
+import { PublicPage } from '../PublicPage.jsx'
 import '../learn.css'
 
 function initial(titulo) {
@@ -44,7 +45,7 @@ export default function LearnIndex() {
   const groups = useMemo(() => groupByLetter(glossaryTerms), [])
 
   return (
-    <div className="learn-page">
+    <PublicPage className="learn-page">
       <PageHeader
         eyebrow="Aprender"
         title="Glosario"
@@ -93,6 +94,6 @@ export default function LearnIndex() {
         </>
       )}
       <Disclaimer />
-    </div>
+    </PublicPage>
   )
 }

@@ -38,3 +38,4 @@
 }
 .learn-related a:hover { border-color: var(--accent); }
 .learn-back { color: var(--accent); }
+.f5-public { padding-block: var(--space-7) var(--space-10); }
