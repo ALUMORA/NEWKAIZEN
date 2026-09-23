@@ -422,8 +422,8 @@ test.describe('página no encontrada', () => {
 
   test('ruta nueva sin feature todavía: "Próximamente"', async ({ page, baseURL }) => {
     await setupApp(page, { baseURL, session: true })
-    await page.goto('/investigar/WALMEX.MX')
-    await expect(page.getByRole('heading', { level: 1, name: 'Ficha de la emisora' })).toBeVisible()
+    await page.goto('/portafolio/rendimiento')
+    await expect(page.getByRole('heading', { level: 1, name: 'Rendimiento' })).toBeVisible()
     await expect(page.getByText('Próximamente')).toBeVisible()
   })
 })

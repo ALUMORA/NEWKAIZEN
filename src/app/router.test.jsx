@@ -30,10 +30,10 @@ describe('router', () => {
 
   it('con sesión, una ruta nueva sin feature muestra Próximamente con el título del handle', async () => {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
-    renderAt('/portafolio/riesgo')
-    expect(await screen.findByRole('heading', { level: 1, name: 'Riesgo' })).toBeInTheDocument()
+    renderAt('/portafolio/rendimiento')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Rendimiento' })).toBeInTheDocument()
     expect(screen.getByText('Próximamente')).toBeInTheDocument()
-    await waitFor(() => expect(document.title).toBe('Riesgo · Kaizen'))
+    await waitFor(() => expect(document.title).toBe('Rendimiento · Kaizen'))
   })
 
   it('las rutas públicas no piden sesión', async () => {
