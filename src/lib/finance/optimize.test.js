@@ -28,6 +28,67 @@ const cov2 = (s1, s2, rho) => [
   [rho * s1 * s2, s2 * s2],
 ]
 
+/**
+ * Congruencial lineal determinista (el mismo de los guiones de goldens), con normal por Box-Muller.
+ * @param {number} seed
+ */
+function lcg(seed) {
+  let state = seed >>> 0
+  const uniform = () => {
+    state = (1664525 * state + 1013904223) >>> 0
+    return (state + 0.5) / 4294967296
+  }
+  const normal = () => Math.sqrt(-2 * Math.log(uniform())) * Math.cos(2 * Math.PI * uniform())
+  return { uniform, normal }
+}
+
+/**
+ * Covarianza muestral (n − 1) de un panel T x N, escrita aquí para no depender de covariance.js.
+ * @param {number[][]} X
+ * @returns {number[][]}
+ */
+function sampleCovOf(X) {
+  const T = X.length
+  const n = X[0].length
+  const m = new Array(n).fill(0)
+  for (const row of X) for (let i = 0; i < n; i += 1) m[i] += row[i] / T
+  return Array.from({ length: n }, (_, i) =>
+    Array.from({ length: n }, (_, j) => {
+      let s = 0
+      for (const row of X) s += (row[i] - m[i]) * (row[j] - m[j])
+      return s / (T - 1)
+    }),
+  )
+}
+
+/**
+ * Covarianza n x n con eigenvalores de 1 a 1/cond, repartidos en escala logarítmica, y
+ * eigenvectores de una base ortonormal pseudoaleatoria (Gram-Schmidt).
+ * @param {number} n
+ * @param {number} cond
+ * @param {{ normal: () => number }} gen
+ * @returns {number[][]}
+ */
+function covWithCondition(n, cond, gen) {
+  /** @type {number[][]} */
+  const Q = []
+  for (let j = 0; j < n; j += 1) {
+    let v = Array.from({ length: n }, () => gen.normal())
+    for (const q of Q) {
+      const d = v.reduce((s, x, i) => s + x * q[i], 0)
+      v = v.map((x, i) => x - d * q[i])
+    }
+    const norm = Math.hypot(...v)
+    Q.push(v.map((x) => x / norm))
+  }
+  const eig = Array.from({ length: n }, (_, k) => Math.pow(cond, -k / (n - 1)))
+  const S = Array.from({ length: n }, (_, i) =>
+    Array.from({ length: n }, (_, j) => Q.reduce((s, q, k) => s + q[i] * eig[k] * q[j], 0)),
+  )
+  for (let i = 0; i < n; i += 1) for (let j = 0; j < i; j += 1) S[i][j] = S[j][i]
+  return S
+}
+
 describe('projectBoxSimplex', () => {
   it('reproduce el caso del spec: v=[.5,.3,.2] con tope .4 da [.4,.35,.25]', () => {
     const w = projectBoxSimplex([0.5, 0.3, 0.2], 0, 0.4)
@@ -309,6 +370,62 @@ describe('riskParity', () => {
         [0, 0],
       ]),
     ).toBeNull()
+  })
+
+  it('con covarianzas de factores realistas siempre dice converged cuando la respuesta es exacta', () => {
+    // Antes el paro era el paso relativo ≤ 1e-15, por debajo del ruido de punto flotante: alrededor
+    // de 5 % de estas matrices quemaba las 10 000 iteraciones y salía converged=false con
+    // contribuciones exactas. Ahora el paro es el residual que define la paridad.
+    const gen = lcg(8080)
+    let casos = 0
+    for (let rep = 0; rep < 240; rep += 1) {
+      const n = 3 + (rep % 20)
+      const T = 52 + (rep % 9) * 26
+      const K = 1 + (rep % 4)
+      const load = Array.from({ length: n }, () => Array.from({ length: K }, () => 0.5 + gen.uniform()))
+      const idio = Array.from({ length: n }, () => 0.01 + 0.03 * gen.uniform())
+      const X = []
+      for (let t = 0; t < T; t += 1) {
+        const f = Array.from({ length: K }, () => gen.normal() * 0.02)
+        X.push(Array.from({ length: n }, (_, i) => load[i].reduce((s, l, k) => s + l * f[k], 0) + gen.normal() * idio[i]))
+      }
+      const r = /** @type {any} */ (riskParity(sampleCovOf(X)))
+      casos += 1
+      expect(r.converged).toBe(true)
+      expect(r.residual).toBeLessThanOrEqual(1e-12)
+      for (const c of r.riskContributions) expect(Math.abs(c - 1 / n)).toBeLessThanOrEqual(1e-12)
+    }
+    expect(casos).toBe(240)
+  })
+
+  it('con una covarianza mal condicionada (cond 1e8) iguala las contribuciones y ninguna sale negativa', () => {
+    // El descenso coordinado solo no llegaba: con esta matriz devolvía contribuciones negativas.
+    const S = covWithCondition(6, 1e8, lcg(12345))
+    const r = /** @type {any} */ (riskParity(S))
+    expect(r).not.toBeNull()
+    expect(r.converged).toBe(true)
+    for (const c of r.riskContributions) {
+      expect(c).toBeGreaterThan(0)
+      expect(Math.abs(c - 1 / 6)).toBeLessThanOrEqual(1e-8)
+    }
+  })
+
+  it('aun con cond 1e10 a 1e14 nunca entrega contribuciones negativas, y converged dice la verdad', () => {
+    const gen = lcg(4242)
+    for (const cond of [1e10, 1e12, 1e14]) {
+      for (let rep = 0; rep < 12; rep += 1) {
+        const n = 3 + (rep % 10)
+        const r = /** @type {any} */ (riskParity(covWithCondition(n, cond, gen)))
+        if (r === null) continue
+        let worst = 0
+        for (const c of r.riskContributions) {
+          expect(c).toBeGreaterThan(0)
+          worst = Math.max(worst, Math.abs(c - 1 / n))
+        }
+        expect(r.residual).toBeCloseTo(worst, 15)
+        expect(r.converged).toBe(worst <= 1e-8)
+      }
+    }
   })
 
   it('rechaza un presupuesto con ceros o del largo equivocado', () => {
