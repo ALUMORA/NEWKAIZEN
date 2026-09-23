@@ -57,13 +57,18 @@ Estas decisiones vienen de defectos concretos de la versión anterior:
    actualizarse. Hoy sale de Banxico con la fecha de cada serie.
 5. **Casi nunca se rellena hacia adelante.** Si a una serie de precios le falta un día, ese día se
    cae de la comparación: el cruce de series es por fecha ISO y no inventa el dato faltante. Hay
-   exactamente dos excepciones, y las dos quedan escritas en `meta.notes` cuando se usan:
+   exactamente dos excepciones:
    - **El tipo de cambio** se puede arrastrar hasta 3 días, para cubrir puentes y días inhábiles.
-   - **La tasa libre de riesgo** se arrastra hasta 45 días. Se usa la tasa vigente al inicio de
-     cada periodo, y si no hay dato publicado dentro de esa ventana, el periodo sale nulo y la
-     pantalla muestra `s/d` en vez de suponer una tasa. Esto importa más de lo que parece, porque
-     esa serie alimenta el Sharpe, el Sortino, el Treynor y todas las regresiones en exceso: casi
-     toda la pantalla de riesgo.
+     Ese arrastre lo hace el servidor al convertir la moneda, y cuando lo usa lo escribe en
+     `meta.notes`.
+   - **La tasa libre de riesgo** se arrastra hasta 45 días naturales. Se usa la tasa vigente al
+     inicio de cada periodo, y si no hay dato publicado dentro de esa ventana, el periodo sale
+     nulo en vez de suponer una tasa. Este arrastre no lo hace el servidor sino la librería
+     financiera del navegador, así que no aparece en `meta.notes`: la señal es el propio nulo. Un
+     solo periodo sin tasa basta para que el Sharpe, el Sortino y el Treynor de esa ventana no se
+     calculen, y la pantalla muestra `s/d` o recorta el tramo, nunca un número con la tasa
+     inventada. Esto importa más de lo que parece, porque esa serie alimenta todas las
+     regresiones en exceso: casi toda la pantalla de riesgo.
 
 ## Moneda
 

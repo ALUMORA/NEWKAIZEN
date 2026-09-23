@@ -68,10 +68,15 @@ moneda.
 
 Se calculan los dos porque contestan preguntas distintas.
 
-**TWR**, rendimiento ponderado por tiempo. Parte la historia en cada flujo externo, calcula el
-rendimiento de cada tramo y los encadena multiplicando. Quita el efecto de cuándo metiste dinero,
-así que es el número comparable contra un índice. El flujo se considera al inicio del periodo.
+**TWR**, rendimiento ponderado por tiempo. Parte la historia en tramos, uno por cada fecha de
+valuación, calcula el rendimiento de cada tramo y los encadena multiplicando. Quita el efecto de
+cuándo metiste dinero, así que es el número comparable contra un índice. El flujo cuenta al cierre
+del tramo en que ocurre: se resta del valor final, `r_i = (V_i − flujo_i) / V_(i−1) − 1`, en vez
+de sumarse a la base, que le regalaría un tramo completo de rendimiento que ese dinero no tuvo.
 Caso probado: de 100 a 110, depósito de 50, de 160 a 144, da −1 por ciento.
+
+Límite: con valuaciones semanales o mensuales, un depósito a media semana no queda bien con
+ninguna de las dos convenciones. Para eso haría falta Dietz modificado, que Kaizen no implementa.
 
 **XIRR**, rendimiento del dinero. Es la tasa que hace cero el valor presente de todos los flujos con
 sus fechas reales, incluido el saldo final, sobre base Actual/365. Se resuelve con Newton y, si no
@@ -85,8 +90,9 @@ buenos. Ninguno de los dos es "el correcto": son dos preguntas.
 
 La serie de valor se arma con los precios de cierre de cada fecha más el efectivo en cada moneda,
 todo convertido a pesos con el FIX de esa misma fecha. Los depósitos y retiros son flujos externos.
-Una compra que no tuvo depósito previo se trata como aportación externa por el monto del costo, para
-que el TWR no la cuente como rendimiento.
+Una compra sin efectivo suficiente se trata como aportación externa por el faltante, no por el
+costo completo: si depositaste 600 y compraste 1,000, la aportación implícita es de 400. Así el TWR
+no cuenta ese dinero como rendimiento.
 
 Las posiciones que vienen de una migración de la versión anterior entran como movimientos de
 apertura sin fecha de compra. En esas, la fecha de primera compra y el efecto tipo de cambio salen
@@ -102,7 +108,9 @@ anual neta por enajenar acciones listadas en la BMV, en BIVA o en el SIC. Kaizen
    de compra, cuando el INPC está disponible. Si no lo está, usa el costo sin actualizar y lo dice.
 3. Suma ganancias y pérdidas del año. Si el neto es negativo, el impuesto es cero y queda una
    pérdida por amortizar.
-4. Aplica 10 por ciento al neto positivo.
+4. Si el neto es positivo, le resta las pérdidas pendientes de ejercicios anteriores, empezando
+   por las más viejas. Una pérdida caduca después de diez ejercicios.
+5. Aplica 10 por ciento a lo que queda.
 
 Caso probado: costo de 550 con factor de actualización de 1.05 da 577.50; vendido en 650, la
 ganancia es 72.50 y el impuesto estimado 7.25 pesos.
@@ -122,7 +130,11 @@ pusiste:
 2. Baja a acciones enteras por defecto.
 3. Con el efectivo restante, compra de una en una la acción que más reduzca la desviación total
    `Σ |w_actual − w_objetivo|`, mientras alcance el dinero.
-4. Respeta el monto mínimo por operación y la opción de no vender.
+4. Mejora por pares: vende una acción de una emisora para comprar una de otra, mientras eso baje
+   la desviación y el efectivo lo permita. Rescata los casos en que bajar a enteros dejó fuera algo
+   caro que el paso anterior ya no alcanza a recomprar. Es búsqueda local: con tres o más activos
+   puede quedar una combinación mejor que solo se alcanza moviendo tres posiciones a la vez.
+5. Respeta el monto mínimo por operación y la opción de no vender.
 
 Caso probado: con 10,000 pesos, sin posiciones, objetivo 50 y 50 y precios de 300 y 700, el
 resultado es 17 del primero y 7 del segundo, sin efectivo sobrante.

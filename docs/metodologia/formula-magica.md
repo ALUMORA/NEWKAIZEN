@@ -26,8 +26,13 @@ con el valor empresa completo:
 
 ```
 valor empresa = capitalización + deuda total + interés minoritario + acciones preferentes
-                − efectivo e inversiones temporales
+                − efectivo
 ```
+
+El efectivo es el renglón de efectivo y equivalentes del balance. Las inversiones temporales solo
+se restan cuando la fuente las reporta sumadas al efectivo en un mismo renglón; si vienen aparte, se
+quedan dentro del valor empresa, que entonces sale un poco más alto de lo que sería con la
+definición del libro.
 
 Se usa EBIT y no utilidad neta, y valor empresa y no capitalización, para que el múltiplo no dependa
 de cuánta deuda trae la empresa ni de su tasa efectiva de impuestos. Dos empresas con el mismo
@@ -49,6 +54,8 @@ donde el capital de trabajo neto excluye el efectivo y la deuda de corto plazo:
 capital de trabajo neto = (activo circulante − efectivo) − (pasivo circulante − deuda de corto plazo)
 ```
 
+con el mismo renglón de efectivo que el valor empresa.
+
 La exclusión del efectivo y de la deuda de corto plazo es deliberada. La idea es medir el capital
 tangible que el negocio necesita para operar, no el que trae parqueado ni el que financia con deuda
 bancaria de corto plazo. Es la diferencia principal entre esta definición y un ROIC estándar.
@@ -64,8 +71,9 @@ y por ROC son 1, 2, 3, así que las sumas son 3, 5, 4 y el orden final es la pri
 segunda.
 
 **Empates.** Cuando dos emisoras tienen exactamente el mismo valor en una métrica, comparten la
-posición promedio, y si la suma también empata se desempata por el EY, que es el criterio más
-estable de los dos. El backend viejo resolvía los empates de otra forma, y ese comportamiento se
+misma posición y la siguiente se salta: 1, 2, 2, 4. Si la suma también empata se desempata por la
+posición en EY, que es el criterio más estable de los dos, y si aun así empatan, por la clave de la
+emisora en orden alfabético, solo para que el orden sea reproducible. El backend viejo resolvía los empates de otra forma, y ese comportamiento se
 conserva en las pruebas de paridad de la versión 1 a propósito, pero no se reproduce en la v2.
 
 ## Qué se excluye y por qué
@@ -74,11 +82,20 @@ conserva en las pruebas de paridad de la versión 1 a propósito, pero no se rep
   activo fijo en el sentido de la fórmula, y su deuda es materia prima, no financiamiento. El propio
   Greenblatt las excluye.
 - **Servicios públicos regulados.** Su rentabilidad la fija un regulador, no el mercado.
-- **FIBRAs y vehículos inmobiliarios.** Su medida de flujo es el FFO, no el EBIT, y tienen su propia
-  pantalla.
-- **Emisoras sin EBIT positivo o sin los renglones necesarios.** Salen del ranking con la razón
-  escrita, no con un cero.
-- **Emisoras con capital invertido negativo.** El ROC no tiene lectura y se excluyen.
+- **FIBRAs y vehículos inmobiliarios.** No se excluyen por regla: simplemente no están en los
+  universos de la fórmula, porque tienen su propia pantalla. Si alguna vez entraran, se
+  rankearían como cualquier otra emisora, así que conviene leerlo como un hueco y no como una
+  garantía.
+- **Emisoras sin EBIT reportado o sin los renglones necesarios.** Salen del ranking con la razón
+  escrita, no con un cero. Un EBIT negativo, en cambio, no se excluye: entra con EY y ROC negativos
+  y queda al fondo del ranking.
+- **Emisoras con capital empleado de cero o negativo, o con valor empresa de cero o negativo.** El
+  cociente no tiene lectura y se excluyen.
+- **Emisoras chicas.** Hay un piso de capitalización: 2,000 millones de dólares en el universo
+  estadounidense y 5,000 millones de pesos en el mexicano.
+- **Emisoras que reportan en una moneda y cotizan en otra.** Se excluyen en vez de convertir,
+  para no mezclar monedas.
+- **Emisoras por las que el proveedor no respondió.** Quedan fuera con ese motivo.
 
 La pantalla muestra siempre cuántas emisoras quedaron dentro, cuántas se excluyeron y por qué. Un
 ranking de 12 emisoras sobre un universo de 130 no dice lo mismo que uno de 100.
@@ -88,8 +105,8 @@ ranking de 12 emisoras sobre un universo de 130 no dice lo mismo que uno de 100.
 Hay que decirlas porque cambian el resultado:
 
 - Greenblatt trabaja sobre el universo estadounidense, con miles de emisoras y un corte por
-  capitalización mínima. El universo mexicano tiene decenas, así que el ranking es mucho más
-  sensible a una sola exclusión.
+  capitalización mínima. Kaizen también corta por capitalización, pero su universo mexicano tiene
+  decenas de emisoras, así que el ranking es mucho más sensible a una sola exclusión.
 - El libro usa datos de un proveedor comercial con estados normalizados. Aquí los estados vienen de
   una fuente pública y pueden traer renglones faltantes o clasificados distinto.
 - El libro propone además una disciplina de rotación anual y un horizonte de varios años. Kaizen no

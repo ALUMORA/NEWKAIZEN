@@ -15,7 +15,11 @@ y los precios de cierre, en pesos. Tres reglas que no se rompen:
    días que le faltan a una se caen de la comparación. Esto suena obvio y era justo el defecto de la
    versión anterior, que emparejaba arreglos por índice y comparaba días distintos.
 3. **Periodicidad explícita.** La cantidad de periodos por año, 252 para diario, 52 para semanal y
-   12 para mensual, se pasa a cada función. No hay ningún 52 escondido.
+   12 para mensual, se pasa explícita. Las funciones de métricas la exigen y sin ella no calculan.
+   Las de comparación contra el referente, si no la reciben, no anualizan: el tracking error y la
+   alfa salen por periodo, y el resultado trae el valor usado para que nadie los etiquete como
+   anuales. La única que supone un valor es la validación walk forward del optimizador, que toma
+   52 si no se le indica otro.
 
 ## Volatilidad
 
@@ -90,8 +94,9 @@ la serie de CETES a 28 días convertida al plazo de cada periodo, no una constan
 
 Sobre esa serie hay una excepción a la regla general de no rellenar huecos, y conviene tenerla
 presente al leer cualquiera de estos números: se usa la tasa vigente al inicio de cada periodo y se
-arrastra hasta 45 días. Si no hay dato publicado dentro de esa ventana, el periodo sale nulo y la
-pantalla muestra `s/d` en vez de suponer una tasa. La misma excepción aplica al Treynor, al alfa de
+arrastra hasta 45 días naturales. Si no hay dato publicado dentro de esa ventana, el periodo sale
+nulo en vez de suponer una tasa, y con un solo periodo nulo la medida de esa ventana no se calcula:
+la pantalla muestra `s/d` o recorta el tramo. La misma excepción aplica al Treynor, al alfa de
 Jensen y a cualquier otra medida que se calcule sobre excesos.
 
 - Sharpe: promedio de los excesos entre su desviación estándar, por la raíz de los periodos por año.
