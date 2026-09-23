@@ -1,8 +1,8 @@
 /* Páginas nuevas de Mi portafolio (F1). Solo espacio vertical; lo demás sale de C1. */
 .kz-portfolio-page { padding-block: var(--space-6) var(--space-7); }
 .kz-portfolio-stats { padding: var(--space-4); }
-.kz-portfolio-note { color: var(--muted); margin: 0; padding: var(--space-3) var(--space-4); }
-.kz-portfolio-list { margin: 0; padding-inline-start: var(--space-5); display: grid; gap: var(--space-2); }
+.kz-portfolio-note { color: var(--muted); font-size: var(--text-sm); margin: 0; padding: var(--space-3) var(--space-4); }
+.kz-portfolio-list { display: grid; font-size: var(--text-md); gap: var(--space-2); margin: 0; padding-inline-start: var(--space-5); }
 .kz-portfolio-type { display: inline-flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
 .kz-portfolio-hint { color: var(--muted); font-size: var(--text-sm); margin: 0; }
 .kz-portfolio-add { display: grid; gap: var(--space-3); grid-template-columns: minmax(0, 1fr); align-items: start; }
@@ -13,5 +13,11 @@
 .kz-portfolio-sources { display: grid; gap: var(--space-2); padding: var(--space-3) var(--space-4); }
 .kz-portfolio-sources__list { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5); list-style: none; margin: 0; padding: 0; }
 .kz-portfolio-notes { padding: var(--space-3) var(--space-4) var(--space-4) calc(var(--space-4) + var(--space-5)); }
-.kz-portfolio-prose { max-width: 72ch; }
+.kz-portfolio-prose { font-size: var(--text-md); max-width: 72ch; }
 .kz-portfolio-prose p { margin: 0; }
+.kz-portfolio-pnl { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.kz-portfolio-links { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); list-style: none; margin: 0; padding: 0; }
+.kz-portfolio-links li { display: grid; gap: var(--space-1); }
+.kz-portfolio-links__link { font-weight: var(--weight-semibold); min-height: 24px; display: inline-flex; align-items: center; }
+.kz-portfolio-links__link,
+.kz-portfolio-prose a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }

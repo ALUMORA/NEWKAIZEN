@@ -1,10 +1,10 @@
-// Mi portafolio (F1). /portafolio monta la tab "Portfolio" de la app legada hasta que exista la
-// página nueva. Los datos locales ya viven en src/lib/storage.js (usePortfolios).
+// Mi portafolio (F1). Todas las páginas son nuevas y se cargan con lazy; los datos locales viven
+// en src/lib/storage.js (usePortfolios) y los cálculos en src/lib/finance.
 import { lazy } from 'react'
-import { legacyRoute } from '../../app/legacyRoute.jsx'
 import { PATHS, route } from '../../app/paths.js'
 
 const Pages = {
+  Summary: lazy(() => import('./pages/Summary.jsx')),
   Transactions: lazy(() => import('./pages/Transactions.jsx')),
   Rebalance: lazy(() => import('./pages/Rebalance.jsx')),
   Risk: lazy(() => import('./pages/Risk.jsx')),
@@ -12,7 +12,11 @@ const Pages = {
 }
 
 export const routes = [
-  legacyRoute(PATHS.portfolio, { title: 'Mi portafolio' }),
+  {
+    path: route(PATHS.portfolio),
+    element: <Pages.Summary />,
+    handle: { title: 'Mi portafolio', description: 'Valor de tu portafolio en pesos, ganancia no realizada, cambio del día, posiciones y asignación.' },
+  },
   {
     path: route(PATHS.portfolioTransactions),
     element: <Pages.Transactions />,

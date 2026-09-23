@@ -423,6 +423,70 @@ plainTest('portafolio: rendimiento con el panel caído avisa y deja el ISR', asy
   guards.assertClean()
 })
 
+test.describe('portafolio: resumen', () => {
+  for (const theme of THEMES) {
+    test(`carga con su h1, valor en pesos, posiciones, asignación y ligas sin violaciones (${theme})`, async ({ page, baseURL }) => {
+      await open(page, baseURL, { theme, state: PERF_STATE })
+      await page.goto('/portafolio')
+      await expect(page.getByRole('heading', { level: 1, name: 'Mi portafolio' })).toBeVisible()
+      await expect(page.locator('h1')).toHaveCount(1)
+      const summary = page.getByRole('region', { name: 'Resumen' })
+      // 150 WALMEX a 65, 5 AAPL a 240 dólares con 18.4321 y 10,300 de efectivo.
+      await expect(summary).toContainText('$42,168.52 MXN')
+      // AAPL: 5 × (240 × 18.4321 − 225 × 18.3); WALMEX a su costo promedio.
+      await expect(summary).toContainText('+$1,531.02 MXN')
+      await expect(summary).toContainText('+$334.32 MXN')
+      const positions = page.getByRole('table', { name: 'Posiciones a precio de hoy' })
+      await expect(positions.getByRole('row', { name: /AAPL/ })).toContainText('$240.00 USD')
+      await expect(positions.getByRole('row', { name: /WALMEX\.MX/ })).toContainText('150')
+      await expect(page.getByRole('figure', { name: 'Asignación' })).toBeVisible()
+      const links = page.getByRole('region', { name: 'Más de tu portafolio' })
+      for (const [name, href] of [['Movimientos', '/portafolio/movimientos'], ['Rendimiento', '/portafolio/rendimiento'], ['Riesgo', '/portafolio/riesgo'], ['Rebalanceo', '/portafolio/rebalanceo']]) {
+        await expect(links.getByRole('link', { name, exact: true })).toHaveAttribute('href', href)
+      }
+      await noHorizontalScroll(page)
+      await expectNoAxeViolations(page, `resumen ${theme}`)
+    })
+  }
+
+  test('cambia de portafolio activo con el selector', async ({ page, baseURL }) => {
+    const second = { ...STATE.portfolios[0], id: 'p2', name: 'Retiro', transactions: [tx({ id: 'r1', type: 'deposit', date: '2026-09-01', amount: 5000 })] }
+    await open(page, baseURL, { state: { ...STATE, portfolios: [STATE.portfolios[0], second] } })
+    await page.goto('/portafolio')
+    await expect(page.getByRole('table', { name: 'Posiciones a precio de hoy' }).getByRole('row', { name: /WALMEX\.MX/ })).toBeVisible()
+    await page.getByLabel('Portafolio activo').selectOption('p2')
+    await expect(page.getByRole('region', { name: 'Resumen' })).toContainText('$5,000.00 MXN')
+    const active = () => page.evaluate(() => JSON.parse(window.localStorage.getItem('kaizen:v2') ?? '{}').activePortfolioId)
+    await expect.poll(active).toBe('p2')
+  })
+
+  test('sin portafolio lleva a la bienvenida', async ({ page, baseURL }) => {
+    await open(page, baseURL, { state: { ...STATE, portfolios: [], activePortfolioId: null } })
+    await page.goto('/portafolio')
+    await expect(page.getByRole('heading', { level: 1, name: 'Mi portafolio' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Ir a la bienvenida' })).toHaveAttribute('href', '/bienvenida')
+    await noHorizontalScroll(page)
+    await expectNoAxeViolations(page, 'resumen sin portafolio')
+  })
+})
+
+plainTest('portafolio: resumen con las cotizaciones caídas avisa y deja reintentar', async ({ page, baseURL }) => {
+  const guards = attachGuards(page, { allow: expectedHttpError(404, 'GET', '/v2/quotes', 'la prueba tumba las cotizaciones a propósito') })
+  await open(page, /** @type {string} */ (baseURL))
+  await page.route(/\/v2\/quotes/, (route, request) =>
+    route.fulfill({
+      status: 404,
+      headers: { 'access-control-allow-origin': request.headers().origin ?? '*', vary: 'Origin' },
+      contentType: 'application/json',
+      body: JSON.stringify({ error: { code: 'NOT_FOUND', message: 'Sin cotizaciones.' } }),
+    }),
+  )
+  await page.goto('/portafolio')
+  await expect(page.getByRole('region', { name: 'Resumen' }).getByRole('alert')).toContainText('No pudimos traer las cotizaciones')
+  await expect(page.getByRole('region', { name: 'Resumen' }).getByRole('button', { name: 'Reintentar' })).toBeVisible()
+  guards.assertClean()
+})
+
 const RISK_STATE = {
   ...STATE,
   portfolios: [{ ...STATE.portfolios[0], transactions: [...STATE.portfolios[0].transactions, tx({ id: 'tx4', type: 'buy', date: '2026-09-11', symbol: 'NAFTRAC.MX', quantity: 50, price: 55 })] }],
