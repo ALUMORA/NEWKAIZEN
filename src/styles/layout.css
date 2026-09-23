@@ -1,0 +1,52 @@
+/* ─── Utilidades de acomodo (C1) ─────────────────────────────────────────────
+   Lo mínimo para que una página se arme sin inventar CSS en cada feature. El
+   armazón de la app (barra lateral, barra superior, navegación de abajo) lo hace
+   C3 con --sidebar-w, --topbar-h y --bottomnav-h de tokens.css.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* Ancho máximo de contenido con margen lateral que no se pega al borde. */
+.kz-container {
+  margin-inline: auto;
+  max-width: var(--content-max);
+  padding-inline: var(--space-4);
+  width: 100%;
+}
+@media (min-width: 900px) {
+  .kz-container { padding-inline: var(--space-6); }
+}
+
+/* Columna con separación regular. El número es un paso de --space-*. */
+.kz-col { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+.kz-col[data-gap="2"] { gap: var(--space-2); }
+.kz-col[data-gap="3"] { gap: var(--space-3); }
+.kz-col[data-gap="6"] { gap: var(--space-6); }
+.kz-col[data-gap="7"] { gap: var(--space-7); }
+
+/* Fila que se envuelve sola cuando no cabe: nunca provoca scroll horizontal. */
+.kz-row { align-items: center; display: flex; flex-wrap: wrap; gap: var(--space-2); min-width: 0; }
+.kz-row[data-gap="3"] { gap: var(--space-3); }
+.kz-row[data-gap="4"] { gap: var(--space-4); }
+.kz-row[data-align="start"] { align-items: flex-start; }
+.kz-row[data-justify="between"] { justify-content: space-between; }
+
+/* Rejilla de métricas: se acomoda sola, sin media queries por conteo. El mínimo
+   de 180px es lo que mide "$1,234,567.89 MXN" en --text-xl sin cortarse. */
+.kz-metric-grid {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+.kz-metric-grid > * { min-width: 0; }
+@media (max-width: 480px) {
+  .kz-metric-grid { grid-template-columns: 1fr; }
+}
+
+/* Dos columnas que se vuelven una en pantalla chica. */
+.kz-split { display: grid; gap: var(--space-4); grid-template-columns: 1fr; }
+@media (min-width: 900px) {
+  .kz-split { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  .kz-split[data-ratio="even"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Separador fino entre bloques de una tarjeta. */
+.kz-divider { background: var(--border); border: 0; height: 1px; margin: 0; width: 100%; }

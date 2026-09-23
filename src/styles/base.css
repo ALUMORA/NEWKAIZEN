@@ -1,0 +1,82 @@
+/* ─── Base del sistema de diseño (C1) ────────────────────────────────────────
+   Solo reglas que NO tocan lo que ya dibuja el legado: utilidades nuevas y el
+   respeto a prefers-reduced-motion para las clases kz-*. Los resets globales
+   siguen viviendo en src/theme.css y src/index.css.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* Números alineados en columna: la misma cifra no baila cuando cambia el dato.
+   Obligatorio en toda celda numérica, métrica y delta. */
+.num {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+}
+
+/* Mono para claves, tickers y cifras clave. */
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Etiqueta en versalitas: el único lugar donde se permite 11px. */
+.kz-eyebrow {
+  color: var(--muted);
+  display: inline-block;
+  font-size: var(--text-2xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-caps);
+  line-height: var(--leading-tight);
+  text-transform: uppercase;
+}
+
+/* Foco visible propio de los componentes nuevos: mismo color que el global de
+   theme.css pero pegado al control, porque en tablas densas un offset de 3px se
+   corta contra la celda de al lado. */
+.kz-focusable:focus-visible,
+.kz-button:focus-visible,
+.kz-icon-button:focus-visible,
+.kz-tab:focus-visible,
+.kz-input:focus-visible,
+.kz-select:focus-visible,
+.kz-th-button:focus-visible,
+.kz-infotip__trigger:focus-visible,
+.kz-status:focus-visible,
+.kz-seg__input:focus-visible + .kz-seg__label,
+.kz-toast__action:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* El teclado tiene que ver dónde está aunque la fila viva dentro de un
+   contenedor con scroll: el anillo va por dentro. */
+/* El contenedor con scroll de una tabla también recibe foco (para moverlo con
+   las flechas): el anillo va por dentro para que no lo corte su marco. */
+.kz-table-scroll:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
+
+/* Dato faltante: "s/d" en tono apagado, nunca un guion. */
+.kz-missing { color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .kz-button,
+  .kz-icon-button,
+  .kz-card,
+  .kz-tab,
+  .kz-seg__label,
+  .kz-toast,
+  .kz-dialog,
+  .kz-sheet,
+  .kz-popover,
+  .kz-skeleton,
+  .kz-input,
+  .kz-input-wrap,
+  .kz-select,
+  .kz-status,
+  .kz-infotip__trigger,
+  .kz-button__spinner,
+  .kz-table tr > :first-child::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
