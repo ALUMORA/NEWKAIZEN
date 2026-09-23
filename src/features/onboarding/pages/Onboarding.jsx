@@ -1,5 +1,7 @@
 // /bienvenida: tres formas de empezar. Un portafolio de EJEMPLO, importar un CSV o empezar vacío.
-// Cualquiera de las tres guarda settings.onboardingDone y lleva al portafolio.
+// Cualquiera de las tres guarda settings.onboardingDone y lleva a /portafolio/movimientos, que lee
+// el storage v2. No a /portafolio: mientras esa ruta monte el legado, ahí se ve el portafolio fijo
+// del código (DEFAULT_PORTFOLIOS) y no el que se acaba de crear.
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Badge, Button, Card, PageHeader, useToast } from '../../../components/ui/index.js'
@@ -27,7 +29,7 @@ export default function Onboarding() {
 
   const finish = (message) => {
     toast.show({ title: message, tone: 'positive' })
-    navigate(PATHS.portfolio)
+    navigate(PATHS.portfolioTransactions)
   }
 
   const onFile = async (event) => {
@@ -89,7 +91,7 @@ export default function Onboarding() {
               </>
             )}
             <Button className="ob-push" variant="secondary" disabled={!csv?.ok.length} onClick={() => { createPortfolio({ name: 'Mi portafolio', transactions: csv?.ok ?? [] }); finish('Listo: importamos tus movimientos') }}>
-              {csv?.ok.length ? `Crear portafolio con ${csv.ok.length} movimientos` : 'Crear portafolio'}
+              {csv?.ok.length ? `Crear portafolio con ${csv.ok.length} ${csv.ok.length === 1 ? 'movimiento' : 'movimientos'}` : 'Crear portafolio'}
             </Button>
           </div>
         </Card>
