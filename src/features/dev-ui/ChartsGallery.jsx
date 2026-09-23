@@ -5,6 +5,8 @@ import { createRng } from '../../lib/rng.js'
 import { TimeSeries } from '../../components/charts/TimeSeries.jsx'
 import { FanChart } from '../../components/charts/FanChart.jsx'
 import { DrawdownChart } from '../../components/charts/DrawdownChart.jsx'
+import { Donut } from '../../components/charts/Donut.jsx'
+import { Bars } from '../../components/charts/Bars.jsx'
 import { GALLERY_NOW } from './sample-data.js'
 
 const DAY = 86400000
@@ -51,6 +53,18 @@ const FAN = Array.from({ length: 21 }, (_, year) => {
   }
 })
 const CONTRIB = FAN.map((p) => ({ x: p.x, value: 500000 + 60000 * p.x }))
+const MIX = [
+  { label: 'Acciones México', value: 420000 }, { label: 'Acciones EUA', value: 310000 }, { label: 'CETES', value: 180000 },
+  { label: 'FIBRAs', value: 95000 }, { label: 'Bonos M', value: 70000 }, { label: 'Efectivo', value: 25000 },
+]
+const MANY = ['WALMEX', 'GFNORTE', 'AMX', 'FEMSA', 'GMEXICO', 'CEMEX', 'BIMBO', 'KOF', 'AC', 'ASUR', 'GAP', 'OMA']
+  .map((label, i) => ({ label, value: Math.round(100000 / (i + 1.4)) }))
+const SECTORS = [
+  { label: 'Materiales', value: 0.084 }, { label: 'Financiero', value: 0.051 }, { label: 'Consumo básico', value: -0.023 },
+  { label: 'Telecomunicaciones', value: 0.012 }, { label: 'Industrial', value: -0.047 }, { label: 'Bienes raíces (FIBRAs)', value: 0.003 },
+]
+const YEARS = [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025].map((y, i) => ({ label: String(y), value: [0.081, -0.157, 0.046, 0.012, 0.209, -0.07, 0.182, -0.139, 0.227][i] }))
+const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'].map((m, i) => ({ label: `${m} 2025`, value: 12000 + ((i * 7919) % 9000) }))
 const STATUS = { asOf: '2026-09-22T20:40:00Z', source: 'BMV', delayMinutes: 15, now: GALLERY_NOW }
 const STALE = { asOf: '2026-09-19', source: 'FRED', fallback: true, stale: true, now: GALLERY_NOW }
 
@@ -83,6 +97,26 @@ export default function ChartsGallery() {
         </Card>
         <Card>
           <DrawdownChart title="Caída desde el máximo" description="IPC, calculada de los cierres." points={IPC} fromPrices height={260} />
+        </Card>
+      </div>
+      <div className="dev-grid dev-grid--2">
+        <Card>
+          <Donut title="Mezcla del portafolio" description="Valor por clase de activo." centerLabel="Valor total" data={MIX} source="Tus movimientos" />
+        </Card>
+        <Card>
+          <Donut title="Doce emisoras" description="Las menores se juntan en Otros." data={MANY} format="number" centerLabel="Acciones" />
+        </Card>
+        <Card>
+          <Bars title="Rendimiento por sector" description="Últimos 30 días." data={SECTORS} signed format="pct" categoryLabel="Sector" valueLabel="Rendimiento" />
+        </Card>
+        <Card>
+          <Bars title="Rendimiento anual del IPC" data={YEARS} signed format="pct" orientation="vertical" categoryLabel="Año" valueLabel="Rendimiento" />
+        </Card>
+        <Card>
+          <Bars title="Aportaciones por mes" data={MONTHS} format="money" orientation="vertical" height={200} categoryLabel="Mes" valueLabel="Aportación" />
+        </Card>
+        <Card>
+          <Donut title="Dona vacía" data={[]} size={140} />
         </Card>
       </div>
     </div>

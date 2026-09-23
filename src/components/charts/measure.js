@@ -26,3 +26,11 @@ export function placeXTicks(ticks, x, x0, x1) {
   }
   return out
 }
+
+/** Recorta una etiqueta para que quepa en `px` de ancho, con puntos suspensivos. */
+export function fitText(text, px) {
+  const s = String(text)
+  const max = Math.floor(px / 6.8)
+  if (s.length <= max) return s
+  return max <= 1 ? '' : `${s.slice(0, max - 1).trimEnd()}…`
+}

@@ -53,7 +53,7 @@
   transition: transform var(--dur-fast) var(--ease-out);
 }
 .kz-chart__tooltip-title { color: var(--muted); font-weight: var(--weight-semibold); margin: 0 0 var(--space-1); }
-.kz-chart__tooltip-row { align-items: center; display: flex; gap: var(--space-2); justify-content: space-between; white-space: nowrap; }
+.kz-chart__tooltip-row { align-items: center; display: flex; gap: var(--space-4); justify-content: space-between; white-space: nowrap; }
 .kz-chart__tooltip-name { align-items: center; color: var(--ink-soft); display: inline-flex; gap: var(--space-2); }
 .kz-chart__tooltip-value { font-variant-numeric: tabular-nums lining-nums; font-weight: var(--weight-semibold); }
 
@@ -63,3 +63,16 @@
 
 .kz-sparkline { display: inline-flex; align-items: center; gap: var(--space-2); vertical-align: middle; }
 .kz-sparkline svg { display: block; overflow: visible; }
+
+/* Dona */
+.kz-donut { align-items: center; display: flex; flex-wrap: wrap; gap: var(--space-5); }
+.kz-donut__ring { flex-shrink: 0; position: relative; }
+.kz-donut__ring svg { display: block; }
+.kz-donut__center { align-items: center; display: flex; flex-direction: column; inset: 0; justify-content: center; position: absolute; text-align: center; padding: 0 18%; }
+.kz-donut__center-label { color: var(--muted); font-size: var(--text-xs); }
+.kz-donut__center-value { color: var(--ink); font-size: var(--text-md); font-weight: var(--weight-semibold); line-height: var(--leading-tight); overflow-wrap: anywhere; }
+.kz-donut__legend { display: flex; flex: 1 1 220px; flex-direction: column; gap: var(--space-2); list-style: none; margin: 0; min-width: 0; padding: 0; }
+.kz-donut__item { align-items: center; column-gap: var(--space-2); display: grid; font-size: var(--text-xs); grid-template-columns: 16px minmax(0, 1fr) auto 6ch; }
+.kz-donut__name { color: var(--ink-soft); font-size: var(--text-xs); min-width: 0; overflow-wrap: anywhere; }
+.kz-donut__value { color: var(--ink); font-size: var(--text-xs); font-weight: var(--weight-semibold); text-align: right; }
+.kz-donut__share { color: var(--muted); font-size: var(--text-xs); text-align: right; min-width: 4.5ch; }
