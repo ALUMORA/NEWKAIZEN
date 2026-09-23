@@ -1,5 +1,6 @@
-// Páginas nuevas de Mi portafolio (F1). Corre en desktop (1440x900) y mobile (390x844) con las
-// respuestas v2 simuladas y el libro sembrado en localStorage (storage v2, llave kaizen:v2).
+// Páginas de Mi portafolio (F1): resumen, movimientos, rendimiento, riesgo y rebalanceo. Corre en
+// desktop (1440x900) y mobile (390x844) con las respuestas v2 simuladas (cotizaciones, panel y FIX
+// responden a lo que se pide) y el libro sembrado en localStorage (storage v2, llave kaizen:v2).
 // La fixture `guards` tumba la prueba ante cualquier console.error, request fallido o >= 400.
 import { readFile } from 'node:fs/promises'
 import AxeBuilder from '@axe-core/playwright'
@@ -492,8 +493,6 @@ const RISK_STATE = {
   portfolios: [{ ...STATE.portfolios[0], transactions: [...STATE.portfolios[0].transactions, tx({ id: 'tx4', type: 'buy', date: '2026-09-11', symbol: 'NAFTRAC.MX', quantity: 50, price: 55 })] }],
 }
 
-// Sin montar hasta que src/app/router.test.jsx deje de usar /portafolio/riesgo como "Próximamente"
-// (docs/requests/F1.md). Para correrlas, monta Risk.jsx en routes.jsx y quita el skip.
 test.describe('portafolio: riesgo', () => {
   for (const theme of THEMES) {
     test(`carga con su h1, medidas, correlaciones y sin violaciones (${theme})`, async ({ page, baseURL }) => {

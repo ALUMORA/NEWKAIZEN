@@ -1,10 +1,11 @@
 // Cálculos de /portafolio/rendimiento. Aquí solo se arma lo que la página pinta; las fórmulas
 // son las de src/lib/finance (valueSeries, twr, xirr, positionPnl, isrOnGains), las mismas que
 // describe docs/metodologia/portafolio.md. Módulo puro: la fecha de hoy entra por parámetro.
-import { twr, twrReturns, valueSeries, annualizeReturn, yearsBetween } from '../../../lib/finance/performance-ledger.js'
+import { isrOnGains, twr, valueSeries, xirr } from '../../../lib/finance/index.js'
+// Lo que el barril todavía no reexporta (docs/requests/F1.md, pedido 6).
+import { annualizeReturn, twrReturns, yearsBetween } from '../../../lib/finance/performance-ledger.js'
 import { derivePositionsDetailed, externalFlows, orderTransactions, positionPnl, realizedSales } from '../../../lib/finance/ledger.js'
-import { signChanges, xirr } from '../../../lib/finance/xirr.js'
-import { isrOnGains } from '../../../lib/finance/tax-mx.js'
+import { signChanges } from '../../../lib/finance/xirr.js'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 /** @param {unknown} v @returns {v is number} */
