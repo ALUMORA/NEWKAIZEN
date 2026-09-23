@@ -10,8 +10,7 @@
 // /portafolio y la paleta en los dos temas; sin la variable se salta.
 import AxeBuilder from '@axe-core/playwright'
 import { test, expect } from './support/guards.js'
-import { API_URL_RE, HEALTH_V2, setupApp } from './support/app.js'
-import { trackNetwork, waitForSettled } from './support/legacy.js'
+import { HEALTH_V2, setupApp } from './support/app.js'
 import { RESEARCH_ROUTES } from './support/research-data.js'
 
 const WCAG_AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
@@ -79,6 +78,17 @@ const QUOTES = {
 const V2_ROUTES = {
   ...Object.fromEntries(Object.entries(RESEARCH_ROUTES).filter(([k]) => /instrument|history|valuation|momentum|news/.test(k))),
   'GET /v2/markets/overview': { json: OVERVIEW },
+  // Mercados ya es la ruta nueva y pide los datos por país; con dos basta para que dibuje.
+  'GET /v2/markets/world': {
+    json: {
+      items: [
+        { country: '484', symbol: 'EWW', label: 'México', changePct: 0.0061, currency: 'USD', asOf: '2026-09-22' },
+        { country: '840', symbol: 'SPY', label: 'Estados Unidos', changePct: -0.0028, currency: 'USD', asOf: '2026-09-22' },
+      ],
+      method: 'Variación del ETF de cada país cotizado en dólares.',
+      meta: meta({ asOf: '2026-09-22' }),
+    },
+  },
   'GET /v2/rates/mx': { json: RATES },
   'GET /v2/search': ({ url }) => ({ json: searchResponse(url.searchParams.get('q')) }),
   'GET /v2/quotes': ({ url }) => {
@@ -100,10 +110,9 @@ async function openShell(page, baseURL, { theme } = {}) {
   return api
 }
 
-/** Espera a que el legado termine de cargar (misma regla que app.spec.js). */
-async function legacySettled(page, net) {
-  await expect(page.locator('.app-shell[data-embedded]')).toBeVisible()
-  await waitForSettled(page, net)
+/** Espera a que la ruta termine de montar dentro del shell: su h1 visible. */
+async function appSettled(page) {
+  await expect(page.getByRole('main').getByRole('heading', { level: 1 }).first()).toBeVisible()
 }
 
 /** La tira muestra datos (la respuesta ya llegó). */
@@ -238,21 +247,19 @@ test.describe('shell: navegación', () => {
     await expect(page.locator('.kz-side')).toHaveCSS('width', '240px')
   })
 
-  test('escritorio: la ruta del legado muestra su contenido sin su barra vieja', async ({ page, baseURL }, testInfo) => {
+  test('escritorio: Mercados y Riesgo sin la barra vieja del legado', async ({ page, baseURL }, testInfo) => {
     test.skip(isMobile(testInfo), 'La misma revisión en móvil está en la prueba de la barra inferior.')
     await openShell(page, /** @type {string} */ (baseURL))
-    const net = trackNetwork(page, API_URL_RE)
     await page.goto('/mercados')
-    await legacySettled(page, net)
-    await expect(page.getByText('Resumen Mañanero').first()).toBeVisible()
+    await appSettled(page)
     await expect(page.locator('.app-sidebar, .app-topbar, .bottom-nav-mobile')).toHaveCount(0)
     await expect(page.getByRole('heading', { level: 1, name: 'Mercados' })).toBeAttached()
 
-    await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: 'Fórmula mágica' }).click()
-    await expect(page).toHaveURL(/\/screener\/formula-magica$/)
-    await expect(page).toHaveTitle('Fórmula Mágica · Kaizen')
-    await expect(page.getByRole('heading', { level: 1, name: 'Fórmula Mágica' })).toBeFocused()
-    await legacySettled(page, net)
+    await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: 'Riesgo' }).click()
+    await expect(page).toHaveURL(/\/portafolio\/riesgo$/)
+    await expect(page).toHaveTitle('Riesgo · Kaizen')
+    await expect(page.getByRole('heading', { level: 1, name: 'Riesgo' })).toBeFocused()
+    await appSettled(page)
     await noHorizontalScroll(page)
   })
 
@@ -283,11 +290,9 @@ test.describe('shell: navegación', () => {
     const footerBottom = await page.getByRole('contentinfo').evaluate((el) => el.getBoundingClientRect().bottom)
     const navTop = await bottom.evaluate((el) => el.getBoundingClientRect().top)
     expect(footerBottom).toBeLessThanOrEqual(navTop + 0.5)
-
-    const net = trackNetwork(page, API_URL_RE)
     await bottom.getByRole('link', { name: 'Mercados' }).click()
     await expect(page).toHaveURL(/\/mercados$/)
-    await legacySettled(page, net)
+    await appSettled(page)
     await expect(page.locator('.bottom-nav-mobile, .app-topbar')).toHaveCount(0)
     await expect(page.getByRole('heading', { level: 1, name: 'Mercados' })).toBeFocused()
     await noHorizontalScroll(page)
@@ -341,9 +346,9 @@ test.describe('shell: paleta de comandos', () => {
     await page.keyboard.press('ArrowUp')
     await expect(dialog.getByRole('option').first()).toHaveAttribute('aria-selected', 'true')
 
-    await input.fill('fibras')
+    await input.fill('riesgo')
     await page.keyboard.press('Enter')
-    await expect(page).toHaveURL(/\/screener\/fibras$/)
+    await expect(page).toHaveURL(/\/portafolio\/riesgo$/)
     await expect(dialog).toBeHidden()
   })
 
@@ -449,11 +454,10 @@ test.describe('shell: accesibilidad (WCAG 2.1 AA)', () => {
         await page.getByRole('button', { name: 'Expandir barra lateral' }).click()
       }
 
-      // Ruta del legado: se revisa el cromo nuevo; el contenido del legado es de antes de C3.
-      const net = trackNetwork(page, API_URL_RE)
+      // Mercados ya es la ruta nueva: se revisa completa, sin excluir contenido.
       await page.goto('/mercados')
-      await legacySettled(page, net)
-      await expectNoAxeViolations(page, `/mercados (cromo), tema ${theme}`, { exclude: ['.workspace-page'] })
+      await appSettled(page)
+      await expectNoAxeViolations(page, `/mercados, tema ${theme}`)
     })
   }
 })
@@ -469,9 +473,8 @@ test.describe('capturas para revisión', () => {
         ['/mercados', 'mercados'],
         ['/portafolio', 'portafolio'],
       ]) {
-        const net = trackNetwork(page, API_URL_RE)
         await page.goto(route)
-        await legacySettled(page, net)
+        await appSettled(page)
         await stripReady(page)
         await settleAnimations(page)
         await page.screenshot({ path: `${CAPTURE_DIR}/${name}-${vp}-${theme}.png` })
