@@ -137,7 +137,7 @@ describe('cashBalances y flujos externos', () => {
 
   it('una compra sin depósito previo se cuenta como aportación externa', () => {
     const flows = externalFlows([buy('AAPL', 1, 100, { date: '2026-01-05' })])
-    expect(flows).toEqual([{ date: '2026-01-05', currency: 'MXN', amount: 100, kind: 'funding' }])
+    expect(flows).toEqual([{ date: '2026-01-05', currency: 'MXN', amount: 100, kind: 'funding', fxRate: null }])
   })
 
   it('con depósito previo no hay aportación implícita', () => {
@@ -408,5 +408,27 @@ describe('no se mezclan monedas dentro de un mismo símbolo', () => {
       ok: true,
       errors: [],
     })
+  })
+})
+
+describe('los flujos externos llevan el tipo de cambio que se capturó', () => {
+  it('el fxRate del movimiento manda sobre la tabla por fecha', () => {
+    const deposito = {
+      id: 'd1',
+      type: 'deposit',
+      date: '2026-01-01',
+      symbol: null,
+      quantity: null,
+      price: null,
+      currency: 'USD',
+      fxRate: 18,
+      fees: 0,
+      amount: 1000,
+      ratio: null,
+      note: '',
+    }
+    expect(externalFlows([deposito])[0].fxRate).toBe(18)
+    // sin fxRate el flujo lo dice en vez de dejar que alguien suponga cuál usó
+    expect(externalFlows([buy('AAPL', 1, 100, { date: '2026-01-05' })])[0].fxRate).toBeNull()
   })
 })

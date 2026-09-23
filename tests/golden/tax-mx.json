@@ -274,6 +274,136 @@
       "expected": {
         "detail": [
           {
+            "factor": 1.0,
+            "gain": -700.0,
+            "indexed": false,
+            "indexedCost": 1000.0,
+            "year": "2012"
+          },
+          {
+            "factor": 1.0,
+            "gain": 500.0,
+            "indexed": false,
+            "indexedCost": 1000.0,
+            "year": "2026"
+          }
+        ],
+        "gain": -200.0,
+        "lossCarry": 0.0,
+        "tax": 50.0,
+        "taxableGain": 500.0,
+        "years": [
+          {
+            "gain": -700.0,
+            "lossCarry": 700.0,
+            "lossUsed": 0.0,
+            "tax": 0.0,
+            "taxableGain": 0.0,
+            "year": "2012"
+          },
+          {
+            "gain": 500.0,
+            "lossCarry": 0.0,
+            "lossUsed": 0.0,
+            "tax": 50.0,
+            "taxableGain": 500.0,
+            "year": "2026"
+          }
+        ]
+      },
+      "input": {
+        "inpc": {},
+        "lossCarryIn": 0,
+        "rate": 0.1,
+        "sales": [
+          {
+            "cost": 1000,
+            "costDate": "2012-01-15",
+            "proceeds": 300,
+            "saleDate": "2012-06-10",
+            "symbol": "A"
+          },
+          {
+            "cost": 1000,
+            "costDate": "2026-01-15",
+            "proceeds": 1500,
+            "saleDate": "2026-06-10",
+            "symbol": "B"
+          }
+        ]
+      },
+      "name": "perdida-que-caduca-a-los-diez-ejercicios",
+      "tol": 1e-09
+    },
+    {
+      "expected": {
+        "detail": [
+          {
+            "factor": 1.0,
+            "gain": -700.0,
+            "indexed": false,
+            "indexedCost": 1000.0,
+            "year": "2020"
+          },
+          {
+            "factor": 1.0,
+            "gain": 500.0,
+            "indexed": false,
+            "indexedCost": 1000.0,
+            "year": "2026"
+          }
+        ],
+        "gain": -200.0,
+        "lossCarry": 200.0,
+        "tax": 0.0,
+        "taxableGain": 0.0,
+        "years": [
+          {
+            "gain": -700.0,
+            "lossCarry": 700.0,
+            "lossUsed": 0.0,
+            "tax": 0.0,
+            "taxableGain": 0.0,
+            "year": "2020"
+          },
+          {
+            "gain": 500.0,
+            "lossCarry": 200.0,
+            "lossUsed": 500.0,
+            "tax": 0.0,
+            "taxableGain": 0.0,
+            "year": "2026"
+          }
+        ]
+      },
+      "input": {
+        "inpc": {},
+        "lossCarryIn": 0,
+        "rate": 0.1,
+        "sales": [
+          {
+            "cost": 1000,
+            "costDate": "2020-01-15",
+            "proceeds": 300,
+            "saleDate": "2020-06-10",
+            "symbol": "A"
+          },
+          {
+            "cost": 1000,
+            "costDate": "2026-01-15",
+            "proceeds": 1500,
+            "saleDate": "2026-06-10",
+            "symbol": "B"
+          }
+        ]
+      },
+      "name": "perdida-que-todavia-no-caduca",
+      "tol": 1e-09
+    },
+    {
+      "expected": {
+        "detail": [
+          {
             "factor": 1.0303540568086142,
             "gain": 28178.75659148314,
             "indexed": true,

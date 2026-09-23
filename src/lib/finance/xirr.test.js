@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { dayCount, moneyWeightedReturn, xirr, xnpv } from './xirr.js'
+import { dayCount, moneyWeightedReturn, signChanges, xirr, xnpv } from './xirr.js'
 
 const golden = JSON.parse(readFileSync(new URL('../../../tests/golden/xirr.json', import.meta.url), 'utf8'))
 
@@ -165,5 +165,28 @@ describe('golden contra scipy.optimize.brentq', () => {
   it('el golden trae el caso de Microsoft', () => {
     expect(golden.cases.map((c) => c.name)).toContain('ejemplo-de-la-documentacion-de-microsoft')
     expect(golden.cases.length).toBeGreaterThanOrEqual(11)
+  })
+})
+
+describe('signChanges: aviso de que el XIRR puede no ser único', () => {
+  const flujo = (date, amount) => ({ date, amount })
+
+  it('un solo cambio de signo es el caso normal', () => {
+    expect(signChanges([flujo('2025-01-01', -1000), flujo('2026-01-01', 1100)])).toBe(1)
+  })
+
+  it('con dos cambios de signo hay más de una tasa que satisface la ecuación', () => {
+    const flujos = [flujo('2020-01-01', -1000), flujo('2021-01-01', 2600), flujo('2022-01-01', -1680)]
+    expect(signChanges(flujos)).toBe(2)
+    const baja = xirr(flujos, { guess: 0.1 })
+    const alta = xirr(flujos, { guess: 0.3 })
+    // las dos son raíces de verdad, no un error de cálculo: el VPN da cero en ambas
+    expect(Math.abs(xnpv(baja, flujos))).toBeLessThan(1e-6)
+    expect(Math.abs(xnpv(alta, flujos))).toBeLessThan(1e-6)
+    expect(baja).not.toBeCloseTo(alta, 6)
+  })
+
+  it('por arriba del tope de anualización devuelve null, que es otra causa distinta', () => {
+    expect(xirr([flujo('2025-01-01', -100), flujo('2025-01-31', 10000)])).toBeNull()
   })
 })

@@ -245,3 +245,33 @@ describe('golden contra la referencia en Python (Decimal de 28 dígitos)', () =>
     expect(golden.cases.length).toBeGreaterThanOrEqual(8)
   })
 })
+
+describe('la pérdida arrastrada caduca a los diez ejercicios', () => {
+  const venta = (saleDate, proceeds, cost) => ({
+    symbol: 'A',
+    saleDate,
+    quantity: 1,
+    proceeds,
+    cost,
+    costDate: `${saleDate.slice(0, 4)}-01-15`,
+    gain: proceeds - cost,
+    currency: 'MXN',
+  })
+
+  it('una pérdida vieja deja de restar y la ganancia sí causa impuesto', () => {
+    const out = isrOnGains({ sales: [venta('2012-06-10', 300, 1000), venta('2026-06-10', 1500, 1000)] })
+    const y2026 = out.years.find((y) => y.year === '2026')
+    // la pérdida de 2012 ya pasó los 10 ejercicios, así que no puede amortizar nada en 2026
+    expect(y2026.lossUsed).toBeCloseTo(0, 9)
+    expect(y2026.taxableGain).toBeCloseTo(500, 9)
+    expect(out.notes.join(' ')).toContain('Caducaron')
+  })
+
+  it('dentro de los diez ejercicios sí resta', () => {
+    const out = isrOnGains({ sales: [venta('2020-06-10', 300, 1000), venta('2026-06-10', 1500, 1000)] })
+    const y2026 = out.years.find((y) => y.year === '2026')
+    expect(y2026.lossUsed).toBeCloseTo(500, 9)
+    expect(y2026.taxableGain).toBeCloseTo(0, 9)
+    expect(out.lossCarry).toBeCloseTo(200, 9)
+  })
+})

@@ -62,11 +62,14 @@
 /**
  * Flujo externo: dinero que entra o sale del portafolio.
  *   kind: 'deposit' | 'withdrawal' | 'funding' (compra que no tenía efectivo y se asume aportada).
+ *   fxRate: pesos por dólar el día del movimiento, tal como se capturó. Es el dato de primera mano
+ *   y quien convierta debe preferirlo sobre una tabla de tipo de cambio por fecha.
  * @typedef {{
  *   date: string | null,
  *   currency: Currency,
  *   amount: number,
  *   kind: 'deposit' | 'withdrawal' | 'funding',
+ *   fxRate: number | null,
  * }} ExternalFlow
  */
 
@@ -94,6 +97,15 @@ const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
 const num = (v) => (isNum(v) ? /** @type {number} */ (v) : 0)
 /** @param {unknown} v */
 const isIsoDate = (v) => typeof v === 'string' && DATE_RE.test(v)
+
+/**
+ * Tipo de cambio capturado en el movimiento, si vino y es utilizable.
+ * @param {{ fxRate?: unknown }} tx
+ * @returns {number | null}
+ */
+function rateOf(tx) {
+  return isNum(tx.fxRate) && /** @type {number} */ (tx.fxRate) > 0 ? /** @type {number} */ (tx.fxRate) : null
+}
 
 /** @param {unknown} v @returns {Currency} */
 function currencyOf(v) {
@@ -197,10 +209,12 @@ function runLedger(transactions, { asOf = null, dates = null } = {}) {
       const amount = num(tx.amount)
       if (type === 'deposit') {
         cash[ccy] += amount - fees
-        if (amount > 0) external.push({ date: tx.date ?? null, currency: ccy, amount, kind: 'deposit' })
+        if (amount > 0) external.push({ date: tx.date ?? null, currency: ccy, amount, kind: 'deposit', fxRate: rateOf(tx) })
       } else if (type === 'withdrawal') {
         cash[ccy] -= amount + fees
-        if (amount > 0) external.push({ date: tx.date ?? null, currency: ccy, amount: -amount, kind: 'withdrawal' })
+        if (amount > 0) {
+          external.push({ date: tx.date ?? null, currency: ccy, amount: -amount, kind: 'withdrawal', fxRate: rateOf(tx) })
+        }
       } else if (type === 'fee') {
         cash[ccy] -= isNum(tx.amount) ? amount : fees
       } else {
@@ -250,7 +264,7 @@ function runLedger(transactions, { asOf = null, dates = null } = {}) {
         const short = Math.max(0, amount - (cash[ccy] + funded[ccy]))
         if (short > EPSILON) {
           funded[ccy] += short
-          external.push({ date: tx.date ?? null, currency: ccy, amount: short, kind: 'funding' })
+          external.push({ date: tx.date ?? null, currency: ccy, amount: short, kind: 'funding', fxRate: rateOf(tx) })
         }
         cash[ccy] -= amount
       }

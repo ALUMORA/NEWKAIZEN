@@ -159,27 +159,54 @@ export function isrOnGains({ sales, inpc = {}, rate = ISR_GAINS_RATE, lossCarryI
 
   /** @type {TaxYear[]} */
   const years = []
-  let carry = isNum(lossCarryIn) && lossCarryIn > 0 ? lossCarryIn : 0
+  // El arrastre se guarda por ejercicio de origen, porque caduca a los LOSS_CARRY_YEARS
+  // ejercicios. Guardarlo como un solo número hacía que una pérdida de 2010 siguiera restándole a
+  // una ganancia de 2026. Lo que entra por `lossCarryIn` no trae ejercicio de origen, así que se
+  // toma como vigente: quien lo pase ya decidió que todavía sirve.
+  /** @type {{ year: string, amount: number }[]} */
+  const carryLots = []
+  if (isNum(lossCarryIn) && /** @type {number} */ (lossCarryIn) > 0) {
+    carryLots.push({ year: NO_YEAR, amount: /** @type {number} */ (lossCarryIn) })
+  }
+  let expired = 0
   let totalGain = 0
   let totalTaxable = 0
   let totalTax = 0
   for (const year of keys) {
+    if (year !== NO_YEAR) {
+      for (const lot of carryLots) {
+        if (lot.year === NO_YEAR || lot.amount <= 0) continue
+        if (Number(year) - Number(lot.year) > LOSS_CARRY_YEARS) {
+          expired += lot.amount
+          lot.amount = 0
+        }
+      }
+    }
     const gain = byYear.get(year) ?? 0
     let lossUsed = 0
     let taxableGain = 0
     if (gain > 0) {
-      lossUsed = Math.min(carry, gain)
+      let pending = gain
+      for (const lot of carryLots) {
+        if (pending <= 0) break
+        const use = Math.min(lot.amount, pending)
+        if (use <= 0) continue
+        lot.amount -= use
+        pending -= use
+        lossUsed += use
+      }
       taxableGain = gain - lossUsed
-      carry -= lossUsed
-    } else {
-      carry += -gain
+    } else if (gain < 0) {
+      carryLots.push({ year, amount: -gain })
     }
+    const carry = carryLots.reduce((acc, lot) => acc + lot.amount, 0)
     const tax = taxableGain * taxRate
     years.push({ year, gain, taxableGain, tax, lossUsed, lossCarry: carry })
     totalGain += gain
     totalTaxable += taxableGain
     totalTax += tax
   }
+  const carry = carryLots.reduce((acc, lot) => acc + lot.amount, 0)
 
   /** @type {string[]} */
   const notes = [
@@ -198,9 +225,14 @@ export function isrOnGains({ sales, inpc = {}, rate = ISR_GAINS_RATE, lossCarryI
   if (dropped.length > 0) {
     notes.push(`Se descartaron ${dropped.length} ventas con datos incompletos.`)
   }
+  if (expired > 0) {
+    notes.push(
+      `Caducaron ${expired.toFixed(2)} de pérdidas que ya pasaron los ${LOSS_CARRY_YEARS} ejercicios, así que dejaron de restar.`,
+    )
+  }
   if (carry > 0) {
     notes.push(
-      `Queda una pérdida pendiente de amortizar; la ley permite aplicarla contra ganancias del mismo tipo hasta por ${LOSS_CARRY_YEARS} ejercicios.`,
+      `Queda una pérdida pendiente de amortizar; la ley permite aplicarla contra ganancias del mismo tipo hasta por ${LOSS_CARRY_YEARS} ejercicios, y aquí ya se aplica esa caducidad.`,
     )
   }
   notes.push('El costo promedio usa la fecha de la primera compra del lote, que es una aproximación cuando hubo varias compras.')

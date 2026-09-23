@@ -157,7 +157,11 @@ export function valueSeries(
 
     let flow = 0
     for (const item of snapshot.external) {
-      const flowRate = isIsoDate(item.date) ? lastKnown(fx, fxKeys, /** @type {string} */ (item.date)) : rate
+      // El tipo de cambio capturado en el propio movimiento manda sobre la tabla por fecha: es el
+      // dato de primera mano. Antes se ignoraba y se sustituía en silencio por el de otro día.
+      const own = isNum(item.fxRate) && /** @type {number} */ (item.fxRate) > 0 ? item.fxRate : null
+      const byDate = isIsoDate(item.date) ? lastKnown(fx, fxKeys, /** @type {string} */ (item.date)) : rate
+      const flowRate = own ?? byDate
       const factor = conversion(item.currency, base, flowRate ?? rate)
       if (factor === null) {
         failure = failure ?? `Falta el tipo de cambio para convertir un movimiento en ${item.currency}.`
