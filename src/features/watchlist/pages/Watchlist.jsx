@@ -6,7 +6,6 @@ import { Button, Card, DataTable, Delta, EmptyState, ErrorState, Input, Money, P
 import { Sparkline } from '../../../components/charts/Sparkline.jsx'
 import { historyQuery, quotesQuery, searchQuery } from '../../../lib/api/queries.js'
 import { LEGACY_WATCHLIST_NAME, update, useStore } from '../../../lib/storage.js'
-import { fmtPct } from '../../../lib/format.js'
 import '../watchlist.css'
 
 const EMPTY = []
@@ -28,7 +27,11 @@ function Trend({ symbol }) {
   const first = data.close[0]
   const last = data.close[data.close.length - 1]
   const change = first ? last / first - 1 : null
-  return <Sparkline values={data.close} label={`Tendencia de un mes de ${symbol}: ${fmtPct(change, { sign: true })}`} />
+  return (
+    <Sparkline values={data.close} label={`Tendencia de un mes de ${symbol}`}>
+      {change != null ? <Delta value={change} /> : <span className="kz-missing">s/d</span>}
+    </Sparkline>
+  )
 }
 
 function SearchBox({ onAdd, symbols }) {
