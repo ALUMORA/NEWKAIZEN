@@ -68,7 +68,8 @@ def statements(
     data = get_statements(symbol, freq)
     notes = data.pop("notes")
     as_of = data.pop("as_of")
-    data["meta"] = meta(data["source"], as_of=as_of, notes=notes)
+    fallback = data.pop("fallback", False)
+    data["meta"] = meta(data["source"], as_of=as_of, fallback=fallback, notes=notes)
     return data
 
 

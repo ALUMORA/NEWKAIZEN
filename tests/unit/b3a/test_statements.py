@@ -106,7 +106,7 @@ def test_yahoo_statements_scale_minor_units(monkeypatch):
         index=["Total Revenue", "Diluted EPS"],
         columns=columns,
     )
-    monkeypatch.setattr(mod, "get_companyfacts", lambda symbol: None)
+    monkeypatch.setattr(mod, "companyfacts_lookup", lambda symbol: (None, "not_filer"))
     monkeypatch.setattr(
         mod.yahoo_fundamentals,
         "get_statement",
@@ -173,3 +173,73 @@ def test_a_comparative_fact_filed_long_after_the_close_does_not_lend_its_fy():
     assert mod._fiscal_year(comparative, "2018-09-29") == 2018
     assert mod._fiscal_year(None, "2026-01-03") == 2025
     assert mod._fiscal_year({"fy": None, "filed": "2025-01-31"}, "2024-12-28") == 2024
+
+
+class _Resp:
+    def __init__(self, status: int):
+        self.status_code = status
+        self.text = ""
+
+    def json(self):
+        raise ValueError("sin cuerpo")
+
+
+def _sec_answers(monkeypatch, status: int) -> None:
+    """La SEC contesta ``status`` a ``companyfacts``; el resto (índice de tickers) sale del replay."""
+    from kaizen_api.providers import sec_edgar
+
+    original = sec_edgar._edgar_session.get
+
+    def get(url, *args, **kwargs):
+        if "companyfacts" in url:
+            return _Resp(status)
+        return original(url, *args, **kwargs)
+
+    monkeypatch.setattr(sec_edgar._edgar_session, "get", get)
+
+
+def _yahoo_income(monkeypatch, frame) -> None:
+    monkeypatch.setattr(
+        mod.yahoo_fundamentals,
+        "get_statement",
+        lambda symbol, kind, freq="annual": frame if kind == "income" else None,
+    )
+    monkeypatch.setattr(mod.yahoo_fundamentals, "get_info", lambda symbol: {"financialCurrency": "USD"})
+
+
+def test_when_the_sec_does_not_answer_yahoo_is_a_marked_fallback(replay_b3a, monkeypatch):
+    """Un 429 de la SEC no es "la emisora no reporta": lo que sale de Yahoo va como sustituto."""
+    _sec_answers(monkeypatch, 429)
+    income = pd.DataFrame([[391_035_000_000.0]], index=["Total Revenue"], columns=[pd.Timestamp("2024-09-30")])
+    _yahoo_income(monkeypatch, income)
+    payload = mod.get_statements("AAPL", "annual")
+    assert payload["source"] == "yahoo"
+    assert payload["fallback"] is True
+    assert any("La SEC no respondió" in note for note in payload["notes"])
+
+
+def test_when_the_sec_does_not_answer_and_yahoo_has_nothing_it_does_not_blame_the_issuer(replay_b3a, monkeypatch):
+    _sec_answers(monkeypatch, 503)
+    _yahoo_income(monkeypatch, None)
+    payload = mod.get_statements("AAPL", "annual")
+    assert payload["periods"] == [] and payload["rows"] == []
+    assert payload["fallback"] is True
+    assert "No hay estados financieros publicados para este símbolo." not in payload["notes"]
+    assert any("No se pudo consultar a la SEC" in note for note in payload["notes"])
+
+
+def test_a_404_from_the_sec_is_an_answer_not_a_failure(replay_b3a):
+    """SPY sí tiene CIK, pero la SEC contesta 404 a sus hechos XBRL: eso sí es "no hay estados"."""
+    payload = mod.get_statements("SPY", "annual")
+    assert payload["fallback"] is False
+    assert payload["notes"] == ["No hay estados financieros publicados para este símbolo."]
+
+
+def test_the_statements_route_passes_the_fallback_to_meta(client, monkeypatch):
+    _sec_answers(monkeypatch, 429)
+    income = pd.DataFrame([[391_035_000_000.0]], index=["Total Revenue"], columns=[pd.Timestamp("2024-09-30")])
+    _yahoo_income(monkeypatch, income)
+    body = client.get("/v2/instrument/AAPL/statements").json()
+    assert body["source"] == "yahoo"
+    assert body["meta"]["fallback"] is True
+    assert "fallback" not in body

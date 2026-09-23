@@ -173,32 +173,71 @@ def cik_for(symbol: str) -> str | None:
     return mapping.get(base) if mapping else None
 
 
-def get_companyfacts(symbol: str) -> dict | None:
-    """``companyfacts`` XBRL del emisor, o ``None`` si no está registrado o la SEC no respondió.
+SEC_OK = "ok"
+SEC_NOT_FILER = "not_filer"
+SEC_NO_FACTS = "no_facts"
+SEC_UNAVAILABLE = "unavailable"
 
-    El resultado es el JSON tal cual lo publica la SEC (``{"entityName", "facts": {...}}``).
+
+def companyfacts_lookup(symbol: str) -> tuple[dict | None, str]:
+    """``companyfacts`` XBRL del emisor y POR QUÉ no llegó, si no llegó.
+
+    El segundo valor distingue lo que ``get_companyfacts`` junta en un solo ``None``:
+
+    * ``"ok"``: hay hechos.
+    * ``"not_filer"``: el símbolo no está registrado ante la SEC (toda la BMV, por ejemplo).
+    * ``"no_facts"``: la SEC contestó y no tiene hechos XBRL de esa emisora (un 404, como SPY).
+    * ``"unavailable"``: no se pudo leer a la SEC (timeout, 429 por límite de tasa, 5xx, JSON
+      malo o el índice de tickers caído). Aquí no se sabe nada de la emisora, y quien sirva otra
+      fuente en su lugar tiene que marcarla como sustituta.
     """
+    if symbol.upper().endswith(".MX"):
+        return None, SEC_NOT_FILER
+    mapping = _edgar_ticker_map()
+    if not mapping:
+        # Sin índice no sabemos si es emisor de EE. UU. Un sufijo de plaza (``BMW.DE``) sí lo dice.
+        return None, SEC_NOT_FILER if "." in symbol else SEC_UNAVAILABLE
     cik = cik_for(symbol)
     if not cik:
-        return None
+        return None, SEC_NOT_FILER
+    status = {"value": SEC_OK}
 
     def fetch() -> dict | None:
         try:
             resp = _edgar_session.get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json", timeout=15)
         except Exception:
+            status["value"] = SEC_UNAVAILABLE
+            return None
+        if resp.status_code == 404:
+            status["value"] = SEC_NO_FACTS
             return None
         if resp.status_code != 200:
+            status["value"] = SEC_UNAVAILABLE
             return None
         try:
             data = resp.json()
         except Exception:
+            status["value"] = SEC_UNAVAILABLE
             return None
         if not isinstance(data, dict) or not data.get("facts"):
+            status["value"] = SEC_NO_FACTS
             return None
         data["cik"] = cik
         return data
 
-    return _cached(f"v2:sec:facts:{cik}", fetch, ttl=SEC_FACTS_TTL, ok=lambda d: bool(d))
+    data = _cached(f"v2:sec:facts:{cik}", fetch, ttl=SEC_FACTS_TTL, ok=lambda d: bool(d))
+    if data:
+        return data, SEC_OK
+    return None, status["value"] if status["value"] != SEC_OK else SEC_UNAVAILABLE
+
+
+def get_companyfacts(symbol: str) -> dict | None:
+    """``companyfacts`` XBRL del emisor, o ``None`` si no está registrado o la SEC no respondió.
+
+    El resultado es el JSON tal cual lo publica la SEC (``{"entityName", "facts": {...}}``). Para
+    saber CUÁL de los dos casos fue, usa ``companyfacts_lookup``.
+    """
+    return companyfacts_lookup(symbol)[0]
 
 
 def _submissions(cik: str) -> dict | None:

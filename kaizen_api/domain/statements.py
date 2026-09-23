@@ -28,7 +28,7 @@ import pandas as pd
 
 from kaizen_api.domain import safe
 from kaizen_api.domain.currency import normalize_currency, scale_minor
-from kaizen_api.providers.sec_edgar import get_companyfacts, get_edgar_financials
+from kaizen_api.providers.sec_edgar import SEC_UNAVAILABLE, companyfacts_lookup, get_edgar_financials
 from kaizen_api.providers.yahoo import fundamentals as yahoo_fundamentals
 
 __all__ = ["ROW_IDS", "ROW_LABELS", "get_edgar_financials", "get_statements"]
@@ -231,8 +231,7 @@ def _sec_currency(facts: dict) -> str | None:
     return "USD"
 
 
-def _sec_statements(symbol: str, freq: str) -> dict[str, Any] | None:
-    facts = get_companyfacts(symbol)
+def _sec_statements(symbol: str, freq: str, facts: dict | None) -> dict[str, Any] | None:
     if not facts:
         return None
     notes: list[str] = []
@@ -423,24 +422,38 @@ def get_statements(symbol: str, freq: str = "annual", financial_currency: str | 
 
     Primero la SEC para emisores de EE. UU. y, si no hay expediente, Yahoo. Sin ninguna de las dos,
     devuelve ``periods`` y ``rows`` vacíos con la nota de por qué, nunca cifras inventadas.
+
+    Trae la llave auxiliar ``fallback`` para ``meta``: va en ``True`` cuando la SEC no se pudo leer
+    (timeout, límite de tasa, error del servidor) y lo que se entrega salió de otra fuente o no
+    salió. Un emisor que simplemente no reporta ante la SEC no es sustituto de nada.
     """
     symbol = symbol.upper()
     freq = freq if freq in ("annual", "quarterly") else "annual"
-    payload = _sec_statements(symbol, freq)
+    facts, sec_status = companyfacts_lookup(symbol)
+    sec_down = sec_status == SEC_UNAVAILABLE
+    payload = _sec_statements(symbol, freq, facts)
     if payload is None:
         if financial_currency is None:
             financial_currency = yahoo_fundamentals.get_info(symbol).get("financialCurrency")
         payload = _yahoo_statements(symbol, freq, financial_currency)
+        if payload is not None and sec_down:
+            payload["notes"].insert(0, "La SEC no respondió; estos renglones salen de Yahoo.")
     if payload is None:
         iso, _div = normalize_currency(financial_currency)
+        note = (
+            "No se pudo consultar a la SEC y Yahoo no trae estados de este símbolo. Intenta más tarde."
+            if sec_down
+            else "No hay estados financieros publicados para este símbolo."
+        )
         payload = {
             "currency": iso,
             "source": "yahoo",
             "periods": [],
             "rows": [],
-            "notes": ["No hay estados financieros publicados para este símbolo."],
+            "notes": [note],
             "as_of": None,
         }
+    payload["fallback"] = sec_down
     payload["symbol"] = symbol
     payload["freq"] = freq
     return payload
