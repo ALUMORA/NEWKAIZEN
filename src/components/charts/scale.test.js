@@ -3,6 +3,7 @@ import {
   decimalsOf, extent, fmtAxisDate, linearScale, logScale, logTicks, nearestIndex, niceStep, niceTicks,
   timeScale, timeTicks, toMs, valueFormatter,
 } from './scale.js'
+import { fitText, placeLabels, placeXTicks } from './measure.js'
 
 describe('niceTicks', () => {
   it('da pasos 1, 2, 2.5 y 5 por década', () => {
@@ -143,5 +144,23 @@ describe('utilidades', () => {
     expect(nearestIndex([0, 10, 20], 14)).toBe(1)
     expect(nearestIndex([0, 10, 20], 16)).toBe(2)
     expect(nearestIndex([], 3)).toBe(-1)
+  })
+})
+
+describe('placeLabels', () => {
+  it('evita encimar y omite las opcionales sin lugar', () => {
+    const b = { x0: 0, x1: 200, y0: 0, y1: 100 }
+    const out = placeLabels([{ x: 50, y: 50, text: 'Mínima varianza' }, { x: 52, y: 50, text: 'CETES', optional: true }], b)
+    expect(out[0].anchor).toBe('start')
+    expect(out[1].hidden || out[1].anchor !== 'start').toBe(true)
+  })
+  it('ancla al borde y omite marcas de x que chocan', () => {
+    const t = placeXTicks([{ value: 0, label: 'ene 2026' }, { value: 1, label: 'feb' }, { value: 100, label: 'dic' }], (v) => v * 3, 0, 300)
+    expect(t[0].anchor).toBe('start')
+    expect(t.map((x) => x.label)).toEqual(['ene 2026', 'dic'])
+  })
+  it('recorta con puntos suspensivos', () => {
+    expect(fitText('GFNORTE', 30)).toBe('GFN…')
+    expect(fitText('AMX', 30)).toBe('AMX')
   })
 })

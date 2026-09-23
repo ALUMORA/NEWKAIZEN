@@ -7,6 +7,10 @@ import { FanChart } from '../../components/charts/FanChart.jsx'
 import { DrawdownChart } from '../../components/charts/DrawdownChart.jsx'
 import { Donut } from '../../components/charts/Donut.jsx'
 import { Bars } from '../../components/charts/Bars.jsx'
+import { Heatmap } from '../../components/charts/Heatmap.jsx'
+import { FrontierChart } from '../../components/charts/FrontierChart.jsx'
+import { Sparkline } from '../../components/charts/Sparkline.jsx'
+import { fmtPct } from '../../lib/format.js'
 import { GALLERY_NOW } from './sample-data.js'
 
 const DAY = 86400000
@@ -65,6 +69,38 @@ const SECTORS = [
 ]
 const YEARS = [2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025].map((y, i) => ({ label: String(y), value: [0.081, -0.157, 0.046, 0.012, 0.209, -0.07, 0.182, -0.139, 0.227][i] }))
 const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'].map((m, i) => ({ label: `${m} 2025`, value: 12000 + ((i * 7919) % 9000) }))
+const TICKERS = ['WALMEX', 'GFNORTE', 'AMX', 'FEMSA', 'GMEXICO', 'CEMEX', 'CETES', 'USD/MXN']
+const CORR = (() => {
+  const rng = createRng('corr')
+  const n = TICKERS.length
+  const m = Array.from({ length: n }, () => Array(n).fill(1))
+  for (let i = 0; i < n; i += 1) {
+    for (let j = i + 1; j < n; j += 1) {
+      const base = i >= 6 || j >= 6 ? -0.35 : 0.45
+      const v = Math.max(-0.95, Math.min(0.95, base + 0.3 * rng.normal()))
+      m[i][j] = Number(v.toFixed(2))
+      m[j][i] = m[i][j]
+    }
+  }
+  m[2][7] = null
+  m[7][2] = null
+  return m
+})()
+const ASSETS = [
+  { label: 'CETES', risk: 0.01, ret: 0.1 }, { label: 'Bonos M', risk: 0.07, ret: 0.095 }, { label: 'IPC', risk: 0.16, ret: 0.11 },
+  { label: 'S&P 500', risk: 0.19, ret: 0.13 }, { label: 'FIBRAs', risk: 0.21, ret: 0.09 }, { label: 'Oro', risk: 0.15, ret: 0.07 },
+]
+// Hipérbola de Markowitz: riesgo = sqrt(σ0² + k (r − r0)²), con mínima varianza en (σ0, r0).
+const FRONT = Array.from({ length: 30 }, (_, i) => {
+  const ret = 0.1 + (i / 29) * 0.045
+  return { ret, risk: Math.sqrt(0.045 ** 2 + 12 * (ret - 0.1) ** 2) }
+})
+const SPARKS = [
+  { label: 'IPC', values: IPC.slice(-30).map((p) => p.value) },
+  { label: 'S&P 500', values: SPX.slice(-30).map((p) => p.value) },
+  { label: 'Plano', values: [5, 5, 5, 5] },
+  { label: 'Con hueco', values: [3, 4, null, 5, 4, 6] },
+]
 const STATUS = { asOf: '2026-09-22T20:40:00Z', source: 'BMV', delayMinutes: 15, now: GALLERY_NOW }
 const STALE = { asOf: '2026-09-19', source: 'FRED', fallback: true, stale: true, now: GALLERY_NOW }
 
@@ -119,6 +155,32 @@ export default function ChartsGallery() {
           <Donut title="Dona vacía" data={[]} size={140} />
         </Card>
       </div>
+      <div className="dev-grid dev-grid--2">
+        <Card>
+          <Heatmap title="Correlaciones a un año" description="Rendimientos diarios; AMX con USD/MXN sin dato." rows={TICKERS} columns={TICKERS} values={CORR} max={1} />
+        </Card>
+        <Card>
+          <FrontierChart title="Frontera eficiente" description="Riesgo y rendimiento anuales esperados." assets={ASSETS} frontier={FRONT}
+            markers={{ minVar: FRONT[0], tangency: FRONT[14], current: { risk: 0.12, ret: 0.105 } }} />
+        </Card>
+      </div>
+      <Card title="Sparkline" titleAs="h3" description="Decorativa: el dato va en el texto de al lado.">
+        <ul className="dev-stack" style={{ listStyle: 'none', margin: 0, padding: 0, gap: 'var(--space-2)' }}>
+          {SPARKS.map((sp) => {
+            const nums = sp.values.filter((v) => typeof v === 'number')
+            const change = nums.at(-1) / nums[0] - 1
+            return (
+              <li key={sp.label} className="dev-inline">
+                <span style={{ minWidth: '7ch' }}>{sp.label}</span>
+                <Sparkline values={sp.values}>
+                  <span className="num">{fmtPct(change, { sign: true })}</span>
+                </Sparkline>
+                <span className="sr-only">en 30 días</span>
+              </li>
+            )
+          })}
+        </ul>
+      </Card>
     </div>
   )
 }
