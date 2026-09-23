@@ -63,14 +63,16 @@ def _quote(symbol: str, info: dict) -> dict | None:
     price = info.get("regularMarketPrice")
     if price is None:
         price = info.get("currentPrice")
-    currency = str(info.get("currency") or "").upper()
+    # ``GBp`` y ``ZAc`` son unidades menores: el proveedor ya las normaliza, y aquí se vuelve a
+    # pedir el divisor por si el ``info`` llegó crudo. La operación es idempotente.
+    currency, divisor = prices.normalize_currency(info.get("currency"))
     if price is None or len(currency) != 3:
         return None
     previous = info.get("regularMarketPreviousClose")
     if previous is None:
         previous = info.get("previousClose")
-    price = float(price)
-    previous = float(previous) if previous is not None else None
+    price = float(price) / divisor
+    previous = float(previous) / divisor if previous is not None else None
     change = price - previous if previous is not None else None
     # El porcentaje se recalcula: Yahoo lo manda en puntos porcentuales y el contrato pide fracción.
     change_pct = (change / previous) if (change is not None and previous) else None
