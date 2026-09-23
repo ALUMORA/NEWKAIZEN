@@ -2,7 +2,7 @@
 // aplica las 13 siguientes, y al lado se corre lo mismo con los pesos calculados con TODA la
 // historia (o sea, sabiendo el futuro). La brecha entre las dos columnas es lo que el método le
 // debía al ajuste al pasado. Sin React; todo el cálculo es de src/lib/finance.
-import { cetesPerPeriod, maxSharpe, minVariance, riskParity, walkForward } from '../../lib/finance/index.js'
+import { annualToPerPeriod, maxSharpe, minVariance, riskParity, walkForward } from '../../lib/finance/index.js'
 import { PERIODS_PER_YEAR, estimateCovariance } from './optimizer.js'
 
 export const ESTIMATION_WINDOW = 156
@@ -51,14 +51,14 @@ function pick(wf) {
  * Corre el walk forward de los cuatro métodos y su contraparte con toda la historia.
  * @param {number[][]} matrix T x N de rendimientos semanales
  * @param {string[]} dates una fecha por renglón
- * @param {{ l: number, u: number, covMethod: 'ledoitWolf' | 'sample', rfYield: number | null }} opts
- *   `rfYield` es el rendimiento anual simple de CETES 28 (el que publica Banxico)
+ * @param {{ l: number, u: number, covMethod: 'ledoitWolf' | 'sample', rfAnnual: number | null }} opts
+ *   `rfAnnual` es la tasa libre de riesgo efectiva anual de la pantalla; aquí se pasa a semanal
  * @returns {null | { start: string, end: string, folds: number, periods: number, rows: any[], notes: { method: string, date: string, note: string }[] }}
  *   null si la historia no alcanza para un solo periodo fuera de muestra
  */
-export function runValidation(matrix, dates, { l, u, covMethod, rfYield }) {
+export function runValidation(matrix, dates, { l, u, covMethod, rfAnnual }) {
   if (matrix.length < ESTIMATION_WINDOW + 1) return null
-  const rfPerPeriod = rfYield === null ? 0 : (cetesPerPeriod(rfYield, 7) ?? 0)
+  const rfPerPeriod = rfAnnual === null ? 0 : (annualToPerPeriod(rfAnnual, PERIODS_PER_YEAR) ?? 0)
   const common = { estimationWindow: ESTIMATION_WINDOW, holdPeriods: HOLD_PERIODS, covariance: covMethod, l, u, rf: rfPerPeriod, k: PERIODS_PER_YEAR }
   const cov = estimateCovariance(matrix, covMethod)
   if (!cov) return null

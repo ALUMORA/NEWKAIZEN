@@ -99,12 +99,12 @@ describe('optimizador: walk forward', () => {
 
   it('sin historia para un periodo fuera de muestra no hay validación', () => {
     const m = rows(ESTIMATION_WINDOW)
-    expect(runValidation(m, datesFor(m.length), { l: 0, u: 1, covMethod: 'ledoitWolf', rfYield: 0.07 })).toBeNull()
+    expect(runValidation(m, datesFor(m.length), { l: 0, u: 1, covMethod: 'ledoitWolf', rfAnnual: 0.07 })).toBeNull()
   })
 
   it('cuatro métodos con su contraparte en la muestra completa, en las mismas fechas', () => {
     const m = rows(220)
-    const out = runValidation(m, datesFor(m.length), { l: 0, u: 1, covMethod: 'ledoitWolf', rfYield: 0.07 })
+    const out = runValidation(m, datesFor(m.length), { l: 0, u: 1, covMethod: 'ledoitWolf', rfAnnual: 0.07 })
     expect(out.rows.map((r) => r.id)).toEqual(['minVariance', 'riskParity', 'maxSharpe', 'equalWeight'])
     expect(out.periods).toBe(220 - ESTIMATION_WINDOW)
     expect(out.folds).toBe(5)
