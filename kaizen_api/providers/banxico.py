@@ -5,20 +5,26 @@ su respaldo (``domain/rates.py`` cae a FRED y lo marca como ``fallback``). Nunca
 
 **Series verificadas.** Solo ``SF43718`` (FIX) y ``SF61745`` (tasa objetivo) vienen marcadas como
 verificadas en ``kaizen_api/data/banxico_series.json``. Las demás quedan en ``verified: false`` hasta
-que una prueba con un token real las confirme contra el endpoint de metadatos del SIE. Mientras
-tanto, con token, :func:`verified_ids` las confirma en caliente contra ese mismo endpoint (24 h de
-caché) comparando el título de la serie con las palabras de ``tituloContiene``: una serie que no se
-pudo confirmar no se publica.
+que una prueba con un token real las confirme contra el endpoint de metadatos del SIE, y mientras
+estén en ``false`` no se publican, aunque haya token. Eso es lo que pide el spec: cada id distinto
+de esos dos se verifica en una prueba antes de usarse.
+
+Además, con token, :func:`verified_ids` vuelve a preguntar los metadatos al SIE (24 h de caché) y
+pasa cada serie por :func:`mismatches`: el título tiene que traer las palabras de
+``tituloContiene`` y ninguna de ``tituloExcluye``, la periodicidad tiene que ser la del catálogo y
+la unidad tiene que cuadrar con ``sieUnit`` (por ciento o pesos). Una serie que no pase no se
+publica, aunque esté marcada ``verified: true``.
 
 Cómo confirmarlas de una vez, cuando el dueño saque su token (es gratis en
 https://www.banxico.org.mx/SieAPIRest/service/v1/token)::
 
     export BANXICO_TOKEN=... KAIZEN_LIVE=1
     .venv/bin/python -m pytest -q -p no:cacheprovider -o addopts="" \\
-        tests/unit/b2b/test_banxico_live.py
+        tests/unit/b2b/test_banxico_live.py -s
 
-Esa prueba pide los metadatos de cada id del catálogo, comprueba título, unidad y periodicidad, e
-imprime la línea exacta que hay que pegar en ``banxico_series.json`` para dejar ``verified: true``.
+Esa prueba pide los metadatos de cada id del catálogo, los pasa por :func:`classify` (el mismo
+candado de título, periodicidad y unidad que usa el servidor) e imprime la lista de ids que se
+pueden dejar en ``verified: true``.
 """
 
 from __future__ import annotations
@@ -251,32 +257,102 @@ def title_matches(titulo: str, expected_words: list[str] | tuple[str, ...]) -> b
     return bool(expected_words) and all(_fold(word) in folded for word in expected_words)
 
 
-def _verify_now(series_ids: tuple[str, ...]) -> dict[str, bool]:
-    meta = fetch_metadata(list(series_ids))
-    cat = catalog()
-    out: dict[str, bool] = {}
-    for sid in series_ids:
+NOT_RETURNED = "el SIE no devolvió esta serie"
+
+UNIT_WORDS = {"percent": ("por ciento", "porcentaje", "%"), "mxn": ("peso",)}
+"""Lo que tiene que decir la ``unidad`` del SIE según el ``sieUnit`` del catálogo."""
+UNIT_NAMES = {"percent": "por ciento", "mxn": "pesos"}
+
+
+def mismatches(info: dict | None, item: dict) -> list[str]:
+    """Por qué una serie del SIE NO es la que dice el catálogo; lista vacía si sí lo es.
+
+    Compara título (palabras que tiene que traer y palabras que no), periodicidad y unidad. El
+    título solo no alcanza: "Cetes a 28 días, tasa de descuento, promedio mensual" trae "cetes" y
+    "28" y es otra serie, y un precio en pesos del Bono M trae "bonos" y "10".
+    """
+    if not info:
+        return [NOT_RETURNED]
+    reasons: list[str] = []
+    titulo = str(info.get("titulo") or "")
+    expected = item.get("tituloContiene") or []
+    if not title_matches(titulo, expected):
+        reasons.append(f'el título "{titulo[:90]}" no trae todas estas palabras: {", ".join(expected)}')
+    folded = _fold(titulo)
+    banned = [word for word in item.get("tituloExcluye") or [] if _fold(word) in folded]
+    if banned:
+        reasons.append(f'el título trae "{", ".join(banned)}", que no corresponde a esta serie')
+    want = str(item.get("periodicidad") or "")
+    got = str(info.get("periodicidad") or "")
+    if not want or _fold(got).strip() != _fold(want).strip():
+        reasons.append(f'la periodicidad es "{got}" y el catálogo dice "{want}"')
+    unidad = str(info.get("unidad") or "")
+    words = UNIT_WORDS.get(str(item.get("sieUnit") or ""), ())
+    if not any(word in _fold(unidad) for word in words):
+        esperada = UNIT_NAMES.get(str(item.get("sieUnit") or ""), "la del catálogo")
+        reasons.append(f'la unidad es "{unidad}" y el catálogo espera {esperada}')
+    return reasons
+
+
+def classify(cat: dict[str, dict], meta: dict[str, dict]) -> dict[str, list]:
+    """Reparte los ids del catálogo en confirmados, desconocidos y distintos (con sus razones).
+
+    Es lo que imprime la prueba en vivo para decidir qué se marca ``verified: true``, y usa
+    exactamente el mismo candado que el servidor.
+    """
+    out: dict[str, list] = {"confirmados": [], "desconocidos": [], "distintos": []}
+    for sid, item in sorted(cat.items()):
         info = meta.get(sid)
-        expected = (cat.get(sid) or {}).get("tituloContiene") or []
-        out[sid] = bool(info) and title_matches(info["titulo"], expected)
+        if info is None:
+            out["desconocidos"].append(sid)
+            continue
+        reasons = mismatches(info, item)
+        if reasons:
+            out["distintos"].append((sid, reasons))
+        else:
+            out["confirmados"].append(sid)
     return out
 
 
-def verified_ids(series_ids: list[str] | tuple[str, ...]) -> dict[str, bool]:
-    """¿Cuáles de esas series son de verdad las que dice el catálogo? Con token, se pregunta al SIE.
+def reviewed(series_id: str) -> bool:
+    """¿Una persona ya confirmó este id con la prueba en vivo (``verified: true`` en el catálogo)?"""
+    return bool((catalog().get(series_id) or {}).get("verified"))
 
-    Las marcadas ``verified: true`` en el catálogo (SF43718 y SF61745) ya están confirmadas a mano y
-    de todos modos se vuelven a comprobar aquí, porque cuesta una sola llamada para todas. El
-    resultado se cachea 24 h; si el SIE no responde, ninguna se da por verificada y quien llama cae
-    a su respaldo en vez de publicar un dato del que no está seguro.
+
+def _verify_now(series_ids: tuple[str, ...]) -> dict[str, list[str]]:
+    meta = fetch_metadata(list(series_ids))
+    cat = catalog()
+    return {sid: mismatches(meta.get(sid), cat.get(sid) or {}) for sid in series_ids}
+
+
+def verification(series_ids: list[str] | tuple[str, ...]) -> dict[str, list[str]]:
+    """Razones por las que cada serie no cuadra con el catálogo, según el SIE (vacío = confirmada).
+
+    Se cachea 24 h. Si el SIE no responde con algo legible, ninguna se da por buena.
     """
     ids = tuple(dict.fromkeys(str(s).strip().upper() for s in series_ids if str(s).strip()))
     if not ids:
         return {}
     key = "banxico:verify:" + ",".join(sorted(ids))
     try:
-        return _cached(key, lambda: _verify_now(ids), ttl=24 * 3600, ok=lambda r: any(r.values()), fail_ttl=600)
+        return _cached(
+            key,
+            lambda: _verify_now(ids),
+            ttl=24 * 3600,
+            ok=lambda r: any(not reasons for reasons in r.values()),
+            fail_ttl=600,
+        )
     except ApiError:
         raise
     except Exception:
-        return dict.fromkeys(ids, False)
+        return dict.fromkeys(ids, ["no se pudo leer la respuesta de metadatos del SIE"])
+
+
+def verified_ids(series_ids: list[str] | tuple[str, ...]) -> dict[str, bool]:
+    """¿Cuáles de esas series son de verdad las que dice el catálogo? Con token, se pregunta al SIE.
+
+    Pasa por :func:`mismatches` (título, periodicidad y unidad). Las marcadas ``verified: true``
+    también se vuelven a comprobar, porque cuesta una sola llamada para todas. Esto NO basta para
+    publicar: además hace falta :func:`reviewed`, la revisión humana del catálogo.
+    """
+    return {sid: not reasons for sid, reasons in verification(series_ids).items()}

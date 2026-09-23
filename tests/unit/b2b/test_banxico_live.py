@@ -12,10 +12,12 @@ https://www.banxico.org.mx/SieAPIRest/service/v1/token)::
     KAIZEN_LIVE=1 .venv/bin/python -m pytest -q -p no:cacheprovider -o addopts="" \\
         tests/unit/b2b/test_banxico_live.py -s
 
-Qué hace: pide ``GET /series/<ids>`` (solo metadatos, ningún dato) con los doce ids del catálogo,
-compara el título que devuelve el SIE contra ``tituloContiene`` de cada uno e imprime tres listas:
-los que confirmó, los que el SIE no conoce y los que devolvió con otro título. Después hay que
-poner ``verified: true`` **nada más en los ids confirmados** y actualizar ``revisado`` con la fecha.
+Qué hace: pide ``GET /series/<ids>`` (solo metadatos, ningún dato) con los doce ids del catálogo y
+los pasa por ``banxico.classify``, que es el mismo candado del servidor: el título tiene que traer
+las palabras de ``tituloContiene`` y ninguna de ``tituloExcluye``, la periodicidad tiene que ser la
+del catálogo y la unidad tiene que cuadrar con ``sieUnit``. Imprime tres listas: los que confirmó,
+los que el SIE no conoce y los que no cuadran, con la razón exacta. Después hay que poner
+``verified: true`` **nada más en los ids confirmados** y actualizar ``revisado`` con la fecha.
 
 Sin ``KAIZEN_LIVE=1`` se salta, y sin ``BANXICO_TOKEN`` también: no falla la corrida normal.
 """
@@ -45,17 +47,8 @@ def token() -> str:
 def test_cada_id_del_catalogo_es_la_serie_que_dice(token, capsys):
     catalogo = banxico.catalog()
     metadatos = banxico.fetch_metadata(list(catalogo))
-    confirmados: list[str] = []
-    desconocidos: list[str] = []
-    distintos: list[tuple[str, str]] = []
-    for sid, item in sorted(catalogo.items()):
-        info = metadatos.get(sid)
-        if info is None:
-            desconocidos.append(sid)
-        elif banxico.title_matches(info["titulo"], item["tituloContiene"]):
-            confirmados.append(sid)
-        else:
-            distintos.append((sid, info["titulo"]))
+    resultado = banxico.classify(catalogo, metadatos)
+    confirmados = resultado["confirmados"]
     with capsys.disabled():
         print("\n── verificación del catálogo del SIE ──")
         for sid in confirmados:
@@ -63,15 +56,18 @@ def test_cada_id_del_catalogo_es_la_serie_que_dice(token, capsys):
             print(f'  OK   {sid} ({catalogo[sid]["rateId"]}): {info["titulo"][:90]}')
             print(f'         unidad="{info["unidad"]}" periodicidad="{info["periodicidad"]}" '
                   f'último={info["fechaFin"]}')
-        for sid in desconocidos:
+        for sid in resultado["desconocidos"]:
             print(f"  ???  {sid}: el SIE no devolvió esta serie. Busca el id correcto en el catálogo del SIE.")
-        for sid, titulo in distintos:
-            print(f'  NO   {sid}: el SIE dice "{titulo[:90]}", y esperábamos {catalogo[sid]["tituloContiene"]}')
+        for sid, razones in resultado["distintos"]:
+            print(f"  NO   {sid}: " + "; ".join(razones))
         print(f"\n  Pon verified: true solo en estos: {confirmados}")
         print("  Y actualiza el campo revisado de kaizen_api/data/banxico_series.json con la fecha de hoy.\n")
-    # Las dos que ya están marcadas verificadas tienen que seguir siéndolo; el resto es informativo.
+    # Las dos que ya están marcadas verificadas tienen que seguir pasando el candado completo.
     for sid in banxico.VERIFIED_IDS:
         assert sid in confirmados, f"{sid} venía marcada como verificada y el SIE ya no la confirma"
+    # Y ninguna marcada verified: true puede estar fuera de los confirmados.
+    marcadas = sorted(sid for sid in catalogo if banxico.reviewed(sid))
+    assert set(marcadas) <= set(confirmados), f"marcadas sin pasar el candado: {set(marcadas) - set(confirmados)}"
 
 
 def test_las_series_verificadas_devuelven_datos(token):

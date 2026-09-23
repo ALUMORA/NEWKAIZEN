@@ -136,3 +136,43 @@ def test_el_dxy_reusa_la_misma_llamada_en_lote_que_b2a(client, b2b_replay):
     with b2b_replay.trace() as llaves:
         client.get("/v2/macro/us")
     assert "yf.download:[DX-Y.NYB]?period=5d" in llaves
+
+
+# ─── banda de cordura: un valor imposible no se publica ──────────────────────
+#
+# El legado v1 descartaba una tasa fuera de 3 % a 20 %; el v2 multiplicaba por 0.01 lo que viniera.
+# Si FRED cambia la unidad de una serie (ya lo ha hecho al renumerar), un 450 saldría como 450 %.
+
+
+def test_una_tasa_fuera_de_rango_no_se_publica_ni_arma_diferenciales(client, monkeypatch):
+    original = macro_domain.fred.fetch_series
+
+    def falso(series_id, start=None, end=None):
+        if series_id == "DGS10":
+            return {"dates": ["2026-09-18", "2026-09-21"], "values": [4.10, 450.0]}
+        return original(series_id, start, end)
+
+    monkeypatch.setattr(macro_domain.fred, "fetch_series", falso)
+    por_id, body = _items(client)
+    assert "ust10y" not in por_id
+    assert "spread10y2y" not in por_id and "spread10y3m" not in por_id, "el diferencial saldría inventado"
+    assert {"ust3m", "ust2y", "vix", "dxy", "fedFunds"} <= set(por_id)
+    assert any("DGS10" in nota and "rango" in nota for nota in body.meta.notes), body.meta.notes
+
+
+@pytest.mark.parametrize("parche", ["vix", "dxy", "fedFunds"])
+def test_niveles_fuera_de_rango_no_se_publican(client, monkeypatch, parche):
+    if parche == "vix":
+        monkeypatch.setattr(macro_domain, "_cboe_vix_series",
+                            lambda: {"dates": ["2026-09-18", "2026-09-21"], "values": [14.8, 1487.0]})
+    elif parche == "dxy":
+        monkeypatch.setattr(macro_domain, "_yahoo_close_series",
+                            lambda _s: {"dates": ["2026-09-18", "2026-09-21"], "values": [100.5, 1.005]})
+    else:
+        original = macro_domain.fred.fetch_series
+        monkeypatch.setattr(macro_domain.fred, "fetch_series", lambda sid, start=None, end=None: (
+            {"dates": ["2026-09-18", "2026-09-21"], "values": [4.33, 433.0]} if sid == "DFF"
+            else original(sid, start, end)))
+    por_id, body = _items(client)
+    assert parche not in por_id
+    assert any("rango" in nota for nota in body.meta.notes), body.meta.notes

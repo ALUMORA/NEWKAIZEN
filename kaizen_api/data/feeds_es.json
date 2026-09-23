@@ -1,6 +1,6 @@
 {
   "revisado": "2026-09-22",
-  "queSePublica": "Solo el titular, la liga a la nota original y el nombre del medio. Nunca el cuerpo de la nota ni la foto. El resumen que trae el propio feed se recorta a 280 caracteres y se muestra como adelanto, con la liga siempre visible.",
+  "queSePublica": "Solo el titular, la liga a la nota original y el nombre del medio. Nunca el cuerpo de la nota, ni su resumen, ni la foto: summary sale siempre en null en /v2/news. El resumen que trae el feed solo se lee para adivinar el idioma.",
   "comoSeEligieron": "Feeds que el medio publica abiertamente en su sitio, sin registro ni llave, y cuyo uso normal es justo ese: que otros enlacen la nota. Tres criterios: que respondan a un cliente que no sea navegador, que la seccion sea de mercados o economia (no la portada general, que mezcla deportes y clima) y que sus terminos no pidan permiso por escrito para redistribuir. Si un medio pide que se le quite, se borra su renglon de aqui y ya.",
   "atribucion": "El campo source de /v2/news lleva el nombre del medio tal como sale en el feed, y la UI lo muestra junto al titular.",
   "feeds": [

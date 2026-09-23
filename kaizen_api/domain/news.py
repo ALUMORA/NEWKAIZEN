@@ -121,7 +121,8 @@ def get_news(ticker: str) -> dict:
 # Lo de arriba es el legado (subcadenas, inglés, resumen largo) y se queda para las rutas v1.
 # Esto es lo que sirve /v2/news: fuentes en español para México además de Yahoo, entidades HTML
 # decodificadas, ligas que no sean http descartadas, duplicados quitados por título normalizado y
-# el tono de domain/tone.py, que es un campo aparte y opcional.
+# el tono de domain/tone.py, que es un campo aparte y opcional. ``summary`` va siempre en ``null``:
+# el contrato es titular y liga, y nunca se reproduce texto de la nota.
 
 FEEDS_PATH = Path(__file__).resolve().parents[1] / "data" / "feeds_es.json"
 
@@ -283,7 +284,9 @@ def build_items(raw: list[dict], lang: str = "all", limit: int = 30) -> list[dic
                 "url": url,
                 "source": str(entry.get("source") or "").strip() or "Yahoo Finanzas",
                 "publishedAt": entry.get("published"),
-                "summary": entry.get("summary") or None,
+                # Titular y liga, nada más (contrato de /v2/news): el resumen de la fuente solo se
+                # usa arriba para adivinar el idioma y no se publica.
+                "summary": None,
                 "lang": item_lang,
                 "tone": tone_of(title),
                 "provider": entry.get("provider") or "yahoo",

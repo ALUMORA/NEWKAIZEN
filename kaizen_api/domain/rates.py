@@ -92,17 +92,67 @@ como respaldo, en ``/v2/rates/rf``, donde el contrato la nombra (``source: "fred
 """
 
 FRED_RF_SERIES = "IR3TIB01MXM156N"
+FRED_RF_TENOR_DAYS = 91
+"""Plazo que de verdad tiene la serie de respaldo (3 meses). Es el ``tenorDays`` que se publica
+con ``fallback`` en ``true``, pida el cliente el plazo que pida: el cliente lo usa en la fórmula
+``rf_d = (1 + y * T / 360) ** (d / T) - 1``, y con el plazo pedido sacaría rf distintos a partir de
+datos idénticos."""
+
+
 def rf_fallback_note(tenor_days: int) -> str:
     """Aviso del respaldo de FRED, nombrando el plazo que de verdad se pidió.
 
     La serie es interbancaria a 3 meses pase lo que pase, así que el aviso tiene que decir contra
     qué plazo no corresponde: si alguien pide 364 días, hablarle de 28 no le aclara nada.
     """
-    return (
+    note = (
         f"Respaldo: serie interbancaria de México a 3 meses de la OCDE en FRED, mensual. No son CETES"
         f" de {int(tenor_days)} días ni tiene la convención de la subasta; se publica solo mientras no"
         " haya token de Banxico."
     )
+    if int(tenor_days) != FRED_RF_TENOR_DAYS:
+        note += (
+            f" Se pidió el plazo de {int(tenor_days)} días, que sin CETES de Banxico no está disponible, así que tenorDays"
+            f" dice {FRED_RF_TENOR_DAYS}, que es el plazo de la serie que se sirve."
+        )
+    return note
+
+
+PLAUSIBLE = {
+    "fraction": (0.0, 0.40),
+    "inflationYoY": (-0.05, 0.40),
+    "coreInflationYoY": (-0.05, 0.40),
+    "fix": (5.0, 60.0),
+    "udi": (1.0, 30.0),
+}
+"""Banda de cordura del último valor publicado, ya en la unidad del contrato.
+
+Igual que el legado (que descartaba un Bono M fuera de 3 % a 20 %), pero por renglón: si una fuente
+cambia de unidad o un id apunta a otra serie, un precio de 102.5 saldría como un rendimiento de
+102.5 %. Un renglón fuera de su banda no se publica y la razón queda en ``meta.notes``.
+"""
+
+
+def _implausible(item: dict) -> str | None:
+    """Aviso si el valor del renglón está fuera de su banda; ``None`` si es creíble."""
+    low, high = PLAUSIBLE.get(item["id"]) or PLAUSIBLE.get(item["unit"]) or (float("-inf"), float("inf"))
+    if low <= item["value"] <= high:
+        return None
+    return (
+        f"No se publicó {item['label']} ({item['seriesId']}): el último dato salió en {item['value']:g},"
+        f" fuera del rango creíble de {low:g} a {high:g}."
+    )
+
+
+def _keep_plausible(items: list[dict], notes: list[str]) -> list[dict]:
+    kept = []
+    for item in items:
+        reason = _implausible(item)
+        if reason:
+            notes.append(reason)
+        else:
+            kept.append(item)
+    return kept
 
 
 def _today() -> _dt.date:
@@ -142,19 +192,33 @@ def _item(rate_id: str, label: str, unit: str, series_id: str, source: str, date
     }
 
 
-def _banxico_items() -> tuple[list[dict], list[str]]:
-    """Renglones del SIE, solo con los ids que el propio SIE confirma en sus metadatos."""
-    catalog = banxico.catalog()
-    checked = banxico.verified_ids(list(catalog))
-    usable = [sid for sid, ok in checked.items() if ok]
+def _gate_notes(checked: dict[str, list[str]]) -> list[str]:
+    """Avisos de las series que no se publicaron, con la razón: el SIE no las confirmó o nadie las revisó."""
     notes: list[str] = []
-    rejected = sorted(sid for sid, ok in checked.items() if not ok)
-    if rejected:
+    missing = sorted(sid for sid, reasons in checked.items() if reasons == [banxico.NOT_RETURNED])
+    if missing:
+        notes.append("No se publicaron estas series porque el SIE no las devolvió: " + ", ".join(missing) + ".")
+    for sid in sorted(checked):
+        if checked[sid] and sid not in missing:
+            notes.append(f"No se publicó {sid} porque el SIE no confirmó que sea lo que dice el catálogo: "
+                         + "; ".join(checked[sid]) + ".")
+    pending = sorted(sid for sid, reasons in checked.items() if not reasons and not banxico.reviewed(sid))
+    if pending:
         notes.append(
-            "No se publicaron estas series porque el SIE no confirmó que sean lo que dice el catálogo: "
-            + ", ".join(rejected)
+            "Estas series del SIE todavía no tienen revisión humana (verified: false en el catálogo) y no se"
+            " publican hasta que alguien corra tests/unit/b2b/test_banxico_live.py con token: "
+            + ", ".join(pending)
             + "."
         )
+    return notes
+
+
+def _banxico_items() -> tuple[list[dict], list[str]]:
+    """Renglones del SIE: solo los ids revisados a mano que el propio SIE vuelve a confirmar hoy."""
+    catalog = banxico.catalog()
+    checked = banxico.verification(list(catalog))
+    usable = [sid for sid, reasons in checked.items() if not reasons and banxico.reviewed(sid)]
+    notes = _gate_notes(checked)
     if not usable:
         return [], notes
     end = _today()
@@ -169,10 +233,10 @@ def _banxico_items() -> tuple[list[dict], list[str]]:
         items.append(
             _item(info["rateId"], info["label"], info["unit"], sid, "banxico", data["dates"], data["values"], scale)
         )
-    return items, notes
+    return _keep_plausible(items, notes), notes
 
 
-def _fred_items() -> list[dict]:
+def _fred_items(notes: list[str]) -> list[dict]:
     """Los pocos renglones que FRED puede dar honestamente, todos marcados como respaldo."""
     items = []
     for rate_id, spec in FRED_MX_FALLBACK.items():
@@ -191,7 +255,7 @@ def _fred_items() -> list[dict]:
                 spec["scale"],
             )
         )
-    return items
+    return _keep_plausible(items, notes)
 
 
 def _max_age(rate_id: str, fallback: bool) -> int:
@@ -222,7 +286,7 @@ def get_mx_rates() -> dict:
             items = []
     if not items:
         fallback = True
-        items = _fred_items()
+        items = _fred_items(notes)
         if configured:
             notes.append("Estos datos son de respaldo: no se pudo leer ninguna serie del SIE de Banxico.")
         else:
@@ -235,9 +299,9 @@ def get_mx_rates() -> dict:
             raise ApiError(
                 503,
                 "NOT_CONFIGURED",
-                "Las tasas de México necesitan el token de Banxico, y el respaldo de FRED tampoco respondió.",
+                "Las tasas de México necesitan el token de Banxico, y el respaldo de FRED no dio un dato utilizable.",
             )
-        raise ApiError(503, "UPSTREAM_UNAVAILABLE", "Ni Banxico ni FRED respondieron. Intenta más tarde.")
+        raise ApiError(503, "UPSTREAM_UNAVAILABLE", "Ni Banxico ni FRED dieron un dato utilizable. Intenta más tarde.")
     order = {rid: i for i, rid in enumerate(RATE_ORDER)}
     items.sort(key=lambda it: order.get(it["id"], len(order)))
     as_of = max(it["asOf"] for it in items)
@@ -256,9 +320,11 @@ def get_mx_rates() -> dict:
 def get_rf_series(start: str | None = None, end: str | None = None, tenor_days: int = 28) -> dict:
     """``/v2/rates/rf``: serie de rendimientos anualizados simples act/360, como fracción.
 
-    Primero CETES del plazo pedido desde Banxico (solo si el SIE confirma la serie); si no, la serie
-    interbancaria de la OCDE en FRED, con ``fallback`` en ``true`` y ``source`` ``fred_ir3tib``. El
-    cliente convierte a tasa por periodo con ``rf_d = (1 + y * plazo / 360) ** (d / plazo) - 1``.
+    Primero CETES del plazo pedido desde Banxico (solo si la serie está revisada en el catálogo y el
+    SIE la confirma); si no, la serie interbancaria de la OCDE en FRED, con ``fallback`` en ``true``,
+    ``source`` ``fred_ir3tib`` y ``tenorDays`` en 91, que es el plazo de esa serie y no el pedido. El
+    cliente convierte a tasa por periodo con ``rf_d = (1 + y * tenorDays / 360) ** (d / tenorDays) - 1``
+    usando el ``tenorDays`` de la respuesta.
     """
     end_date = _dt.date.fromisoformat(end) if end else _today()
     start_date = _dt.date.fromisoformat(start) if start else end_date - _dt.timedelta(days=3 * 365)
@@ -269,7 +335,8 @@ def get_rf_series(start: str | None = None, end: str | None = None, tenor_days: 
         try:
             # Se pregunta por TODO el catálogo, no solo por esta serie, para compartir la misma
             # entrada de caché que /v2/rates/mx: así el SIE recibe una consulta de metadatos, no dos.
-            if banxico.verified_ids(list(banxico.catalog())).get(series_id):
+            reasons = banxico.verification(list(banxico.catalog())).get(series_id, ["sin respuesta del SIE"])
+            if not reasons and banxico.reviewed(series_id):
                 data = banxico.fetch_series([series_id], start_date.isoformat(), end_date.isoformat()).get(series_id)
                 if data and data["values"]:
                     return {
@@ -283,8 +350,13 @@ def get_rf_series(start: str | None = None, end: str | None = None, tenor_days: 
                         "notes": notes,
                     }
                 notes.append("Banxico no tiene datos de CETES en ese rango de fechas.")
+            elif reasons:
+                notes.append(f"El SIE no confirmó la serie {series_id}, así que no se usó: " + "; ".join(reasons) + ".")
             else:
-                notes.append(f"El SIE no confirmó la serie {series_id}, así que no se usó.")
+                notes.append(
+                    f"La serie {series_id} todavía no tiene revisión humana (verified: false en el catálogo),"
+                    " así que no se usó."
+                )
         except ApiError as exc:
             notes.append(f"Banxico no respondió ({exc.code}).")
     elif not banxico.configured():
@@ -298,7 +370,7 @@ def get_rf_series(start: str | None = None, end: str | None = None, tenor_days: 
         )
     notes.append(rf_fallback_note(tenor_days))
     return {
-        "tenorDays": int(tenor_days),
+        "tenorDays": FRED_RF_TENOR_DAYS,
         "dates": serie["dates"],
         "values": [round(v / 100, 8) for v in serie["values"]],
         "source": "fred_ir3tib",

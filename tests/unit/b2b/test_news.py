@@ -215,3 +215,33 @@ def test_symbol_demasiado_largo_es_400(client):
     r = client.get("/v2/news?symbol=" + "A" * 21)
     assert r.status_code == 400
     assert r.json()["error"]["code"] == "INVALID_SYMBOL"
+
+
+# ─── titular y liga, nada más ────────────────────────────────────────────────
+#
+# El contrato dice "headline + link only" y NewsItem dice "Titular y liga, nada más". Antes el v2
+# copiaba el summary de la fuente, y para Yahoo eso caía hasta content.body recortado a 250
+# caracteres a media palabra: el arranque del artículo, no un sumario.
+
+
+def test_build_items_no_publica_el_resumen_de_la_fuente():
+    items = N.build_items([_crudo(summary="El arranque de la nota que el medio publicó completo, recortado a")])
+    assert items[0]["summary"] is None
+
+
+def test_yahoo_v2_nunca_toma_el_cuerpo_de_la_nota():
+    from kaizen_api.providers.yahoo import news as yahoo_news
+
+    cuerpo = "Cuerpo completo de la nota. " * 20
+    crudo = {"content": {"title": "Titular", "body": cuerpo, "canonicalUrl": {"url": "https://medio.example/n"},
+                         "pubDate": "2026-09-22T10:00:00Z", "provider": {"displayName": "AFP"}}}
+    assert yahoo_news.normalize(crudo)["summary"] is None
+    # El legado v1 no cambia: sigue con su resumen de 250 caracteres.
+    assert len(yahoo_news._extract_news_item(crudo)["summary"]) == 250
+
+
+def test_la_ruta_solo_publica_titular_y_liga(client):
+    for url in ("/v2/news?limit=50", "/v2/news?symbol=AAPL&limit=50"):
+        items = NewsResponse.model_validate(client.get(url).json()).items
+        assert items, url
+        assert all(item.summary is None for item in items), url

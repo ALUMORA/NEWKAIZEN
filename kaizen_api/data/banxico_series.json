@@ -1,7 +1,7 @@
 {
   "revisado": "2026-09-22",
   "fuente": "SIE de Banxico, https://www.banxico.org.mx/SieAPIRest/service/v1",
-  "porQue": "Un id equivocado del SIE devuelve una serie real con el nombre equivocado, y eso no se nota mirando el número. Por eso cada id trae las palabras que su título tiene que contener, y solo se publica el que el SIE confirma.",
+  "porQue": "Un id equivocado del SIE devuelve una serie real con el nombre equivocado, y eso no se nota mirando el número. Por eso cada id trae las palabras que su título tiene que contener (tituloContiene), las que no puede traer (tituloExcluye), su periodicidad y su unidad, y solo se publica el que una persona ya confirmó (verified) y el SIE vuelve a confirmar en caliente.",
   "verificadas": [
     "SF43718",
     "SF61745"
@@ -9,9 +9,9 @@
   "comoVerificar": {
     "token": "Sacar el token gratis en https://www.banxico.org.mx/SieAPIRest/service/v1/token",
     "comando": "export BANXICO_TOKEN=... KAIZEN_LIVE=1 && .venv/bin/python -m pytest -q -p no:cacheprovider -o addopts=\"\" tests/unit/b2b/test_banxico_live.py -s",
-    "queHace": "Pide GET /series/<ids> (solo metadatos, no datos) y compara el título que devuelve el SIE contra tituloContiene de cada id, además de revisar periodicidad y fechaFin. Imprime la lista de ids confirmados.",
-    "despues": "Poner verified en true nada más para los ids que la prueba confirmó, y anotar la fecha en revisado. Un id que no pase se queda en false y su renglón no sale en /v2/rates/mx.",
-    "enCaliente": "Aunque el archivo diga false, el servidor con token vuelve a preguntar los metadatos al SIE (caché de 24 h) y publica solo los ids que confirma. El flag de aquí es la revisión humana; la de caliente es la red de seguridad."
+    "queHace": "Pide GET /series/<ids> (solo metadatos, no datos) y pasa cada id por banxico.classify: el título tiene que traer todas las palabras de tituloContiene y ninguna de tituloExcluye, la periodicidad tiene que ser la del catálogo y la unidad tiene que cuadrar con sieUnit (por ciento o pesos). Imprime los ids confirmados y, de los demás, la razón exacta.",
+    "despues": "Poner verified en true nada más para los ids que la prueba confirmó, y anotar la fecha en revisado. Un id en false no sale en /v2/rates/mx ni en /v2/rates/rf aunque haya token: se nombra en meta.notes como pendiente de revisión.",
+    "enCaliente": "Con token, el servidor vuelve a preguntar los metadatos al SIE (caché de 24 h) con el mismo candado. Para publicar una serie hacen falta las dos cosas: verified en true (la revisión humana) y que el SIE la confirme hoy (la red de seguridad)."
   },
   "series": [
     {
@@ -27,6 +27,7 @@
         "tipo de cambio",
         "fix"
       ],
+      "tituloExcluye": [],
       "nota": "Pesos por dolar. Es el tipo de cambio para solventar obligaciones en moneda extranjera, publicado un dia habil despues de la fecha de determinacion."
     },
     {
@@ -41,6 +42,7 @@
       "tituloContiene": [
         "objetivo"
       ],
+      "tituloExcluye": [],
       "nota": "Tasa de interes interbancaria a un dia, objetivo de la politica monetaria."
     },
     {
@@ -56,6 +58,7 @@
         "tiie",
         "28"
       ],
+      "tituloExcluye": [],
       "nota": "Tasa de interes interbancaria de equilibrio a 28 dias."
     },
     {
@@ -68,7 +71,11 @@
       "periodicidad": "Diaria",
       "maxAgeDays": 5,
       "tituloContiene": [
-        "fondeo"
+        "fondeo",
+        "bancari"
+      ],
+      "tituloExcluye": [
+        "gubernamental"
       ],
       "nota": "Tasa de fondeo bancario a un dia habil, la referencia nueva que sustituye a la TIIE de 28 dias en instrumentos nuevos."
     },
@@ -83,7 +90,12 @@
       "maxAgeDays": 14,
       "tituloContiene": [
         "cetes",
-        "28"
+        "28",
+        "rendimiento"
+      ],
+      "tituloExcluye": [
+        "descuento",
+        "promedio mensual"
       ],
       "nota": "Rendimiento en el mercado primario de la subasta semanal. Es la tasa libre de riesgo de /v2/rates/rf."
     },
@@ -98,7 +110,12 @@
       "maxAgeDays": 14,
       "tituloContiene": [
         "cetes",
-        "91"
+        "91",
+        "rendimiento"
+      ],
+      "tituloExcluye": [
+        "descuento",
+        "promedio mensual"
       ],
       "nota": "Rendimiento en el mercado primario de la subasta semanal."
     },
@@ -113,7 +130,12 @@
       "maxAgeDays": 21,
       "tituloContiene": [
         "cetes",
-        "182"
+        "182",
+        "rendimiento"
+      ],
+      "tituloExcluye": [
+        "descuento",
+        "promedio mensual"
       ],
       "nota": "Rendimiento en el mercado primario de la subasta semanal."
     },
@@ -128,7 +150,12 @@
       "maxAgeDays": 35,
       "tituloContiene": [
         "cetes",
-        "364"
+        "364",
+        "rendimiento"
+      ],
+      "tituloExcluye": [
+        "descuento",
+        "promedio mensual"
       ],
       "nota": "Rendimiento en el mercado primario; la subasta de 364 dias no es todas las semanas."
     },
@@ -143,7 +170,12 @@
       "maxAgeDays": 7,
       "tituloContiene": [
         "bonos",
-        "10"
+        "10",
+        "rendimiento"
+      ],
+      "tituloExcluye": [
+        "precio",
+        "sobretasa"
       ],
       "nota": "Rendimiento del bono de desarrollo del Gobierno Federal a tasa fija, 10 anos."
     },
@@ -160,6 +192,7 @@
         "inflacion",
         "anual"
       ],
+      "tituloExcluye": [],
       "nota": "Variacion anual del INPC."
     },
     {
@@ -174,6 +207,7 @@
       "tituloContiene": [
         "subyacente"
       ],
+      "tituloExcluye": [],
       "nota": "Variacion anual del INPC subyacente."
     },
     {
@@ -188,6 +222,7 @@
       "tituloContiene": [
         "udis"
       ],
+      "tituloExcluye": [],
       "nota": "Pesos por unidad de inversion."
     }
   ]
