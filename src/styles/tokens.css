@@ -1,0 +1,206 @@
+/* ─── Tokens del sistema de diseño (C1) ──────────────────────────────────────
+   Se carga DESPUÉS de src/theme.css y solo AGREGA nombres nuevos; los que ya
+   existían (--bg, --surface*, --ink*, --muted*, --border*, --accent*,
+   --positive*, --negative*, --warning*, --info*, --focus, --shadow-*,
+   --radius-*) se conservan tal cual porque el legado los usa hasta M3.
+
+   La única excepción son --chart-1 a --chart-5: theme.css los traía como
+   valores de arranque que nadie dibujaba (el único uso era --donut, que
+   tampoco se usa). Aquí se redefinen junto con --chart-6 a --chart-8 como una
+   paleta categórica de 8 validada con el validador de la habilidad dataviz en
+   los dos temas. Los valores viejos se quedan en theme.css sin efecto.
+
+   Todo color de esta hoja pasó por src/styles/contrast.check.js:
+   texto ≥ 4.5:1 y texto grande o elemento de interfaz ≥ 3:1.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Tipografía ───────────────────────────────────────────────────────────
+     Escala en rem sobre 16px. --text-2xs solo para etiquetas en mayúsculas con
+     --tracking-caps; ningún dato numérico baja de --text-xs (12px). */
+  --text-2xs: 0.6875rem; /* 11px */
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.8125rem;  /* 13px */
+  --text-md: 0.875rem;   /* 14px, cuerpo y datos por omisión */
+  --text-lg: 1rem;       /* 16px */
+  --text-xl: 1.25rem;    /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+  --text-3xl: 2rem;      /* 32px */
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  --tracking-caps: 0.06em;
+  --tracking-tight: -0.02em;
+
+  /* ── Espaciado, base 4px ────────────────────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --space-9: 48px;
+  --space-10: 64px;
+  --space-11: 80px;
+  --space-12: 96px;
+
+  /* ── Dirección y estado del dato ────────────────────────────────────────
+     El color nunca va solo: el signo (+ o U+2212) y, cuando aplica, la flecha
+     acompañan siempre. --neutral-dir es para movimientos sin bueno ni malo,
+     como USD/MXN. --stale marca dato viejo o de respaldo. */
+  --up: var(--positive);
+  --up-soft: var(--positive-soft);
+  --down: var(--negative);
+  --down-soft: var(--negative-soft);
+  --flat: var(--muted);
+  --flat-soft: var(--surface-2);
+  --neutral-dir: var(--info);
+  --neutral-dir-soft: var(--info-soft);
+  --stale: var(--warning);
+  --stale-soft: var(--warning-soft);
+
+  /* ── Gráficas: categórica de 8, en orden fijo ──────────────────────────────
+     Validada con scripts/validate_palette.js de la habilidad dataviz contra la
+     superficie de tarjeta de cada tema (#fffef9 y #101a14): banda de
+     luminosidad, piso de croma, separación CVD de pares vecinos (claro: peor
+     ΔE 13.1 deutan; oscuro: 8.9 deutan), piso de visión normal (20.1 y 21.6) y
+     contraste ≥ 3:1. Todos los pares de las tres primeras (dispersión): claro
+     9.7 PASA; oscuro 6.2 AVISO, así que en oscuro una dispersión con tres
+     series lleva etiqueta directa o forma distinta por serie. Se asignan en
+     orden, nunca en ciclo: una novena serie se agrupa en "Otros". */
+  --chart-1: #027d4d; /* verde de marca */
+  --chart-2: #336abb; /* azul */
+  --chart-3: #c38323; /* ámbar */
+  --chart-4: #723d9a; /* violeta */
+  --chart-5: #cd5b46; /* rojo terracota */
+  --chart-6: #019ca0; /* cian */
+  --chart-7: #992b6d; /* magenta */
+  --chart-8: #88851c; /* olivo */
+
+  /* Secuencial (magnitud): un solo tono, claro → oscuro. Monótona en L, saltos
+     ≥ 0.06 y el extremo claro despega de la superficie (2.18:1). */
+  --seq-1: #82bb9c;
+  --seq-2: #59a37b;
+  --seq-3: #298a5b;
+  --seq-4: #006e41;
+  --seq-5: #01522e;
+
+  /* Divergente (polaridad): azul ↔ naranja con gris neutro en medio. Una
+     correlación no es buena ni mala, por eso no va en rojo y verde. Los cinco
+     pasos aguantan texto en --ink encima (≥ 4.5:1). */
+  --div-neg-2: #578ed4;
+  --div-neg-1: #9bbee7;
+  --div-0: #dee3de;
+  --div-pos-1: #deb089;
+  --div-pos-2: #ca723c;
+
+  /* Ejes y retícula (gráficos, no texto: el texto de los ejes usa --muted). */
+  --grid: #e1e6e2;
+  --axis: #b9c0ba;
+  --crosshair: #56635c;
+
+  /* ── Borde de control ─────────────────────────────────────────────────────
+     --border y --border-strong separan y encuadran: son adorno y se quedan como
+     están (el legado los usa). Pero el borde de un campo de texto sí es la
+     única señal de que ahí se puede escribir, y por eso la 1.4.11 le pide 3:1.
+     --border-strong da 1.7:1, así que los controles nuevos usan este token, que
+     llega a 3:1 en los dos temas contra --surface y --surface-raised. */
+  --control-border: #818883;
+  --control-border-hover: #5f6862;
+
+  /* ── Capas ────────────────────────────────────────────────────────────────
+     Orden fijo para que nadie invente un z-index de 9999. Los diálogos y los
+     popovers nativos viven en la capa superior del navegador y no los
+     necesitan; estos son para lo que se queda en el flujo. */
+  --z-sticky: 10;
+  --z-topbar: 80;
+  --z-nav: 200;
+  --z-toast: 1200;
+
+  /* Fondo detrás de un diálogo o una hoja. */
+  --scrim: color-mix(in srgb, var(--bg-deep) 62%, transparent);
+
+  --radius-full: 999px;
+
+  /* ── Movimiento ─────────────────────────────────────────────────────────── */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+
+  /* ── Estructura ─────────────────────────────────────────────────────────── */
+  --sidebar-w: 240px;
+  --sidebar-w-collapsed: 64px;
+  --topbar-h: 56px;
+  --bottomnav-h: 64px;
+  --content-max: 1440px;
+
+  /* Superficie sobre la que se dibuja una gráfica (la de la tarjeta). La usan
+     los fondos de los marcos de gráfica y el validador de paleta. */
+  --chart-surface: var(--surface);
+}
+
+:root[data-theme="dark"] {
+  --chart-1: #219761;
+  --chart-2: #427fd8;
+  --chart-3: #c68627;
+  --chart-4: #9258bf;
+  --chart-5: #db6752;
+  --chart-6: #06a0a4;
+  --chart-7: #b23b81;
+  --chart-8: #93912c;
+
+  /* En oscuro la rampa secuencial va al revés: el paso corto es el más apagado. */
+  --seq-1: #25543d;
+  --seq-2: #2b714f;
+  --seq-3: #368f62;
+  --seq-4: #48ae77;
+  --seq-5: #71c994;
+
+  --div-neg-2: #174a92;
+  --div-neg-1: #193860;
+  --div-0: #232824;
+  --div-pos-1: #582a00;
+  --div-pos-2: #803200;
+
+  --grid: #1f2c25;
+  --axis: #3a4b42;
+  --crosshair: #95a39b;
+
+  --control-border: #66716a;
+  --control-border-hover: #7f8b84;
+}
+
+/* Un panel que se queda oscuro en los dos temas (.dark-panel de theme.css)
+   también necesita los tokens nuevos del tema oscuro, o las gráficas de adentro
+   pierden contraste contra su fondo. */
+.dark-panel {
+  --chart-1: #219761;
+  --chart-2: #427fd8;
+  --chart-3: #c68627;
+  --chart-4: #9258bf;
+  --chart-5: #db6752;
+  --chart-6: #06a0a4;
+  --chart-7: #b23b81;
+  --chart-8: #93912c;
+  --seq-1: #25543d;
+  --seq-2: #2b714f;
+  --seq-3: #368f62;
+  --seq-4: #48ae77;
+  --seq-5: #71c994;
+  --div-neg-2: #174a92;
+  --div-neg-1: #193860;
+  --div-0: #232824;
+  --div-pos-1: #582a00;
+  --div-pos-2: #803200;
+  --grid: #1f2c25;
+  --axis: #3a4b42;
+  --crosshair: #95a39b;
+}

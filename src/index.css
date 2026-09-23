@@ -1,4 +1,13 @@
 @import './theme.css';
+/* Sistema de diseño nuevo (C1). Va después de theme.css porque extiende sus
+   tokens y porque las clases kz-* tienen que ganarle a los estilos sueltos de
+   `input`, `label` y compañía que el legado todavía necesita. Las reglas de
+   @import van todas juntas arriba: el navegador ignora un @import que aparezca
+   después de la primera regla del archivo. */
+@import './styles/tokens.css';
+@import './styles/base.css';
+@import './styles/components.css';
+@import './styles/layout.css';
 
 /* Tipografías locales (@fontsource-variable, importadas en src/main.jsx; nada de Google Fonts,
    la CSP solo permite 'self'). Son los mismos archivos woff2 que servía Google.
