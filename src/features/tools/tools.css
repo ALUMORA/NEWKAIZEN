@@ -78,3 +78,225 @@
   font-size: var(--text-md);
   line-height: var(--leading-normal);
 }
+
+/* Optimizador y backtest (F4, segunda tanda). Solo tokens. */
+.kz-tool {
+  padding-block: var(--space-5) var(--space-8);
+}
+.kz-tool .kz-page-header {
+  margin: 0;
+}
+.kz-tool__layout {
+  display: grid;
+  gap: var(--space-5);
+  align-items: start;
+}
+@media (min-width: 1040px) {
+  .kz-tool__layout {
+    grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+  }
+}
+.kz-tool__side,
+.kz-tool__results {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+}
+.kz-tool__form {
+  display: grid;
+  gap: var(--space-5);
+}
+.kz-tool__group {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.kz-tool__group legend {
+  padding: 0;
+  margin-bottom: var(--space-3);
+  font-weight: var(--weight-semibold);
+  color: var(--ink);
+}
+.kz-tool__pair {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.kz-tool__hint {
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--muted);
+}
+.kz-tool__hint[data-tone='warning'],
+.kz-tool__notice {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-left: 3px solid var(--stale);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+.kz-tool__portfolios {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin-bottom: var(--space-5);
+}
+.kz-tool__portfolio {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  min-width: 0;
+}
+.kz-tool__portfolio-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.kz-tool__portfolio-title,
+.kz-tool__subtitle {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--ink);
+}
+.kz-tool__portfolio-stats,
+.kz-tool__stats {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+.kz-tool__stats {
+  margin-bottom: var(--space-5);
+}
+.kz-tool__results > .kz-tool__notice {
+  margin: 0;
+}
+.kz-tool__stack {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.kz-tool__notes {
+  margin: var(--space-4) 0 0;
+  padding-left: var(--space-5);
+  display: grid;
+  gap: var(--space-2);
+  color: var(--ink);
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+}
+.kz-tool__subsection {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+.kz-tool__subsection .kz-tool__notes {
+  margin-top: 0;
+}
+.kz-tool__more {
+  margin: var(--space-4) 0 0;
+}
+.kz-tool__more a {
+  color: var(--accent);
+  font-weight: var(--weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Selección de emisoras */
+.kz-picker {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.kz-picker__form {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+.kz-picker__form > :first-child {
+  width: 100%;
+}
+.kz-picker__results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.kz-picker__result {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  width: 100%;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.kz-picker__result:hover {
+  background: var(--surface-2);
+}
+.kz-picker__result:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+.kz-picker__name {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.kz-picker__selected {
+  display: grid;
+  gap: var(--space-2);
+}
+.kz-picker__count {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+.kz-picker__chips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.kz-picker__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-left: var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-full);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: var(--text-md);
+}
+/* En pantallas angostas cada cartera ocupa el ancho: sus tres cifras van en una fila. */
+@media (max-width: 699px) {
+  .kz-tool__portfolio-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
