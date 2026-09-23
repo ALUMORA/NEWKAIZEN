@@ -166,6 +166,34 @@ describe('walkForward, resultados', () => {
     expect(r.folds).toBe(r.rebalances.length)
   })
 
+  it('la caída máxima cuenta una pérdida en el PRIMER periodo fuera de muestra', () => {
+    // El pico de arranque es la riqueza inicial, 1, no el primer valor ya golpeado. Antes de
+    // corregirlo esta estrategia, que pierde 30 % de entrada y luego sube poco, reportaba 0.
+    const T = 20
+    const returns = []
+    for (let t = 0; t < T; t += 1) returns.push([0.001 * ((t % 3) - 1), 0.002 * ((t % 2) - 0.5)])
+    returns[10] = [-0.3, -0.3]
+    for (let t = 11; t < T; t += 1) returns[t] = [0.001, 0.001]
+    const dates = Array.from({ length: T }, (_, t) => `2020-01-${String(t + 1).padStart(2, '0')}`)
+    const r = /** @type {any} */ (
+      walkForward(returns, dates, { estimationWindow: 10, holdPeriods: 5, method: 'equalWeight' })
+    )
+    expect(r.returns[0]).toBeCloseTo(-0.3, 12)
+    expect(r.summary.maxDrawdown).toBeCloseTo(-0.3, 12)
+  })
+
+  it('la caída máxima coincide con la de la trayectoria que arranca en 1', () => {
+    const { returns, dates } = panel(200, 4, 8080)
+    const r = /** @type {any} */ (walkForward(returns, dates, { estimationWindow: 52, holdPeriods: 13 }))
+    let peak = 1
+    let worst = 0
+    for (const v of r.values) {
+      peak = Math.max(peak, v)
+      worst = Math.min(worst, v / peak - 1)
+    }
+    expect(r.summary.maxDrawdown).toBeCloseTo(worst, 14)
+  })
+
   it('cada rebalanceo entrega pesos que suman 1', () => {
     const { returns, dates } = panel(120, 5, 2718)
     for (const method of /** @type {const} */ (['minVariance', 'maxSharpe', 'riskParity', 'equalWeight'])) {

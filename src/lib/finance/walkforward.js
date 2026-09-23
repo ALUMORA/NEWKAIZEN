@@ -60,11 +60,16 @@ function meanAndSd(xs) {
 
 /**
  * Caída máxima de una trayectoria de valor (fracción negativa).
+ *
+ * `values` NO trae el arranque: es la riqueza DESPUÉS de cada periodo. Por eso el pico inicial es
+ * 1, la riqueza con la que se entra, y no `values[0]`; si no, una pérdida en el primer periodo
+ * fuera de muestra no se contaría. Si esto se cambia por `performance.js::drawdowns`, hay que
+ * pasarle `[1, ...values]`.
  * @param {number[]} values
  * @returns {number}
  */
 function maxDrawdownOf(values) {
-  let peak = values[0]
+  let peak = 1
   let worst = 0
   for (const v of values) {
     if (v > peak) peak = v

@@ -157,7 +157,8 @@ def walk_forward(
         hold_start += hold_periods
 
     values = np.cumprod(1.0 + np.asarray(oos_returns))
-    running_peak = np.maximum.accumulate(values)
+    # El pico arranca en 1, la riqueza inicial: una caída en el primer periodo también cuenta.
+    running_peak = np.maximum.accumulate(np.concatenate([[1.0], values]))[1:]
     max_drawdown = float(np.min(values / running_peak - 1.0))
     wealth = float(values[-1])
     n_oos = len(oos_returns)
@@ -214,6 +215,10 @@ def case(name: str, panel, dates, tol: float, **options) -> dict:
 def main() -> None:
     panel, dates = weekly_panel(300, 5, seed=20260922)
     small, small_dates = weekly_panel(70, 3, seed=31415)
+    # Mismo panel chico con un desplome justo en el primer periodo fuera de muestra (renglón 52):
+    # la caída máxima tiene que medirse contra la riqueza inicial, 1, no contra el primer valor.
+    crash = [row[:] for row in small]
+    crash[52] = [-0.30, -0.25, -0.20]
 
     cases = [
         case("equal weight, pesos fijos cada periodo, 300x5", panel, dates, 1e-12, method="equalWeight", rebalance="period"),
@@ -226,6 +231,15 @@ def main() -> None:
             small,
             small_dates,
             1e-7,
+            estimation_window=52,
+            hold_periods=4,
+        ),
+        case(
+            "equal weight con desplome en el primer periodo fuera de muestra, 70x3",
+            crash,
+            small_dates,
+            1e-12,
+            method="equalWeight",
             estimation_window=52,
             hold_periods=4,
         ),
