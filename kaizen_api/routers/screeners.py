@@ -19,7 +19,7 @@ from fastapi import APIRouter, Query
 from kaizen_api.domain.screeners import factors as factors_domain
 from kaizen_api.domain.screeners import fibras as fibras_domain
 from kaizen_api.domain.screeners import magic as magic_domain
-from kaizen_api.domain.universe import custom_universe, get_universe
+from kaizen_api.domain.universe import custom_universe, fetch_symbols, get_universe
 from kaizen_api.errors import ApiError, invalid_param
 from kaizen_api.provenance import meta
 from kaizen_api.routers import ERROR_RESPONSES, cache_control, parse_symbols
@@ -33,6 +33,16 @@ MAX_FIBRAS_EXTRA = 20
 
 DELAY_MINUTES = 15
 """Yahoo publica los precios con unos 15 minutos de retraso en las dos plazas."""
+
+
+def _unknown_symbols(symbols: list[str]) -> list[str]:
+    """De un universo propio que no dio datos, los símbolos que Yahoo dice no conocer.
+
+    Solo se llama cuando ninguna emisora trajo datos, para separar "no existe" (404) de "el
+    proveedor no contestó" (503). Pide solo el ``info``, que es lo que distingue los dos casos.
+    """
+    fetched, _pending = fetch_symbols(symbols)
+    return [s for s in symbols if fetched.get(s) is not None and fetched[s].not_found]
 
 
 def _upstream_down(what: str) -> ApiError:
@@ -64,6 +74,14 @@ def factors(
 
     board = factors_domain.get_factors(chosen)
     if not any(row["coverage"] > 0 for row in board["rows"]):
+        if universe == "custom":
+            unknown = _unknown_symbols(chosen.symbols)
+            if unknown and len(unknown) == len(chosen.symbols):
+                raise ApiError(
+                    404,
+                    "NOT_FOUND",
+                    "No encontramos datos de " + ", ".join(unknown) + ". Revisa los símbolos.",
+                )
         raise _upstream_down("las emisoras del universo")
     return {
         "universe": board["universe"],
@@ -125,6 +143,7 @@ def fibras(
             source,
             as_of=table["asOf"],
             delay_minutes=DELAY_MINUTES,
+            stale=bool(table.get("rateStale")),
             fallback=bool(table.get("rateFallback")),
             notes=table["notes"],
         ),
