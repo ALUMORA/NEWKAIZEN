@@ -52,3 +52,29 @@
 .kz-sim__more {
   margin: var(--space-4) 0 0;
 }
+/* El <main> del shell no tiene relleno: cada página pone su medianil (16 px en móvil). */
+.kz-sim {
+  display: grid;
+  gap: var(--space-5);
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding: var(--space-5) var(--space-4) var(--space-8);
+}
+@media (min-width: 820px) {
+  .kz-sim {
+    padding-inline: var(--space-6);
+  }
+}
+.kz-sim .kz-page-header {
+  margin: 0;
+}
+.kz-sim__more a {
+  color: var(--accent);
+  font-weight: var(--weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.kz-sim__notes {
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+}
