@@ -99,9 +99,9 @@ describe('ledoitWolfConstantCorrelation', () => {
 
   it('con dos activos el objetivo ES la covarianza muestral, así que no hay nada que contraer', () => {
     // Con N = 2 solo hay una correlación, el promedio r̄ es esa misma, y F coincide con S: la
-    // distancia gamma es cero y delta queda 0/0. PyPortfolioOpt devuelve 1 por la división entre
-    // cero y aquí se devuelve 0, pero la matriz resultante es la misma en los dos casos, que es
-    // lo único que se usa. El golden usa paneles de 3 activos o más justo por esto.
+    // distancia gamma es cero (o ~1e-35 por redondeo) y delta queda 0/0. PyPortfolioOpt reporta 1
+    // y aquí se fija en 0, pero la matriz resultante es la misma en los dos casos. El golden usa
+    // paneles de 3 activos o más justo por esto.
     const panel = [
       [0.01, -0.02],
       [-0.005, 0.03],
@@ -113,6 +113,31 @@ describe('ledoitWolfConstantCorrelation', () => {
     expect(shrinkage).toBe(0)
     for (let i = 0; i < 2; i += 1) {
       for (let j = 0; j < 2; j += 1) expect(cov[i][j]).toBeCloseTo(S[i][j], 15)
+    }
+  })
+
+  it('con dos activos el shrinkage es 0 SIEMPRE, no un 0 o un 1 según cómo redondee gamma', () => {
+    // La prueba de arriba pasaba de casualidad: en ese panel gamma sale 0 exacto. En otros sale
+    // ~1e-35 y delta = (π − ρ)/γ/T se disparaba y se recortaba a 1. La matriz era la misma, pero
+    // una pantalla que enseñe "contracción aplicada" habría mostrado 0 % o 100 % al azar.
+    let state = 20260922
+    const uniform = () => {
+      state = (1664525 * state + 1013904223) >>> 0
+      return (state + 0.5) / 4294967296
+    }
+    const normal = () => Math.sqrt(-2 * Math.log(uniform())) * Math.cos(2 * Math.PI * uniform())
+    for (const T of [5, 20, 60, 200, 7, 33, 104, 156]) {
+      const panel = []
+      for (let t = 0; t < T; t += 1) {
+        const f = normal()
+        panel.push([0.01 * (f + normal()), 0.02 * (f + normal())])
+      }
+      const S = /** @type {number[][]} */ (sampleCov(panel))
+      const r = /** @type {any} */ (ledoitWolfConstantCorrelation(panel))
+      expect(r.shrinkage).toBe(0)
+      for (let i = 0; i < 2; i += 1) {
+        for (let j = 0; j < 2; j += 1) expect(r.cov[i][j]).toBe(S[i][j])
+      }
     }
   })
 

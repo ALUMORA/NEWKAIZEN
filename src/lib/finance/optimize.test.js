@@ -28,6 +28,67 @@ const cov2 = (s1, s2, rho) => [
   [rho * s1 * s2, s2 * s2],
 ]
 
+/**
+ * Congruencial lineal determinista (el mismo de los guiones de goldens), con normal por Box-Muller.
+ * @param {number} seed
+ */
+function lcg(seed) {
+  let state = seed >>> 0
+  const uniform = () => {
+    state = (1664525 * state + 1013904223) >>> 0
+    return (state + 0.5) / 4294967296
+  }
+  const normal = () => Math.sqrt(-2 * Math.log(uniform())) * Math.cos(2 * Math.PI * uniform())
+  return { uniform, normal }
+}
+
+/**
+ * Covarianza muestral (n − 1) de un panel T x N, escrita aquí para no depender de covariance.js.
+ * @param {number[][]} X
+ * @returns {number[][]}
+ */
+function sampleCovOf(X) {
+  const T = X.length
+  const n = X[0].length
+  const m = new Array(n).fill(0)
+  for (const row of X) for (let i = 0; i < n; i += 1) m[i] += row[i] / T
+  return Array.from({ length: n }, (_, i) =>
+    Array.from({ length: n }, (_, j) => {
+      let s = 0
+      for (const row of X) s += (row[i] - m[i]) * (row[j] - m[j])
+      return s / (T - 1)
+    }),
+  )
+}
+
+/**
+ * Covarianza n x n con eigenvalores de 1 a 1/cond, repartidos en escala logarítmica, y
+ * eigenvectores de una base ortonormal pseudoaleatoria (Gram-Schmidt).
+ * @param {number} n
+ * @param {number} cond
+ * @param {{ normal: () => number }} gen
+ * @returns {number[][]}
+ */
+function covWithCondition(n, cond, gen) {
+  /** @type {number[][]} */
+  const Q = []
+  for (let j = 0; j < n; j += 1) {
+    let v = Array.from({ length: n }, () => gen.normal())
+    for (const q of Q) {
+      const d = v.reduce((s, x, i) => s + x * q[i], 0)
+      v = v.map((x, i) => x - d * q[i])
+    }
+    const norm = Math.hypot(...v)
+    Q.push(v.map((x) => x / norm))
+  }
+  const eig = Array.from({ length: n }, (_, k) => Math.pow(cond, -k / (n - 1)))
+  const S = Array.from({ length: n }, (_, i) =>
+    Array.from({ length: n }, (_, j) => Q.reduce((s, q, k) => s + q[i] * eig[k] * q[j], 0)),
+  )
+  for (let i = 0; i < n; i += 1) for (let j = 0; j < i; j += 1) S[i][j] = S[j][i]
+  return S
+}
+
 describe('projectBoxSimplex', () => {
   it('reproduce el caso del spec: v=[.5,.3,.2] con tope .4 da [.4,.35,.25]', () => {
     const w = projectBoxSimplex([0.5, 0.3, 0.2], 0, 0.4)
@@ -123,6 +184,19 @@ describe('minVariance', () => {
     expect(r.volatility).toBeCloseTo(0.2, 12)
   })
 
+  it('da la misma respuesta a cualquier escala de la covarianza', () => {
+    // Σ = diag(s, 4s) → w₁ = .8. Con s = 1e-15 el paso de FISTA salía 2.5 veces grande (λmax mal
+    // estimado) y minVariance devolvía w₁ = .2859 con converged=false.
+    for (const s of [1, 1e-6, 1e-12, 1e-15, 1e-18]) {
+      const r = minVariance([
+        [s, 0],
+        [0, 4 * s],
+      ])
+      expect(r.weights[0]).toBeCloseTo(0.8, 12)
+      expect(r.converged).toBe(true)
+    }
+  })
+
   it('lanza InfeasibleError con n=2 y tope .35, como dice el spec', () => {
     expect(() => minVariance(cov2(0.2, 0.3, 0), { u: 0.35 })).toThrow(InfeasibleError)
   })
@@ -195,6 +269,41 @@ describe('maxSharpe', () => {
 
   it('rechaza rf no finito', () => {
     expect(() => maxSharpe([0.1, 0.15], cov2(0.2, 0.3, 0), Number.NaN)).toThrow(InvalidInputError)
+  })
+
+  it('devuelve null si ningún portafolio factible rinde más que rf', () => {
+    // Con exceso máximo negativo el máximo de (μ − rf)/σ vive en la rama ineficiente (conviene MÁS
+    // volatilidad), que el barrido sobre la frontera no visita: antes salía [1, 0] con Sharpe −0.30
+    // etiquetado como tangente, cuando [0, 1] da −0.08. Ahí no hay portafolio tangente que enseñar.
+    expect(maxSharpe([0.02, 0.01], cov2(0.1, 0.5, 0), 0.05)).toBeNull()
+    // Exceso máximo exactamente cero: tampoco hay tangente con Sharpe positivo.
+    expect(maxSharpe([0.05, 0.03], cov2(0.2, 0.3, 0), 0.05)).toBeNull()
+    // Todos los μ iguales y por debajo de rf.
+    expect(maxSharpe([0.03, 0.03], cov2(0.2, 0.3, 0), 0.05)).toBeNull()
+  })
+
+  it('el exceso máximo se mide con la caja: si el tope deja fuera al único activo que le gana a rf, null', () => {
+    // Sin tope, el activo 1 rinde .10 > rf. Con u=.5 el máximo factible es .5·.10 + .5·.02 = .06 < .07.
+    const S = cov2(0.2, 0.3, 0)
+    expect(maxSharpe([0.1, 0.02], S, 0.07)).not.toBeNull()
+    expect(maxSharpe([0.1, 0.02], S, 0.07, { u: 0.5 })).toBeNull()
+  })
+
+  it('con exceso positivo pero mínima varianza por debajo de rf, sigue encontrando el tangente', () => {
+    const mu = [0.03, 0.09]
+    const S = cov2(0.1, 0.3, 0.2)
+    const rf = 0.05
+    const t = /** @type {any} */ (maxSharpe(mu, S, rf))
+    expect(t).not.toBeNull()
+    let best = -Infinity
+    for (let i = 0; i <= 20000; i += 1) {
+      const w = i / 20000
+      const m = w * mu[0] + (1 - w) * mu[1]
+      const v = w * w * S[0][0] + 2 * w * (1 - w) * S[0][1] + (1 - w) * (1 - w) * S[1][1]
+      best = Math.max(best, (m - rf) / Math.sqrt(v))
+    }
+    expect(t.sharpe).toBeGreaterThan(0)
+    expect(t.sharpe).toBeGreaterThanOrEqual(best - 1e-9)
   })
 })
 
@@ -276,9 +385,116 @@ describe('riskParity', () => {
     ).toBeNull()
   })
 
+  it('con covarianzas de factores realistas siempre dice converged cuando la respuesta es exacta', () => {
+    // Antes el paro era el paso relativo ≤ 1e-15, por debajo del ruido de punto flotante: alrededor
+    // de 5 % de estas matrices quemaba las 10 000 iteraciones y salía converged=false con
+    // contribuciones exactas. Ahora el paro es el residual que define la paridad.
+    const gen = lcg(8080)
+    let casos = 0
+    for (let rep = 0; rep < 240; rep += 1) {
+      const n = 3 + (rep % 20)
+      const T = 52 + (rep % 9) * 26
+      const K = 1 + (rep % 4)
+      const load = Array.from({ length: n }, () => Array.from({ length: K }, () => 0.5 + gen.uniform()))
+      const idio = Array.from({ length: n }, () => 0.01 + 0.03 * gen.uniform())
+      const X = []
+      for (let t = 0; t < T; t += 1) {
+        const f = Array.from({ length: K }, () => gen.normal() * 0.02)
+        X.push(Array.from({ length: n }, (_, i) => load[i].reduce((s, l, k) => s + l * f[k], 0) + gen.normal() * idio[i]))
+      }
+      const r = /** @type {any} */ (riskParity(sampleCovOf(X)))
+      casos += 1
+      expect(r.converged).toBe(true)
+      expect(r.residual).toBeLessThanOrEqual(1e-12)
+      for (const c of r.riskContributions) expect(Math.abs(c - 1 / n)).toBeLessThanOrEqual(1e-12)
+    }
+    expect(casos).toBe(240)
+  })
+
+  it('con una covarianza mal condicionada (cond 1e8) iguala las contribuciones y ninguna sale negativa', () => {
+    // El descenso coordinado solo no llegaba: con esta matriz devolvía contribuciones negativas.
+    const S = covWithCondition(6, 1e8, lcg(12345))
+    const r = /** @type {any} */ (riskParity(S))
+    expect(r).not.toBeNull()
+    expect(r.converged).toBe(true)
+    for (const c of r.riskContributions) {
+      expect(c).toBeGreaterThan(0)
+      expect(Math.abs(c - 1 / 6)).toBeLessThanOrEqual(1e-8)
+    }
+  })
+
+  it('aun con cond 1e10 a 1e14 nunca entrega contribuciones negativas, y converged dice la verdad', () => {
+    const gen = lcg(4242)
+    for (const cond of [1e10, 1e12, 1e14]) {
+      for (let rep = 0; rep < 12; rep += 1) {
+        const n = 3 + (rep % 10)
+        const r = /** @type {any} */ (riskParity(covWithCondition(n, cond, gen)))
+        if (r === null) continue
+        let worst = 0
+        for (const c of r.riskContributions) {
+          expect(c).toBeGreaterThan(0)
+          worst = Math.max(worst, Math.abs(c - 1 / n))
+        }
+        expect(r.residual).toBeCloseTo(worst, 15)
+        expect(r.converged).toBe(worst <= 1e-8)
+      }
+    }
+  })
+
   it('rechaza un presupuesto con ceros o del largo equivocado', () => {
     expect(() => riskParity(cov2(0.2, 0.3, 0), { budget: [1, 0] })).toThrow(InvalidInputError)
     expect(() => riskParity(cov2(0.2, 0.3, 0), { budget: [1] })).toThrow(InvalidInputError)
+  })
+})
+
+describe('covarianza no simétrica', () => {
+  const asimetrica = [
+    [0.04, 0.03],
+    [-0.03, 0.09],
+  ]
+
+  it('todas las funciones la rechazan en vez de optimizar algo que no es el problema', () => {
+    // Con Σ asimétrica el gradiente Σy que usa FISTA no es el de ½ wᵀΣw: el resultado no sería el
+    // óptimo de nada. Antes minVariance devolvía [.4615, .5385] sin avisar.
+    const mu = [0.1, 0.15]
+    expect(() => minVariance(asimetrica)).toThrow(InvalidInputError)
+    expect(() => meanVariance(mu, asimetrica, 1)).toThrow(InvalidInputError)
+    expect(() => efficientFrontier(mu, asimetrica)).toThrow(InvalidInputError)
+    expect(() => maxSharpe(mu, asimetrica, 0.05)).toThrow(InvalidInputError)
+    expect(() => riskParity(asimetrica)).toThrow(InvalidInputError)
+  })
+
+  it('la tolerancia es relativa a la escala: una covarianza semanal chica también se revisa', () => {
+    const chica = [
+      [4e-4, 1.2e-4],
+      [1.0e-4, 9e-4],
+    ]
+    expect(() => minVariance(chica)).toThrow(InvalidInputError)
+    expect(() => riskParity(chica)).toThrow(InvalidInputError)
+  })
+
+  it('el ruido de redondeo sí se acepta y da lo mismo que la simétrica', () => {
+    const S = cov2(0.2, 0.3, 0.4)
+    const ruidosa = [
+      [S[0][0], S[0][1] * (1 + 1e-13)],
+      [S[1][0], S[1][1]],
+    ]
+    expect(minVariance(ruidosa).weights[0]).toBeCloseTo(minVariance(S).weights[0], 10)
+    expect(/** @type {any} */ (riskParity(ruidosa)).weights[0]).toBeCloseTo(
+      /** @type {any} */ (riskParity(S)).weights[0],
+      10,
+    )
+  })
+
+  it('el mensaje dice qué pasa, en español y sin guiones largos', () => {
+    try {
+      minVariance(asimetrica)
+      expect.unreachable()
+    } catch (e) {
+      const message = /** @type {Error} */ (e).message
+      expect(message).toMatch(/simétrica/)
+      expect(message).not.toMatch(/[\u2013\u2014]/)
+    }
   })
 })
 

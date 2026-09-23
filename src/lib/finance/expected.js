@@ -89,27 +89,37 @@ export function historicalMean(returnMatrix, k) {
 }
 
 /**
- * Contracción de James-Stein (versión Bayes-Stein de Jorion, 1986) de las medias hacia un
+ * Contracción de James-Stein (fórmula Bayes-Stein de Jorion, 1986) de las medias hacia un
  * objetivo común.
  *
- * μ_JS = (1 − w)·μ̂ + w·μ₀·1, con w = λ/(T + λ) y λ = (N + 2)/d, donde
- * d = (μ̂ − μ₀·1)ᵀ Σ⁻¹ (μ̂ − μ₀·1). Entre más dispersas estén las medias respecto al objetivo
- * (d grande), menos se encoge; entre más periodos (T grande), menos se encoge.
+ * μ_JS = (1 − w)·μ̂ + w·μ₀·1, con w = (N + 2)/(N + 2 + T·d) y
+ * d = (μ̂ − μ₀·1)ᵀ Σ⁻¹ (μ̂ − μ₀·1), con μ̂ y Σ POR PERIODO. Entre más dispersas estén las medias
+ * respecto al objetivo (d grande), menos se encoge; entre más periodos (T grande), menos se encoge.
  *
- * El objetivo por omisión es el rendimiento del portafolio de mínima varianza,
- * μ₀ = (1ᵀΣ⁻¹μ̂)/(1ᵀΣ⁻¹1), que es el que propone Jorion. Con `target: 'average'` se usa el
- * promedio simple de las medias.
+ * UNIDADES, que aquí sí importan: d NO es invariante a la periodicidad. Si anualizas μ̂ y Σ con k,
+ * d se multiplica por k y, sin corregirlo, la contracción sale como si hubiera k·T observaciones
+ * (con datos semanales, unas 30 veces menos contracción de la que toca). Por eso:
+ * - lo normal es pasar `means` y `cov` POR PERIODO, en la misma periodicidad en la que se contaron
+ *   los T (`historicalMean(...).perPeriod` y la covarianza sin anualizar), con `k` = 1;
+ * - si ya las tienes anualizadas, pasa `k` (52 semanal, 12 mensual, 252 diaria) y la cuenta se
+ *   hace internamente por periodo. El resultado sale en la unidad en la que entró.
  *
- * @param {number[]} means medias por activo (μ̂), todas en la misma periodicidad
- * @param {number[][]} cov covarianza N x N en esa misma periodicidad
+ * El objetivo por omisión es el promedio simple de las medias (la "grand mean" del spec). Con
+ * `target: 'minVariance'` se usa el rendimiento del portafolio de mínima varianza,
+ * μ₀ = (1ᵀΣ⁻¹μ̂)/(1ᵀΣ⁻¹1), que es el que propone Jorion. El peso w es el mismo con los dos.
+ *
+ * @param {number[]} means medias por activo (μ̂): por periodo, o anualizadas si pasas `k`
+ * @param {number[][]} cov covarianza N x N en la misma unidad que `means`
  * @param {number} T número de periodos con los que se estimaron las medias
- * @param {{ target?: 'minVariance' | 'average' }} [options]
+ * @param {{ target?: 'average' | 'minVariance', k?: number }} [options]
+ *   `k` cuántos periodos caben en la unidad de `means` y `cov`: 1 (por omisión) si vienen por
+ *   periodo, o los periodos por año si vienen anualizadas
  * @returns {{ mu: number[], shrinkage: number, target: number } | null}
  *   `null` si Σ no se pudo factorizar (no es definida positiva ni con jitter).
  *   Con un solo activo devuelve la media tal cual y `shrinkage` 0.
- * @throws {InvalidInputError} si las dimensiones no casan, hay NaN o T no es un entero ≥ 1
+ * @throws {InvalidInputError} si las dimensiones no casan, hay NaN, T < 1 o k no es mayor que cero
  */
-export function jamesStein(means, cov, T, { target = 'minVariance' } = {}) {
+export function jamesStein(means, cov, T, { target = 'average', k = 1 } = {}) {
   const mu = assertVector(means, 'las medias')
   const S = assertSquare(cov, 'la covarianza')
   if (mu.length !== S.length) {
@@ -117,6 +127,9 @@ export function jamesStein(means, cov, T, { target = 'minVariance' } = {}) {
   }
   if (!Number.isFinite(T) || T < 1) {
     throw new InvalidInputError('El número de periodos T tiene que ser un número mayor o igual a 1.')
+  }
+  if (!Number.isFinite(k) || k <= 0) {
+    throw new InvalidInputError('Los periodos por unidad (k) tienen que ser un número mayor que cero.')
   }
   const n = mu.length
   if (n === 1) return { mu: [mu[0]], shrinkage: 0, target: mu[0] }
@@ -144,9 +157,11 @@ export function jamesStein(means, cov, T, { target = 'minVariance' } = {}) {
   if (!sInvDiff) return null
   let d = 0
   for (let i = 0; i < n; i += 1) d += diff[i] * sInvDiff[i]
+  // Con μ̂ y Σ en unidades de k periodos, d = k·d_periodo: se regresa a la unidad de los T.
+  const dPerPeriod = d / k
 
   // d ≈ 0 quiere decir que las medias ya son el objetivo: se encoge del todo, que da lo mismo.
-  const w = d > 0 ? (n + 2) / d / (T + (n + 2) / d) : 1
+  const w = dPerPeriod > 0 ? (n + 2) / (n + 2 + T * dPerPeriod) : 1
   const shrinkage = Math.max(0, Math.min(1, w))
   return {
     mu: mu.map((m) => (1 - shrinkage) * m + shrinkage * mu0),

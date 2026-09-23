@@ -6,11 +6,14 @@
 // FISTA (gradiente proximal acelerado) y proyección exacta sobre la intersección del símplex con
 // la caja, que es el conjunto factible real de alguien que no puede vender en corto.
 //
+// La covarianza tiene que ser simétrica: una asimetría mayor que 1e-8 relativo a su escala lanza
+// InvalidInputError en todas las funciones de aquí (el ruido de redondeo se promedia y ya).
+//
 // Unidades: `mu`, `rf` y la covarianza tienen que venir en la MISMA periodicidad (todo anual, o
 // todo por periodo). Los pesos son fracciones que suman 1. Ninguna función de aquí sugiere
 // comprar ni vender nada: entrega la mezcla que cumple las restricciones que le diste.
 
-import { assertSquare, assertVector, InvalidInputError, largestEigenvalue, matVec, quadForm } from './linalg.js'
+import { assertSquare, assertVector, InvalidInputError, largestEigenvalue, matVec, quadForm, solveSPD } from './linalg.js'
 
 /**
  * El problema no tiene solución con esas restricciones: los mínimos suman más de 1, o los máximos
@@ -298,6 +301,41 @@ function describe(weights, cov, mu, iterations, converged) {
   return { weights, variance, volatility: Math.sqrt(variance), expectedReturn, iterations, converged }
 }
 
+/** Asimetría máxima aceptada, relativa a la entrada más grande de la matriz. */
+const SYMMETRY_TOL = 1e-8
+
+/**
+ * Valida que la covarianza sea cuadrada y simétrica, y devuelve una copia simétrica exacta.
+ *
+ * Con Σ asimétrica el gradiente Σy que usa FISTA no es el gradiente de ½ wᵀΣw, así que el
+ * resultado no sería el óptimo de nada. Por eso una asimetría de verdad (más de 1e-8 relativo a la
+ * escala de la matriz, que para una covarianza semanal es del orden de 1e-4) se rechaza, y el
+ * ruido de redondeo por debajo de eso se promedia con la transpuesta.
+ * @param {number[][]} cov
+ * @returns {number[][]}
+ * @throws {InvalidInputError}
+ */
+function symmetricCov(cov) {
+  const S = assertSquare(cov, 'la covarianza')
+  const n = S.length
+  let scale = 0
+  for (const row of S) for (const x of row) scale = Math.max(scale, Math.abs(x))
+  for (let i = 0; i < n; i += 1) {
+    for (let j = i + 1; j < n; j += 1) {
+      const gap = Math.abs(S[i][j] - S[j][i])
+      if (gap > SYMMETRY_TOL * scale) {
+        throw new InvalidInputError(
+          `La covarianza no es simétrica: la entrada (${i + 1}, ${j + 1}) vale ${S[i][j]} y la (${j + 1}, ${i + 1}) vale ${S[j][i]}.`,
+        )
+      }
+      const mid = (S[i][j] + S[j][i]) / 2
+      S[i][j] = mid
+      S[j][i] = mid
+    }
+  }
+  return S
+}
+
 /**
  * Prepara y valida covarianza + cajas.
  * @param {number[][]} cov
@@ -305,7 +343,7 @@ function describe(weights, cov, mu, iterations, converged) {
  * @returns {{ S: number[][], lo: number[], hi: number[], n: number }}
  */
 function prepare(cov, { l = 0, u = 1 } = {}) {
-  const S = assertSquare(cov, 'la covarianza')
+  const S = symmetricCov(cov)
   const n = S.length
   const lo = expandBound(l, n, 'el peso mínimo')
   const hi = expandBound(u, n, 'el peso máximo')
@@ -323,7 +361,7 @@ function prepare(cov, { l = 0, u = 1 } = {}) {
  * @param {{ l?: number | number[], u?: number | number[], maxIter?: number, tol?: number }} [options]
  * @returns {PortfolioResult}
  * @throws {InfeasibleError} si las cajas no dejan sumar 1
- * @throws {InvalidInputError} si la covarianza no es cuadrada o trae NaN
+ * @throws {InvalidInputError} si la covarianza no es cuadrada ni simétrica, o trae NaN
  */
 export function minVariance(cov, options = {}) {
   const { S, lo, hi, n } = prepare(cov, options)
@@ -477,12 +515,18 @@ export function efficientFrontier(mu, cov, options = {}) {
  * barrido grueso para acotar y después sección áurea para afinar. Con μ=(.10,.15), σ=(.2,.3),
  * ρ=0 y rf=.05 da [.529412, .470588] con Sharpe .416667.
  *
+ * Eso solo vale si algún portafolio factible rinde MÁS que rf. Si ninguno lo hace, el máximo de
+ * (μ − rf)/σ está en la rama ineficiente (con exceso negativo conviene más volatilidad, no menos),
+ * que no es un portafolio tangente ni tiene sentido enseñarlo como tal. En ese caso sale `null`,
+ * y la pantalla muestra "s/d" o cae a mínima varianza diciéndolo, como hace `walkForward`.
+ *
  * @param {number[]} mu rendimientos esperados por activo
  * @param {number[][]} cov covarianza N x N
  * @param {number} rf tasa libre de riesgo en la MISMA periodicidad que `mu` y `cov`
  * @param {{ l?: number | number[], u?: number | number[], scan?: number, refine?: number }} [options]
  * @returns {(PortfolioResult & { sharpe: number, tau: number }) | null}
- *   `null` si la volatilidad del mejor punto es cero (Sharpe no está definido)
+ *   `null` si ningún portafolio que cumpla la caja rinde más que rf (no hay tangente con Sharpe
+ *   positivo), o si la volatilidad del mejor punto es cero (Sharpe no está definido)
  * @throws {InfeasibleError} si las cajas no dejan sumar 1
  * @throws {InvalidInputError} si las dimensiones no casan o hay NaN
  */
@@ -491,6 +535,13 @@ export function maxSharpe(mu, cov, rf, options = {}) {
   const m = assertVector(mu, 'los rendimientos esperados')
   if (m.length !== n) throw new InvalidInputError(`Hay ${m.length} rendimientos esperados y la covarianza es de ${n}.`)
   if (!Number.isFinite(rf)) throw new InvalidInputError('La tasa libre de riesgo tiene que ser un número finito.')
+
+  // El rendimiento máximo factible sale del extremo lineal del conjunto (llenar primero a los de
+  // mayor μ hasta su tope). Si ni ese le gana a rf, no hay portafolio tangente.
+  const richest = greedyLinear(m, lo, hi)
+  let maxReturn = 0
+  for (let i = 0; i < n; i += 1) maxReturn += richest[i] * m[i]
+  if (!(maxReturn - rf > 0)) return null
 
   const lipschitz = lipschitzOf(S)
   const spread = Math.max(...m) - Math.min(...m)
@@ -576,30 +627,70 @@ export function maxSharpe(mu, cov, rf, options = {}) {
 }
 
 /**
+ * Contribuciones de riesgo de y (sin normalizar) y su distancia al presupuesto.
+ * @param {number[][]} S
+ * @param {number[]} y
+ * @param {number[]} b
+ * @returns {{ weights: number[], riskContributions: number[], variance: number, residual: number }}
+ */
+function riskBudgetState(S, y, b) {
+  let sum = 0
+  for (const v of y) sum += v
+  const weights = y.map((v) => v / sum)
+  const Sw = matVec(S, weights)
+  let raw = 0
+  for (let i = 0; i < weights.length; i += 1) raw += weights[i] * Sw[i]
+  const variance = Math.max(0, raw)
+  const riskContributions = weights.map((w, i) => (variance > 0 ? (w * Sw[i]) / variance : 0))
+  let residual = variance > 0 ? 0 : Infinity
+  for (let i = 0; i < weights.length; i += 1) {
+    const gap = Math.abs(riskContributions[i] - b[i])
+    if (!(gap <= residual)) residual = Number.isFinite(gap) ? gap : Infinity
+  }
+  return { weights, riskContributions, variance, residual }
+}
+
+/** Tolerancia del spec para decir que las contribuciones quedaron iguales al presupuesto. */
+const RISK_PARITY_ACCEPT = 1e-8
+
+/**
  * Paridad de riesgo: cada activo aporta la misma parte del riesgo total del portafolio, en vez de
  * la misma parte del dinero. Un activo volátil pesa menos y uno tranquilo pesa más.
  *
- * Se resuelve por descenso coordinado cíclico sobre y (sin normalizar): para cada i,
- * Σ_ii y_i² + y_i·Σ_{j≠i} Σ_ij y_j − b_i = 0, y al final w = y/Σy. Con σ=(.2,.3) y ρ=0 da
- * [.6, .4], o sea proporcional a 1/σ, como debe ser sin correlación.
+ * Se resuelve sobre y > 0 (sin normalizar) la condición y_i·(Σy)_i = b_i, que es el mínimo de la
+ * función convexa ½ yᵀΣy − Σ b_i·log y_i (Spinu, 2013); al final w = y/Σy. Primero van barridos
+ * de descenso coordinado cíclico, baratos y suficientes para cualquier covarianza sana, y si no
+ * alcanzan (covarianza mal condicionada) se termina con Newton sobre esa misma función, con
+ * búsqueda de línea exacta y sin salir de y > 0. Con σ=(.2,.3) y ρ=0 da [.6, .4], o sea
+ * proporcional a 1/σ, como debe ser sin correlación.
+ *
+ * El paro es el residual que de verdad define la paridad, max_i |RC_i − b_i|, no el tamaño del
+ * paso. `converged` es true si ese residual quedó en 1e-8 o menos (lo que pide el spec) o en `tol`
+ * si pediste algo más holgado. REVISA `converged` antes de enseñar `riskContributions`: con una
+ * covarianza casi singular (condición de 1e12 o más) la aritmética de doble precisión ya no deja
+ * calcular las contribuciones a 1e-8, y ahí sale false con el mejor punto que se encontró.
  *
  * Solo largos por construcción: no acepta cajas, porque la solución ya es interior.
  *
- * @param {number[][]} cov covarianza N x N con diagonal positiva
+ * @param {number[][]} cov covarianza N x N simétrica con diagonal positiva
  * @param {{ budget?: number[] | null, maxIter?: number, tol?: number }} [options]
- *   `budget` es el reparto de riesgo objetivo (por omisión, parejo); se normaliza a sumar 1
+ *   `budget` es el reparto de riesgo objetivo (por omisión, parejo); se normaliza a sumar 1.
+ *   `maxIter` topa barridos más pasos de Newton (500); `tol` es el residual al que se afina (1e-12)
  * @returns {{
  *   weights: number[],
  *   riskContributions: number[],
  *   variance: number,
  *   volatility: number,
+ *   residual: number,
  *   iterations: number,
  *   converged: boolean,
- * } | null} `null` si algún activo tiene varianza cero o negativa
- * @throws {InvalidInputError} si la covarianza no es cuadrada, trae NaN o el presupuesto no casa
+ * } | null} `null` si algún activo tiene varianza cero o negativa, o si la covarianza es tan
+ *   singular que ninguna iteración dio contribuciones positivas (no significarían nada)
+ * @throws {InvalidInputError} si la covarianza no es cuadrada ni simétrica, trae NaN o el
+ *   presupuesto no casa
  */
-export function riskParity(cov, { budget = null, maxIter = 10000, tol = 1e-15 } = {}) {
-  const S = assertSquare(cov, 'la covarianza')
+export function riskParity(cov, { budget = null, maxIter = 500, tol = 1e-12 } = {}) {
+  const S = symmetricCov(cov)
   const n = S.length
   let b
   if (budget == null) {
@@ -621,29 +712,93 @@ export function riskParity(cov, { budget = null, maxIter = 10000, tol = 1e-15 } 
   const y = new Array(n)
   for (let i = 0; i < n; i += 1) y[i] = Math.sqrt(b[i] / S[i][i])
 
+  let state = riskBudgetState(S, y, b)
+  let best = { y: y.slice(), state }
+  const keep = () => {
+    if (state.residual < best.state.residual) best = { y: y.slice(), state }
+  }
+
+  // 1. Descenso coordinado cíclico: cada paso resuelve exacto la cuadrática de y_i.
   let iterations = 0
-  let converged = false
-  for (let it = 1; it <= maxIter; it += 1) {
-    iterations = it
-    let delta = 0
+  const sweeps = Math.min(maxIter, 60)
+  while (iterations < sweeps && best.state.residual > tol) {
+    iterations += 1
     for (let i = 0; i < n; i += 1) {
       let c = 0
       for (let j = 0; j < n; j += 1) if (j !== i) c += S[i][j] * y[j]
-      const next = (-c + Math.sqrt(c * c + 4 * S[i][i] * b[i])) / (2 * S[i][i])
-      delta = Math.max(delta, Math.abs(next - y[i]) / Math.max(1e-12, Math.abs(y[i])))
-      y[i] = next
+      y[i] = (-c + Math.sqrt(c * c + 4 * S[i][i] * b[i])) / (2 * S[i][i])
     }
-    if (delta <= tol) {
-      converged = true
-      break
+    state = riskBudgetState(S, y, b)
+    keep()
+  }
+
+  // 2. Newton sobre ½ yᵀΣy − Σ b·log y. El hessiano Σ + diag(b/y²) es definido positivo siempre.
+  //    La búsqueda de línea usa la derivada direccional (más precisa que comparar valores de la
+  //    función) y nunca deja salir a y de y > 0. Se para al llegar a `tol` o cuando el residual ya
+  //    rebota en el piso de redondeo sin mejorar.
+  if (best.state.residual > tol) {
+    for (let i = 0; i < n; i += 1) y[i] = best.y[i]
+    /** @param {number[]} point @param {number[]} dir */
+    const slope = (point, dir) => {
+      const Sy = matVec(S, point)
+      let d = 0
+      for (let i = 0; i < n; i += 1) d += (Sy[i] - b[i] / point[i]) * dir[i]
+      return d
+    }
+    let stall = 0
+    while (iterations < maxIter && best.state.residual > tol && stall < 8) {
+      iterations += 1
+      const Sy = matVec(S, y)
+      const minusGrad = new Array(n)
+      const H = new Array(n)
+      for (let i = 0; i < n; i += 1) {
+        minusGrad[i] = b[i] / y[i] - Sy[i]
+        H[i] = S[i].slice()
+        H[i][i] += b[i] / (y[i] * y[i])
+      }
+      const dir = solveSPD(H, minusGrad)
+      if (!dir || dir.some((v) => !Number.isFinite(v))) break
+      let tMax = 1
+      for (let i = 0; i < n; i += 1) if (dir[i] < 0) tMax = Math.min(tMax, (-0.99 * y[i]) / dir[i])
+      /** @param {number} t */
+      const at = (t) => y.map((v, i) => v + t * dir[i])
+      let t = tMax
+      if (slope(at(tMax), dir) > 0) {
+        let lo = 0
+        let hi = tMax
+        for (let k = 0; k < 60; k += 1) {
+          const mid = (lo + hi) / 2
+          if (slope(at(mid), dir) > 0) hi = mid
+          else lo = mid
+        }
+        t = lo > 0 ? lo : hi / 2
+      }
+      const next = at(t)
+      let moved = false
+      for (let i = 0; i < n; i += 1) {
+        if (next[i] !== y[i]) moved = true
+        y[i] = next[i]
+      }
+      state = riskBudgetState(S, y, b)
+      const before = best.state.residual
+      keep()
+      // Solo cuenta como estancado si ya está cerca: lejos del óptimo el residual puede subir
+      // unos pasos mientras Newton avanza en la función convexa.
+      if (best.state.residual < before) stall = 0
+      else if (best.state.residual <= 1e-6) stall += 1
+      if (!moved) break
     }
   }
 
-  let sum = 0
-  for (const v of y) sum += v
-  const weights = y.map((v) => v / sum)
-  const variance = Math.max(0, quadForm(weights, S))
-  const Sw = matVec(S, weights)
-  const riskContributions = weights.map((w, i) => (variance > 0 ? (w * Sw[i]) / variance : 0))
-  return { weights, riskContributions, variance, volatility: Math.sqrt(variance), iterations, converged }
+  const { weights, riskContributions, variance, residual } = best.state
+  if (!(variance > 0) || riskContributions.some((c) => !(c > 0))) return null
+  return {
+    weights,
+    riskContributions,
+    variance,
+    volatility: Math.sqrt(variance),
+    residual,
+    iterations,
+    converged: residual <= Math.max(tol, RISK_PARITY_ACCEPT),
+  }
 }

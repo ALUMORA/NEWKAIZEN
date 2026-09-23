@@ -87,7 +87,9 @@ export function sampleCov(returnMatrix) {
  *
  * @param {number[][]} returnMatrix T x N: renglones = periodos, columnas = activos. Mínimo T = 2.
  * @returns {{ cov: number[][], shrinkage: number, target: number[][], meanCorrelation: number | null } | null}
- *   `shrinkage` es δ ∈ [0, 1]; `meanCorrelation` es r̄, o `null` con un solo activo.
+ *   `shrinkage` es δ ∈ [0, 1]; `meanCorrelation` es r̄, o `null` con un solo activo. Con 1 o 2
+ *   activos `shrinkage` es 0 siempre: el objetivo coincide con la muestral y `cov` ES la muestral
+ *   (PyPortfolioOpt con N = 2 reporta 1; la matriz es la misma).
  *   Devuelve `null` si hay menos de 2 periodos.
  * @throws {import('./linalg.js').InvalidInputError} si la matriz no es rectangular o trae NaN
  */
@@ -198,7 +200,14 @@ export function ledoitWolfConstantCorrelation(returnMatrix) {
 
   // γ = 0 quiere decir que la muestra YA es el objetivo (pasa con un panel de puros ceros):
   // no hay nada que ganar contrayendo y la división daría NaN.
-  const delta = gammaHat > 0 ? Math.max(0, Math.min(1, (piHat - rhoHat) / gammaHat / T)) : 0
+  //
+  // Con N = 2 pasa SIEMPRE, por construcción: solo hay una correlación, r̄ es esa misma y F = S.
+  // Pero γ no sale 0 exacto sino ~1e-35 según el redondeo, y δ = (π − ρ)/γ/T se dispara y se
+  // recorta a 1, o sale 0: un número que salta entre 0 % y 100 % sin significar nada.
+  // PyPortfolioOpt reporta 1 (8 de 8 paneles probados). Como la matriz es idéntica con cualquier δ,
+  // aquí se fija en 0, que es lo que de verdad pasó: se usó la covarianza muestral tal cual.
+  const delta =
+    N > 2 && gammaHat > 0 ? Math.max(0, Math.min(1, (piHat - rhoHat) / gammaHat / T)) : 0
 
   const shrunk = zerosMatrix(N, N)
   for (let i = 0; i < N; i += 1) {

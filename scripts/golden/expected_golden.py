@@ -75,7 +75,10 @@ def historical_case(name: str, panel: list[list[float]], k: int) -> dict:
     }
 
 
-def james_stein_case(name: str, means: list[float], cov: np.ndarray, periods: int, target: str) -> dict:
+def james_stein_case(
+    name: str, means: list[float], cov: np.ndarray, periods: int, target: str, k: int = 1
+) -> dict:
+    """James-Stein con medias y covarianza en unidades de k periodos (k=1: por periodo)."""
     mu = np.asarray(means, dtype=float)
     n = len(mu)
     ones = np.ones(n)
@@ -84,14 +87,18 @@ def james_stein_case(name: str, means: list[float], cov: np.ndarray, periods: in
     else:
         mu0 = float((ones @ np.linalg.solve(cov, mu)) / (ones @ np.linalg.solve(cov, ones)))
     diff = mu - mu0
-    d = float(diff @ np.linalg.solve(cov, diff))
+    # d se calcula en la unidad de entrada y se regresa a la de los T dividiendo entre k.
+    d = float(diff @ np.linalg.solve(cov, diff)) / k
     lam = (n + 2) / d if d > 0 else math.inf
     w = 1.0 if math.isinf(lam) else lam / (periods + lam)
     shrunk = (1 - w) * mu + w * mu0
+    case_input: dict = {"means": means, "cov": cov.tolist(), "T": periods, "target": target}
+    if k != 1:
+        case_input["k"] = k
     return {
         "name": name,
         "fn": "jamesStein",
-        "input": {"means": means, "cov": cov.tolist(), "T": periods, "target": target},
+        "input": case_input,
         "expected": {"mu": shrunk.tolist(), "shrinkage": w, "target": mu0},
         "tol": TOL,
     }
@@ -115,6 +122,16 @@ def main() -> None:
         james_stein_case("James-Stein hacia el promedio simple, 5 activos, T=156", means5, cov5, 156, "average"),
         james_stein_case("James-Stein hacia minima varianza, 8 activos, T=520", means8, cov8, 520, "minVariance"),
         james_stein_case("James-Stein con pocos periodos (T=24) encoge mucho mas", means8, cov8, 24, "minVariance"),
+        # Las mismas medias y covarianza del caso de 5 activos, anualizadas con k=52: la contraccion
+        # tiene que salir IGUAL que por periodo, y mu y el objetivo, 52 veces mas grandes.
+        james_stein_case(
+            "James-Stein anualizado con k=52 da la misma contraccion que por periodo",
+            [m * 52 for m in means5],
+            cov5 * 52,
+            156,
+            "average",
+            k=52,
+        ),
     ]
 
     OUT.parent.mkdir(parents=True, exist_ok=True)

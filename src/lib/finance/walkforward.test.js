@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs'
 
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { InvalidInputError } from './linalg.js'
 import { walkForward } from './walkforward.js'
@@ -166,6 +166,34 @@ describe('walkForward, resultados', () => {
     expect(r.folds).toBe(r.rebalances.length)
   })
 
+  it('la caída máxima cuenta una pérdida en el PRIMER periodo fuera de muestra', () => {
+    // El pico de arranque es la riqueza inicial, 1, no el primer valor ya golpeado. Antes de
+    // corregirlo esta estrategia, que pierde 30 % de entrada y luego sube poco, reportaba 0.
+    const T = 20
+    const returns = []
+    for (let t = 0; t < T; t += 1) returns.push([0.001 * ((t % 3) - 1), 0.002 * ((t % 2) - 0.5)])
+    returns[10] = [-0.3, -0.3]
+    for (let t = 11; t < T; t += 1) returns[t] = [0.001, 0.001]
+    const dates = Array.from({ length: T }, (_, t) => `2020-01-${String(t + 1).padStart(2, '0')}`)
+    const r = /** @type {any} */ (
+      walkForward(returns, dates, { estimationWindow: 10, holdPeriods: 5, method: 'equalWeight' })
+    )
+    expect(r.returns[0]).toBeCloseTo(-0.3, 12)
+    expect(r.summary.maxDrawdown).toBeCloseTo(-0.3, 12)
+  })
+
+  it('la caída máxima coincide con la de la trayectoria que arranca en 1', () => {
+    const { returns, dates } = panel(200, 4, 8080)
+    const r = /** @type {any} */ (walkForward(returns, dates, { estimationWindow: 52, holdPeriods: 13 }))
+    let peak = 1
+    let worst = 0
+    for (const v of r.values) {
+      peak = Math.max(peak, v)
+      worst = Math.min(worst, v / peak - 1)
+    }
+    expect(r.summary.maxDrawdown).toBeCloseTo(worst, 14)
+  })
+
   it('cada rebalanceo entrega pesos que suman 1', () => {
     const { returns, dates } = panel(120, 5, 2718)
     for (const method of /** @type {const} */ (['minVariance', 'maxSharpe', 'riskParity', 'equalWeight'])) {
@@ -178,6 +206,20 @@ describe('walkForward, resultados', () => {
         )
         for (const w of rebalance.weights) expect(w).toBeGreaterThanOrEqual(-1e-12)
       }
+    }
+  })
+
+  it('maxSharpe con rf por encima de todo lo factible cae a mínima varianza y lo dice', () => {
+    // rf de 1 % SEMANAL: ninguna media de ventana le gana, así que no hay tangente que enseñar.
+    const { returns, dates } = panel(120, 4, 2024)
+    const r = /** @type {any} */ (
+      walkForward(returns, dates, { estimationWindow: 52, holdPeriods: 13, method: 'maxSharpe', rf: 0.01 })
+    )
+    const mv = /** @type {any} */ (walkForward(returns, dates, { estimationWindow: 52, holdPeriods: 13 }))
+    expect(r.rebalances.length).toBeGreaterThan(0)
+    for (let i = 0; i < r.rebalances.length; i += 1) {
+      expect(r.rebalances[i].note).toBe('No hubo portafolio tangente, se usó mínima varianza.')
+      expect(r.rebalances[i].weights).toEqual(mv.rebalances[i].weights)
     }
   })
 
@@ -254,6 +296,67 @@ describe('walkForward, casos de borde y validación', () => {
     expect(() => walkForward(returns, dates, { estimationWindow: 10, method: () => [1, Number.NaN, 0] })).toThrow(
       InvalidInputError,
     )
+  })
+})
+
+describe('walkForward, estrategias propias y avisos del optimizador', () => {
+  it('rechaza una estrategia que devuelve pesos que no suman 1 (apalancada o incompleta)', () => {
+    const { returns, dates } = panel(40, 2, 11)
+    const opts = { estimationWindow: 20, holdPeriods: 5 }
+    expect(() => walkForward(returns, dates, { ...opts, method: () => [0.8, 0.8] })).toThrow(InvalidInputError)
+    expect(() => walkForward(returns, dates, { ...opts, method: () => [0.3, 0.3] })).toThrow(InvalidInputError)
+    expect(() => walkForward(returns, dates, { ...opts, method: () => [0.5, 0.5] })).not.toThrow()
+  })
+
+  it('rechaza una estrategia que se sale de la caja l ≤ w ≤ u', () => {
+    const { returns, dates } = panel(40, 3, 12)
+    const opts = { estimationWindow: 20, holdPeriods: 5 }
+    expect(() => walkForward(returns, dates, { ...opts, method: () => [1.2, -0.1, -0.1] })).toThrow(InvalidInputError)
+    expect(() => walkForward(returns, dates, { ...opts, u: 0.4, method: () => [0.5, 0.3, 0.2] })).toThrow(
+      InvalidInputError,
+    )
+    expect(() => walkForward(returns, dates, { ...opts, u: 0.4, method: () => [0.4, 0.35, 0.25] })).not.toThrow()
+  })
+
+  it('si el optimizador no convergió en un corte, el rebalanceo lo dice en la nota', async () => {
+    // Con datos reales es casi imposible hacer que FISTA o la paridad de riesgo topen con su límite
+    // de iteraciones, así que se sustituye el optimizador por uno que reporta converged=false.
+    vi.resetModules()
+    vi.doMock('./optimize.js', async (importOriginal) => {
+      const real = /** @type {any} */ (await importOriginal())
+      /** @param {(...args: any[]) => any} fn */
+      const unconverged = (fn) => (/** @type {any[]} */ ...args) => {
+        const r = fn(...args)
+        return r ? { ...r, converged: false } : r
+      }
+      return {
+        ...real,
+        minVariance: unconverged(real.minVariance),
+        riskParity: unconverged(real.riskParity),
+        maxSharpe: unconverged(real.maxSharpe),
+      }
+    })
+    try {
+      const mod = await import('./walkforward.js')
+      const { returns, dates } = panel(90, 3, 77)
+      for (const method of /** @type {const} */ (['minVariance', 'riskParity', 'maxSharpe'])) {
+        const r = /** @type {any} */ (mod.walkForward(returns, dates, { estimationWindow: 52, holdPeriods: 13, method }))
+        for (const rebalance of r.rebalances) {
+          expect(rebalance.note).toContain('El optimizador no convergió en este corte, los pesos son aproximados.')
+        }
+      }
+    } finally {
+      vi.doUnmock('./optimize.js')
+      vi.resetModules()
+    }
+  })
+
+  it('cuando el optimizador sí convergió no hay nota', () => {
+    const { returns, dates } = panel(90, 3, 77)
+    for (const method of /** @type {const} */ (['minVariance', 'riskParity', 'maxSharpe'])) {
+      const r = /** @type {any} */ (walkForward(returns, dates, { estimationWindow: 52, holdPeriods: 13, method }))
+      for (const rebalance of r.rebalances) expect(rebalance.note).toBeNull()
+    }
   })
 })
 
