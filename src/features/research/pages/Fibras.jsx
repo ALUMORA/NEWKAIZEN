@@ -5,7 +5,7 @@ import { Suspense, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { fibrasScreenerQuery } from '../../../lib/api/queries.js'
-import { MISSING, fmtMoney, fmtMultiple, fmtPct, fmtPp } from '../../../lib/format.js'
+import { MISSING, fmtDate, fmtMoney, fmtMultiple, fmtPct, fmtPp } from '../../../lib/format.js'
 import { Button, Card, DataTable, InfoTip, Input, PageHeader, Skeleton, Stat } from '../../../components/ui/index.js'
 import { PATHS, pathInstrument } from '../../../app/paths.js'
 import { QueryBlock } from '../components/QueryBlock.jsx'
@@ -18,10 +18,11 @@ import {
   describeRate,
   missingFields,
   parseExtra,
+  rateDate,
   splitRateNotes,
   spreadBars,
 } from '../fibras.js'
-import { generalNotes, notesFor } from '../screenerNotes.js'
+import { generalNotes, notesFor, readableMeta } from '../screenerNotes.js'
 import '../research.css'
 import '../magic-fibras.css'
 
@@ -152,6 +153,7 @@ function Table({ rows, notes, against, status, loading = false }) {
         rowKey="symbol"
         caption="FIBRAs ordenadas por P/NAV"
         captionHidden
+        className="kz-scr-table"
         defaultSort={{ key: 'pNav', direction: 'ascending' }}
         loading={loading}
         density="compact"
@@ -161,11 +163,16 @@ function Table({ rows, notes, against, status, loading = false }) {
   )
 }
 
-/** @param {{ rate: ReturnType<typeof describeRate>, value: number | null, notes: string[] }} props */
-function RateBody({ rate, value, notes }) {
+/** @param {{ rate: ReturnType<typeof describeRate>, value: number | null, date: string | null, notes: string[] }} props */
+function RateBody({ rate, value, date, notes }) {
   return (
     <div className="kz-col" data-gap="3">
-      <Stat label={rate.label} value={value == null ? MISSING : fmtPct(value)} sublabel={`Fuente: ${rate.sourceLabel}`} size="lg" />
+      <Stat
+        label={rate.label}
+        value={value == null ? MISSING : fmtPct(value)}
+        sublabel={`Fuente: ${rate.sourceLabel}${date ? `, dato del ${fmtDate(date)}` : ''}`}
+        size="lg"
+      />
       {rate.missing ? (
         <div role="note" aria-label="Sin tasa de referencia" className="kz-research-warning">
           El servidor no tiene tasa de referencia en este momento, así que el diferencial sale como s/d.
@@ -314,7 +321,11 @@ function Notes({ notes }) {
     <Card
       title="Notas del cálculo"
       description="Cómo se leen estas cifras y de qué fecha son."
-      footer={<Link to={METHOD_PATH}>Metodología completa de FIBRAs</Link>}
+      footer={
+        <Link className="kz-scr-link" to={METHOD_PATH}>
+          Metodología completa de FIBRAs
+        </Link>
+      }
     >
       {notes.length ? (
         <ul className="kz-scr-list">
@@ -340,6 +351,14 @@ export default function Fibras() {
   const rate = describeRate(data?.meta, data?.cetes28)
   const general = generalNotes(notes, rows.map((r) => r.symbol))
   const split = splitRateNotes(general)
+  const rateAsOf = rateDate(notes)
+  // La tarjeta de la tasa lleva la fecha y la fuente de la tasa, no las de los precios; el respaldo
+  // (fallback) y lo viejo (stale) son los que dijo el servidor.
+  const rateStatus = readableMeta(data?.meta, {
+    ...(rate.source ? { source: rate.source === 'fred' ? 'FRED' : 'Banxico' } : {}),
+    ...(rateAsOf ? { asOf: rateAsOf } : {}),
+  })
+  const status = readableMeta(data?.meta)
 
   const applyExtra = (list) => {
     const next = new URLSearchParams(params)
@@ -362,9 +381,9 @@ export default function Fibras() {
         }
       />
       <div className="kz-research-grid" data-cols="2">
-        <Card title="Tasa de referencia" status={data?.meta} description="La tasa contra la que se mide el diferencial de cada FIBRA.">
+        <Card title="Tasa de referencia" status={rateStatus} description="La tasa contra la que se mide el diferencial de cada FIBRA.">
           <QueryBlock query={query} lines={3}>
-            {() => <RateBody rate={rate} value={data.cetes28} notes={split.rate} />}
+            {() => <RateBody rate={rate} value={data.cetes28} date={rateAsOf} notes={split.rate} />}
           </QueryBlock>
         </Card>
         <ExtraForm key={extra.join(',')} extra={extra} onApply={applyExtra} />
@@ -372,9 +391,9 @@ export default function Fibras() {
       {query.isPending ? <Table rows={[]} notes={[]} against={rate.against} status={undefined} loading /> : null}
       {data ? (
         <>
-          <Table rows={rows} notes={notes} against={rate.against} status={data.meta} />
+          <Table rows={rows} notes={notes} against={rate.against} status={status} />
           <div className="kz-research-grid" data-cols="2">
-            <SpreadChart rows={rows} rate={rate} status={data.meta} />
+            <SpreadChart rows={rows} rate={rate} status={status} />
             <Reasons rows={rows} notes={notes} />
           </div>
           <Notes notes={split.rest} />

@@ -54,3 +54,39 @@ export function ebitFallbackSymbols(notes) {
   }
   return out
 }
+
+const SOURCE_NAMES = Object.freeze({
+  yahoo: 'Yahoo Finance',
+  computed: 'cálculo de Kaizen',
+  fred: 'FRED',
+  banxico: 'Banxico',
+  sec: 'SEC',
+  stooq: 'Stooq',
+})
+
+/**
+ * meta.source del API ("yahoo,computed,fred") en palabras: "Yahoo Finance, cálculo de Kaizen y FRED".
+ * Lo que no se reconozca se deja tal cual; nada se esconde.
+ * @param {string | null | undefined} source
+ */
+export function sourceLabel(source) {
+  const names = String(source ?? '')
+    .split(',')
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .map((t) => SOURCE_NAMES[/** @type {keyof typeof SOURCE_NAMES} */ (t.toLowerCase().split('_')[0])] ?? t)
+  if (names.length <= 1) return names[0] ?? ''
+  return `${names.slice(0, -1).join(', ')} y ${names[names.length - 1]}`
+}
+
+/**
+ * El meta tal cual, con la fuente en palabras para DataStatus. asOf, stale y fallback no cambian.
+ * @template {{ source?: string | null } | null | undefined} M
+ * @param {M} meta
+ * @param {Partial<NonNullable<M>>} [over]
+ * @returns {M}
+ */
+export function readableMeta(meta, over = {}) {
+  if (!meta) return meta
+  return { ...meta, source: sourceLabel(meta.source), ...over }
+}

@@ -10,7 +10,7 @@ import { Badge, Card, DataTable, PageHeader, SegmentedControl, Stat } from '../.
 import { PATHS, pathInstrument } from '../../../app/paths.js'
 import { QueryBlock } from '../components/QueryBlock.jsx'
 import { EXCLUSION_RULES, UNIVERSES, groupExclusions, parseUniverse, sharedValues, withPositions } from '../magicFormula.js'
-import { ebitFallbackSymbols } from '../screenerNotes.js'
+import { ebitFallbackSymbols, readableMeta } from '../screenerNotes.js'
 import '../research.css'
 import '../magic-fibras.css'
 
@@ -99,7 +99,12 @@ function Ranking({ rows, notes, status, loading = false }) {
       header: 'Utilidad de operación',
       numeric: true,
       sortable: true,
-      format: (v, row) => fmtMoney(v, row.currency, { compact: true }),
+      format: (v, row) => (
+        <>
+          {fmtMoney(v, row.currency, { compact: true })}
+          <span className="kz-scr-sub">cierre {fmtDate(row.fiscalPeriodEnd)}</span>
+        </>
+      ),
     },
     {
       key: 'enterpriseValue',
@@ -110,7 +115,6 @@ function Ranking({ rows, notes, status, loading = false }) {
       format: (v, row) => fmtMoney(v, row.currency, { compact: true }),
     },
     { key: 'sector', header: 'Sector', sortable: true, format: (v) => v || MISSING },
-    { key: 'fiscalPeriodEnd', header: 'Cierre fiscal', sortable: true, format: (v) => fmtDate(v) },
   ]
   return (
     <Card
@@ -136,6 +140,7 @@ function Ranking({ rows, notes, status, loading = false }) {
         rowKey="symbol"
         caption="Ranking de la fórmula mágica"
         captionHidden
+        className="kz-scr-table"
         defaultSort={{ key: 'rank', direction: 'ascending' }}
         loading={loading}
         density="compact"
@@ -188,7 +193,9 @@ function Notes({ notes }) {
       title="Notas del cálculo"
       description="Lo que el servidor avisa sobre estos datos: cobertura, fechas y renglones de respaldo."
       footer={
-        <Link to={METHOD_PATH}>Metodología completa de la fórmula mágica</Link>
+        <Link className="kz-scr-link" to={METHOD_PATH}>
+          Metodología completa de la fórmula mágica
+        </Link>
       }
     >
       {notes.length ? (
@@ -232,7 +239,7 @@ export default function MagicFormula() {
           </Link>
         }
       />
-      <Card title="Universo" status={data?.meta}>
+      <Card title="Universo" status={readableMeta(data?.meta)}>
         <div className="kz-col" data-gap="4">
           <div className="kz-scr-toolbar">
             <SegmentedControl label="Universo" hideLabel items={[...UNIVERSES]} value={universe} onChange={changeUniverse} />
@@ -262,7 +269,7 @@ export default function MagicFormula() {
       {query.isPending ? <Ranking rows={[]} notes={[]} status={undefined} loading /> : null}
       {data ? (
         <>
-          <Ranking rows={rows} notes={notes} status={data.meta} />
+          <Ranking rows={rows} notes={notes} status={readableMeta(data.meta)} />
           <div className="kz-research-grid" data-cols="2">
             <Exclusions excluded={excluded} />
             <Notes notes={notes} />

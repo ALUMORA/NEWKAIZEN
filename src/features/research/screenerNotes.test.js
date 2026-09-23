@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ebitFallbackSymbols, generalNotes, mentions, notesFor } from './screenerNotes.js'
+import { ebitFallbackSymbols, generalNotes, mentions, notesFor, readableMeta, sourceLabel } from './screenerNotes.js'
 
 // Notas con la redacción real de kaizen_api/domain/screeners/{fibras,magic}.py.
 const FMTY = 'FMTY14.MX: LTV, deuda entre capitalización, cap rate y flujo van en s/d porque los estados financieros que publica Yahoo no son de esta FIBRA o ya no la describen. Yahoo la clasifica como banco (Banks - Regional); su balance es idéntico al de FHIPO14.MX, así que es el del fiduciario que comparten.'
@@ -43,5 +43,21 @@ describe('ebitFallbackSymbols', () => {
   it('sin esa nota no marca a nadie', () => {
     expect(ebitFallbackSymbols([GENERAL]).size).toBe(0)
     expect(ebitFallbackSymbols(null).size).toBe(0)
+  })
+})
+
+describe('sourceLabel y readableMeta', () => {
+  it('pone la fuente en palabras y deja lo desconocido tal cual', () => {
+    expect(sourceLabel('yahoo,computed,fred')).toBe('Yahoo Finance, cálculo de Kaizen y FRED')
+    expect(sourceLabel('yahoo,computed')).toBe('Yahoo Finance y cálculo de Kaizen')
+    expect(sourceLabel('fred_ir3tib')).toBe('FRED')
+    expect(sourceLabel('eodhd')).toBe('eodhd')
+    expect(sourceLabel(null)).toBe('')
+  })
+  it('conserva fecha, retraso, viejo y respaldo', () => {
+    const meta = { asOf: '2026-09-22', source: 'yahoo,computed,fred', delayMinutes: 15, stale: false, fallback: true, generatedAt: 'x', notes: [] }
+    expect(readableMeta(meta)).toEqual({ ...meta, source: 'Yahoo Finance, cálculo de Kaizen y FRED' })
+    expect(readableMeta(meta, { source: 'FRED', asOf: '2026-08-01' })).toMatchObject({ source: 'FRED', asOf: '2026-08-01', fallback: true })
+    expect(readableMeta(undefined)).toBe(undefined)
   })
 })

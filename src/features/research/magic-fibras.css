@@ -14,7 +14,22 @@
   text-align: right;
 }
 .kz-scr-symbol__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.kz-scr-symbol__body a { color: var(--ink); font-family: var(--font-mono); font-weight: var(--weight-semibold); }
+.kz-scr-symbol__body a {
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-weight: var(--weight-semibold);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+.kz-scr-symbol__body a:hover { text-decoration-color: currentColor; }
+.kz-scr-link { color: var(--accent); font-weight: var(--weight-medium); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Tablas de los screeners: ocupan el ancho de la tarjeta y los encabezados largos bajan de renglón
+   antes de obligar al scroll horizontal (que sigue ahí, dentro del marco, cuando no cabe). */
+.kz-scr-table .kz-table { width: 100%; }
+.kz-scr-table .kz-table thead th { vertical-align: bottom; white-space: normal; }
+.kz-scr-table .kz-th-button { text-align: inherit; white-space: normal; }
 .kz-scr-symbol__name { color: var(--muted); font-size: var(--text-xs); font-weight: var(--weight-regular); max-width: 28ch; white-space: normal; }
 .kz-scr-symbol__tags { align-items: center; display: flex; flex-wrap: wrap; gap: var(--space-1); }
 .kz-scr-tie { color: var(--muted); font-size: var(--text-xs); white-space: nowrap; }
@@ -33,6 +48,10 @@
 .kz-scr-extra { align-items: flex-start; display: flex; flex-wrap: wrap; gap: var(--space-3); }
 .kz-scr-extra > :first-child { flex: 1 1 240px; min-width: 0; }
 .kz-scr-extra > button { margin-top: calc(var(--text-sm) * 1.6); }
+@media (max-width: 600px) {
+  .kz-scr-extra > :first-child { flex-basis: 100%; }
+  .kz-scr-extra > button { margin-top: 0; }
+}
 .kz-scr-reasons { display: flex; flex-direction: column; gap: var(--space-4); list-style: none; margin: 0; padding: 0; }
 .kz-scr-reasons > li { display: flex; flex-direction: column; gap: var(--space-1); }
 .kz-scr-reasons > li:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }

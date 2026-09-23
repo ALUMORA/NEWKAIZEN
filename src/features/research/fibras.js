@@ -115,3 +115,17 @@ export function missingFields(row) {
     .filter(([key]) => !Number.isFinite(row?.[key]))
     .map(([, label]) => label)
 }
+
+/**
+ * Fecha de la tasa de referencia según las notas del API ("la tasa de referencia, del 2026-08-01"
+ * o "dato del 2026-08-01" en la nota de la tasa sustituta). No es la fecha de los precios.
+ * @param {readonly string[] | null | undefined} notes
+ * @returns {string | null}
+ */
+export function rateDate(notes) {
+  for (const note of notes ?? []) {
+    const m = /tasa de referencia, del (\d{4}-\d{2}-\d{2})/.exec(note) ?? (/sustituta/.test(note) ? /dato del (\d{4}-\d{2}-\d{2})/.exec(note) : null)
+    if (m) return m[1]
+  }
+  return null
+}
