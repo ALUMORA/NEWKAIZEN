@@ -1,0 +1,163 @@
+/* Marco de la app (C3). Solo tokens de src/theme.css y src/styles/tokens.css. */
+
+/* ─── Estructura ─────────────────────────────────────────────────────────── */
+.kz-shell {
+  --kz-side: var(--sidebar-w);
+  background: var(--bg);
+  color: var(--ink);
+  display: grid;
+  grid-template-columns: var(--kz-side) minmax(0, 1fr);
+  min-height: 100vh;
+}
+.kz-shell[data-collapsed] { --kz-side: var(--sidebar-w-collapsed); }
+.kz-shell__frame {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-width: 0;
+}
+.kz-shell__main {
+  flex: 1;
+  min-width: 0;
+}
+.kz-shell__main:focus { outline: none; }
+
+/* ─── Liga de salto ──────────────────────────────────────────────────────── */
+.kz-skip {
+  background: var(--surface-raised);
+  border: 2px solid var(--focus);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  left: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  position: fixed;
+  top: var(--space-3);
+  transform: translateY(calc(-100% - var(--space-6)));
+  z-index: var(--z-toast);
+}
+.kz-skip:focus-visible { transform: none; }
+
+/* ─── Barra lateral ──────────────────────────────────────────────────────── */
+.kz-side {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+}
+.kz-side__head {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  height: var(--topbar-h);
+  padding-inline: var(--space-4);
+}
+.kz-side__brand {
+  align-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  display: inline-flex;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-bold);
+  gap: var(--space-2);
+  letter-spacing: var(--tracking-tight);
+  text-decoration: none;
+}
+.kz-side__nav {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-2) var(--space-3) var(--space-4);
+}
+.kz-side__group + .kz-side__group { margin-top: var(--space-3); }
+.kz-side__label {
+  color: var(--muted);
+  margin: 0 0 var(--space-1);
+  padding-inline: var(--space-2);
+}
+.kz-side__list {
+  display: grid;
+  gap: 2px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.kz-side__link {
+  align-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--ink-soft);
+  display: flex;
+  font-size: var(--text-md);
+  font-weight: var(--weight-medium);
+  gap: var(--space-3);
+  min-height: 32px;
+  padding: 0 var(--space-2);
+  position: relative;
+  text-decoration: none;
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+.kz-side__link svg { color: var(--muted); flex-shrink: 0; }
+.kz-side__link:hover { background: var(--surface-2); color: var(--ink); }
+.kz-side__link[aria-current="page"] {
+  background: var(--accent-soft);
+  color: var(--ink);
+  font-weight: var(--weight-semibold);
+}
+.kz-side__link[aria-current="page"] svg { color: var(--ink); }
+.kz-side__link[aria-current="page"]::before {
+  background: var(--accent);
+  border-radius: var(--radius-full);
+  content: "";
+  inset: 8px auto 8px -6px;
+  position: absolute;
+  width: 3px;
+}
+.kz-side__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kz-side__foot {
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  padding: var(--space-1) var(--space-3);
+}
+
+/* Plegada: solo iconos, centrados. Los nombres de sección quedan para el lector de pantalla. */
+.kz-side[data-collapsed] .kz-side__head { justify-content: center; padding-inline: 0; }
+.kz-side[data-collapsed] .kz-side__nav { padding-inline: var(--space-2); }
+.kz-side[data-collapsed] .kz-side__text { display: none; }
+.kz-side[data-collapsed] .kz-side__label {
+  clip-path: inset(50%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
+}
+.kz-side[data-collapsed] .kz-side__group + .kz-side__group {
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+}
+.kz-side[data-collapsed] .kz-side__link { justify-content: center; padding: 0; }
+.kz-side[data-collapsed] .kz-side__link[aria-current="page"]::before { left: -4px; }
+.kz-side[data-collapsed] .kz-side__foot { justify-content: center; padding-inline: 0; }
+
+/* ─── Móvil (< 768 px): sin barra lateral ───────────────────────────────── */
+@media (max-width: 767.98px) {
+  .kz-shell { grid-template-columns: minmax(0, 1fr); }
+  .kz-side { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kz-side__link { transition: none; }
+}
