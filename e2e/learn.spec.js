@@ -4,6 +4,7 @@
 // excepción, request fallido o respuesta >= 400.
 //
 // Capturas para revisión: con F5_CAPTURE_DIR=/ruta se guarda una por página y viewport.
+import { readFileSync, readdirSync } from 'node:fs'
 import AxeBuilder from '@axe-core/playwright'
 import { test, expect } from './support/guards.js'
 import { HEALTH_V2, setupApp } from './support/app.js'
@@ -99,11 +100,17 @@ async function open(page, baseURL, path, { theme = 'light', session = false, rou
   await page.goto(path)
 }
 
+// Todas las guías de docs/metodologia (menos el README, que es el índice), con el título de su
+// primer "# ": así una guía nueva entra sola a axe y a la revisión de scroll.
+const GUIDES_DIR = new URL('../docs/metodologia/', import.meta.url)
+const GUIDE_PAGES = readdirSync(GUIDES_DIR)
+  .filter((f) => f.endsWith('.md') && f !== 'README.md')
+  .map((f) => ({ path: `/aprender/metodologia/${f.replace(/\.md$/, '')}`, h1: readFileSync(new URL(f, GUIDES_DIR), 'utf8').match(/^#\s+(.*)$/m)[1].trim() }))
+
 const PUBLIC_PAGES = [
   { path: '/aprender', h1: 'Glosario' },
   { path: '/aprender/sharpe', h1: /Sharpe/ },
-  { path: '/aprender/metodologia/riesgo', h1: 'Metodología de riesgo' },
-  { path: '/aprender/metodologia/fuentes-de-datos', h1: /./ },
+  ...GUIDE_PAGES,
   { path: '/legal/terminos', h1: 'Términos de uso' },
   { path: '/legal/privacidad', h1: 'Aviso de privacidad' },
   { path: '/legal/aviso', h1: 'Aviso legal' },
@@ -135,6 +142,25 @@ test.describe('F5: páginas públicas', () => {
     await first.click()
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(title)
     await expect(page.getByText('Cómo leerlo')).toBeVisible()
+  })
+
+  test('las guías se leen completas: listas con su sangría y ligas con nombre', async ({ page, baseURL }) => {
+    await open(page, baseURL, '/aprender/metodologia/backtest')
+    const changes = page.getByRole('heading', { name: /Qué cambió/ }).locator('xpath=following-sibling::ol[1]')
+    await expect(changes.locator(':scope > li')).toHaveCount(3)
+    await expect(changes.locator(':scope > li').first()).toContainText('multiplicado por 52. Eso no es')
+
+    await open(page, baseURL, '/aprender/metodologia/fuentes-de-datos')
+    const fill = page.locator('.learn-md li').filter({ hasText: 'Casi nunca se rellena' })
+    await expect(fill.locator(':scope > ul > li')).toHaveCount(2)
+    await expect(fill).not.toContainText(' - ')
+
+    await open(page, baseURL, '/aprender/metodologia/valuacion-dcf')
+    const links = page.locator('.learn-md a')
+    await expect(links.first()).toBeVisible()
+    for (const text of await links.allTextContents()) expect(text, 'el texto de la liga no es un nombre de archivo').not.toMatch(/\.md$/)
+    await expect(links.first()).toHaveText('FIBRAs')
+    await expect(links.first()).toHaveCSS('text-decoration-line', 'underline')
   })
 
   test('un término que no existe muestra un estado vacío amable', async ({ page, baseURL }) => {

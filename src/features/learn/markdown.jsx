@@ -3,13 +3,22 @@
 // markdown-parse.js. Sin HTML crudo: todo pasa por React, así que nada del texto se interpreta
 // como marcado.
 import { Link } from 'react-router'
+import { GUIDE_NAMES } from './guides.js'
 import { parseMarkdown } from './markdown-parse.js'
 
 const GUIDE_LINK = /^(?:\.\/)?([a-z0-9-]+)\.md(#.*)?$/
 
+/**
+ * Liga de una guía a otra. Si el texto visible es el nombre del archivo ("fibras.md"), se cambia por
+ * el nombre de la guía: un nombre de archivo no le dice nada a quien lee.
+ */
 function linkFor(href, text, key) {
   const guide = href.match(GUIDE_LINK)
-  if (guide) return <Link key={key} to={guide[1] === 'README' ? '/aprender' : `/aprender/metodologia/${guide[1]}`}>{text}</Link>
+  if (guide) {
+    const slug = guide[1]
+    const label = /\.md$/.test(text) ? (slug === 'README' ? 'Aprender' : (GUIDE_NAMES[slug] ?? text)) : text
+    return <Link key={key} to={slug === 'README' ? '/aprender' : `/aprender/metodologia/${slug}`}>{label}</Link>
+  }
   if (/^https?:\/\//.test(href)) return <a key={key} href={href} rel="noopener noreferrer" target="_blank">{text}</a>
   return <span key={key}>{text}</span>
 }
