@@ -2021,6 +2021,11 @@ function Workspace({ backendUrl, initialTab = "news", onLogout, onTabChange, emb
         .resp-grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
         .table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
 
+        /* El ancho que importa es el del contenido, no el de la ventana: dentro del shell la barra
+           lateral se lleva 240 px, y con una consulta por viewport las cuadrículas de 4 columnas
+           se recortaban entre 820 y 1100 px. */
+        .workspace-page { container: legacy / inline-size; }
+
         @media (max-width: 768px) {
           .mobile-tab-label {
             display:flex; align-items:center;
@@ -2029,12 +2034,15 @@ function Workspace({ backendUrl, initialTab = "news", onLogout, onTabChange, emb
             font-weight:800; font-size:13px;
             white-space:nowrap; max-width:160px; overflow:hidden; text-overflow:ellipsis;
           }
+          html, body { overflow-x:hidden; max-width:100vw; }
+        }
+
+        @container legacy (max-width: 960px) {
           .resp-grid-2 { grid-template-columns: 1fr !important; }
           .resp-grid-3 { grid-template-columns: 1fr !important; }
           .resp-hide-mobile { display:none !important; }
           td, th { padding: 8px 10px; font-size:12px; }
           .hero-title { font-size:32px !important; }
-          html, body { overflow-x:hidden; max-width:100vw; }
 
           /* Rebalanceo table — scroll horizontal */
           .rebal-table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
