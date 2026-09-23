@@ -14,8 +14,9 @@ USERS                  JSON ``{"usuario": "scrypt$n$r$p$salt_hex$hash_hex"}`` (s
 TOKEN_TTL_HOURS        Vigencia del token. Default 12.
 TOKEN_VERSION          Subirlo invalida todos los tokens emitidos. Default 1.
 ALLOWED_ORIGINS        Orígenes CORS exactos separados por coma.
-ALLOWED_ORIGIN_REGEX   Regex de orígenes CORS. Default los previews de Vercel de newkaizen; fuera de
-                       producción se suman http://localhost:* y http://127.0.0.1:*.
+ALLOWED_ORIGIN_REGEX   Regex de orígenes CORS. Default: en producción solo
+                       https://newkaizen.vercel.app; fuera de producción también los previews
+                       newkaizen-*.vercel.app, http://localhost:* y http://127.0.0.1:*.
 VERCEL_TEAM_SLUG       Acota la regex default a los previews de un equipo de Vercel
                        (``newkaizen-<rama>-<equipo>.vercel.app``). El dominio de producción se pone
                        en ALLOWED_ORIGINS. Se ignora si ALLOWED_ORIGIN_REGEX viene explícita.
@@ -55,6 +56,10 @@ from dataclasses import dataclass, field
 
 DEFAULT_PORT = 8002
 DEFAULT_ORIGIN_REGEX = r"^https://newkaizen(-[a-z0-9-]+)?\.vercel\.app$"
+"""Default fuera de producción: el dominio de producción y cualquier preview ``newkaizen-*``."""
+PRODUCTION_ORIGIN_REGEX = r"^https://newkaizen\.vercel\.app$"
+"""Default en producción: solo el dominio de producción. ``newkaizen-*.vercel.app`` lo puede
+registrar un tercero, así que los previews se abren con VERCEL_TEAM_SLUG o ALLOWED_ORIGIN_REGEX."""
 DEV_ORIGIN_REGEXES = (r"^http://localhost(:\d+)?$", r"^http://127\.0\.0\.1(:\d+)?$")
 DEV_SECRET_KEY = "kaizen-dev-secret-key-solo-para-desarrollo-local"
 MIN_SECRET_LENGTH = 32
@@ -216,7 +221,7 @@ def _check_login_limits(ip_per_minute: int, user_per_hour: int) -> None:
 
 
 def _origin_regex(env: Mapping[str, str], production: bool, warnings: list[str]) -> str:
-    """Regex de orígenes CORS: la explícita, la del equipo de Vercel, o la default (más ancha)."""
+    """Regex de orígenes CORS: la explícita, la del equipo de Vercel, o la default del entorno."""
     explicit = (env.get("ALLOWED_ORIGIN_REGEX") or "").strip()
     slug = (env.get("VERCEL_TEAM_SLUG") or "").strip().lower()
     if explicit:
@@ -230,10 +235,13 @@ def _origin_regex(env: Mapping[str, str], production: bool, warnings: list[str])
         # (newkaizen.vercel.app) se lista aparte en ALLOWED_ORIGINS.
         return rf"^https://newkaizen-[a-z0-9-]+-{re.escape(slug)}\.vercel\.app$"
     if production:
+        # Cerrado por omisión: la regex ancha dejaba entrar a cualquier proyecto de Vercel que
+        # empezara con 'newkaizen-', incluido uno registrado por un tercero.
         warnings.append(
-            "ALLOWED_ORIGIN_REGEX default: cualquier proyecto de Vercel que empiece con 'newkaizen-' "
-            "puede llamar al API desde el navegador. Acota con VERCEL_TEAM_SLUG o ALLOWED_ORIGIN_REGEX"
+            "CORS en producción solo acepta https://newkaizen.vercel.app (más ALLOWED_ORIGINS): los "
+            "previews de Vercel quedan fuera. Ábrelos con VERCEL_TEAM_SLUG o ALLOWED_ORIGIN_REGEX"
         )
+        return PRODUCTION_ORIGIN_REGEX
     return DEFAULT_ORIGIN_REGEX
 
 
