@@ -16,7 +16,6 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
-    "e2e:baseline": "playwright test --project=baseline-desktop --project=baseline-mobile",
     "bundle": "node scripts/check-bundle.mjs",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build && npm run bundle",
     "fixtures:legacy": "node scripts/record-legacy-fixtures.mjs",
