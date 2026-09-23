@@ -2,13 +2,13 @@
 // nueva; el resto son rutas nuevas. Para migrar una ruta: crear ./pages/X.jsx, cargarla con
 // lazy() y cambiar legacyRoute(...) por { path: route(PATHS.x), element: <Pages.X />, handle }.
 import { lazy } from 'react'
-import ComingSoon from '../../app/ComingSoon.jsx'
 import { legacyRoute } from '../../app/legacyRoute.jsx'
 import { PATHS, route } from '../../app/paths.js'
 
 const Pages = {
   Mexico: lazy(() => import('./pages/MexicoPage.jsx')),
   Cetes: lazy(() => import('./pages/CetesPage.jsx')),
+  News: lazy(() => import('./pages/NewsPage.jsx')),
 }
 
 export const routes = [
@@ -28,7 +28,7 @@ export const routes = [
   },
   {
     path: route(PATHS.marketsNews),
-    element: <ComingSoon />,
+    element: <Pages.News />,
     handle: { title: 'Noticias', description: 'Titulares de mercados de México y Estados Unidos con enlace a la fuente original.' },
   },
 ]

@@ -100,6 +100,7 @@ const V2_ROUTES = {
 
 const PAGES = [
   { path: '/mercados/mexico', h1: 'México: tasas, CETES e inflación', ready: (page) => page.getByText('Tasa objetivo').first() },
+  { path: '/mercados/noticias', h1: 'Noticias', ready: (page) => page.getByRole('link', { name: /Banxico recorta/ }) },
   { path: '/mercados/cetes', h1: 'Calculadora de CETES', ready: (page) => page.getByRole('rowheader', { name: '364 días' }) },
 ]
 
@@ -166,4 +167,17 @@ test('/mercados/cetes: tasa prellenada, 11 % a 28 días da efectiva de 11.75 % y
   // 10,000 × .11 × 28 / 360 = 85.56; retención 10,000 × .009 × 28 / 365 = 6.90; neto 78.65
   await expect(page.getByText('$85.56').first()).toBeVisible()
   await expect(page.getByText('78.65').first()).toBeVisible()
+})
+
+test('/mercados/noticias: liga externa segura, sin resumen ni ánimo, filtro por idioma', async ({ page, baseURL }) => {
+  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, legacyApi: true, health: HEALTH, routes: V2_ROUTES })
+  await page.goto('/mercados/noticias')
+  const link = page.getByRole('link', { name: /Banxico recorta/ })
+  await expect(link).toHaveAttribute('rel', 'noopener noreferrer')
+  await expect(link).toHaveAttribute('href', 'https://example.com/n1')
+  await expect(page.getByRole('link', { name: /Treasury yields/ })).toBeVisible()
+  await page.getByRole('radio', { name: 'Español' }).check({ force: true })
+  await expect(page.getByRole('link', { name: /Treasury yields/ })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: /La BMV cierra/ })).toBeVisible()
+  await expect(page.getByText(/positivo|negativo/i)).toHaveCount(0)
 })
