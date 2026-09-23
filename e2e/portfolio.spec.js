@@ -46,7 +46,17 @@ const FX_HISTORY = {
 }
 
 const quote = (symbol, name, price) => ({ symbol, name, price, previousClose: price, change: 0, changePct: 0, currency: 'MXN', exchange: 'BMV', type: 'equity', marketState: 'REGULAR', asOf: '2026-09-22T14:40:00Z' })
-const QUOTES = { quotes: [quote('WALMEX.MX', 'Walmex', 65), quote('NAFTRAC.MX', 'Naftrac', 55.2)], missing: [], meta: meta() }
+const QUOTE_TABLE = {
+  'WALMEX.MX': { ...quote('WALMEX.MX', 'Walmex', 65), previousClose: 64, change: 1, changePct: 1 / 64 },
+  'NAFTRAC.MX': { ...quote('NAFTRAC.MX', 'Naftrac', 55.2), previousClose: 55.5, change: -0.3, changePct: -0.3 / 55.5 },
+  'AMXB.MX': quote('AMXB.MX', 'América Móvil', 18.5),
+  AAPL: { ...quote('AAPL', 'Apple', 240), previousClose: 238, change: 2, changePct: 2 / 238, currency: 'USD', exchange: 'NASDAQ' },
+}
+/** QuotesResponse con lo que se pidió: lo que no está en la tabla sale en `missing`. */
+const QUOTES = ({ url }) => {
+  const symbols = (url.searchParams.get('symbols') ?? '').split(',').filter(Boolean)
+  return { json: { quotes: symbols.filter((s) => QUOTE_TABLE[s]).map((s) => QUOTE_TABLE[s]), missing: symbols.filter((s) => !QUOTE_TABLE[s]), meta: meta() } }
+}
 
 // PanelResponse: 12 semanas de precios en pesos, sin rellenar.
 const weeks = Array.from({ length: 12 }, (_, i) => `2026-${String(7 + Math.floor(i / 4)).padStart(2, '0')}-${String(1 + (i % 4) * 7).padStart(2, '0')}`)
@@ -72,7 +82,7 @@ const V2_ROUTES = {
   'GET /v2/fx/history': { json: FX_HISTORY },
   'GET /v2/search': { json: { results: [], meta: meta({ source: 'kaizen', delayMinutes: null }) } },
   'GET /v2/fx': { json: { pair: 'USDMXN', rate: 18.4321, asOf: '2026-09-22T14:40:00Z', source: 'yahoo', stale: false, meta: meta() } },
-  'GET /v2/quotes': { json: QUOTES },
+  'GET /v2/quotes': QUOTES,
 }
 
 const tx = (over) => ({ fees: 0, currency: 'MXN', fxRate: null, amount: null, ratio: null, price: null, quantity: null, symbol: null, note: '', ...over })
@@ -280,6 +290,30 @@ test.describe('portafolio: rebalanceo', () => {
     await expect.poll(count).toBe(5)
     await page.getByRole('button', { name: 'Deshacer' }).click()
     await expect.poll(count).toBe(3)
+  })
+
+  test('agregar una emisora nueva con meta entra al plan', async ({ page, baseURL }) => {
+    await open(page, baseURL, { state: REBALANCE_STATE })
+    await page.goto('/portafolio/rebalanceo')
+    const form = page.getByRole('region', { name: 'Agregar una emisora' })
+    await form.getByLabel('Clave de la emisora').fill('WAL MEX')
+    await form.getByLabel('Meta').fill('10')
+    await form.getByRole('button', { name: 'Agregar a las metas' }).click()
+    await expect(form.getByText('Esa clave no es válida')).toBeVisible()
+
+    await form.getByLabel('Clave de la emisora').fill('amxb.mx')
+    await form.getByRole('button', { name: 'Agregar a las metas' }).click()
+    await expect(page.getByLabel('Meta de AMXB.MX en porcentaje')).toHaveValue(/10/)
+    await expect(page.getByText('Ajusta las metas hasta que sumen 100%.')).toBeVisible()
+    await page.getByLabel('Meta de WALMEX.MX en porcentaje').fill('50')
+    await expect(planTable(page).getByRole('row', { name: /AMXB\.MX/ })).toContainText('Aumentar')
+
+    await form.getByLabel('Clave de la emisora').fill('ZZZZ.MX')
+    await form.getByLabel('Meta').fill('5')
+    await form.getByRole('button', { name: 'Agregar a las metas' }).click()
+    await expect(form.getByText('Sin cotización para ZZZZ.MX')).toBeVisible()
+    await noHorizontalScroll(page)
+    await expectNoAxeViolations(page, 'rebalanceo con emisora nueva')
   })
 
   test('metas que no suman 100% no calculan plan', async ({ page, baseURL }) => {

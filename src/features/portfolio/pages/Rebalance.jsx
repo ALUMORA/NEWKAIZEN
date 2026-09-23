@@ -5,12 +5,12 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import {
-  Button, Card, ConfirmDialog, DataStatus, DataTable, EmptyState, ErrorState, NumberInput, PageHeader, Stat, useToast,
+  Button, Card, ConfirmDialog, DataStatus, DataTable, EmptyState, ErrorState, Input, NumberInput, PageHeader, Stat, useToast,
 } from '../../../components/ui/index.js'
 import { cashBalances, derivePositions, wholeShareRebalance } from '../../../lib/finance/index.js'
 import { fmtMoney, fmtNumber, fmtPct } from '../../../lib/format.js'
 import { fxQuery, quotesQuery } from '../../../lib/api/queries.js'
-import { isReadOnly, newId, update, useStore } from '../../../lib/storage.js'
+import { isReadOnly, newId, normalizeSymbol, update, useStore } from '../../../lib/storage.js'
 import { PATHS } from '../../../app/paths.js'
 import { todayMx } from '../tx-labels.js'
 import '../portfolio.css'
@@ -30,6 +30,8 @@ export default function Rebalance() {
   const portfolio = useStore(selectActive)
   const toast = useToast()
   const [confirming, setConfirming] = useState(false)
+  const [draft, setDraft] = useState({ symbol: '', pct: /** @type {number | null} */ (null) })
+  const [draftErrors, setDraftErrors] = useState(/** @type {{ symbol?: string, pct?: string }} */ ({}))
   const readOnly = isReadOnly()
 
   const transactions = useMemo(() => portfolio?.transactions ?? [], [portfolio])
@@ -98,6 +100,22 @@ export default function Rebalance() {
     })
   }
 
+  /** @param {import('react').FormEvent} event */
+  function addSymbol(event) {
+    event.preventDefault()
+    const symbol = normalizeSymbol(draft.symbol)
+    /** @type {{ symbol?: string, pct?: string }} */
+    const errors = {}
+    if (!symbol) errors.symbol = 'Esa clave no es válida. Usa la clave de pizarra, por ejemplo AMXB.MX o AAPL.'
+    else if (symbols.includes(symbol)) errors.symbol = `${symbol} ya está en tus metas: cambia su meta en la tabla.`
+    if (draft.pct == null || !(draft.pct > 0) || draft.pct > 100) errors.pct = 'La meta va de 0 a 100 %.'
+    setDraftErrors(errors)
+    if (errors.symbol || errors.pct || !symbol) return
+    setTarget(symbol, draft.pct)
+    setDraft({ symbol: '', pct: null })
+    toast.show({ title: 'Emisora agregada a tus metas', description: `${symbol} con meta de ${fmtPct((draft.pct ?? 0) / 100)}`, tone: 'positive' })
+  }
+
   function register() {
     setConfirming(false)
     if (!plan) return
@@ -162,6 +180,7 @@ export default function Rebalance() {
   ]
 
   const quotesStatus = quotes.data?.meta
+  const missing = /** @type {string[]} */ (quotes.data?.missing ?? []).filter((m) => symbols.includes(m))
   return (
     <div className="kz-container kz-col kz-portfolio-page" data-gap="6">
       <PageHeader
@@ -190,6 +209,35 @@ export default function Rebalance() {
           />
         )}
       </Card>
+      <Card title="Agregar una emisora" titleAs="h2" description="Suma a tus metas una emisora que todavía no tienes. El plan la toma en cuenta en cuanto haya precio.">
+        <form className="kz-portfolio-add" onSubmit={addSymbol} noValidate>
+          <Input
+            label="Clave de la emisora"
+            value={draft.symbol}
+            onChange={(e) => { setDraft((d) => ({ ...d, symbol: e.target.value.toUpperCase() })); setDraftErrors((x) => ({ ...x, symbol: undefined })) }}
+            error={draftErrors.symbol}
+            autoComplete="off"
+            spellCheck={false}
+            disabled={readOnly}
+          />
+          <NumberInput
+            label="Meta"
+            suffix="%"
+            value={draft.pct}
+            onChange={(n) => { setDraft((d) => ({ ...d, pct: n })); setDraftErrors((x) => ({ ...x, pct: undefined })) }}
+            error={draftErrors.pct}
+            decimals={2}
+            disabled={readOnly}
+          />
+          <Button type="submit" variant="secondary" disabled={readOnly}>Agregar a las metas</Button>
+        </form>
+        {missing.length > 0 && (
+          <p className="kz-portfolio-hint">
+            {`Sin cotización para ${missing.join(', ')}: mientras no haya precio, su meta se reparte entre las demás.`}
+          </p>
+        )}
+      </Card>
+
       {fx.data?.meta && (
         <div className="kz-row">
           <span>Tipo de cambio para valuar en pesos: {fmtNumber(usdRate, { decimals: 4 })}</span>
