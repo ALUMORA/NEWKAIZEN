@@ -104,7 +104,8 @@ def test_events_carry_dates_types_and_currency(replay_b3a):
     for item in data["items"]:
         assert item["amount"] is None, "Yahoo no publica el monto del dividendo que viene"
         if item["type"] == "earnings":
-            assert item["currency"] is None
+            # Sin consenso no hay número al que ponerle moneda; con consenso, la moneda es la suya.
+            assert item["currency"] is None if item["estimate"] is None else item["currency"] in ("MXN", "USD")
         else:
             assert item["currency"] in ("MXN", "USD")
     assert data["as_of"] == "2026-09-22", "el calendario vale al momento de leerlo"
@@ -144,3 +145,23 @@ def test_a_symbol_without_a_calendar_is_reported_not_faked(replay_b3a, monkeypat
 )
 def test_calendar_dates_are_normalised(raw, expected):
     assert events_mod._as_date(raw) == expected
+
+
+def test_an_eps_estimate_says_which_currency_it_is_in(replay_b3a):
+    """El consenso de WALMEX es en pesos y el de AAPL en dólares: sin moneda parecían comparables."""
+    data = events_mod.get_events(["AAPL", "WALMEX.MX"])
+    upcoming = {item["symbol"]: item for item in data["items"] if item["type"] == "earnings" and item["estimate"]}
+    assert upcoming["AAPL"]["currency"] == "USD"
+    assert upcoming["WALMEX.MX"]["currency"] == "MXN"
+
+
+def test_an_eps_estimate_in_pence_is_given_in_pounds(replay_b3a, monkeypatch):
+    monkeypatch.setattr(
+        events_mod._yahoo,
+        "get_calendar",
+        lambda symbol: {"Earnings Date": [_dt.date(2026, 10, 29)], "Earnings Average": 55.0},
+    )
+    monkeypatch.setattr(events_mod._yahoo, "get_info", lambda symbol: {"currency": "GBp"})
+    (item,) = events_mod.get_events(["LON.L"])["items"]
+    assert item["currency"] == "GBP"
+    assert item["estimate"] == pytest.approx(0.55)
