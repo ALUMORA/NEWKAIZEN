@@ -3,6 +3,7 @@
 import { Link, useMatches } from 'react-router'
 import { useSession } from '../lib/auth/session.js'
 import { PATHS } from './paths.js'
+import { useShell } from './shell/shell-context.js'
 
 const DEFAULT_DESCRIPTION = 'Estamos construyendo esta sección. Mientras tanto puedes usar las herramientas que ya están disponibles.'
 
@@ -11,8 +12,11 @@ export default function ComingSoon({ title, description }) {
   const session = useSession()
   const handle = /** @type {{ title?: string, description?: string } | undefined} */ (matches.at(-1)?.handle)
   const heading = title ?? handle?.title ?? 'Próximamente'
+  // Dentro del shell ya hay un <main id="contenido">: aquí va un div para no anidar otro main.
+  const { embedded } = useShell()
+  const Root = embedded ? 'div' : 'main'
   return (
-    <main className="kz-message-page">
+    <Root className={embedded ? 'kz-message-page kz-message-page--embedded' : 'kz-message-page'}>
       <section aria-labelledby="kz-soon-title" className="kz-message card">
         <span className="badge">Próximamente</span>
         <h1 id="kz-soon-title">{heading}</h1>
@@ -23,6 +27,6 @@ export default function ComingSoon({ title, description }) {
           </Link>
         </div>
       </section>
-    </main>
+    </Root>
   )
 }

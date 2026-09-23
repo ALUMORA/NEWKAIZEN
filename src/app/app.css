@@ -49,6 +49,11 @@
   min-height: 100vh;
   padding: 32px 16px;
 }
+
+.kz-message-page--embedded {
+  background: transparent;
+  min-height: 60vh;
+}
 .kz-message {
   display: grid;
   gap: 12px;
