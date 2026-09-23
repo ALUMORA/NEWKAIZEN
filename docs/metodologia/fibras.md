@@ -79,7 +79,9 @@ valor en libros de los inmuebles.
 El diferencial que publica la pantalla es el **rendimiento por distribución menos la tasa de CETES a
 28 días** del mismo momento, no el cap rate contra CETES. Ese diferencial es lo que el mercado está
 pagando por encima de la deuda del gobierno, a cambio de aceptar riesgo de ocupación, de crédito de
-los inquilinos y de falta de liquidez. El bono M no se usa.
+los inquilinos y de falta de liquidez. El bono M no se usa. Mientras no haya token de Banxico, la tasa que se usa es un sustituto: la tasa
+interbancaria a 91 días que publica la OCDE, en promedio mensual. La pantalla lo dice en sus notas y
+marca el dato como respaldo; no es CETES a 28 días.
 
 Cuando el diferencial se comprime a casi nada, la FIBRA está cotizando como si sus rentas fueran tan
 seguras como un CETE. Cuando se abre mucho, el mercado está descontando algo.
@@ -119,11 +121,22 @@ inmuebles. Puede ser oportunidad, o puede ser desconfianza en los avalúos, en l
 el nivel de deuda. El NAV depende de avalúos que se actualizan con rezago, así que el mercado suele
 moverse antes que el NAV. Por eso el cap rate implícito sirve como comprobación independiente.
 
+## Estados financieros que se descartan
+
+En varias FIBRAs la fuente pública devuelve el balance del banco fiduciario en lugar del de la
+FIBRA, o uno de hace años. Publicar el apalancamiento con esos números sería inventarlo, así que
+Kaizen descarta los estados cuando la fuente clasifica a la emisora como banco, cuando el balance es
+idéntico al de otra FIBRA, cuando el último cierre tiene más de 18 meses, o cuando los certificados
+del balance difieren más de 20 por ciento de los que están en circulación. En esos casos el
+apalancamiento, el cap rate y el flujo salen como s/d, con el motivo escrito. Si solo la deuda no
+cuadra con la reportada, salen como s/d nada más las métricas que la usan.
+
 ## Rendimiento por distribución
 
 En concepto, son las distribuciones de los últimos doce meses entre el precio por certificado.
-Kaizen toma el rendimiento por dividendo que publica la fuente para el certificado y, si no lo trae,
-el de los últimos doce meses. Es **bruto**: a la parte
+Kaizen suma las distribuciones que de verdad se pagaron en los últimos doce meses y las divide entre
+el precio. No usa el rendimiento anualizado hacia adelante que publica la fuente, que puede diferir
+en más de un punto. Si no hay historia de pagos, el dato sale como s/d. Es **bruto**: a la parte
 de la distribución que viene del resultado fiscal se le retiene ISR a la tasa del artículo 9, 30 por
 ciento, según el artículo 188. Para una persona física residente en México esa retención es un pago a
 cuenta: el ingreso se acumula en la declaración anual y lo retenido se acredita. No aplica el 10 por

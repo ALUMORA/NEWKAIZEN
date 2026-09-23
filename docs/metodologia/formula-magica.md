@@ -38,6 +38,12 @@ Se usa EBIT y no utilidad neta, y valor empresa y no capitalización, para que e
 de cuánta deuda trae la empresa ni de su tasa efectiva de impuestos. Dos empresas con el mismo
 negocio y distinta estructura de capital deben salir parecidas.
 
+El EBIT que usa Kaizen es la **utilidad de operación** del estado de resultados. La fuente también
+publica un renglón llamado "EBIT", pero lo arma como utilidad antes de impuestos más intereses, así
+que arrastra resultados financieros y partidas no operativas: en algunas emisoras difiere de la
+utilidad de operación en 30 por ciento o más. Ese renglón solo se usa como respaldo cuando la
+utilidad de operación no viene, y la pantalla dice en qué emisoras pasó.
+
 El interés minoritario y las preferentes entran porque son reclamos sobre los mismos activos que
 generan el EBIT. Dejarlos fuera abarata artificialmente a las empresas que los tienen, y ese detalle
 suele omitirse en las implementaciones sueltas que circulan.
@@ -82,13 +88,13 @@ conserva en las pruebas de paridad de la versión 1 a propósito, pero no se rep
   activo fijo en el sentido de la fórmula, y su deuda es materia prima, no financiamiento. El propio
   Greenblatt las excluye.
 - **Servicios públicos regulados.** Su rentabilidad la fija un regulador, no el mercado.
-- **FIBRAs y vehículos inmobiliarios.** No se excluyen por regla: simplemente no están en los
-  universos de la fórmula, porque tienen su propia pantalla. Si alguna vez entraran, se
-  rankearían como cualquier otra emisora, así que conviene leerlo como un hueco y no como una
-  garantía.
-- **Emisoras sin EBIT reportado o sin los renglones necesarios.** Salen del ranking con la razón
-  escrita, no con un cero. Un EBIT negativo, en cambio, no se excluye: entra con EY y ROC negativos
-  y queda al fondo del ranking.
+- **FIBRAs y vehículos inmobiliarios.** Se excluyen por regla, junto con todo el sector
+  inmobiliario, y además tienen su propia pantalla.
+- **Emisoras sin utilidad de operación reportada o sin los renglones necesarios.** Salen del
+  ranking con la razón escrita, no con un cero.
+- **Emisoras con utilidad de operación de cero o negativa.** También salen, como en el método
+  original: un rendimiento sobre capital negativo no dice nada útil sobre qué tan barata está una
+  empresa rentable.
 - **Emisoras con capital empleado de cero o negativo, o con valor empresa de cero o negativo.** El
   cociente no tiene lectura y se excluyen.
 - **Emisoras chicas.** Hay un piso de capitalización: 2,000 millones de dólares en el universo
