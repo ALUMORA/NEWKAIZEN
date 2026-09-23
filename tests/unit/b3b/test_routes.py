@@ -226,14 +226,20 @@ def test_el_momentum_cumple_el_contrato(client, symbol):
         assert valor is None or -1 <= valor <= 10, f"{campo} tiene que ser fracción"
 
 
-def test_el_momentum_compara_contra_la_referencia_de_su_moneda(client):
+def test_el_momentum_compara_contra_la_referencia_de_su_moneda(client, monkeypatch):
+    import datetime as dt
+
+    from kaizen_api.domain.screeners import momentum as mom
+
+    monkeypatch.setattr(mom._dt, "date", type("H", (dt.date,), {"today": classmethod(lambda cls: dt.date(2026, 9, 22))}))
     eeuu = client.get("/v2/momentum/AAPL").json()
     assert eeuu["currency"] == "USD" and eeuu["benchmark"] == "SPY"
     mexico = client.get("/v2/momentum/WALMEX.MX").json()
     assert mexico["currency"] == "MXN" and mexico["benchmark"] == "NAFTRAC.MX"
     assert mexico["relative12m1"] == pytest.approx(mexico["r12m1"] - mexico["benchmarkR12m1"], abs=1e-9)
     assert mexico["meta"]["source"] == "yahoo,computed"
-    assert mexico["meta"]["asOf"] == "2026-08-01"
+    assert mexico["meta"]["asOf"] == "2026-08-31", "fecha del cierre, no del día 1 con que Yahoo fecha la barra"
+    assert mexico["meta"]["stale"] is False
     assert mexico["meta"]["fallback"] is False
 
 

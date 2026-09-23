@@ -8,8 +8,9 @@ no aplica sale con ``applicable=false`` y su razón en español, nunca con un n�
 ``GET /v2/momentum/{symbol}`` entrega el 12-1 (12 meses saltándose el último) sobre cierres
 ajustados de fin de mes, contra una referencia en la MISMA moneda.
 
-Movidas sin cambios desde ``research.py`` en M1: misma ruta, parámetros, validación,
-``response_model`` y ``Cache-Control``.
+Movidas desde ``research.py`` en M1: misma ruta, parámetros, validación, ``response_model`` y
+``Cache-Control``. La caché de valuación vive en el servicio (insumos por emisora, tasa por
+moneda), no en la ruta, para que cambiar un parámetro no vuelva a salir a Yahoo ni a FRED.
 """
 
 from __future__ import annotations
@@ -46,18 +47,15 @@ def valuation(
     years: Annotated[int | None, Query(ge=1, le=15, description="Años de proyección explícita")] = None,
     growth: Annotated[float | None, Query(ge=-0.5, le=1.0, description="Crecimiento del FCFF, fracción anual")] = None,
 ) -> ValuationResponse:
-    key = f"v2:valuation:{symbol.upper()}:{erp}:{crp}:{terminal_growth}:{years}:{growth}"
-    payload = _cached(
-        key,
-        lambda: get_valuation(
-            symbol,
-            erp=erp,
-            crp=crp,
-            terminal_growth=terminal_growth,
-            years=years,
-            growth=growth,
-        ),
-        ttl=CACHE_SECONDS["fundamentals"],
+    # Sin caché por combinación de parámetros: Yahoo y FRED ya se leen una vez por emisora y por
+    # moneda dentro del servicio, y el cálculo con otros parámetros es aritmética barata.
+    payload = get_valuation(
+        symbol,
+        erp=erp,
+        crp=crp,
+        terminal_growth=terminal_growth,
+        years=years,
+        growth=growth,
     )
     raw = payload["meta"]
     return {
@@ -94,7 +92,7 @@ def momentum(symbol: SymbolPath) -> MomentumResponse:
         "yahoo,computed",
         as_of=payload.get("_asOf"),
         delay_minutes=None,
-        stale=False,
+        stale=bool(payload.get("_stale")),
         fallback=False,
         notes=payload.get("_notes") or [],
     )
