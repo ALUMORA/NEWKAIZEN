@@ -1,0 +1,28 @@
+// Barril del sistema de diseño (C1). API congelada: las props de cada componente están en
+// docs/design.md. Las features importan de aquí y de ningún archivo suelto de esta carpeta.
+//
+//   import { Button, Card, DataTable, Money, useToast } from '../../components/ui/index.js'
+export { Button, IconButton } from './Button.jsx'
+export { Badge } from './Badge.jsx'
+export { Card } from './Card.jsx'
+export { Tabs, TabPanel } from './Tabs.jsx'
+export { SegmentedControl } from './SegmentedControl.jsx'
+export { Field, Input, Select, NumberInput } from './Field.jsx'
+export { DataTable } from './DataTable.jsx'
+export { Stat, Delta, Money } from './Stat.jsx'
+export { InfoTip } from './InfoTip.jsx'
+export { Skeleton, EmptyState, ErrorState } from './Feedback.jsx'
+export { DataStatus } from './DataStatus.jsx'
+export { Dialog, ConfirmDialog, Sheet } from './Dialog.jsx'
+export { Disclaimer, DISCLAIMER_SHORT } from './Disclaimer.jsx'
+export { PageHeader, SectionHeading } from './PageHeader.jsx'
+export { SrOnly } from './SrOnly.jsx'
+export { ThemeToggle } from './ThemeToggle.jsx'
+export { Mark } from './Mark.jsx'
+export { UiProvider } from './UiProvider.jsx'
+export { useUi, useToast, useConfirm } from './useUi.js'
+// Utilidades puras que acompañan a los componentes.
+export { parseNumber, formatForInput } from './number.js'
+export { describeDelta } from './delta.js'
+export { describeStatus } from './status.js'
+export { sortRows, nextSort } from './table-sort.js'
