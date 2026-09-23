@@ -8,6 +8,7 @@ import { PATHS, route } from '../../app/paths.js'
 
 const Pages = {
   Mexico: lazy(() => import('./pages/MexicoPage.jsx')),
+  Cetes: lazy(() => import('./pages/CetesPage.jsx')),
 }
 
 export const routes = [
@@ -22,7 +23,7 @@ export const routes = [
   },
   {
     path: route(PATHS.marketsCetes),
-    element: <ComingSoon />,
+    element: <Pages.Cetes />,
     handle: { title: 'Calculadora de CETES', description: 'Cuánto rinde una inversión en CETES según el plazo y la tasa de la última subasta.' },
   },
   {

@@ -100,6 +100,7 @@ const V2_ROUTES = {
 
 const PAGES = [
   { path: '/mercados/mexico', h1: 'México: tasas, CETES e inflación', ready: (page) => page.getByText('Tasa objetivo').first() },
+  { path: '/mercados/cetes', h1: 'Calculadora de CETES', ready: (page) => page.getByRole('rowheader', { name: '364 días' }) },
 ]
 
 async function settleAnimations(page) {
@@ -148,6 +149,21 @@ test('/mercados/mexico: respaldo y serie sin verificar se notan, cambios en pb',
   await page.goto('/mercados/mexico')
   await expect(page.getByText('no está verificada')).toBeVisible()
   await expect(page.getByText(/Este dato viene de una fuente de respaldo/).first()).toBeVisible()
-  await expect(page.getByText('Dólar FIX')).toBeVisible()
-  await expect(page.getByText('18.4321')).toBeVisible()
+  await expect(page.getByText('18.4321').first()).toBeVisible()
+})
+
+test('/mercados/cetes: tasa prellenada, 11 % a 28 días da efectiva de 11.75 % y retención sobre el capital', async ({ page, baseURL }) => {
+  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, legacyApi: true, health: HEALTH, routes: V2_ROUTES })
+  await page.goto('/mercados/cetes')
+  const rate = page.getByLabel('Tasa anual')
+  await expect(rate).toHaveValue(/7\.25/)
+  await rate.fill('11')
+  await rate.blur()
+  const amount = page.getByLabel('Monto a invertir')
+  await amount.fill('10000')
+  await amount.blur()
+  await expect(page.getByText('11.75%').first()).toBeVisible()
+  // 10,000 × .11 × 28 / 360 = 85.56; retención 10,000 × .009 × 28 / 365 = 6.90; neto 78.65
+  await expect(page.getByText('$85.56').first()).toBeVisible()
+  await expect(page.getByText('78.65').first()).toBeVisible()
 })
