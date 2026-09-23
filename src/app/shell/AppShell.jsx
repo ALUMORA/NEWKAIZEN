@@ -7,12 +7,14 @@
 // cromo.
 import { useCallback, useState } from 'react'
 import { Outlet } from 'react-router'
+import BottomNav from './BottomNav.jsx'
 import Sidebar from './Sidebar.jsx'
 import TopBar from './TopBar.jsx'
 import { ShellContext } from './shell-context.js'
 import { useCollapsed } from './useCollapsed.js'
 import './shell.css'
 import './topbar.css'
+import './bottomnav.css'
 
 const EMBEDDED = Object.freeze({ embedded: true })
 
@@ -34,6 +36,7 @@ export default function AppShell() {
           </main>
           <footer className="kz-foot" />
         </div>
+        <BottomNav />
       </div>
     </ShellContext.Provider>
   )
