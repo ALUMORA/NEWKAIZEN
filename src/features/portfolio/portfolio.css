@@ -2,3 +2,5 @@
 .kz-portfolio-page { padding-block: var(--space-6) var(--space-7); }
 .kz-portfolio-stats { padding: var(--space-4); }
 .kz-portfolio-note { color: var(--muted); margin: 0; padding: var(--space-3) var(--space-4); }
+.kz-portfolio-list { margin: 0; padding-inline-start: var(--space-5); display: grid; gap: var(--space-2); }
+.kz-portfolio-type { display: inline-flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }

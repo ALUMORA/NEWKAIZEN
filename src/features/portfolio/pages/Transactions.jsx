@@ -3,12 +3,13 @@
 // que integra compras repetidas a costo promedio.
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import { Button, Card, ConfirmDialog, DataTable, EmptyState, ErrorState, PageHeader, useToast } from '../../../components/ui/index.js'
+import { Badge, Button, Card, ConfirmDialog, DataTable, EmptyState, ErrorState, PageHeader, useToast } from '../../../components/ui/index.js'
 import { derivePositions } from '../../../lib/finance/index.js'
 import { fmtDate, fmtMoney, fmtNumber } from '../../../lib/format.js'
 import { getStorageError, isReadOnly, update, useStore } from '../../../lib/storage.js'
 import { PATHS } from '../../../app/paths.js'
 import TransactionDialog from '../TransactionDialog.jsx'
+import { findOversells } from '../lib/oversells.js'
 import '../portfolio.css'
 import { TX_LABELS } from '../tx-labels.js'
 
@@ -45,6 +46,8 @@ export default function Transactions() {
 
   const transactions = useMemo(() => portfolio?.transactions ?? [], [portfolio])
   const positions = useMemo(() => derivePositions(transactions), [transactions])
+  const oversells = useMemo(() => findOversells(transactions), [transactions])
+  const oversold = useMemo(() => new Set(oversells.map((o) => o.id)), [oversells])
 
   if (!portfolio) {
     return (
@@ -99,7 +102,19 @@ export default function Transactions() {
 
   const txColumns = [
     { key: 'date', header: 'Fecha', format: (/** @type {any} */ v) => fmtDate(v), sortable: true, minWidth: 110 },
-    { key: 'type', header: 'Tipo', format: (/** @type {string} */ v) => TX_LABELS[v] ?? v, sortable: true },
+    {
+      key: 'type',
+      header: 'Tipo',
+      sortable: true,
+      format: (/** @type {string} */ v, /** @type {any} */ row) =>
+        oversold.has(row.id) ? (
+          <span className="kz-portfolio-type">
+            {TX_LABELS[v] ?? v} <Badge tone="warning">Recortada</Badge>
+          </span>
+        ) : (
+          (TX_LABELS[v] ?? v)
+        ),
+    },
     { key: 'symbol', header: 'Clave', format: (/** @type {any} */ v) => v ?? '', sortable: true },
     { key: 'quantity', header: 'Títulos', numeric: true, format: fmtQty },
     { key: 'price', header: 'Precio', numeric: true, format: money },
@@ -147,6 +162,23 @@ export default function Transactions() {
       />
 
       {storageError && <ErrorState title="Aviso sobre tus datos" message={storageError.message} size="sm" headingAs="p" />}
+
+      {oversells.length > 0 && (
+        <Card
+          title="Ventas por más títulos de los que tenías"
+          actions={<Badge tone="warning">Revisa</Badge>}
+          description="El libro solo cuenta lo que había a esa fecha, así que tus posiciones y tu resultado usan la cantidad recortada. Corrige la venta o agrega la compra que falta."
+        >
+          <ul className="kz-portfolio-list">
+            {oversells.map((o) => (
+              <li key={o.id}>
+                {`Venta de ${fmtQty(o.asked)} ${o.symbol}${o.date ? ` el ${fmtDate(o.date)}` : ' sin fecha'}: `}
+                {o.held > 0 ? `tenías ${fmtQty(o.held)}, así que solo cuentan ${fmtQty(o.held)}.` : 'no tenías títulos, así que no cuenta.'}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
 
       <Card title="Libro de movimientos" padding="none" description={`${fmtNumber(transactions.length, { decimals: 0 })} movimientos registrados`}>
         <DataTable
