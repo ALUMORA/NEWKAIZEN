@@ -52,9 +52,11 @@ Esta es la parte frágil de toda optimización, así que se maneja con cuidado:
   28 y la prima como supuesto editable con su fuente y su fecha.
 - **Promedio histórico**, disponible pero marcado como ruidoso. Con 3 años de datos semanales, el
   error estándar del promedio es del mismo orden que el promedio.
-- **James y Stein**, como punto intermedio: contrae los promedios hacia el rendimiento de la
-  cartera de mínima varianza, `μ₀ = (1ᵀC⁻¹μ̂) / (1ᵀC⁻¹1)`, que es la variante de Jorion. Contraer
-  hacia el promedio simple de los activos también está disponible, pero no es la opción por omisión.
+- **James y Stein**, como punto intermedio: contrae los promedios hacia el promedio simple de los
+  activos, `μ₀ = (1/N) Σ μ̂_i`. La variante de Jorion, que contrae hacia el rendimiento de la
+  cartera de mínima varianza, `μ₀ = (1ᵀC⁻¹μ̂) / (1ᵀC⁻¹1)`, también está disponible, pero no es la
+  opción por omisión. La contracción se calcula con medias y covarianza por periodo, así que da lo
+  mismo con datos semanales o anualizados.
 
 Todos los supuestos son campos editables en la pantalla. Ninguno está escondido en el código.
 
@@ -69,14 +71,15 @@ ya es interior, y un tope por activo se ignora.
 | Mínima varianza | `min wᵀCw` sujeto a las restricciones. No usa rendimientos esperados |
 | Media varianza | `min ½·wᵀCw − τ·wᵀμ`, con `τ ≥ 0` como tolerancia al riesgo: `τ = 0` es la mínima varianza y un `τ` grande se acerca al máximo rendimiento |
 | Frontera | Barrido de 30 puntos entre la mínima varianza y el máximo rendimiento alcanzable |
-| Tangente | `max (wᵀμ − rf) / √(wᵀCw)`: recorrido de la frontera y refinamiento por sección dorada |
+| Tangente | `max (wᵀμ − rf) / √(wᵀCw)`: recorrido de la frontera y refinamiento por sección dorada. Si ninguna cartera permitida rinde más que `rf`, no hay tangente y se dice así |
 | Paridad de riesgo | `w` tal que `w_i · (C w)_i` sea igual para todo `i` |
 
 El método numérico es FISTA con proyección sobre el simplex con cajas. La proyección es
 `w = clip(v − θ, l, u)` con θ encontrado por bisección, y el paso es `1/λmax`, con λmax por
-iteración de potencia. La paridad de riesgo usa descenso coordenado cíclico y se detiene cuando el
-cambio relativo de los pesos entre dos vueltas baja de 1e−15; las pruebas verifican que las
-contribuciones al riesgo quedan iguales dentro de 1e−8.
+iteración de potencia. La paridad de riesgo usa descenso coordenado cíclico y, si la covarianza está
+mal condicionada, termina con el método de Newton. Se detiene cuando las contribuciones al riesgo
+quedan iguales dentro de 1e−8, y si no lo logra lo marca como no convergido en vez de entregar el
+resultado como exacto.
 
 Si las restricciones son imposibles, o sea `Σ l > 1` o `Σ u < 1`, se lanza un error de
 infactibilidad con mensaje en español, no una cartera cualquiera. Por ejemplo, dos activos con

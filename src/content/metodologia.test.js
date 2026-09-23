@@ -239,12 +239,15 @@ describe('optimizador: problemas y parámetros como los resuelve optimize.js', (
     expect(plano('optimizador.md')).not.toMatch(/la lista de días descartados se reporta/)
   })
 
-  it('James y Stein contrae hacia la cartera de mínima varianza por omisión', () => {
-    const r = jamesStein([0.01, 0.02], [[0.04, 0], [0, 0.01]], 60)
-    // μ₀ = (1ᵀΣ⁻¹μ)/(1ᵀΣ⁻¹1) = (0.25 + 2) / (25 + 100) · 100 = .018, no el promedio .015
-    expect(r?.target).toBeCloseTo((0.01 / 0.04 + 0.02 / 0.01) / (1 / 0.04 + 1 / 0.01), 12)
-    expect(plano('optimizador.md')).toMatch(/cartera de mínima varianza/)
-    expect(plano('optimizador.md')).not.toMatch(/hacia el promedio general/)
+  it('James y Stein contrae hacia el promedio simple por omisión y hacia la mínima varianza si se pide', () => {
+    const mu = [0.01, 0.02]
+    const cov = [[0.04, 0], [0, 0.01]]
+    // Por omisión, el promedio .015; con target minVariance, (1ᵀΣ⁻¹μ)/(1ᵀΣ⁻¹1) = .018
+    expect(jamesStein(mu, cov, 60)?.target).toBeCloseTo(0.015, 12)
+    expect(jamesStein(mu, cov, 60, { target: 'minVariance' })?.target)
+      .toBeCloseTo((0.01 / 0.04 + 0.02 / 0.01) / (1 / 0.04 + 1 / 0.01), 12)
+    expect(plano('optimizador.md')).toMatch(/hacia el promedio simple de los activos/)
+    expect(plano('optimizador.md')).toMatch(/no es la opción por omisión/)
   })
 
   it('el delta de Ledoit y Wolf del glosario es el del panel de prueba', () => {
