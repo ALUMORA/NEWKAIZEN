@@ -941,3 +941,55 @@ html.kz-scroll-lock { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .kz-link { transition: none; }
 }
+
+/* ═══ Buscador de emisoras (SearchCombobox) ═════════════════════════════════ */
+
+.kz-combobox { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+/* El panel se ancla al campo, no a la ayuda de abajo. */
+.kz-combobox__field { position: relative; }
+.kz-combobox__popup {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  left: 0;
+  max-height: min(360px, 60vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--space-1);
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--space-1));
+  z-index: var(--z-sticky);
+}
+.kz-combobox__popup[hidden],
+.kz-combobox__list[hidden] { display: none; }
+.kz-combobox__empty { color: var(--muted); font-size: var(--text-sm); margin: 0; padding: var(--space-2); }
+.kz-combobox__status { color: var(--muted); font-size: var(--text-xs); margin: 0; }
+.kz-combobox__group + .kz-combobox__group { margin-top: var(--space-2); }
+.kz-combobox__group-label { color: var(--muted); margin: var(--space-2) 0 var(--space-1); padding-inline: var(--space-2); }
+.kz-combobox__option {
+  align-items: center;
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  cursor: pointer;
+  display: flex;
+  font-size: var(--text-md);
+  gap: var(--space-3);
+  min-height: 40px;
+  padding: 0 var(--space-2);
+}
+.kz-combobox__option svg { color: var(--muted); flex-shrink: 0; }
+.kz-combobox__option[aria-selected="true"] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.kz-combobox__option[aria-selected="true"] svg { color: var(--ink); }
+.kz-combobox__label { font-weight: var(--weight-semibold); white-space: nowrap; }
+.kz-combobox__detail {
+  color: var(--muted);
+  flex: 1;
+  font-size: var(--text-sm);
+  min-width: 0;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
