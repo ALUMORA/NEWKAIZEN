@@ -196,6 +196,41 @@ describe('maxSharpe', () => {
   it('rechaza rf no finito', () => {
     expect(() => maxSharpe([0.1, 0.15], cov2(0.2, 0.3, 0), Number.NaN)).toThrow(InvalidInputError)
   })
+
+  it('devuelve null si ningún portafolio factible rinde más que rf', () => {
+    // Con exceso máximo negativo el máximo de (μ − rf)/σ vive en la rama ineficiente (conviene MÁS
+    // volatilidad), que el barrido sobre la frontera no visita: antes salía [1, 0] con Sharpe −0.30
+    // etiquetado como tangente, cuando [0, 1] da −0.08. Ahí no hay portafolio tangente que enseñar.
+    expect(maxSharpe([0.02, 0.01], cov2(0.1, 0.5, 0), 0.05)).toBeNull()
+    // Exceso máximo exactamente cero: tampoco hay tangente con Sharpe positivo.
+    expect(maxSharpe([0.05, 0.03], cov2(0.2, 0.3, 0), 0.05)).toBeNull()
+    // Todos los μ iguales y por debajo de rf.
+    expect(maxSharpe([0.03, 0.03], cov2(0.2, 0.3, 0), 0.05)).toBeNull()
+  })
+
+  it('el exceso máximo se mide con la caja: si el tope deja fuera al único activo que le gana a rf, null', () => {
+    // Sin tope, el activo 1 rinde .10 > rf. Con u=.5 el máximo factible es .5·.10 + .5·.02 = .06 < .07.
+    const S = cov2(0.2, 0.3, 0)
+    expect(maxSharpe([0.1, 0.02], S, 0.07)).not.toBeNull()
+    expect(maxSharpe([0.1, 0.02], S, 0.07, { u: 0.5 })).toBeNull()
+  })
+
+  it('con exceso positivo pero mínima varianza por debajo de rf, sigue encontrando el tangente', () => {
+    const mu = [0.03, 0.09]
+    const S = cov2(0.1, 0.3, 0.2)
+    const rf = 0.05
+    const t = /** @type {any} */ (maxSharpe(mu, S, rf))
+    expect(t).not.toBeNull()
+    let best = -Infinity
+    for (let i = 0; i <= 20000; i += 1) {
+      const w = i / 20000
+      const m = w * mu[0] + (1 - w) * mu[1]
+      const v = w * w * S[0][0] + 2 * w * (1 - w) * S[0][1] + (1 - w) * (1 - w) * S[1][1]
+      best = Math.max(best, (m - rf) / Math.sqrt(v))
+    }
+    expect(t.sharpe).toBeGreaterThan(0)
+    expect(t.sharpe).toBeGreaterThanOrEqual(best - 1e-9)
+  })
 })
 
 describe('efficientFrontier', () => {

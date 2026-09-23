@@ -477,12 +477,18 @@ export function efficientFrontier(mu, cov, options = {}) {
  * barrido grueso para acotar y después sección áurea para afinar. Con μ=(.10,.15), σ=(.2,.3),
  * ρ=0 y rf=.05 da [.529412, .470588] con Sharpe .416667.
  *
+ * Eso solo vale si algún portafolio factible rinde MÁS que rf. Si ninguno lo hace, el máximo de
+ * (μ − rf)/σ está en la rama ineficiente (con exceso negativo conviene más volatilidad, no menos),
+ * que no es un portafolio tangente ni tiene sentido enseñarlo como tal. En ese caso sale `null`,
+ * y la pantalla muestra "s/d" o cae a mínima varianza diciéndolo, como hace `walkForward`.
+ *
  * @param {number[]} mu rendimientos esperados por activo
  * @param {number[][]} cov covarianza N x N
  * @param {number} rf tasa libre de riesgo en la MISMA periodicidad que `mu` y `cov`
  * @param {{ l?: number | number[], u?: number | number[], scan?: number, refine?: number }} [options]
  * @returns {(PortfolioResult & { sharpe: number, tau: number }) | null}
- *   `null` si la volatilidad del mejor punto es cero (Sharpe no está definido)
+ *   `null` si ningún portafolio que cumpla la caja rinde más que rf (no hay tangente con Sharpe
+ *   positivo), o si la volatilidad del mejor punto es cero (Sharpe no está definido)
  * @throws {InfeasibleError} si las cajas no dejan sumar 1
  * @throws {InvalidInputError} si las dimensiones no casan o hay NaN
  */
@@ -491,6 +497,13 @@ export function maxSharpe(mu, cov, rf, options = {}) {
   const m = assertVector(mu, 'los rendimientos esperados')
   if (m.length !== n) throw new InvalidInputError(`Hay ${m.length} rendimientos esperados y la covarianza es de ${n}.`)
   if (!Number.isFinite(rf)) throw new InvalidInputError('La tasa libre de riesgo tiene que ser un número finito.')
+
+  // El rendimiento máximo factible sale del extremo lineal del conjunto (llenar primero a los de
+  // mayor μ hasta su tope). Si ni ese le gana a rf, no hay portafolio tangente.
+  const richest = greedyLinear(m, lo, hi)
+  let maxReturn = 0
+  for (let i = 0; i < n; i += 1) maxReturn += richest[i] * m[i]
+  if (!(maxReturn - rf > 0)) return null
 
   const lipschitz = lipschitzOf(S)
   const spread = Math.max(...m) - Math.min(...m)

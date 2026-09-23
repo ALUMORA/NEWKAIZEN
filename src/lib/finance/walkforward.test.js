@@ -209,6 +209,20 @@ describe('walkForward, resultados', () => {
     }
   })
 
+  it('maxSharpe con rf por encima de todo lo factible cae a mínima varianza y lo dice', () => {
+    // rf de 1 % SEMANAL: ninguna media de ventana le gana, así que no hay tangente que enseñar.
+    const { returns, dates } = panel(120, 4, 2024)
+    const r = /** @type {any} */ (
+      walkForward(returns, dates, { estimationWindow: 52, holdPeriods: 13, method: 'maxSharpe', rf: 0.01 })
+    )
+    const mv = /** @type {any} */ (walkForward(returns, dates, { estimationWindow: 52, holdPeriods: 13 }))
+    expect(r.rebalances.length).toBeGreaterThan(0)
+    for (let i = 0; i < r.rebalances.length; i += 1) {
+      expect(r.rebalances[i].note).toBe('No hubo portafolio tangente, se usó mínima varianza.')
+      expect(r.rebalances[i].weights).toEqual(mv.rebalances[i].weights)
+    }
+  })
+
   it('respeta la caja en cada corte', () => {
     const { returns, dates } = panel(120, 5, 161803)
     const r = /** @type {any} */ (
