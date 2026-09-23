@@ -5,7 +5,7 @@
 // Landmarks: header (barra superior), nav "Principal" (barra lateral), main#contenido, footer.
 // El legado (LegacyPage) se entera por ShellContext de que va incrustado y esconde su propio
 // cromo.
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { Outlet } from 'react-router'
 import BottomNav from './BottomNav.jsx'
 import CommandPalette from './CommandPalette.jsx'
@@ -14,6 +14,7 @@ import Sidebar from './Sidebar.jsx'
 import TopBar from './TopBar.jsx'
 import { ShellContext } from './shell-context.js'
 import { useCollapsed } from './useCollapsed.js'
+import { useRouteFocus } from './useRouteFocus.js'
 import { usePaletteShortcuts } from './useShortcuts.js'
 import './shell.css'
 import './topbar.css'
@@ -28,6 +29,8 @@ export default function AppShell() {
   const openPalette = useCallback(() => setPaletteOpen(true), [])
   const closePalette = useCallback(() => setPaletteOpen(false), [])
   usePaletteShortcuts(openPalette)
+  const mainRef = useRef(/** @type {HTMLElement | null} */ (null))
+  useRouteFocus(mainRef)
   return (
     <ShellContext.Provider value={EMBEDDED}>
       <div className="kz-shell" data-collapsed={collapsed || undefined}>
@@ -37,7 +40,7 @@ export default function AppShell() {
         <Sidebar collapsed={collapsed} onToggle={toggleCollapsed} />
         <div className="kz-shell__frame">
           <TopBar onOpenPalette={openPalette} />
-          <main className="kz-shell__main" id="contenido" tabIndex={-1}>
+          <main className="kz-shell__main" id="contenido" ref={mainRef} tabIndex={-1}>
             <Outlet />
           </main>
           <Footer />
