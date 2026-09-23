@@ -42,7 +42,10 @@ export default function Rebalance() {
   )
 
   const quotes = useQuery({ ...quotesQuery(symbols), enabled: symbols.length > 0 })
-  const fx = useQuery(fxQuery())
+  // El tipo de cambio solo se pide si algo del portafolio está en dólares.
+  const needsFx =
+    positions.some((p) => p.currency === 'USD') || (cash.USD ?? 0) !== 0 || (quotes.data?.quotes ?? []).some((/** @type {any} */ q) => q.currency === 'USD')
+  const fx = useQuery({ ...fxQuery(), enabled: needsFx })
   const usdRate = fx.data?.rate ?? null
 
   /** Precio en pesos por símbolo, y la cotización original. */
