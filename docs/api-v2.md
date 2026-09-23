@@ -149,7 +149,8 @@ están en `docs/OWNERSHIP.md`).
   `meta.notes`.
 - `GET /v2/panel?symbols=A,B&range=1y&interval=1d&ccy=MXN` → `PanelResponse`. INNER JOIN por fecha,
   sin rellenar precios; los símbolos que no se pudieron alinear van en `dropped` con su motivo. Los
-  rendimientos se calculan en el cliente.
+  rendimientos se calculan en el cliente. Para separar efecto precio y efecto tipo de cambio, ver
+  "Panel en moneda nativa y en MXN" en las recetas para el cliente, más abajo.
 - `GET /v2/fx?pair=USDMXN` → `FxResponse`. FIX de Banxico (`banxico_fix`) si hay token, si no Yahoo
   marcado en `meta`.
 - `GET /v2/fx/history?pair=USDMXN&start=&end=` → `FxHistoryResponse`. Banxico FIX SF43718 con token,
@@ -203,7 +204,9 @@ están en `docs/OWNERSHIP.md`).
 ### Investigación (B3a: `routers/research.py`, `routers/events.py` y `routers/insiders.py`)
 
 - `GET /v2/instrument/{symbol}` → `InstrumentResponse`: cotización, fundamentales en la moneda del
-  precio, beta (calculada o de Yahoo, con ventana y observaciones), medianas del sector y cobertura.
+  precio, beta (calculada o de Yahoo, con ventana y observaciones), `sectorMedians` y cobertura.
+  `sectorMedians` hoy siempre sale en `null`; qué llaves tiene y dónde está la referencia del sector
+  que sí existe, en "Referencias del sector", más abajo.
 - `GET /v2/instrument/{symbol}/statements?freq=annual` (`annual` o `quarterly`) →
   `StatementsResponse`. Solo renglones reales (SEC para emisores de EE. UU., Yahoo para el resto),
   nunca sintetizados; sin datos, `periods` vacío.
@@ -218,7 +221,8 @@ están en `docs/OWNERSHIP.md`).
 - `GET /v2/valuation/{symbol}?erp=&crp=&terminalGrowth=&years=&growth=` → `ValuationResponse`.
   Límites: `erp` y `crp` de 0 a 0.2, `terminalGrowth` de -0.02 a 0.06, `years` de 1 a 15, `growth`
   de -0.5 a 1.0. Múltiplos contra el sector (mercado `US` o `EM`), DCF de flujo a la empresa con
-  sensibilidad WACC por crecimiento, y P/B justificado para bancos.
+  sensibilidad WACC por crecimiento, y P/B justificado para bancos. Cómo leer `benchmark` contra
+  `current` en `multiples.methods`, en "Referencias del sector", más abajo.
 - `GET /v2/momentum/{symbol}` → `MomentumResponse`. `r12m1` es el rendimiento de 12 meses sin el
   último mes; `relative12m1` contra `benchmark`.
 
@@ -231,6 +235,84 @@ están en `docs/OWNERSHIP.md`).
 - `GET /v2/screeners/fibras?extra=A,B` (hasta 20 extra) → `FibrasResponse`. `signal` es
   `descuento`, `en_linea`, `prima` o `sin_datos` (descripción del precio contra el NAV, no una
   recomendación). `ltv` es deuda entre activos totales.
+
+## Recetas y referencias para el cliente
+
+Respuestas a pedidos de los streams de la fase 3 que no cambian el contrato: dicen qué trae cada
+campo y cómo combinar rutas que ya existen. Las pruebas `tests/contract/test_pb_docs_referencias.py`,
+`tests/unit/b3b/test_pb_referencia_sectorial.py` y `tests/unit/b2a/test_pb_panel_nativo_y_mxn.py`
+comprueban contra el servidor lo que dice esta sección.
+
+### Referencias del sector: `sectorMedians` y `multiples.methods`
+
+Pedido 3 de F3. Hay dos lugares que hablan del sector y no son lo mismo.
+
+**`sectorMedians` vive en `GET /v2/instrument/{symbol}`, no en `GET /v2/valuation/{symbol}`.** Es un
+objeto cuyas llaves son un subconjunto de `FundamentalKey`, las mismas 22 de `fundamentals`: `pe`,
+`forwardPe`, `pb`, `ps`, `evEbitda`, `pfcf`, `earningsYield`, `fcfYield`, `dividendYield`,
+`payoutRatio`, `roe`, `roa`, `grossMargin`, `operatingMargin`, `netMargin`, `revenueGrowthYoY`,
+`epsGrowthYoY`, `debtToEquity`, `netDebtToEbitda`, `currentRatio`, `enterpriseValue` y
+`sharesOutstanding`. Cada valor iría en la misma unidad que su gemelo de `fundamentals` (fracción,
+razón o monto) o en `null`. **Hoy el servidor siempre lo manda en `null`**: la ficha no arma un
+universo de emisoras comparables, así que no hay mediana que publicar, y no se rellena con otra
+cosa. La UI lo trata como "sin referencia del sector" y no la inventa.
+
+**La referencia del sector que sí existe está en `GET /v2/valuation/{symbol}`, en
+`multiples.methods`.** Siempre son cuatro renglones, en este orden:
+
+| `id` | Múltiplo | Gemelo en `fundamentals` | `benchmark` |
+| --- | --- | --- | --- |
+| `pe` | Precio / utilidad | `pe` | Mediana del sector |
+| `pb` | Precio / valor en libros | `pb` | Mediana del sector |
+| `evEbitda` | Valor empresa / EBITDA | `evEbitda` | Mediana del sector |
+| `pfcf` | Precio / flujo libre | `pfcf` | Siempre `null`: Damodaran no publica P/FCF por industria, y la razón va en `meta.notes` |
+
+- `benchmark` es la mediana, solo de valores positivos, de los múltiplos de las industrias de
+  Damodaran (datos de enero 2026) que caen en el sector de Yahoo de la emisora, en el mercado
+  `multiples.market`: `US` si la emisora es de Estados Unidos y `EM` para cualquier otro país,
+  México incluido. Es una mediana de industrias, no de emisoras comparables. Si el sector de Yahoo
+  no se reconoce, la referencia es el total del mercado sin financieras. Fecha y fuente de la tabla:
+  `multiples.asOf` y `multiples.source`.
+- Cuál de las dos fue (sector o total del mercado) hoy solo se dice en texto, en `meta.notes`
+  ("Mediana de N industrias de Damodaran del sector ..." o "Total del mercado ..."), y solo cuando
+  `multiples.applicable` es `true`. No hay un campo que lo diga.
+- `current` es el múltiplo de la emisora calculado por la propia valuación, en la moneda del precio.
+  Compara `benchmark` contra `current` de la misma respuesta, no contra `fundamentals` de la ficha:
+  los dos cálculos no usan las mismas definiciones de valor empresa y de flujo libre. Con las
+  grabaciones del 22 de septiembre de 2026, el EV/EBITDA de AAPL sale 34.73 en la valuación y 29.80
+  en la ficha; el P/U sí coincide.
+- `applicable` de cada renglón es `true` solo si hubo precio implícito. En bancos, aseguradoras,
+  FIBRAs, fondos y con utilidades negativas todo el bloque sale con `multiples.applicable: false` y
+  su `reason`; `current` y `benchmark` se siguen publicando como contexto, sin precio implícito.
+
+### Panel en moneda nativa y en MXN: efecto precio y efecto tipo de cambio
+
+Pedido 2 de F1. No hay una ruta que devuelva las dos monedas juntas y no hace falta: con dos
+llamadas, casi siempre, el cliente tiene todo, y el tipo de cambio le sale exacto, el mismo que usó
+el servidor para convertir.
+
+1. La moneda de cada posición sale del `currency` de `/v2/quotes`.
+2. `GET /v2/panel?symbols=<todas>&ccy=MXN` da los precios en pesos, que es lo que ya usa el riesgo.
+3. `GET /v2/panel?symbols=<las de una moneda>&ccy=native`, una llamada por cada moneda distinta del
+   peso (en la práctica, una con las emisoras en dólares). Pedir `ccy=native` con monedas mezcladas
+   responde `400 BAD_REQUEST` a propósito, porque un panel tiene un solo `currency`. Las emisoras en
+   pesos no necesitan el panel nativo: en MXN su precio es el mismo.
+4. Cruza por fecha y usa solo las fechas que estén en los dos paneles. No coinciden: cada panel es
+   un INNER JOIN de sus propios símbolos, y la conversión omite las fechas sin tipo de cambio
+   cercano.
+5. El tipo de cambio de cada fecha es `X = precio en MXN / precio nativo`. Es exactamente el que usó
+   el servidor (FIX de Banxico o Yahoo, con el mismo relleno de hasta 3 días), así que para esto no
+   hace falta `/v2/fx/history`, que sirve para mostrar la serie del tipo de cambio pero no reproduce
+   la conversión fecha por fecha.
+6. La separación la hace `pnlDecomposition` de `src/lib/finance/fx.js`: `price0` y `price1` del panel
+   nativo, `fx0` y `fx1` del paso 5 (en 1 para las posiciones en pesos). El efecto precio va a tipo
+   de cambio inicial y el efecto cambiario a precio final, y suman exactamente el resultado en pesos.
+
+Procedencia: el efecto cambiario hereda el `meta` del panel en MXN. Si ahí `meta.fallback` es
+`true`, el tipo de cambio vino de Yahoo y no del FIX, y la UI lo dice junto al efecto cambiario; el
+panel nativo no convierte nada y su `meta` habla solo de precios. Pide los dos paneles con el mismo
+`range` e `interval`. El segundo casi nunca vuelve a salir a Yahoo por los precios, porque el
+servidor guarda la serie de cada símbolo una hora.
 
 ## Rutas v1 (legado)
 
