@@ -4,6 +4,7 @@
 // excepción, request fallido o respuesta >= 400.
 //
 // Capturas para revisión: con F5_CAPTURE_DIR=/ruta se guarda una por página y viewport.
+import { readFileSync, readdirSync } from 'node:fs'
 import AxeBuilder from '@axe-core/playwright'
 import { test, expect } from './support/guards.js'
 import { HEALTH_V2, setupApp } from './support/app.js'
@@ -79,12 +80,17 @@ async function expectNoAxeViolations(page, context) {
   expect(results.violations, `${context}:\n${detail}`).toEqual([])
 }
 
+// Se compara contra el ancho del viewport que pidió la prueba, no contra window.innerWidth: en el
+// proyecto mobile (Pixel 7, isMobile) el viewport de layout crece con el contenido que se desborda,
+// así que innerWidth sube junto con scrollWidth y la comparación pasaba sin comparar nada.
 async function noHorizontalScroll(page) {
-  const { scrollWidth, innerWidth, frame } = await page.evaluate(() => {
+  const width = page.viewportSize()?.width ?? 0
+  const { scrollWidth, clientWidth, frame } = await page.evaluate(() => {
     const el = document.querySelector('.kz-shell__frame')
-    return { scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth, frame: el ? el.scrollWidth - el.clientWidth : 0 }
+    return { scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth, frame: el ? el.scrollWidth - el.clientWidth : 0 }
   })
-  expect(scrollWidth, 'la página no se desplaza a lo ancho').toBeLessThanOrEqual(innerWidth)
+  expect(scrollWidth, 'la página no se desplaza a lo ancho').toBeLessThanOrEqual(width)
+  expect(clientWidth, 'el viewport de layout no crece más que la pantalla').toBeLessThanOrEqual(width)
   expect(frame, 'el marco del shell no se desplaza a lo ancho').toBeLessThanOrEqual(0)
 }
 
@@ -94,11 +100,17 @@ async function open(page, baseURL, path, { theme = 'light', session = false, rou
   await page.goto(path)
 }
 
+// Todas las guías de docs/metodologia (menos el README, que es el índice), con el título de su
+// primer "# ": así una guía nueva entra sola a axe y a la revisión de scroll.
+const GUIDES_DIR = new URL('../docs/metodologia/', import.meta.url)
+const GUIDE_PAGES = readdirSync(GUIDES_DIR)
+  .filter((f) => f.endsWith('.md') && f !== 'README.md')
+  .map((f) => ({ path: `/aprender/metodologia/${f.replace(/\.md$/, '')}`, h1: readFileSync(new URL(f, GUIDES_DIR), 'utf8').match(/^#\s+(.*)$/m)[1].trim() }))
+
 const PUBLIC_PAGES = [
   { path: '/aprender', h1: 'Glosario' },
   { path: '/aprender/sharpe', h1: /Sharpe/ },
-  { path: '/aprender/metodologia/riesgo', h1: 'Metodología de riesgo' },
-  { path: '/aprender/metodologia/fuentes-de-datos', h1: /./ },
+  ...GUIDE_PAGES,
   { path: '/legal/terminos', h1: 'Términos de uso' },
   { path: '/legal/privacidad', h1: 'Aviso de privacidad' },
   { path: '/legal/aviso', h1: 'Aviso legal' },
@@ -130,6 +142,25 @@ test.describe('F5: páginas públicas', () => {
     await first.click()
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(title)
     await expect(page.getByText('Cómo leerlo')).toBeVisible()
+  })
+
+  test('las guías se leen completas: listas con su sangría y ligas con nombre', async ({ page, baseURL }) => {
+    await open(page, baseURL, '/aprender/metodologia/backtest')
+    const changes = page.getByRole('heading', { name: /Qué cambió/ }).locator('xpath=following-sibling::ol[1]')
+    await expect(changes.locator(':scope > li')).toHaveCount(3)
+    await expect(changes.locator(':scope > li').first()).toContainText('multiplicado por 52. Eso no es')
+
+    await open(page, baseURL, '/aprender/metodologia/fuentes-de-datos')
+    const fill = page.locator('.learn-md li').filter({ hasText: 'Casi nunca se rellena' })
+    await expect(fill.locator(':scope > ul > li')).toHaveCount(2)
+    await expect(fill).not.toContainText(' - ')
+
+    await open(page, baseURL, '/aprender/metodologia/valuacion-dcf')
+    const links = page.locator('.learn-md a')
+    await expect(links.first()).toBeVisible()
+    for (const text of await links.allTextContents()) expect(text, 'el texto de la liga no es un nombre de archivo').not.toMatch(/\.md$/)
+    await expect(links.first()).toHaveText('FIBRAs')
+    await expect(links.first()).toHaveCSS('text-decoration-line', 'underline')
   })
 
   test('un término que no existe muestra un estado vacío amable', async ({ page, baseURL }) => {
@@ -187,26 +218,50 @@ test.describe('F5: bienvenida', () => {
     })
   }
 
-  test('importar un CSV valida filas y guarda onboardingDone', async ({ page, baseURL }) => {
+  // Las tres salidas llevan a /portafolio/movimientos, que lee kaizen:v2. Se revisa lo que se ve en
+  // la página de destino, no solo la URL: /portafolio todavía es el legado y ahí aparecía un
+  // portafolio fijo del código (MSFT, AAPL, AMZN) en lugar del que se acababa de crear.
+  test('importar un CSV valida filas y lleva a los movimientos importados', async ({ page, baseURL }) => {
     await open(page, baseURL, '/bienvenida', { session: true, legacyApi: true })
     const csv = 'tipo,fecha,símbolo,cantidad,precio,moneda\ncompra,2026-03-02,WALMEX.MX,10,60.5,MXN\ncompra,2026-03-02,,5,10,MXN\n'
     await page.getByLabel('Elegir archivo CSV').setInputFiles({ name: 'movimientos.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) })
     await expect(page.getByRole('status').filter({ hasText: 'movimientos.csv' })).toContainText('1 movimiento válido, 1 con problemas')
     await expect(page.getByText('Fila 3: falta el símbolo')).toBeVisible()
-    await page.getByRole('button', { name: 'Crear portafolio con 1 movimientos' }).click()
-    await expect(page).toHaveURL(/\/portafolio$/)
+    await page.getByRole('button', { name: 'Crear portafolio con 1 movimiento', exact: true }).click()
+    await expect(page).toHaveURL(/\/portafolio\/movimientos$/)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Movimientos')
+    const ledger = page.getByRole('table').first()
+    await expect(ledger).toContainText('WALMEX.MX')
+    await expect(page.locator('body')).not.toContainText('MSFT')
     const store = await readStore(page)
     expect(store.settings.onboardingDone).toBe(true)
     expect(store.portfolios.at(-1).transactions).toHaveLength(1)
   })
 
-  test('el ejemplo queda marcado EJEMPLO', async ({ page, baseURL }) => {
+  test('el ejemplo se ve marcado EJEMPLO con sus emisoras', async ({ page, baseURL }) => {
     await open(page, baseURL, '/bienvenida', { session: true, legacyApi: true })
     await page.getByRole('button', { name: 'Usar el ejemplo' }).click()
-    await expect(page).toHaveURL(/\/portafolio$/)
+    await expect(page).toHaveURL(/\/portafolio\/movimientos$/)
+    await expect(page.locator('main').getByText('Portafolio de EJEMPLO', { exact: true })).toBeVisible()
+    const ledger = page.getByRole('table').first()
+    for (const symbol of ['NAFTRAC.MX', 'WALMEX.MX', 'FEMSAUBD.MX']) await expect(ledger).toContainText(symbol)
+    await expect(page.locator('body')).not.toContainText('MSFT')
     const store = await readStore(page)
     expect(store.settings.onboardingDone).toBe(true)
     expect(store.portfolios.at(-1).name).toContain('EJEMPLO')
     expect(store.portfolios.at(-1).transactions.length).toBe(5)
+  })
+
+  test('empezar vacío lleva a un portafolio sin movimientos', async ({ page, baseURL }) => {
+    await open(page, baseURL, '/bienvenida', { session: true, legacyApi: true })
+    await page.getByRole('button', { name: 'Empezar vacío' }).click()
+    await expect(page).toHaveURL(/\/portafolio\/movimientos$/)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Movimientos')
+    await expect(page.locator('main').getByText('Mi portafolio', { exact: true })).toBeVisible()
+    await expect(page.getByText('Aún no hay movimientos')).toBeVisible()
+    await expect(page.locator('body')).not.toContainText('MSFT')
+    await expect(page.locator('body')).not.toContainText('WALMEX')
+    const store = await readStore(page)
+    expect(store.portfolios.at(-1).transactions).toHaveLength(0)
   })
 })
