@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pandas as pd
 import pytest
 
 from kaizen_api import cache
@@ -58,17 +59,17 @@ def test_muestra_constante_deja_todos_los_puntajes_en_cero():
 # ─── momento y volatilidad ───────────────────────────────────────────────────
 
 
-def test_momento_12_1_es_p11_entre_p0():
-    """13 cierres de fin de mes: se usa el penúltimo contra el primero, saltando el mes en curso."""
+def test_momento_12_1_salta_el_ultimo_mes_cerrado():
+    """Con hoy en febrero, t es enero: cuenta diciembre contra enero del año anterior."""
     puntos = [(f"2025-{m:02d}-28", float(100 + m)) for m in range(1, 13)]
-    puntos += [("2026-01-28", 500.0)]  # el mes en curso no entra
-    assert F.month_end_closes(puntos)[-1] == 500.0
-    assert F.momentum_12m1(puntos) == pytest.approx(112 / 101 - 1)
+    puntos += [("2026-01-28", 500.0)]  # el mes t no entra
+    assert F.momentum_12m1(puntos, as_of="2026-02-15") == pytest.approx(112 / 101 - 1)
 
 
-def test_momento_pide_trece_meses():
-    puntos = [(f"2025-{m:02d}-28", 100.0) for m in range(1, 13)]
-    assert F.momentum_12m1(puntos) is None
+def test_momento_pide_los_dos_meses():
+    puntos = [(f"2025-{m:02d}-28", 100.0) for m in range(2, 13)]
+    assert F.momentum_12m1(puntos, as_of="2026-02-15") is None
+    assert F.momentum_12m1([], as_of="2026-02-15") is None
 
 
 def test_volatilidad_anualiza_por_raiz_de_52():
@@ -234,7 +235,9 @@ def test_sin_historico_el_momento_y_la_volatilidad_van_en_nulo_y_se_avisa(monkey
 
 def test_con_historico_se_llenan_momento_y_volatilidad(monkeypatch):
     universo = fakes.universe(("AAA", "A", "Technology"))
-    serie = fakes.weekly(100.0, 104, step=0.5, year=2024)
+    # El momento se mide contra el último mes cerrado de HOY, así que la serie termina hoy.
+    inicio = pd.Timestamp.today().normalize() - pd.Timedelta(weeks=103)
+    serie = [((inicio + pd.Timedelta(weeks=i)).date().isoformat(), 100.0 + i * 0.5) for i in range(104)]
     board = _board(monkeypatch, universo, {"AAA": _rico("AAA", "Technology")}, closes={"AAA": serie})
     fila = board["rows"][0]
     assert fila["metrics"]["momentum12m1"] > 0
@@ -300,3 +303,43 @@ def test_el_tablero_se_cachea_por_universo(monkeypatch):
     F.get_factors(universo)
     F.get_factors(universo)
     assert len(llamadas) == 1
+
+
+def test_momento_del_screener_es_el_de_v2_momentum():
+    """Una sola definición de 12-1 en la app: el screener delega en ``momentum.momentum_12_1``.
+
+    Cierres diarios de un año y medio que suben 1 % por mes calendario; el 31 de agosto es lunes y
+    el cierre del 4 de septiembre ya no puede contar como fin de agosto.
+    """
+    import datetime as dt
+
+    from kaizen_api.domain.screeners import momentum as M
+
+    puntos = []
+    dia = dt.date(2025, 3, 3)
+    while dia <= dt.date(2026, 9, 18):
+        if dia.weekday() < 5:
+            meses = (dia.year - 2025) * 12 + dia.month
+            puntos.append((dia.isoformat(), 100.0 * 1.01 ** meses))
+        dia += dt.timedelta(days=1)
+    esperado = M.momentum_12_1(
+        dates=[d for d, _ in puntos], closes=[c for _, c in puntos], as_of="2026-09-22"
+    )
+    assert esperado == pytest.approx(1.01 ** 11 - 1)
+    assert F.momentum_12m1(puntos, as_of="2026-09-22") == pytest.approx(esperado)
+
+
+def test_el_screener_pide_cierres_diarios_para_el_momento(monkeypatch):
+    """Las barras semanales de Yahoo se fechan el lunes en que abren y cruzan fin de mes."""
+    pedidos = []
+
+    def fake(syms, **kw):
+        pedidos.append(kw.get("interval"))
+        return {}
+
+    from kaizen_api.domain.universe import Member, Universe
+
+    monkeypatch.setattr(F, "fetch_closes", fake)
+    monkeypatch.setattr(F, "fetch_symbols", lambda syms, **kw: ({}, []))
+    F.build(Universe(id="t", name="t", currency="USD", members=(Member("AAA"),)))
+    assert "1d" in pedidos

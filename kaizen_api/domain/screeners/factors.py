@@ -15,8 +15,10 @@ Cómo se calcula, en corto:
 * Las **pruebas** (``checks``) son "cumple / no cumple" contra umbrales fijos y publicados. No hay
   comprar ni vender: esto no es recomendación de inversión.
 
-Fuentes: ``info`` de Yahoo por emisora (una llamada) y una sola descarga en lote de cierres
-ajustados para el momento y la volatilidad. Las dos pasan por ``domain/universe.py``.
+Fuentes: ``info`` de Yahoo por emisora (una llamada) y dos descargas en lote de cierres
+ajustados, semanales para la volatilidad y diarios para el momento. Pasan por
+``domain/universe.py``. El momento 12-1 no se define aquí: se delega en
+``momentum.momentum_12_1``, la misma función de ``/v2/momentum``, para que la app tenga una sola.
 """
 
 from __future__ import annotations
@@ -26,6 +28,7 @@ from dataclasses import dataclass
 
 from kaizen_api.cache import _cached
 from kaizen_api.domain import safe
+from kaizen_api.domain.screeners.momentum import momentum_12_1
 from kaizen_api.domain.universe import (
     SymbolData,
     Universe,
@@ -52,8 +55,11 @@ PERIODS_PER_YEAR = 52
 MIN_RETURNS = 30
 """Rendimientos semanales mínimos para publicar una volatilidad."""
 
-MIN_MONTHS = 13
-"""Cierres de fin de mes que pide el momento 12-1 (P11 entre P0)."""
+MOMENTUM_PERIOD = "2y"
+MOMENTUM_INTERVAL = "1d"
+"""El momento pide cierres diarios: las barras semanales de Yahoo se fechan el lunes en que abren,
+así que la que abre el lunes 31 de agosto trae el cierre del viernes 4 de septiembre y no sirve
+como fin de agosto."""
 
 CACHE_TTL = 43200
 CACHE_FAIL_TTL = 300
@@ -172,28 +178,18 @@ def robust_z(sample: list[float], value: float) -> float:
 # ─── métricas por emisora ────────────────────────────────────────────────────
 
 
-def month_end_closes(points: list[tuple[str, float]]) -> list[float]:
-    """Último cierre de cada mes, en orden. Entra ``[(YYYY-MM-DD, cierre)]``."""
-    by_month: dict[str, float] = {}
-    for date, close in points:
-        by_month[date[:7]] = close
-    return [by_month[key] for key in sorted(by_month)]
+def momentum_12m1(points: list[tuple[str, float]], as_of=None) -> float | None:
+    """Momento 12-1 de ``[(YYYY-MM-DD, cierre)]`` diarios, con la definición de ``/v2/momentum``.
 
-
-def momentum_12m1(points: list[tuple[str, float]]) -> float | None:
-    """Momento 12-1: rendimiento de hace 12 meses a hace 1 mes, sobre cierres de fin de mes.
-
-    Con 13 cierres mensuales P0..P12 (P12 es el mes en curso), es P11 entre P0 menos 1. Se salta el
-    mes más reciente porque el efecto de corto plazo va al revés del momento.
+    Delega en ``momentum.momentum_12_1``: con t el último mes cerrado antes de ``as_of`` (hoy por
+    omisión), es el cierre de t−1 entre el de t−12 menos 1, por fecha y no por posición, y ``None``
+    si falta alguno de los dos meses.
     """
-    months = month_end_closes(points)
-    if len(months) < MIN_MONTHS:
+    if not points:
         return None
-    start = months[-MIN_MONTHS]
-    end = months[-2]
-    if start <= 0:
-        return None
-    return end / start - 1.0
+    return momentum_12_1(
+        dates=[d for d, _ in points], closes=[c for _, c in points], as_of=as_of
+    )
 
 
 def annualized_volatility(points: list[tuple[str, float]]) -> float | None:
@@ -215,7 +211,11 @@ def _price(info: dict) -> float | None:
     return safe(info.get("currentPrice") or info.get("regularMarketPrice"))
 
 
-def metrics_of(data: SymbolData, points: list[tuple[str, float]] | None) -> dict[str, float | None]:
+def metrics_of(
+    data: SymbolData,
+    points: list[tuple[str, float]] | None,
+    daily: list[tuple[str, float]] | None = None,
+) -> dict[str, float | None]:
     """Las doce métricas de una emisora. Lo que no se puede calcular honesto queda en ``None``.
 
     Las cuatro de valor mezclan precio (moneda de cotización) con cifras de los estados (moneda de
@@ -256,8 +256,9 @@ def metrics_of(data: SymbolData, points: list[tuple[str, float]] | None) -> dict
     out["revenueGrowth"] = safe(info.get("revenueGrowth"))
     out["earningsGrowth"] = safe(info.get("earningsGrowth"))
 
+    if daily:
+        out["momentum12m1"] = momentum_12m1(daily)
     if points:
-        out["momentum12m1"] = momentum_12m1(points)
         out["volatility"] = annualized_volatility(points)
     return out
 
@@ -305,7 +306,10 @@ def _name_of(symbol: str, universe: Universe, data: SymbolData | None) -> str | 
     return None
 
 
-def _build_rows(universe: Universe, fetched: dict[str, SymbolData], closes: dict) -> list[dict]:
+def _build_rows(
+    universe: Universe, fetched: dict[str, SymbolData], closes: dict, daily: dict | None = None
+) -> list[dict]:
+    daily = daily or {}
     rows = []
     for symbol in universe.symbols:
         data = fetched.get(symbol)
@@ -323,7 +327,7 @@ def _build_rows(universe: Universe, fetched: dict[str, SymbolData], closes: dict
                 "metrics": dict.fromkeys(METRIC_IDS),
             })
             continue
-        metrics = metrics_of(data, closes.get(symbol))
+        metrics = metrics_of(data, closes.get(symbol), daily.get(symbol))
         coverage = coverage_of(metrics)
         excluded = coverage < MIN_COVERAGE
         reason = None
@@ -425,7 +429,8 @@ def build(universe: Universe) -> dict:
     """Arma el tablero de factores de un universo ya resuelto. Sin caché ni HTTP."""
     fetched, pending = fetch_symbols(universe.symbols)
     closes = fetch_closes(universe.symbols, period=HISTORY_PERIOD, interval=HISTORY_INTERVAL)
-    rows = _build_rows(universe, fetched, closes)
+    daily = fetch_closes(universe.symbols, period=MOMENTUM_PERIOD, interval=MOMENTUM_INTERVAL)
+    rows = _build_rows(universe, fetched, closes, daily)
     small = _score_rows(rows)
     rows = _order(rows)
 
@@ -442,8 +447,12 @@ def build(universe: Universe) -> dict:
         notes.append(f"{len(excluded)} de {len(rows)} emisoras quedaron fuera por falta de datos.")
     if pending:
         notes.append("El proveedor no respondió por: " + ", ".join(sorted(pending)) + ".")
-    if not closes:
+    if not closes and not daily:
         notes.append("No se pudo bajar el histórico de precios: momento y volatilidad van en s/d.")
+    elif not closes:
+        notes.append("No se pudo bajar el histórico semanal: la volatilidad va en s/d.")
+    elif not daily:
+        notes.append("No se pudo bajar el histórico diario: el momento va en s/d.")
     comparable = sum(1 for r in rows if not r["excluded"])
     if 0 < comparable < MIN_SECTOR:
         notes.append(

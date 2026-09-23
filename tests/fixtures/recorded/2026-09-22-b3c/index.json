@@ -8,6 +8,27 @@
    "soft_failure": false,
    "recorded_at": "2026-09-22T22:58:39+00:00"
   },
+  "yf.download:[AAPL,MSFT,NVDA,AVGO,ORCL,ADBE,LLY,JNJ,ABBV,MRK,AMGN,AMZN,HD,MCD,NKE,LOW,WMT,COST,PG,KO,PEP,CAT,HON,RTX,UNP,DE,XOM,CVX,COP,EOG,GOOGL,META,DIS,CMCSA,LIN,APD,SHW,FCX]?period=2y": {
+   "file": "yf.download-AAPL-MSFT-NVDA-AVGO-ORCL-ADBE-LLY-JNJ-ABBV-MRK-A-b25bf773ffb36d9c.json",
+   "provider": "yfinance.download",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-23T05:00:54+00:00"
+  },
+  "yf.download:[AAPL,MSFT]?interval=1wk&period=2y": {
+   "file": "yf.download-AAPL-MSFT-7a226b71a523254d.json",
+   "provider": "yfinance.download",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-23T05:00:54+00:00"
+  },
+  "yf.download:[AAPL,MSFT]?period=2y": {
+   "file": "yf.download-AAPL-MSFT-99f3e616a8d0b574.json",
+   "provider": "yfinance.download",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-23T05:00:55+00:00"
+  },
   "yf.download:[AAPL,WALMEX.MX,ZZZNOTREAL]?interval=1wk&period=2y": {
    "file": "yf.download-AAPL-WALMEX.MX-ZZZNOTREAL-f15b9d8131031f9f.json",
    "provider": "yfinance.download",
@@ -21,6 +42,13 @@
    "kind": "value",
    "soft_failure": false,
    "recorded_at": "2026-09-22T22:59:18+00:00"
+  },
+  "yf.download:[WALMEX.MX,FEMSAUBD.MX,KOFUBL.MX,BIMBOA.MX,CHDRAUIB.MX,AC.MX,GRUMAB.MX,KIMBERA.MX,GFNORTEO.MX,Q.MX,BBAJIOO.MX,GENTERA.MX,GMEXICOB.MX,CEMEXCPO.MX,ORBIA.MX,GAPB.MX,ASURB.MX,OMAB.MX,PINFRA.MX,AMXB.MX,TLEVISACPO.MX,ALSEA.MX,LIVEPOLC-1.MX]?period=2y": {
+   "file": "yf.download-WALMEX.MX-FEMSAUBD.MX-KOFUBL.MX-BIMBOA.MX-CHDRAU-aeee1cbcf56e6c45.json",
+   "provider": "yfinance.download",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-23T05:00:53+00:00"
   },
   "yf.download:[ZZZNOTREAL]?interval=1wk&period=2y": {
    "file": "yf.download-ZZZNOTREAL-2539537d8e71afc7.json",
@@ -517,10 +545,10 @@
   "2026-09-22"
  ],
  "summary": {
-  "keys_total": 72,
+  "keys_total": 76,
   "keys_by_provider": {
    "yf": 68,
-   "yf.download": 4
+   "yf.download": 8
   },
   "exceptions_by_provider": {},
   "empty_by_provider": {
@@ -535,5 +563,5 @@
    ]
   }
  },
- "updated_at": "2026-09-23T04:58:39+00:00"
+ "updated_at": "2026-09-23T05:00:55+00:00"
 }
