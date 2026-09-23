@@ -146,6 +146,16 @@ const NEWS = {
   meta: meta({ source: 'rss', delayMinutes: null }),
 }
 
+/** PanelResponse: precios alineados por fecha. */
+const panel = (symbols) => ({
+  currency: 'MXN',
+  interval: '1d',
+  dates: DATES,
+  prices: Object.fromEntries(symbols.map((s, i) => [s, walk(50 + 20 * i, i % 2 ? -0.001 : 0.003)])),
+  dropped: [],
+  meta: meta({ asOf: '2026-09-22', delayMinutes: null }),
+})
+
 const V2_ROUTES = {
   'GET /v2/markets/overview': { json: OVERVIEW },
   'GET /v2/rates/mx': { json: RATES },
@@ -157,6 +167,7 @@ const V2_ROUTES = {
   'GET /v2/valuation/:symbol': { json: VALUATION },
   'GET /v2/momentum/:symbol': { json: MOMENTUM },
   'GET /v2/news': { json: NEWS },
+  'GET /v2/panel': ({ url }) => ({ json: panel(String(url.searchParams.get('symbols') ?? '').split(',')) }),
 }
 
 async function open(page, baseURL, { theme, routes = {} } = {}) {
@@ -198,7 +209,18 @@ async function instrumentReady(page) {
   await expect(page.getByText('Walmex reporta ventas')).toBeVisible()
 }
 
-const PAGES = [{ path: '/investigar/WALMEX.MX', ready: instrumentReady, name: 'ficha' }]
+/** El comparador terminó de cargar. */
+async function compareReady(page) {
+  await expect(page.getByRole('heading', { level: 1, name: 'Comparar emisoras' })).toBeVisible()
+  await expect(page.getByRole('figure', { name: 'Precio en base 100' })).toBeVisible()
+  await expect(page.getByRole('table', { name: 'Múltiplos y rentabilidad lado a lado' }).getByText('21.4x').first()).toBeVisible()
+  await expect(page.getByRole('table', { name: 'Rendimiento de cada emisora en el periodo' })).toBeVisible()
+}
+
+const PAGES = [
+  { path: '/investigar/WALMEX.MX', ready: instrumentReady, name: 'ficha' },
+  { path: '/investigar/comparar?symbols=WALMEX.MX,AAPL', ready: compareReady, name: 'comparar' },
+]
 
 test.describe('investigar: ficha de la emisora', () => {
   test('muestra precio, historia, valuación con avisos, estados, dividendos y noticias', async ({ page, baseURL }) => {
@@ -219,6 +241,31 @@ test.describe('investigar: ficha de la emisora', () => {
     await page.goto('/investigar/WALMEX.MX')
     await expect(page.getByText('El flujo libre es negativo: el DCF no aplica.')).toBeVisible()
     await expect(page.getByText('Walmex reporta ventas')).toBeVisible()
+  })
+})
+
+test.describe('investigar: comparar', () => {
+  test('dos emisoras lado a lado, base 100 y cambio de emisoras', async ({ page, baseURL }) => {
+    await open(page, /** @type {string} */ (baseURL))
+    await page.goto('/investigar/comparar?symbols=WALMEX.MX,AAPL')
+    await compareReady(page)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
+    await expect(page.getByRole('columnheader', { name: 'AAPL' })).toBeVisible()
+    const input = page.getByRole('textbox', { name: 'Claves de las emisoras' })
+    await input.fill('WALMEX.MX')
+    await page.getByRole('button', { name: 'Comparar' }).click()
+    await expect(page.getByText(/Escribe de 2 a 5 claves/).first()).toBeVisible()
+    await input.fill('walmex.mx, aapl, msft')
+    await page.getByRole('button', { name: 'Comparar' }).click()
+    await expect(page).toHaveURL(/symbols=WALMEX\.MX,AAPL,MSFT/)
+    await expect(page.getByRole('columnheader', { name: 'MSFT' })).toBeVisible()
+    await noHorizontalScroll(page)
+  })
+
+  test('sin emisoras pide elegir al menos dos', async ({ page, baseURL }) => {
+    await open(page, /** @type {string} */ (baseURL))
+    await page.goto('/investigar/comparar')
+    await expect(page.getByRole('heading', { level: 2, name: 'Elige al menos dos emisoras' })).toBeVisible()
   })
 })
 

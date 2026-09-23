@@ -17,3 +17,6 @@
   .kz-research-grid[data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 .kz-research-page { padding-block: var(--space-4) var(--space-8); }
+.kz-research-foot { padding: var(--space-3) var(--space-4); }
+.kz-research-compare-form > :first-child { flex: 1 1 260px; min-width: 0; }
+.kz-research-compare-form > button { margin-top: calc(var(--text-sm) * 1.6); }
