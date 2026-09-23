@@ -8,6 +8,7 @@
 import { useCallback, useState } from 'react'
 import { Outlet } from 'react-router'
 import BottomNav from './BottomNav.jsx'
+import Footer from './Footer.jsx'
 import Sidebar from './Sidebar.jsx'
 import TopBar from './TopBar.jsx'
 import { ShellContext } from './shell-context.js'
@@ -34,7 +35,7 @@ export default function AppShell() {
           <main className="kz-shell__main" id="contenido" tabIndex={-1}>
             <Outlet />
           </main>
-          <footer className="kz-foot" />
+          <Footer />
         </div>
         <BottomNav />
       </div>

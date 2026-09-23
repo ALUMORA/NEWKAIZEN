@@ -161,3 +161,29 @@
 @media (prefers-reduced-motion: reduce) {
   .kz-side__link { transition: none; }
 }
+
+/* ─── Pie ────────────────────────────────────────────────────────────────── */
+.kz-foot {
+  align-items: center;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: var(--text-xs);
+  gap: var(--space-2) var(--space-6);
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-6);
+}
+.kz-foot .kz-foot__text { color: var(--muted); font-size: var(--text-xs); margin: 0; }
+.kz-foot__links { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); list-style: none; margin: 0; padding: 0; }
+.kz-foot__links a {
+  color: var(--ink-soft);
+  display: inline-block;
+  line-height: 24px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.kz-foot__links a:hover { color: var(--ink); }
+@media (max-width: 767.98px) {
+  .kz-foot { padding: var(--space-4) var(--space-3); }
+}
