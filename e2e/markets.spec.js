@@ -181,3 +181,16 @@ test('/mercados/noticias: liga externa segura, sin resumen ni ánimo, filtro por
   await expect(page.getByRole('link', { name: /La BMV cierra/ })).toBeVisible()
   await expect(page.getByText(/positivo|negativo/i)).toHaveCount(0)
 })
+
+test('/mercados/mexico: la serie de CETES de respaldo (FRED) se marca y el FIX se ve aunque Banxico no traiga series', async ({ page, baseURL }) => {
+  const routes = {
+    ...V2_ROUTES,
+    'GET /v2/rates/mx': { json: { items: [], meta: meta({ asOf: null, source: 'banxico', delayMinutes: null }) } },
+    'GET /v2/rates/rf': { json: { ...RF, source: 'fred_ir3tib', fallback: true, meta: meta({ asOf: '2026-09-18', source: 'fred_ir3tib', delayMinutes: null, fallback: true }) } },
+  }
+  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, legacyApi: true, health: HEALTH, routes })
+  await page.goto('/mercados/mexico')
+  await expect(page.getByText('Sin tasas por ahora')).toBeVisible()
+  await expect(page.getByText('18.4321').first()).toBeVisible()
+  await expect(page.getByText(/Este dato viene de una fuente de respaldo \(fred_ir3tib\)/)).toBeVisible()
+})

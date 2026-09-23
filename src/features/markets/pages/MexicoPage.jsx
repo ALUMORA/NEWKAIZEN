@@ -34,40 +34,37 @@ function MexicoRates() {
     <Card title="México" description="Tasa objetivo de Banxico, TIIE, CETES, inflación, UDI y tipo de cambio FIX." status={meta}>
       {rates.isPending ? <LoadingGrid /> : null}
       {rates.isError ? <ErrorState message="No pudimos traer las tasas de Banxico." onRetry={() => rates.refetch()} retrying={rates.isFetching} /> : null}
-      {rates.data ? (
-        rates.data.items.length ? (
-          <div className="kz-col">
-            <div className="markets-grid">
-              {rates.data.items.map((item) => (
-                <Stat
-                  key={item.id}
-                  label={item.label}
-                  value={fmtByUnit(item.value, item.unit, item.id)}
-                  delta={item.unit === 'fraction' ? rateDelta(item) : null}
-                  info={termFor(item.id) ? { termKey: termFor(item.id), term: item.label } : undefined}
-                  status={itemStatus(item, meta)}
-                  sublabel={item.seriesId ? `Serie ${item.seriesId}` : undefined}
-                />
-              ))}
-              {fx.isPending ? <Stat label="Dólar FIX" loading /> : null}
-              {fx.data ? (
-                <Stat
-                  label="Dólar FIX"
-                  value={fmtNumber(fx.data.rate, { decimals: 4 })}
-                  sublabel="Pesos por dólar. Si sube, el peso está más débil."
-                  info={{ termKey: 'tipo-de-cambio-fix', term: 'Dólar FIX' }}
-                  status={{ ...itemStatus(fx.data, fx.data.meta), stale: Boolean(fx.data.stale || fx.data.meta?.stale) }}
-                />
-              ) : null}
-            </div>
-            {fx.isError ? <ErrorState size="sm" message="No pudimos traer el tipo de cambio." onRetry={() => fx.refetch()} /> : null}
-            <ApiNotes meta={meta} label="Avisos de Banxico" />
-            {fx.data ? <ApiNotes meta={fx.data.meta} label="Avisos del tipo de cambio" /> : null}
+      {rates.data && !rates.data.items.length ? <EmptyState title="Sin tasas por ahora" text="Banxico no devolvió series. Intenta más tarde." /> : null}
+      {rates.isPending ? null : (
+        <div className="kz-col">
+          <div className="markets-grid">
+            {(rates.data?.items ?? []).map((item) => (
+              <Stat
+                key={item.id}
+                label={item.label}
+                value={fmtByUnit(item.value, item.unit, item.id)}
+                delta={item.unit === 'fraction' ? rateDelta(item) : null}
+                info={termFor(item.id) ? { termKey: termFor(item.id), term: item.label } : undefined}
+                status={itemStatus(item, meta)}
+                sublabel={item.seriesId ? `Serie ${item.seriesId}` : undefined}
+              />
+            ))}
+            {fx.isPending ? <Stat label="Dólar FIX" loading /> : null}
+            {fx.data ? (
+              <Stat
+                label="Dólar FIX"
+                value={fmtNumber(fx.data.rate, { decimals: 4 })}
+                sublabel="Pesos por dólar. Si sube, el peso está más débil."
+                info={{ termKey: 'tipo-de-cambio-fix', term: 'Dólar FIX' }}
+                status={{ ...itemStatus(fx.data, fx.data.meta), stale: Boolean(fx.data.stale || fx.data.meta?.stale) }}
+              />
+            ) : null}
           </div>
-        ) : (
-          <EmptyState title="Sin tasas por ahora" text="Banxico no devolvió series. Intenta más tarde." />
-        )
-      ) : null}
+          {fx.isError ? <ErrorState size="sm" message="No pudimos traer el tipo de cambio." onRetry={() => fx.refetch()} /> : null}
+          <ApiNotes meta={meta} label="Avisos de Banxico" />
+          {fx.data ? <ApiNotes meta={fx.data.meta} label="Avisos del tipo de cambio" /> : null}
+        </div>
+      )}
     </Card>
   )
 }
