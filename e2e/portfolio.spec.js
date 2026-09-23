@@ -47,7 +47,25 @@ const FX_HISTORY = {
 const quote = (symbol, name, price) => ({ symbol, name, price, previousClose: price, change: 0, changePct: 0, currency: 'MXN', exchange: 'BMV', type: 'equity', marketState: 'REGULAR', asOf: '2026-09-22T14:40:00Z' })
 const QUOTES = { quotes: [quote('WALMEX.MX', 'Walmex', 65), quote('NAFTRAC.MX', 'Naftrac', 55.2)], missing: [], meta: meta() }
 
+// PanelResponse: 12 semanas de precios en pesos, sin rellenar.
+const weeks = Array.from({ length: 12 }, (_, i) => `2026-${String(7 + Math.floor(i / 4)).padStart(2, '0')}-${String(1 + (i % 4) * 7).padStart(2, '0')}`)
+const walk = (start, steps) => steps.map((_, i) => Math.round(start * (1 + 0.01 * Math.sin(i * 1.3) + 0.002 * i) * 100) / 100)
+const PANEL = {
+  currency: 'MXN',
+  interval: '1wk',
+  dates: weeks,
+  prices: {
+    'WALMEX.MX': walk(62, weeks),
+    'NAFTRAC.MX': walk(55, weeks).map((v, i) => Math.round((v * (1 + 0.004 * Math.cos(i))) * 100) / 100),
+    '^MXX': walk(60000, weeks),
+    '^GSPC': walk(120000, weeks).map((v, i) => Math.round(v * (1 + 0.006 * Math.cos(i * 0.7)))),
+  },
+  dropped: [],
+  meta: meta({ asOf: '2026-09-19', delayMinutes: null }),
+}
+
 const V2_ROUTES = {
+  'GET /v2/panel': { json: PANEL },
   'GET /v2/markets/overview': { json: OVERVIEW },
   'GET /v2/rates/mx': { json: RATES },
   'GET /v2/fx/history': { json: FX_HISTORY },
@@ -224,6 +242,32 @@ test.describe('portafolio: rebalanceo', () => {
   })
 })
 
+const RISK_STATE = {
+  ...STATE,
+  portfolios: [{ ...STATE.portfolios[0], transactions: [...STATE.portfolios[0].transactions, tx({ id: 'tx4', type: 'buy', date: '2026-09-11', symbol: 'NAFTRAC.MX', quantity: 50, price: 55 })] }],
+}
+
+test.describe('portafolio: riesgo', () => {
+  for (const theme of THEMES) {
+    test(`carga con su h1, medidas, correlaciones y sin violaciones (${theme})`, async ({ page, baseURL }) => {
+      await open(page, baseURL, { theme, state: RISK_STATE })
+      await page.goto('/portafolio/riesgo')
+      await expect(page.getByRole('heading', { level: 1, name: 'Riesgo' })).toBeVisible()
+      await expect(page.locator('h1')).toHaveCount(1)
+      await expect(page.getByText('11 semanas de datos')).toBeVisible()
+      await expect(page.getByRole('figure', { name: 'Correlaciones entre tus emisoras' })).toBeVisible()
+      await noHorizontalScroll(page)
+      await expectNoAxeViolations(page, `riesgo ${theme}`)
+    })
+  }
+
+  test('sin posiciones lleva a Movimientos', async ({ page, baseURL }) => {
+    await open(page, baseURL, { state: { ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: [] }] } })
+    await page.goto('/portafolio/riesgo')
+    await expect(page.getByRole('link', { name: 'Ir a Movimientos' })).toHaveAttribute('href', '/portafolio/movimientos')
+  })
+})
+
 // Capturas para revisión: con F1_CAPTURE_DIR=/ruta guarda cada página nueva; sin la variable se salta.
 test('capturas', async ({ page, baseURL }, testInfo) => {
   const dir = process.env.F1_CAPTURE_DIR ?? ''
@@ -239,4 +283,9 @@ test('capturas', async ({ page, baseURL }, testInfo) => {
   await expect(planTable(page)).toBeVisible()
   await settleAnimations(page)
   await page.screenshot({ path: `${dir}/rebalanceo-${testInfo.project.name}.png`, fullPage: true })
+  await page.addInitScript((st) => window.localStorage.setItem('kaizen:v2', st), JSON.stringify(RISK_STATE))
+  await page.goto('/portafolio/riesgo')
+  await expect(page.getByRole('figure', { name: 'Correlaciones entre tus emisoras' })).toBeVisible()
+  await settleAnimations(page)
+  await page.screenshot({ path: `${dir}/riesgo-${testInfo.project.name}.png`, fullPage: true })
 })
