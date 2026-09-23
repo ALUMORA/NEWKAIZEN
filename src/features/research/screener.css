@@ -1,0 +1,56 @@
+/* Screener de factores (F3b). Solo tokens. */
+.kz-screener-controls { align-items: flex-end; display: flex; flex-wrap: wrap; gap: var(--space-4); }
+.kz-screener-controls > * { min-width: 0; }
+.kz-screener-controls > :last-child { flex: 0 1 260px; }
+.kz-screener-custom { align-items: flex-start; display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.kz-screener-custom > :first-child { flex: 1 1 280px; min-width: 0; }
+.kz-screener-custom > button { margin-top: calc(var(--text-sm) * 1.6); }
+.kz-screener-notes { font-size: var(--text-sm); }
+.kz-screener-lead { margin-block: var(--space-3); max-width: 80ch; }
+
+/* Celdas */
+.kz-screener-emisora { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.kz-screener-link {
+  color: var(--ink);
+  font-weight: var(--weight-semibold);
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+.kz-screener-link:hover { text-decoration-color: currentColor; }
+.kz-screener-name { color: var(--ink-soft); display: block; font-size: var(--text-xs); font-weight: var(--weight-regular); max-width: 10rem; white-space: normal; }
+.kz-screener-tag { color: var(--muted); display: block; font-size: var(--text-xs); font-weight: var(--weight-regular); max-width: 10rem; white-space: normal; }
+.kz-screener-th { display: inline-flex; flex-direction: column; line-height: var(--leading-tight); max-width: 12ch; white-space: normal; }
+.kz-screener-wrap { display: inline-block; line-height: var(--leading-tight); max-width: 13ch; white-space: normal; }
+.kz-screener-th small { color: var(--muted); font-size: var(--text-xs); font-weight: var(--weight-regular); letter-spacing: 0; text-transform: none; }
+.kz-screener-score { align-items: flex-end; display: inline-flex; flex-direction: column; gap: 2px; }
+.kz-screener-raw { color: var(--muted); font-size: var(--text-xs); }
+.kz-screener-composite { align-items: center; display: inline-flex; gap: var(--space-2); justify-content: flex-end; }
+.kz-screener-check { align-items: flex-start; display: inline-flex; flex-direction: column; gap: 2px; }
+
+/* Barra divergente del compuesto: centro en 0, con la paleta divergente (--div-*) y no con verde y
+   rojo, porque quedar arriba o abajo de la mediana no es bueno ni malo. */
+.kz-screener-zbar {
+  background: var(--surface-2);
+  border-radius: var(--radius-full);
+  display: inline-block;
+  height: 6px;
+  position: relative;
+  width: 48px;
+}
+.kz-screener-zbar::before { background: var(--border-strong); content: ""; height: 10px; left: 50%; position: absolute; top: -2px; width: 1px; }
+.kz-screener-zbar__fill { border-radius: var(--radius-full); height: 100%; position: absolute; top: 0; }
+.kz-screener-zbar__fill[data-side="pos"] { background: var(--div-pos-2); left: 50%; }
+.kz-screener-zbar__fill[data-side="neg"] { background: var(--div-neg-2); right: 50%; }
+
+/* Notas y guía */
+.kz-screener-rownotes h3 { font-size: var(--text-md); margin-bottom: var(--space-2); }
+.kz-screener-rownotes ul { color: var(--ink-soft); display: flex; flex-direction: column; font-size: var(--text-sm); gap: var(--space-2); margin: 0; padding-inline-start: var(--space-5); }
+.kz-screener-rownotes .mono { color: var(--muted); font-size: var(--text-xs); }
+.kz-screener-guide { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr); margin: 0; }
+@media (min-width: 900px) {
+  .kz-screener-guide { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.kz-screener-guide dt { align-items: center; color: var(--ink); display: flex; font-weight: var(--weight-semibold); gap: var(--space-1); }
+.kz-screener-guide dd { color: var(--ink-soft); font-size: var(--text-sm); margin: var(--space-1) 0 0; max-width: 70ch; }
+.kz-screener-more { color: var(--ink); font-weight: var(--weight-semibold); text-decoration: underline; text-underline-offset: 3px; }
