@@ -1,6 +1,6 @@
 # CONTINUAR: rehacer NEWKAIZEN como "Bloomberg-lite"
 
-Actualizado el **23 de septiembre de 2026**, al cerrar la revisión de la fase 2. Este archivo
+Actualizado el **23 de septiembre de 2026**, con la primera tanda de la fase 3. Este archivo
 es el punto de entrada para la siguiente sesión. Todo lo que hace falta está en `docs/overhaul/`.
 
 ## Qué es esto
@@ -147,6 +147,37 @@ escritorio y móvil, sin errores de consola.
 
 Abierto: el contenido del legado no pasa por axe (se va en M3); el Heatmap esconde los valores de
 celda a 390 px (siguen en "Ver tabla").
+
+### Fase 3, primera tanda: rutas nuevas (23 de septiembre de 2026)
+
+Se hizo con límite de tiempo y solo sobre las rutas que mostraban "Próximamente"; las que montan el
+legado no se tocaron (el baseline las cuida y se reemplazan en M3). Construido y probado con axe en
+los dos temas y viewports:
+
+- **F1**: `/portafolio/movimientos` (libro con alta, borrado con Deshacer, USD con FIX de la fecha,
+  costo promedio), `/portafolio/rebalanceo` (acciones enteras, registro al libro con Deshacer),
+  `/portafolio/riesgo` (caída máxima, VaR, CVaR, betas en pesos, N efectiva, USD, correlaciones).
+  **Falta `/portafolio/rendimiento`** (TWR, XIRR, efecto precio y tipo de cambio, ISR): hoy es el
+  único ejemplo de "Próximamente" que usan `router.test.jsx` y `app.spec.js`.
+- **F2**: `/mercados/mexico`, `/mercados/cetes` (calculadora con ISR), `/mercados/noticias`.
+- **F3**: `/investigar/:symbol` (ficha con valuación, DCF editable, momentum, estados, dividendos,
+  noticias; cada sección cae sola) y `/investigar/comparar`.
+- **F4**: `/herramientas/simulador` (Monte Carlo en el worker, abanico, metas, retiro; reproduce
+  176,729.14 y 180,292.00).
+- **F5**: `/aprender`, `/aprender/:termino`, `/aprender/metodologia/:guia`, los tres legales como
+  borrador, `/watchlist`, `/bienvenida` y `public/manifest.webmanifest` (falta enlazarlo en
+  `index.html`).
+
+Compuerta: `npm run check` 1,831 pruebas, bundle al 74 %; `e2e:baseline` 16 de 16; `e2e` 246 más
+las 2 del shell corregidas después (shell.spec 17 de 17); sin errores de consola en la ficha, México
+y el simulador con el replay.
+
+Pedidos abiertos de los streams en `docs/requests/F1.md` a `F5.md` (sector en lote para la
+concentración, precios en moneda original para separar efectos, buscador reutilizable, etc.). La
+descripción de la emisora llega en inglés desde Yahoo.
+
+Lo siguiente: `/portafolio/rendimiento`, luego reemplazar las rutas del legado (panorama,
+portafolio, optimizador, backtest, screeners) y M3.
 
 ### Lo que falta, en orden
 
