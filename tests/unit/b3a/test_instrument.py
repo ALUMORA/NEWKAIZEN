@@ -212,3 +212,50 @@ def test_same_currency_has_no_fx_and_no_fx_fallback(replay_b3a):
     data = mod.get_instrument("WALMEX.MX")
     assert data["fxUsed"] is None
     assert not any("tipo de cambio" in note for note in data["notes"])
+
+
+def _aged_info(monkeypatch, symbol: str, when: str) -> None:
+    """La info grabada del símbolo, pero con la última cotización fechada en ``when``."""
+    import datetime as _dt
+
+    original = mod._yahoo.get_info
+    stamp = _dt.datetime.fromisoformat(when).replace(tzinfo=_dt.UTC).timestamp()
+
+    def get_info(sym):
+        info = dict(original(sym))
+        if sym.upper() == symbol:
+            info["regularMarketTime"] = stamp
+        return info
+
+    monkeypatch.setattr(mod._yahoo, "get_info", get_info)
+
+
+def test_a_quote_from_days_ago_is_stale(replay_b3a, monkeypatch):
+    """Un precio de hace una semana no es el de la sesión más reciente: ``stale`` lo dice."""
+    _aged_info(monkeypatch, "AAPL", "2026-09-15T20:00:00")
+    data = mod.get_instrument("AAPL")
+    assert data["stale"] is True
+    assert any("2026-09-15" in note for note in data["notes"])
+
+
+def test_todays_quote_is_not_stale(replay_b3a):
+    data = mod.get_instrument("AAPL")
+    assert data["stale"] is False
+
+
+def test_the_instrument_route_passes_stale_to_meta(client, monkeypatch):
+    _aged_info(monkeypatch, "AAPL", "2026-09-15T20:00:00")
+    body = client.get("/v2/instrument/AAPL").json()
+    assert body["meta"]["stale"] is True
+    assert "stale" not in body
+
+
+def test_an_old_fx_bar_makes_the_card_stale(replay_b3a, monkeypatch):
+    from kaizen_api.domain.fx import BANXICO_FIX_SOURCE, FxQuote
+
+    old = FxQuote(rate=18.5, as_of="2026-09-14", source=BANXICO_FIX_SOURCE, stale=True, fallback=False)
+    monkeypatch.setattr(currency_mod, "fx_spot", lambda: old)
+    data = mod.get_instrument("AAPL.MX")
+    assert data["fxUsed"]["asOf"] == "2026-09-14"
+    assert data["stale"] is True
+    assert any("USDMXN que se usó es del 2026-09-14" in note for note in data["notes"])

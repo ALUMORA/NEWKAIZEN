@@ -44,11 +44,13 @@ def instrument(symbol: SymbolPath) -> InstrumentResponse:
     notes = data.pop("notes")
     sources = data.pop("sources")
     fallback = data.pop("fallback")
+    stale = data.pop("stale")
     as_of = data.pop("as_of")
     data["meta"] = meta(
         ",".join(sources),
         as_of=as_of,
         delay_minutes=YAHOO_DELAY_MINUTES,
+        stale=stale,
         fallback=fallback,
         notes=notes,
     )

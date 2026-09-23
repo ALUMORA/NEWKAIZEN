@@ -559,7 +559,8 @@ def get_instrument(symbol: str) -> dict:
     """Ficha completa de la emisora para ``/v2/instrument/{symbol}``.
 
     Levanta ``ApiError`` 404 cuando Yahoo no conoce el símbolo. Devuelve el cuerpo del contrato sin
-    ``meta``, más las llaves auxiliares ``notes``, ``sources`` y ``fallback`` que arma el router.
+    ``meta``, más las llaves auxiliares ``notes``, ``sources``, ``fallback`` y ``stale`` que arma
+    el router.
     """
     symbol = symbol.upper()
     info = _yahoo.get_info(symbol)
@@ -685,6 +686,21 @@ def get_instrument(symbol: str) -> dict:
         sources.append(conv.source)
     available = sum(1 for key in FUNDAMENTAL_KEYS if fundamentals[key] is not None)
     quote = _quote(info, price, px_divisor)
+    # ``stale``: la cotización es más vieja que la última sesión cerrada de su bolsa (la regla de
+    # ``history.is_stale`` de B2a, la misma que usan las series), o el tipo de cambio con el que se
+    # convirtieron los estados pasó la tolerancia de ``domain.fx``.
+    quote_stale = _history.is_stale(symbol, quote["asOf"], "1d")
+    if quote_stale:
+        notes.append(
+            f"La última cotización que trae Yahoo es del {quote['asOf'][:10]}, así que no es el precio "
+            "de la sesión más reciente."
+        )
+    fx_stale = conv.used() is not None and conv.stale
+    if fx_stale:
+        notes.append(
+            f"El tipo de cambio {conv.pair} que se usó es del {conv.used()['asOf']}, más viejo de lo "
+            "que se tolera."
+        )
     return {
         "symbol": symbol,
         "name": str(info.get("longName") or info.get("shortName") or symbol),
@@ -707,6 +723,7 @@ def get_instrument(symbol: str) -> dict:
         "sources": sources,
         "as_of": quote["asOf"],
         "fallback": fallback,
+        "stale": bool(quote_stale or fx_stale),
     }
 
 
