@@ -38,6 +38,11 @@ describe('palette-model', () => {
     expect(groups.find((g) => g.id === 'acciones')).toBeUndefined()
   })
 
+  it('las rutas cuyo nombre empieza con lo tecleado van primero', () => {
+    const go = buildGroups({ q: 'resumen', routes, dark: false }).find((g) => g.id === 'ir-a')
+    expect(go?.options.map((o) => o.label)).toEqual(['Resumen', 'Panorama'])
+  })
+
   it('tema: el texto de la acción sigue al tema actual', () => {
     const groups = buildGroups({ q: 'tema', routes, dark: true })
     expect(groups.at(-1)?.options[0].label).toBe('Cambiar a tema claro')

@@ -86,9 +86,14 @@ export function buildGroups({ q, results = [], recents = [], routes, dark }) {
   }
 
   /** @type {PaletteOption[]} */
+  // Primero las rutas cuyo nombre empieza con lo tecleado ("resumen" pone Resumen antes que
+  // Panorama, que solo coincide por palabra clave); el resto conserva el orden de nav.js.
+  const startsWith = (/** @type {{ label: string }} */ r) => (needle && fold(r.label).startsWith(needle) ? 0 : 1)
   const go = routes
     .filter((r) => routeMatches(text, r))
-    .map((r) => ({ id: `go-${r.id}`, kind: 'route', label: r.label, detail: r.section || undefined, to: r.to }))
+    .map((r, i) => ({ r, i }))
+    .sort((a, b) => startsWith(a.r) - startsWith(b.r) || a.i - b.i)
+    .map(({ r }) => ({ id: `go-${r.id}`, kind: 'route', label: r.label, detail: r.section || undefined, to: r.to }))
 
   const actionList = [
     { id: 'act-theme', kind: /** @type {const} */ ('action'), label: dark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro', action: 'theme', keywords: 'tema modo oscuro claro apariencia' },

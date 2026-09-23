@@ -10,7 +10,10 @@
   color: var(--ink);
   font: inherit;
   font-size: var(--text-lg);
+  flex-shrink: 0;
   height: 44px;
+  /* Deja lugar al anillo de foco: el cuerpo del diálogo recorta lo que se sale. */
+  margin-top: 4px;
   padding: 0 var(--space-3);
   width: 100%;
 }
