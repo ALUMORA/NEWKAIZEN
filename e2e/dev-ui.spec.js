@@ -231,6 +231,23 @@ test('aviso: borrar con confirmación y Deshacer lo regresa, anunciado con aria-
   await expect(region).not.toContainText('Movimiento borrado')
 })
 
+test('.kz-page: medianil de 16 px en teléfono y 24 px desde 820 px, con tope --content-max', async ({ page, baseURL }, testInfo) => {
+  await openGallery(page, baseURL)
+  const main = page.locator('main.kz-page')
+  await expect(main).toHaveCount(1)
+  const css = await main.evaluate((el) => {
+    const cs = getComputedStyle(el)
+    return { left: cs.paddingLeft, right: cs.paddingRight, max: cs.maxWidth, token: getComputedStyle(document.documentElement).getPropertyValue('--content-max').trim() }
+  })
+  const gutter = testInfo.project.name === 'mobile' ? '16px' : '24px'
+  expect(css).toEqual({ left: gutter, right: gutter, max: css.token, token: '1440px' })
+  // En el corte exacto ya es de 24 px, y un píxel antes sigue en 16.
+  await page.setViewportSize({ width: 820, height: 900 })
+  await expect.poll(() => main.evaluate((el) => getComputedStyle(el).paddingLeft)).toBe('24px')
+  await page.setViewportSize({ width: 819, height: 900 })
+  await expect.poll(() => main.evaluate((el) => getComputedStyle(el).paddingLeft)).toBe('16px')
+})
+
 test('sin scroll horizontal de página; la tabla hace scroll dentro de su marco', async ({ page, baseURL }, testInfo) => {
   for (const theme of THEMES) {
     await openGallery(page, baseURL, theme)

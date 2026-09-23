@@ -754,7 +754,7 @@ function TextsSection() {
 
 export default function DevUiPage() {
   return (
-    <main className="dev-page kz-container" id="contenido">
+    <main className="dev-page kz-page" id="contenido">
       <PageHeader
         eyebrow="Solo desarrollo"
         title="Sistema de diseño"

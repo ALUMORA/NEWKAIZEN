@@ -81,6 +81,27 @@ extremo claro 2.18:1 y 2.05:1).
 `.kz-metric-grid`, `.kz-split`, `.kz-divider` (`layout.css`, con `data-gap`, `data-align`,
 `data-justify`, `data-ratio` donde aplica).
 
+### `.kz-page`: el medianil de una página
+
+El `<main>` del shell no tiene relleno ni ancho máximo a propósito: el legado incrustado trae el suyo.
+Cada página nueva envuelve su contenido en **`.kz-page`** (`layout.css`) en vez de inventar su regla:
+
+| | Móvil (< 820px) | Desde 820px |
+| --- | --- | --- |
+| `padding-inline` | 16px (`--space-4`) | 24px (`--space-6`) |
+| `max-width` | `--content-max` (1440px), centrado con `margin-inline: auto` | igual |
+
+Solo da ancho y medianil; el ritmo vertical (`padding-block`, `gap`) lo pone cada página, por ejemplo
+`<div className="kz-page kz-col" data-gap="6">`. Va una sola vez por página, en su raíz: anidarla
+suma dos medianiles. `/dev/ui` la usa en su `<main>`.
+
+`.kz-container` sigue igual (24px desde 900px) para no mover lo que ya la usa; lo nuevo va con
+`.kz-page`.
+
+Un `.sr-only` es absoluto: dentro de algo con scroll horizontal, ese algo necesita `position:
+relative` (como `.kz-table-scroll`) o el texto oculto se sale del scroll y ensancha la página en
+móvil (ver la prueba "shell: avisos" de `e2e/shell.spec.js`).
+
 ## Componentes
 
 Todas las props no listadas se pasan al elemento raíz (`...rest`) salvo donde se indica. "Nodo" es
