@@ -37,7 +37,7 @@ function Table({ rows, notes, against, status, loading = false }) {
     {
       key: 'symbol',
       header: 'FIBRA',
-      minWidth: 190,
+      minWidth: 170,
       format: (v, row) => {
         const own = notesFor(v, notes)
         return (
@@ -279,7 +279,7 @@ function Reasons({ rows, notes }) {
                   ))}
                 </ul>
               ) : (
-                <p className="kz-research-muted">El servidor no dejó una nota para esta FIBRA; la fuente no trae esos renglones.</p>
+                <p className="kz-research-muted">El servidor no explicó por qué faltan; el reporte trimestral de la FIBRA puede traer esas cifras.</p>
               )}
             </li>
           ))}

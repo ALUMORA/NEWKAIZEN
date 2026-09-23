@@ -4,7 +4,8 @@
 // Corre en desktop (1440x900) y mobile (390x844). La fixture `guards` tumba la prueba ante
 // cualquier console.error, excepción, request fallido o respuesta >= 400.
 //
-// Capturas para revisión: con F3C_CAPTURE_DIR=/ruta la prueba "capturas" guarda cada página.
+// Capturas para revisión: con F3C_CAPTURE_DIR=/ruta la prueba "capturas" guarda cada página
+// (F3C_CAPTURE_THEME=dark para el tema oscuro).
 import AxeBuilder from '@axe-core/playwright'
 import { test as plainTest } from '@playwright/test'
 import { test, expect, attachGuards } from './support/guards.js'
@@ -14,6 +15,7 @@ import { RESEARCH_ROUTES, meta } from './support/research-data.js'
 const WCAG_AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const THEMES = /** @type {const} */ (['light', 'dark'])
 const CAPTURE_DIR = process.env.F3C_CAPTURE_DIR ?? ''
+const CAPTURE_THEME = process.env.F3C_CAPTURE_THEME === 'dark' ? 'dark' : 'light'
 
 const HEALTH = { ...HEALTH_V2, capabilities: [...HEALTH_V2.capabilities, 'markets.overview'] }
 
@@ -372,7 +374,7 @@ test.describe('screener: FIBRAs', () => {
     await expect(reasons.getByText('En s/d: LTV, deuda entre capitalización, cap rate, rendimiento de flujo.').first()).toBeVisible()
     await expect(reasons.getByText(/no cuadra con la que Yahoo le reporta/)).toBeVisible()
     await expect(reasons.getByRole('heading', { level: 3, name: /STORAGE18\.MX/ })).toBeVisible()
-    await expect(reasons.getByText('El servidor no dejó una nota para esta FIBRA; la fuente no trae esos renglones.')).toBeVisible()
+    await expect(reasons.getByText('El servidor no explicó por qué faltan; el reporte trimestral de la FIBRA puede traer esas cifras.')).toBeVisible()
 
     const notes = page.getByRole('region', { name: 'Notas del cálculo' })
     await expect(notes.getByText(/no un avalúo independiente/)).toBeVisible()
@@ -460,11 +462,12 @@ test.describe('capturas para revisión', () => {
   test.skip(!CAPTURE_DIR, 'sin F3C_CAPTURE_DIR')
   for (const p of PAGES) {
     test(`captura ${p.name}`, async ({ page, baseURL }, testInfo) => {
-      await open(page, /** @type {string} */ (baseURL), { theme: 'light' })
+      await open(page, /** @type {string} */ (baseURL), { theme: CAPTURE_THEME })
       await page.goto(p.path)
       await p.ready(page)
       await settleAnimations(page)
-      await page.screenshot({ path: `${CAPTURE_DIR}/${p.name}-${testInfo.project.name}.png`, fullPage: true })
+      const suffix = CAPTURE_THEME === 'dark' ? '-oscuro' : ''
+      await page.screenshot({ path: `${CAPTURE_DIR}/${p.name}-${testInfo.project.name}${suffix}.png`, fullPage: true })
     })
   }
 })
