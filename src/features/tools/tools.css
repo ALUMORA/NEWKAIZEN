@@ -1,0 +1,80 @@
+/* Simulador de metas y retiro (F4). Solo tokens. */
+.kz-sim__layout {
+  display: grid;
+  gap: var(--space-5);
+  align-items: start;
+}
+@media (min-width: 1040px) {
+  .kz-sim__layout {
+    grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+  }
+}
+.kz-sim__results {
+  display: grid;
+  gap: var(--space-5);
+  min-width: 0;
+}
+.kz-sim__form {
+  display: grid;
+  gap: var(--space-5);
+}
+.kz-sim__group {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.kz-sim__group legend {
+  padding: 0;
+  margin-bottom: var(--space-3);
+  font-weight: var(--weight-semibold);
+  color: var(--ink);
+}
+.kz-sim__source {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+.kz-sim__stats {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+.kz-sim__notes {
+  margin: 0;
+  padding-left: var(--space-5);
+  display: grid;
+  gap: var(--space-2);
+  color: var(--ink);
+}
+.kz-sim__more {
+  margin: var(--space-4) 0 0;
+}
+/* El <main> del shell no tiene relleno: cada página pone su medianil (16 px en móvil). */
+.kz-sim {
+  display: grid;
+  gap: var(--space-5);
+  max-width: var(--content-max);
+  margin-inline: auto;
+  padding: var(--space-5) var(--space-4) var(--space-8);
+}
+@media (min-width: 820px) {
+  .kz-sim {
+    padding-inline: var(--space-6);
+  }
+}
+.kz-sim .kz-page-header {
+  margin: 0;
+}
+.kz-sim__more a {
+  color: var(--accent);
+  font-weight: var(--weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.kz-sim__notes {
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+}
