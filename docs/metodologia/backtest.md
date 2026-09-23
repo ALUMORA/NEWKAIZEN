@@ -48,7 +48,7 @@ Nueva York se cae de la comparación, en los dos lados.
 | --- | --- |
 | CAGR | `(V_final / V_inicial)^(1/años) − 1` |
 | Volatilidad anualizada | Desviación muestral por la raíz de los periodos por año |
-| Caída máxima | Mínimo de `V_t / máximo hasta t − 1`, con fechas de pico, fondo y recuperación |
+| Caída máxima | Mínimo de `V_t / máx(V_0..V_t) − 1`, con fechas de pico, fondo y recuperación |
 | Calmar | CAGR entre el valor absoluto de la caída máxima |
 | Sharpe y Sortino | Sobre excesos contra la serie de CETES 28, no contra una constante |
 | VaR y CVaR al 95 | Histórico y paramétrico, los dos etiquetados |

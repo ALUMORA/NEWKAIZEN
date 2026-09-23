@@ -90,8 +90,9 @@ la serie de CETES a 28 días convertida al plazo de cada periodo, no una constan
 
 Sobre esa serie hay una excepción a la regla general de no rellenar huecos, y conviene tenerla
 presente al leer cualquiera de estos números: se usa la tasa vigente al inicio de cada periodo y se
-arrastra hasta 45 días. Si no hay dato publicado dentro de esa ventana, el periodo sale nulo y la
-pantalla muestra `s/d` en vez de suponer una tasa. La misma excepción aplica al Treynor, al alfa de
+arrastra hasta 45 días naturales. Si no hay dato publicado dentro de esa ventana, el periodo sale
+nulo en vez de suponer una tasa, y con un solo periodo nulo la medida de esa ventana no se calcula:
+la pantalla muestra `s/d` o recorta el tramo. La misma excepción aplica al Treynor, al alfa de
 Jensen y a cualquier otra medida que se calcule sobre excesos.
 
 - Sharpe: promedio de los excesos entre su desviación estándar, por la raíz de los periodos por año.

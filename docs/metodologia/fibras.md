@@ -24,7 +24,8 @@ Los dos se recalcularon con la definición correcta. Cuando faltan los renglones
 Un fideicomiso de inversión en bienes raíces, regulado por los artículos 187 y 188 de la Ley del
 ISR. Invierte en inmuebles destinados al arrendamiento, tiene que conservarlos al menos cuatro años
 y debe distribuir al menos el 95 por ciento de su resultado fiscal cada año. A cambio, no paga ISR a
-nivel del fideicomiso: el impuesto se cobra en el tenedor, con retención sobre la distribución.
+nivel del fideicomiso: el impuesto se cobra en el tenedor, con retención sobre la distribución a
+la tasa del artículo 9.
 
 Eso explica por qué su rendimiento por distribución es mucho mayor que el dividendo de una acción, y
 por qué la utilidad neta no sirve para valuarlas.
@@ -95,8 +96,11 @@ moverse antes que el NAV. Por eso el cap rate implícito sirve como comprobació
 
 ## Rendimiento por distribución
 
-Distribuciones de los últimos doce meses entre el precio por certificado. Es **bruto**: a las
-distribuciones se les retiene ISR según los artículos 187 y 188.
+Distribuciones de los últimos doce meses entre el precio por certificado. Es **bruto**: a la parte
+de la distribución que viene del resultado fiscal se le retiene ISR a la tasa del artículo 9, 30 por
+ciento, según el artículo 188. Para una persona física residente en México esa retención es un pago a
+cuenta: el ingreso se acumula en la declaración anual y lo retenido se acredita. No aplica el 10 por
+ciento del artículo 140, que es el de los dividendos de acciones.
 
 La sostenibilidad se revisa contra el AFFO, no contra la utilidad. Si la distribución supera al AFFO
 de forma consistente, se está financiando con deuda o con venta de activos, y eso no se sostiene.
