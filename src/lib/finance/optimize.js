@@ -6,6 +6,9 @@
 // FISTA (gradiente proximal acelerado) y proyección exacta sobre la intersección del símplex con
 // la caja, que es el conjunto factible real de alguien que no puede vender en corto.
 //
+// La covarianza tiene que ser simétrica: una asimetría mayor que 1e-8 relativo a su escala lanza
+// InvalidInputError en todas las funciones de aquí (el ruido de redondeo se promedia y ya).
+//
 // Unidades: `mu`, `rf` y la covarianza tienen que venir en la MISMA periodicidad (todo anual, o
 // todo por periodo). Los pesos son fracciones que suman 1. Ninguna función de aquí sugiere
 // comprar ni vender nada: entrega la mezcla que cumple las restricciones que le diste.
@@ -298,6 +301,41 @@ function describe(weights, cov, mu, iterations, converged) {
   return { weights, variance, volatility: Math.sqrt(variance), expectedReturn, iterations, converged }
 }
 
+/** Asimetría máxima aceptada, relativa a la entrada más grande de la matriz. */
+const SYMMETRY_TOL = 1e-8
+
+/**
+ * Valida que la covarianza sea cuadrada y simétrica, y devuelve una copia simétrica exacta.
+ *
+ * Con Σ asimétrica el gradiente Σy que usa FISTA no es el gradiente de ½ wᵀΣw, así que el
+ * resultado no sería el óptimo de nada. Por eso una asimetría de verdad (más de 1e-8 relativo a la
+ * escala de la matriz, que para una covarianza semanal es del orden de 1e-4) se rechaza, y el
+ * ruido de redondeo por debajo de eso se promedia con la transpuesta.
+ * @param {number[][]} cov
+ * @returns {number[][]}
+ * @throws {InvalidInputError}
+ */
+function symmetricCov(cov) {
+  const S = assertSquare(cov, 'la covarianza')
+  const n = S.length
+  let scale = 0
+  for (const row of S) for (const x of row) scale = Math.max(scale, Math.abs(x))
+  for (let i = 0; i < n; i += 1) {
+    for (let j = i + 1; j < n; j += 1) {
+      const gap = Math.abs(S[i][j] - S[j][i])
+      if (gap > SYMMETRY_TOL * scale) {
+        throw new InvalidInputError(
+          `La covarianza no es simétrica: la entrada (${i + 1}, ${j + 1}) vale ${S[i][j]} y la (${j + 1}, ${i + 1}) vale ${S[j][i]}.`,
+        )
+      }
+      const mid = (S[i][j] + S[j][i]) / 2
+      S[i][j] = mid
+      S[j][i] = mid
+    }
+  }
+  return S
+}
+
 /**
  * Prepara y valida covarianza + cajas.
  * @param {number[][]} cov
@@ -305,7 +343,7 @@ function describe(weights, cov, mu, iterations, converged) {
  * @returns {{ S: number[][], lo: number[], hi: number[], n: number }}
  */
 function prepare(cov, { l = 0, u = 1 } = {}) {
-  const S = assertSquare(cov, 'la covarianza')
+  const S = symmetricCov(cov)
   const n = S.length
   const lo = expandBound(l, n, 'el peso mínimo')
   const hi = expandBound(u, n, 'el peso máximo')
@@ -323,7 +361,7 @@ function prepare(cov, { l = 0, u = 1 } = {}) {
  * @param {{ l?: number | number[], u?: number | number[], maxIter?: number, tol?: number }} [options]
  * @returns {PortfolioResult}
  * @throws {InfeasibleError} si las cajas no dejan sumar 1
- * @throws {InvalidInputError} si la covarianza no es cuadrada o trae NaN
+ * @throws {InvalidInputError} si la covarianza no es cuadrada ni simétrica, o trae NaN
  */
 export function minVariance(cov, options = {}) {
   const { S, lo, hi, n } = prepare(cov, options)
@@ -648,11 +686,11 @@ const RISK_PARITY_ACCEPT = 1e-8
  *   converged: boolean,
  * } | null} `null` si algún activo tiene varianza cero o negativa, o si la covarianza es tan
  *   singular que ninguna iteración dio contribuciones positivas (no significarían nada)
- * @throws {InvalidInputError} si la covarianza no es cuadrada, trae NaN o el
+ * @throws {InvalidInputError} si la covarianza no es cuadrada ni simétrica, trae NaN o el
  *   presupuesto no casa
  */
 export function riskParity(cov, { budget = null, maxIter = 500, tol = 1e-12 } = {}) {
-  const S = assertSquare(cov, 'la covarianza')
+  const S = symmetricCov(cov)
   const n = S.length
   let b
   if (budget == null) {

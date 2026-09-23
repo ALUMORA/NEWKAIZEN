@@ -434,6 +434,57 @@ describe('riskParity', () => {
   })
 })
 
+describe('covarianza no simétrica', () => {
+  const asimetrica = [
+    [0.04, 0.03],
+    [-0.03, 0.09],
+  ]
+
+  it('todas las funciones la rechazan en vez de optimizar algo que no es el problema', () => {
+    // Con Σ asimétrica el gradiente Σy que usa FISTA no es el de ½ wᵀΣw: el resultado no sería el
+    // óptimo de nada. Antes minVariance devolvía [.4615, .5385] sin avisar.
+    const mu = [0.1, 0.15]
+    expect(() => minVariance(asimetrica)).toThrow(InvalidInputError)
+    expect(() => meanVariance(mu, asimetrica, 1)).toThrow(InvalidInputError)
+    expect(() => efficientFrontier(mu, asimetrica)).toThrow(InvalidInputError)
+    expect(() => maxSharpe(mu, asimetrica, 0.05)).toThrow(InvalidInputError)
+    expect(() => riskParity(asimetrica)).toThrow(InvalidInputError)
+  })
+
+  it('la tolerancia es relativa a la escala: una covarianza semanal chica también se revisa', () => {
+    const chica = [
+      [4e-4, 1.2e-4],
+      [1.0e-4, 9e-4],
+    ]
+    expect(() => minVariance(chica)).toThrow(InvalidInputError)
+    expect(() => riskParity(chica)).toThrow(InvalidInputError)
+  })
+
+  it('el ruido de redondeo sí se acepta y da lo mismo que la simétrica', () => {
+    const S = cov2(0.2, 0.3, 0.4)
+    const ruidosa = [
+      [S[0][0], S[0][1] * (1 + 1e-13)],
+      [S[1][0], S[1][1]],
+    ]
+    expect(minVariance(ruidosa).weights[0]).toBeCloseTo(minVariance(S).weights[0], 10)
+    expect(/** @type {any} */ (riskParity(ruidosa)).weights[0]).toBeCloseTo(
+      /** @type {any} */ (riskParity(S)).weights[0],
+      10,
+    )
+  })
+
+  it('el mensaje dice qué pasa, en español y sin guiones largos', () => {
+    try {
+      minVariance(asimetrica)
+      expect.unreachable()
+    } catch (e) {
+      const message = /** @type {Error} */ (e).message
+      expect(message).toMatch(/simétrica/)
+      expect(message).not.toMatch(/[\u2013\u2014]/)
+    }
+  })
+})
+
 describe('goldens contra scipy (SLSQP y root)', () => {
   for (const testCase of golden.cases) {
     it(`${testCase.fn}: ${testCase.name}`, () => {
