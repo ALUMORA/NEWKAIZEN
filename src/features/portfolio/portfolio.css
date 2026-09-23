@@ -1,0 +1,4 @@
+/* Páginas nuevas de Mi portafolio (F1). Solo espacio vertical; lo demás sale de C1. */
+.kz-portfolio-page { padding-block: var(--space-6) var(--space-7); }
+.kz-portfolio-stats { padding: var(--space-4); }
+.kz-portfolio-note { color: var(--muted); margin: 0; padding: var(--space-3) var(--space-4); }
