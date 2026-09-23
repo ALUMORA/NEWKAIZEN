@@ -4,8 +4,9 @@
 //
 // Capturas para revisión: con F3_CAPTURE_DIR=/ruta la prueba "capturas" guarda cada página.
 import AxeBuilder from '@axe-core/playwright'
-import { test, expect } from './support/guards.js'
-import { HEALTH_V2, setupApp } from './support/app.js'
+import { test as plainTest } from '@playwright/test'
+import { test, expect, attachGuards } from './support/guards.js'
+import { HEALTH_V2, expectedHttpError, setupApp } from './support/app.js'
 
 const WCAG_AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const THEMES = /** @type {const} */ (['light', 'dark'])
@@ -234,14 +235,60 @@ test.describe('investigar: ficha de la emisora', () => {
     await noHorizontalScroll(page)
   })
 
-  test('una sección caída no tumba la ficha', async ({ page, baseURL }) => {
+  test('DCF que no aplica: muestra la razón y el resto de la ficha', async ({ page, baseURL }) => {
     await open(page, /** @type {string} */ (baseURL), {
-      routes: { 'GET /v2/valuation/:symbol': { status: 200, json: { ...VALUATION, dcf: { ...VALUATION.dcf, applicable: false, reason: 'El flujo libre es negativo: el DCF no aplica.' } } } },
+      routes: { 'GET /v2/valuation/:symbol': { json: { ...VALUATION, dcf: { ...VALUATION.dcf, applicable: false, reason: 'El flujo libre es negativo: el DCF no aplica.' } } } },
     })
     await page.goto('/investigar/WALMEX.MX')
     await expect(page.getByText('El flujo libre es negativo: el DCF no aplica.')).toBeVisible()
     await expect(page.getByText('Walmex reporta ventas')).toBeVisible()
   })
+
+  test('emisora del SIC: tipo de cambio usado, aviso de moneda y dato de respaldo visibles', async ({ page, baseURL }) => {
+    const sic = {
+      ...INSTRUMENT,
+      symbol: 'AAPL.MX',
+      name: 'Apple (SIC)',
+      exchange: 'BMV SIC',
+      financialCurrency: 'USD',
+      fxUsed: { pair: 'USDMXN', rate: 18.4321, asOf: '2026-09-19' },
+      meta: meta({ fallback: true, stale: true, source: 'stooq', asOf: '2026-09-19' }),
+    }
+    const warning = 'Los flujos se reportan en USD y el precio cotiza en MXN: el valor por acción se convirtió con el tipo de cambio del 19 sep.'
+    await open(page, /** @type {string} */ (baseURL), {
+      routes: {
+        'GET /v2/instrument/:symbol': { json: sic },
+        'GET /v2/valuation/:symbol': { json: { ...VALUATION, dcf: { ...VALUATION.dcf, warnings: [warning, ...VALUATION.dcf.warnings] } } },
+      },
+    })
+    await page.goto('/investigar/AAPL.MX')
+    await expect(page.getByRole('heading', { level: 1, name: 'Apple (SIC) (AAPL.MX)' })).toBeVisible()
+    await expect(page.getByText(/se convirtieron a MXN con USDMXN/)).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Resumen' }).getByText('18.4321')).toBeVisible()
+    await expect(page.getByText(warning)).toBeVisible()
+    await expect(page.getByText(/Respaldo/).first()).toBeVisible()
+  })
+})
+
+// Sin la fixture automática: esta prueba adjunta sus guardas con permisos explícitos para los 503.
+plainTest('investigar: una sección caída no tumba la ficha', async ({ page, baseURL }) => {
+  const guards = attachGuards(page, {
+    allow: [
+      ...expectedHttpError(503, 'GET', '/v2/valuation/WALMEX.MX', 'la prueba tumba la valuación a propósito'),
+      ...expectedHttpError(503, 'GET', '/v2/news', 'la prueba tumba las noticias a propósito'),
+    ],
+  })
+  const down = { status: 503, json: { error: { code: 'UPSTREAM_UNAVAILABLE', message: 'El proveedor de datos no responde. Intenta en unos minutos.' } } }
+  await open(page, /** @type {string} */ (baseURL), { routes: { 'GET /v2/valuation/:symbol': down, 'GET /v2/news': down } })
+  await page.goto('/investigar/WALMEX.MX')
+  await expect(page.getByRole('heading', { level: 1, name: 'Wal-Mart de México (WALMEX.MX)' })).toBeVisible()
+  const valuation = page.getByRole('region', { name: 'Valuación' })
+  await expect(valuation.getByRole('alert')).toContainText('El proveedor de datos no responde', { timeout: 10_000 })
+  await expect(valuation.getByRole('button', { name: 'Reintentar' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Noticias' }).getByRole('alert')).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByRole('figure', { name: /Precio de Wal-Mart/ })).toBeVisible()
+  await expect(page.getByRole('table', { name: 'Dividendos más recientes' })).toBeVisible()
+  guards.assertClean()
 })
 
 test.describe('investigar: comparar', () => {
