@@ -11,10 +11,31 @@ import { test as base, expect } from './support/guards.js'
 import { attachGuards } from './support/guards.js'
 import { DEFAULT_SESSION, SESSION_KEY } from './support/auth.js'
 import { API_URL_RE, expectedHttpError, loginResponse, setupApp } from './support/app.js'
-import { LEGACY_TABS, openLegacyTab, trackNetwork, waitForSettled } from './support/legacy.js'
+import { trackNetwork, waitForSettled } from './support/legacy.js'
 
 const test = base
 const WCAG_AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
+
+/**
+ * Cambia de sección como la persona: la barra lateral del shell (C3) en escritorio y la paleta de
+ * comandos en móvil (la barra inferior solo trae cuatro secciones). El legado ya no trae su barra.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} name nombre de la entrada en src/app/nav.js
+ * @param {boolean} mobile
+ */
+async function goToSection(page, name, mobile) {
+  if (!mobile) {
+    await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name, exact: true }).click()
+    return
+  }
+  await page.getByRole('button', { name: 'Buscar emisora o función' }).click()
+  await page.getByRole('combobox', { name: 'Buscar emisora o función' }).fill(name)
+  await expect(page.getByRole('option').first()).toHaveText(new RegExp(`^${name}`))
+  await page.keyboard.press('Enter')
+}
+
+/** El h1 de la tab del legado (solo para lector de pantalla cuando va dentro del shell). */
+const legacyHeading = (page, name) => page.getByRole('heading', { level: 1, name, exact: true })
 
 /** Espera a que la app legada termine de cargar (shell montado, red quieta, sin spinners). */
 async function legacySettled(page, net) {
@@ -56,7 +77,7 @@ test.describe('login', () => {
 
     await expect(page).toHaveURL(/\/portafolio$/)
     await legacySettled(page, net)
-    await expect(page.locator('.app-topbar')).toContainText('Portfolio')
+    await expect(legacyHeading(page, 'Mi portafolio')).toBeAttached()
     expect(api.calls).toContain('POST /auth/login')
     const stored = await page.evaluate((k) => JSON.parse(sessionStorage.getItem(k) ?? 'null'), SESSION_KEY)
     expect(stored).toMatchObject({ token: 'jwt.e2e', user: { username: 'ana', displayName: 'Ana López' } })
@@ -185,7 +206,7 @@ test.describe('login', () => {
       await expect(page).toHaveURL(/\/mercados$/)
       await legacySettled(page, net)
       await expect(page.getByText('Algo salió mal')).toHaveCount(0)
-      await expect(page.locator('.app-topbar')).toContainText('Noticias')
+      await expect(legacyHeading(page, 'Mercados')).toBeAttached()
     })
   }
 })
@@ -202,7 +223,7 @@ test.describe('app legada dentro de LegacyPage', () => {
     await page.goto('/mercados')
     await legacySettled(page, net)
     await expect(page).toHaveTitle('Mercados · Kaizen')
-    await expect(page.locator('.app-topbar')).toContainText('Noticias')
+    await expect(legacyHeading(page, 'Mercados')).toBeAttached()
     // Datos de las respuestas v1 grabadas: el panorama de mercados y las noticias.
     await expect(page.getByText('Resumen Mañanero').first()).toBeVisible()
     expect(api.calls.filter((c) => c === 'GET /health').length).toBeGreaterThanOrEqual(1)
@@ -267,12 +288,10 @@ test.describe('app legada dentro de LegacyPage', () => {
   })
 
   // La URL sigue a la tab del legado: cambiar de tab navega (push) a la ruta de esa tab, el
-  // título cambia, recargar conserva la tab y Atrás regresa. Escritorio usa la barra lateral y
-  // móvil las pastillas de abajo (openLegacyTab).
+  // título cambia, recargar conserva la tab y Atrás regresa. Escritorio usa la barra lateral del
+  // shell y móvil la paleta de comandos (goToSection).
   test('cambiar de tab en el legado cambia la URL y el título; recargar la conserva y Atrás regresa', async ({ page, baseURL }, testInfo) => {
     const mobile = testInfo.project.name === 'mobile'
-    const sharpe = /** @type {(typeof LEGACY_TABS)[number]} */ (LEGACY_TABS.find((t) => t.id === 'optimize'))
-    const topbar = page.locator('.app-topbar')
     await setupApp(page, { baseURL, session: true, legacyApi: true })
     const net = trackNetwork(page, API_URL_RE)
     await page.goto('/mercados')
@@ -280,10 +299,10 @@ test.describe('app legada dentro de LegacyPage', () => {
     await expect(page).toHaveTitle('Mercados · Kaizen')
     const historyBefore = await page.evaluate(() => history.length)
 
-    await openLegacyTab(page, sharpe, mobile)
+    await goToSection(page, 'Optimizador', mobile)
     await expect(page).toHaveURL(/\/herramientas\/optimizador$/)
     await expect(page).toHaveTitle('Optimizador · Kaizen')
-    await expect(topbar).toContainText('Sharpe Optimizer')
+    await expect(legacyHeading(page, 'Optimizador')).toBeAttached()
     await legacySettled(page, net)
     // Una sola entrada nueva en el historial: sin ciclos de navegación.
     expect(await page.evaluate(() => history.length)).toBe(historyBefore + 1)
@@ -293,20 +312,18 @@ test.describe('app legada dentro de LegacyPage', () => {
     await legacySettled(page, net)
     await expect(page).toHaveURL(/\/herramientas\/optimizador$/)
     await expect(page).toHaveTitle('Optimizador · Kaizen')
-    await expect(topbar).toContainText('Sharpe Optimizer')
+    await expect(legacyHeading(page, 'Optimizador')).toBeAttached()
 
     await page.goBack()
     await expect(page).toHaveURL(/\/mercados$/)
     await legacySettled(page, net)
     await expect(page).toHaveTitle('Mercados · Kaizen')
-    await expect(topbar).toContainText('Noticias')
+    await expect(legacyHeading(page, 'Mercados')).toBeAttached()
     await expect(page.getByText('Resumen Mañanero').first()).toBeVisible()
   })
 
   test('Atrás y Adelante dentro de la app mueven la tab del legado sin recargar', async ({ page, baseURL }, testInfo) => {
     const mobile = testInfo.project.name === 'mobile'
-    const byId = (id) => /** @type {(typeof LEGACY_TABS)[number]} */ (LEGACY_TABS.find((t) => t.id === id))
-    const topbar = page.locator('.app-topbar')
     await setupApp(page, { baseURL, session: true, legacyApi: true })
     const net = trackNetwork(page, API_URL_RE)
     await page.goto('/mercados')
@@ -316,20 +333,20 @@ test.describe('app legada dentro de LegacyPage', () => {
       /** @type {any} */ (window).__sinRecargar = true
     })
 
-    await openLegacyTab(page, byId('fibras'), mobile)
+    await goToSection(page, 'FIBRAs', mobile)
     await expect(page).toHaveURL(/\/screener\/fibras$/)
     await expect(page).toHaveTitle('FIBRAs · Kaizen')
-    await openLegacyTab(page, byId('portfolio'), mobile)
+    await goToSection(page, 'Resumen', mobile)
     await expect(page).toHaveURL(/\/portafolio$/)
     await expect(page).toHaveTitle('Mi portafolio · Kaizen')
     await legacySettled(page, net)
 
     await page.goBack()
     await expect(page).toHaveURL(/\/screener\/fibras$/)
-    await expect(topbar).toContainText('FIBRA Screener')
+    await expect(legacyHeading(page, 'FIBRAs')).toBeAttached()
     await page.goBack()
     await expect(page).toHaveURL(/\/mercados$/)
-    await expect(topbar).toContainText('Noticias')
+    await expect(legacyHeading(page, 'Mercados')).toBeAttached()
     await page.goForward()
     await expect(page).toHaveURL(/\/screener\/fibras$/)
     await expect(page).toHaveTitle('FIBRAs · Kaizen')
@@ -345,13 +362,14 @@ test.describe('app legada dentro de LegacyPage', () => {
     await legacySettled(page, net)
   })
 
-  test('cerrar sesión desde el legado vuelve a /login', async ({ page, baseURL }, testInfo) => {
-    test.skip(testInfo.project.name === 'mobile', 'En móvil el legado esconde la barra lateral con el botón de salir.')
+  test('cerrar sesión desde el shell con el legado montado vuelve a /login', async ({ page, baseURL }, testInfo) => {
+    test.skip(testInfo.project.name === 'mobile', 'En móvil se sale desde la hoja "Más" (e2e/shell.spec.js).')
     await setupApp(page, { baseURL, session: true, legacyApi: true, fixClock: true })
     const net = trackNetwork(page, API_URL_RE)
     await page.goto('/mercados')
     await legacySettled(page, net)
     // addInitScript volvería a sembrar la sesión al recargar; aquí la navegación es del lado del cliente.
+    await page.getByRole('button', { name: /^Cuenta de / }).click()
     await page.getByRole('button', { name: 'Cerrar sesión' }).click()
     await expect(page).toHaveURL(/\/login$/)
     await expect(page.getByRole('status').filter({ hasText: 'Cerraste tu sesión.' })).toBeVisible()
