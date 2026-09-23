@@ -1,6 +1,7 @@
 // Páginas nuevas de Mi portafolio (F1). Corre en desktop (1440x900) y mobile (390x844) con las
 // respuestas v2 simuladas y el libro sembrado en localStorage (storage v2, llave kaizen:v2).
 // La fixture `guards` tumba la prueba ante cualquier console.error, request fallido o >= 400.
+import { readFile } from 'node:fs/promises'
 import AxeBuilder from '@axe-core/playwright'
 import { test, expect } from './support/guards.js'
 import { HEALTH_V2, setupApp } from './support/app.js'
@@ -201,6 +202,53 @@ test.describe('portafolio: movimientos', () => {
     await expect(page.getByRole('link', { name: 'Ir a la bienvenida' })).toHaveAttribute('href', '/bienvenida')
     await noHorizontalScroll(page)
     await expectNoAxeViolations(page, 'movimientos vacío')
+  })
+})
+
+const OVERSELL_STATE = {
+  ...STATE,
+  portfolios: [{ ...STATE.portfolios[0], transactions: [...STATE.portfolios[0].transactions, tx({ id: 'tx9', type: 'sell', date: '2026-09-15', symbol: 'WALMEX.MX', quantity: 250, price: 66 })] }],
+}
+
+test.describe('portafolio: movimientos, huecos de la primera tanda', () => {
+  test('una venta por más de lo que había se avisa y se marca en el libro', async ({ page, baseURL }) => {
+    await open(page, baseURL, { state: OVERSELL_STATE })
+    await page.goto('/portafolio/movimientos')
+    const warning = page.getByRole('region', { name: 'Ventas por más títulos de los que tenías' })
+    await expect(warning).toBeVisible()
+    await expect(warning).toContainText('Venta de 250 WALMEX.MX el 15 sep 2026: tenías 200, así que solo cuentan 200.')
+    await expect(txTable(page).getByRole('row', { name: /15 sep 2026/ })).toContainText('Recortada')
+    // Lo que cuenta el libro: 200 vendidos de 200, así que no queda posición.
+    await expect(posTable(page).getByRole('row', { name: /WALMEX\.MX/ })).toHaveCount(0)
+    await noHorizontalScroll(page)
+    await expectNoAxeViolations(page, 'movimientos con venta de más')
+  })
+
+  test('exportar CSV y volver a importarlo con filas nuevas, repetidas y malas', async ({ page, baseURL }) => {
+    await open(page, baseURL)
+    await page.goto('/portafolio/movimientos')
+    await expect(txTable(page).getByRole('row')).toHaveCount(4)
+
+    const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Exportar CSV' }).click()])
+    expect(download.suggestedFilename()).toBe('movimientos-2026-09-22.csv')
+    const exported = await readFile(/** @type {string} */ (await download.path()), 'utf8')
+    const lines = exported.replace(/^\uFEFF/, '').trim().split(/\r\n/)
+    expect(lines[0]).toBe('Fecha,Tipo,Clave,Títulos,Precio,Monto,Comisión,Moneda,Tipo de cambio,Proporción,Nota')
+    expect(lines).toHaveLength(4)
+
+    const csv = [lines[0], lines[2], '2026-09-12,Compra,NAFTRAC.MX,50,55.1,,,MXN,,,', '2026-09-13,Dividendo,WALMEX.MX,,,120,,MXN,,,', '2026-09-14,Regalo,X,1,1,,,MXN,,,'].join('\r\n')
+    await page.getByLabel('Archivo CSV de movimientos').setInputFiles({ name: 'mis-movimientos.csv', mimeType: 'text/csv', buffer: Buffer.from(csv, 'utf8') })
+    const dialog = page.getByRole('dialog', { name: 'Importar movimientos' })
+    await expect(dialog).toBeVisible()
+    await expect(dialog).toContainText('2 movimientos listos para agregar, 1 ya estaban en tu libro y no se repiten, 1 con problemas que se quedan fuera.')
+    await expect(dialog).toContainText('Fila 5: tipo desconocido (Regalo).')
+    await expectNoAxeViolations(page, 'diálogo de importación')
+    await dialog.getByRole('button', { name: 'Agregar 2 movimientos' }).click()
+    await expect(dialog).toBeHidden()
+    await expect(txTable(page).getByRole('row')).toHaveCount(6)
+    await expect(posTable(page).getByRole('row', { name: /NAFTRAC\.MX/ })).toBeVisible()
+    await page.getByRole('button', { name: 'Deshacer' }).click()
+    await expect(txTable(page).getByRole('row')).toHaveCount(4)
   })
 })
 

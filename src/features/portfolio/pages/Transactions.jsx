@@ -1,17 +1,20 @@
 // /portafolio/movimientos: el libro del portafolio activo (storage v2). Alta con Dialog, borrado
 // con ConfirmDialog y Deshacer en un aviso. Las posiciones salen del ledger de src/lib/finance,
 // que integra compras repetidas a costo promedio.
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { Badge, Button, Card, ConfirmDialog, DataTable, EmptyState, ErrorState, PageHeader, useToast } from '../../../components/ui/index.js'
 import { derivePositions } from '../../../lib/finance/index.js'
 import { fmtDate, fmtMoney, fmtNumber } from '../../../lib/format.js'
+import { downloadCSV } from '../../../lib/csv.js'
 import { getStorageError, isReadOnly, update, useStore } from '../../../lib/storage.js'
 import { PATHS } from '../../../app/paths.js'
 import TransactionDialog from '../TransactionDialog.jsx'
+import CsvImportDialog from '../CsvImportDialog.jsx'
+import { parseTransactionsCSV, transactionsToCSV } from '../lib/tx-csv.js'
 import { findOversells } from '../lib/oversells.js'
 import '../portfolio.css'
-import { TX_LABELS } from '../tx-labels.js'
+import { TX_LABELS, todayMx } from '../tx-labels.js'
 
 /** @param {any} s */
 const selectActive = (s) => s.portfolios.find((/** @type {any} */ p) => p.id === s.activePortfolioId) ?? null
@@ -42,6 +45,8 @@ export default function Transactions() {
   const [adding, setAdding] = useState(false)
   const [dialogKey, setDialogKey] = useState(0)
   const [pending, setPending] = useState(/** @type {any} */ (null))
+  const [preview, setPreview] = useState(/** @type {any} */ (null))
+  const fileRef = useRef(/** @type {HTMLInputElement | null} */ (null))
   const readOnly = isReadOnly()
 
   const transactions = useMemo(() => portfolio?.transactions ?? [], [portfolio])
@@ -72,6 +77,35 @@ export default function Transactions() {
     editTransactions(portfolio.id, (txs) => [...txs, tx])
     setAdding(false)
     toast.show({ title: 'Movimiento guardado', description: describeTx(tx), tone: 'positive' })
+  }
+
+  function exportCsv() {
+    downloadCSV(`movimientos-${todayMx()}.csv`, transactionsToCSV(transactions))
+  }
+
+  /** @param {import('react').ChangeEvent<HTMLInputElement>} event */
+  async function onFile(event) {
+    const input = event.currentTarget
+    const file = input.files?.[0]
+    if (!file) return
+    const text = await file.text()
+    input.value = ''
+    setPreview({ name: file.name, ...parseTransactionsCSV(text, transactions) })
+  }
+
+  function confirmImport() {
+    const added = preview?.ok ?? []
+    setPreview(null)
+    if (added.length === 0) return
+    const ids = new Set(added.map((/** @type {any} */ t) => t.id))
+    const portfolioId = portfolio.id
+    editTransactions(portfolioId, (txs) => [...txs, ...added])
+    toast.show({
+      title: 'Movimientos importados',
+      description: `${fmtNumber(added.length, { decimals: 0 })} movimientos agregados a tu libro`,
+      tone: 'positive',
+      action: { label: 'Deshacer', onClick: () => editTransactions(portfolioId, (txs) => txs.filter((t) => !ids.has(t.id))) },
+    })
   }
 
   function confirmDelete() {
@@ -155,9 +189,18 @@ export default function Transactions() {
         eyebrow={portfolio.name}
         description="Compras, ventas, dividendos, depósitos y retiros de tu portafolio. Se guardan solo en este navegador."
         actions={
-          <Button onClick={() => openAdd()} disabled={readOnly}>
-            Agregar movimiento
-          </Button>
+          <div className="kz-row">
+            <Button onClick={() => openAdd()} disabled={readOnly}>
+              Agregar movimiento
+            </Button>
+            <Button variant="secondary" onClick={() => fileRef.current?.click()} disabled={readOnly}>
+              Importar CSV
+            </Button>
+            <Button variant="secondary" onClick={exportCsv} disabled={transactions.length === 0}>
+              Exportar CSV
+            </Button>
+            <input ref={fileRef} type="file" accept=".csv,text/csv" hidden aria-label="Archivo CSV de movimientos" onChange={onFile} />
+          </div>
         }
       />
 
@@ -212,6 +255,7 @@ export default function Transactions() {
         />
       </Card>
 
+      <CsvImportDialog preview={preview} onCancel={() => setPreview(null)} onConfirm={confirmImport} />
       <TransactionDialog key={dialogKey} open={adding} onClose={() => setAdding(false)} onSave={handleSave} />
       <ConfirmDialog
         open={pending != null}
