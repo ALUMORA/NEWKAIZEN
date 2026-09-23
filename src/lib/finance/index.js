@@ -87,5 +87,5 @@ export { probabilityOfGoal, requiredContribution, retirementIncome } from './goa
 export { cashBalances, validateTransaction } from './ledger.js'
 export { valueSeries, twr } from './performance-ledger.js'
 export { xirr } from './xirr.js'
-export { isrOnGains } from './tax-mx.js'
+export { isrOnGains, interestWithholding, INTEREST_WITHHOLDING_RATE } from './tax-mx.js'
 export { wholeShareRebalance } from './rebalance.js'

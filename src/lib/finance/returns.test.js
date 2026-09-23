@@ -265,6 +265,8 @@ describe('el barril index.js', () => {
       'createRng', 'lognormalParams', 'simulate', 'probabilityOfGoal', 'requiredContribution', 'retirementIncome',
       // A4: rendimiento del ledger, XIRR, ISR y rebalanceo
       'valueSeries', 'twr', 'xirr', 'isrOnGains', 'wholeShareRebalance',
+      // PF: retención provisional de ISR sobre intereses
+      'interestWithholding', 'INTEREST_WITHHOLDING_RATE',
     ]
     for (const nombre of esperados) expect(api[nombre], nombre).toBeDefined()
     expect(Object.keys(api).sort()).toEqual([...esperados].sort())

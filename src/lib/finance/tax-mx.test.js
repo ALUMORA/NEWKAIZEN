@@ -1,9 +1,12 @@
 import { readFileSync } from 'node:fs'
 import {
   DIVIDEND_WITHHOLDING_RATE,
+  INTEREST_WITHHOLDING_RATE,
+  INTEREST_WITHHOLDING_SOURCE,
   ISR_GAINS_RATE,
   dividendWithholding,
   inpcFactor,
+  interestWithholding,
   isrOnGains,
 } from './tax-mx.js'
 
@@ -273,5 +276,47 @@ describe('la pérdida arrastrada caduca a los diez ejercicios', () => {
     expect(y2026.lossUsed).toBeCloseTo(500, 9)
     expect(y2026.taxableGain).toBeCloseTo(0, 9)
     expect(out.lossCarry).toBeCloseTo(200, 9)
+  })
+})
+
+describe('interestWithholding: retención provisional de ISR sobre intereses', () => {
+  it('la tasa de 2026 es 0.90 % y trae su fuente', () => {
+    expect(INTEREST_WITHHOLDING_RATE).toBe(0.009)
+    expect(INTEREST_WITHHOLDING_SOURCE).toContain('Ley de Ingresos de la Federación 2026')
+    expect(INTEREST_WITHHOLDING_SOURCE).toContain('0.90 %')
+  })
+
+  it('100 000 a 365 días retienen exactamente la tasa anual: 900', () => {
+    expect(interestWithholding(100000, 365)).toBeCloseTo(900, 9)
+  })
+
+  it('100 000 en CETES a 28 días retienen 100 000 × 0.009 × 28 ÷ 365', () => {
+    expect(interestWithholding(100000, 28)).toBeCloseTo((100000 * 0.009 * 28) / 365, 9)
+    expect(interestWithholding(100000, 28)).toBeCloseTo(69.0410958904, 6)
+  })
+
+  it('es proporcional a los días y al capital', () => {
+    expect(interestWithholding(50000, 182)).toBeCloseTo(interestWithholding(100000, 91), 9)
+    expect(interestWithholding(10000, 0)).toBe(0)
+    expect(interestWithholding(0, 28)).toBe(0)
+  })
+
+  it('acepta otra tasa, por ejemplo la de 2025 (0.50 %)', () => {
+    expect(interestWithholding(100000, 365, { rate: 0.005 })).toBeCloseTo(500, 9)
+    expect(interestWithholding(100000, 365, { rate: 0 })).toBe(0)
+  })
+
+  it('una tasa inválida cae a la de la ley vigente', () => {
+    expect(interestWithholding(100000, 365, { rate: Number.NaN })).toBeCloseTo(900, 9)
+    expect(interestWithholding(100000, 365, { rate: -0.01 })).toBeCloseTo(900, 9)
+  })
+
+  it('devuelve null con capital o días que no sirven', () => {
+    expect(interestWithholding(Number.NaN, 28)).toBeNull()
+    expect(interestWithholding(100000, Number.POSITIVE_INFINITY)).toBeNull()
+    expect(interestWithholding(-1, 28)).toBeNull()
+    expect(interestWithholding(100000, -28)).toBeNull()
+    // un texto no es capital, aunque parezca número
+    expect(interestWithholding('100000', 28)).toBeNull()
   })
 })

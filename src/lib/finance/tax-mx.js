@@ -21,6 +21,15 @@ export const ISR_GAINS_RATE = 0.1
 export const DIVIDEND_WITHHOLDING_RATE = 0.1
 /** Ejercicios en los que se puede amortizar la pérdida pendiente. */
 export const LOSS_CARRY_YEARS = 10
+/**
+ * Tasa anual de retención provisional de ISR sobre el capital que genera intereses (LISR arts. 54
+ * y 135). La fija cada año la Ley de Ingresos de la Federación: 0.90 % para 2026 (0.50 % en 2025).
+ * Se expresa como fracción: 0.009 es 0.90 %.
+ */
+export const INTEREST_WITHHOLDING_RATE = 0.009
+/** De dónde sale la tasa anterior, para mostrarlo junto al cálculo. */
+export const INTEREST_WITHHOLDING_SOURCE =
+  'Ley de Ingresos de la Federación 2026, art. 21: tasa anual de retención de 0.90 % sobre el capital (LISR arts. 54 y 135)'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 const NO_YEAR = 'sin fecha'
@@ -272,4 +281,21 @@ export function dividendWithholding(amount, { rate = DIVIDEND_WITHHOLDING_RATE }
       `Dato: ${(applied * 100).toFixed(0)} % de retención sobre dividendos de emisoras mexicanas (LISR art. 140). Los dividendos del extranjero siguen otras reglas.`,
     ],
   }
+}
+
+/**
+ * Retención provisional de ISR sobre intereses: capital × tasa anual × días ÷ 365. La retención se
+ * calcula sobre el capital invertido, no sobre el interés ganado, y es un pago a cuenta del impuesto
+ * anual, no el impuesto definitivo.
+ * Mínimo: capital y días como números finitos no negativos. Devuelve null si no. Una tasa que no
+ * sea número finito no negativo se sustituye por la de la ley vigente.
+ * @param {number} capital monto invertido que genera los intereses
+ * @param {number} days días que el capital estuvo invertido
+ * @param {{ rate?: number }} [options] tasa anual como fracción (0.009 es 0.90 %)
+ * @returns {number | null}
+ */
+export function interestWithholding(capital, days, { rate = INTEREST_WITHHOLDING_RATE } = {}) {
+  if (!isNum(capital) || !isNum(days) || capital < 0 || days < 0) return null
+  const applied = isNum(rate) && rate >= 0 ? rate : INTEREST_WITHHOLDING_RATE
+  return (capital * applied * days) / 365
 }
