@@ -1,0 +1,11 @@
+/* Bienvenida (F5). Solo tokens. */
+.ob-page { display: flex; flex-direction: column; gap: var(--space-6); min-width: 0; padding-block: var(--space-6) var(--space-10); }
+.ob-options { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); }
+.ob-option { display: flex; flex-direction: column; gap: var(--space-3); height: 100%; }
+.ob-option p { margin: 0; line-height: var(--leading-normal); color: var(--muted); font-size: var(--text-md); }
+.ob-option ul { margin: 0; padding-left: var(--space-5); color: var(--muted); font-size: var(--text-sm); display: grid; gap: var(--space-1); }
+.ob-file { display: flex; flex-direction: column; gap: var(--space-2); font-size: var(--text-sm); }
+.ob-file input { font: inherit; color: var(--ink); min-height: 44px; }
+.ob-summary { font-size: var(--text-sm); margin: 0; }
+.ob-errors { color: var(--muted); font-size: var(--text-sm); margin: 0; padding-left: var(--space-5); }
+.ob-push { margin-top: auto; }
