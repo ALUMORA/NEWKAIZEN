@@ -352,6 +352,21 @@ class MxRateItem(ContractModel):
     source: str
     previous: float | None
     changeBp: float | None
+    verified: bool = Field(
+        default=False,
+        description=(
+            "true solo si la serie es del SIE, tiene revisión humana en el catálogo y el SIE la confirmó hoy;"
+            " los respaldos de FRED van en false"
+        ),
+    )
+    stale: bool = Field(
+        default=False,
+        description="El último dato de ESTA serie es más viejo de lo que se tolera para su periodicidad",
+    )
+    tenorDays: Literal[28, 91, 182, 364] | None = Field(
+        default=None,
+        description="Plazo en días de los CETES (el mismo de /v2/rates/rf); null en las demás series",
+    )
 
 
 class MxRatesResponse(ContractModel):

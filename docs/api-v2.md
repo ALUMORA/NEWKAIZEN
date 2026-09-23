@@ -160,7 +160,25 @@ están en `docs/OWNERSHIP.md`).
 - `GET /v2/rates/mx` → `MxRatesResponse`. Ids: `target` (objetivo, SF61745), `tiie28`,
   `tiieFondeo`, `cetes28`, `cetes91`, `cetes182`, `cetes364`, `bonoM10` (si existe), `inflationYoY`,
   `coreInflationYoY`, `udi`, `fix`. Cualquier serie del SIE distinta de SF43718 y SF61745 se verifica
-  contra el endpoint de metadatos del SIE en una prueba antes de usarse.
+  contra el endpoint de metadatos del SIE en una prueba antes de usarse. Desde la fase 3 (pedidos 2
+  y 3 de F2) cada renglón dice tres cosas por serie:
+  - `verified`: `true` solo si la serie viene del SIE, tiene revisión humana en el catálogo
+    (`verified: true` en `kaizen_api/data/banxico_series.json`) y el SIE la confirmó hoy con su
+    título, periodicidad y unidad. Una serie del SIE que no pase ese candado no se publica (su id y
+    la razón quedan en `meta.notes`), así que hoy `verified: false` solo lo lleva el respaldo de FRED
+    (`bonoM10` con `source: "fred"`), que nunca pasa por el SIE. La UI lo marca como no verificado.
+  - `stale`: el último dato de ESA serie es más viejo de lo que se tolera para su periodicidad
+    (`maxAgeDays` del catálogo: 5 días naturales para objetivo, TIIE, FIX y UDI; 14 a 35 para los
+    CETES; 7 para el Bono M del SIE; 45 para la inflación quincenal; y 70 para el Bono M mensual de
+    FRED, en `FRED_MX_FALLBACK` de `domain/rates.py`). `meta.stale` es exactamente que alguna serie
+    tenga `stale: true`.
+  - `tenorDays`: plazo en días de los CETES (`cetes28` 28, `cetes91` 91, `cetes182` 182,
+    `cetes364` 364), el mismo que acepta `/v2/rates/rf`; `null` en todas las demás series, incluida
+    la TIIE. Ya no hace falta sacarlo del id ni de la etiqueta.
+
+  El servidor siempre manda los tres campos; son opcionales en el contrato solo para que un cliente
+  tolere un API desplegado antes de este cambio (ahí, sin `verified`, la serie no se da por
+  verificada, y sin `stale` se usa `meta.stale`).
 - `GET /v2/rates/rf?start=&end=&tenorDays=28` (`tenorDays`: 28, 91, 182 o 364) →
   `RfSeriesResponse`. Rendimientos anualizados simples act/360 como fracción. El cliente convierte a
   tasa por periodo: `rf_d = (1 + y * 28 / 360)^(d / 28) - 1`. Fuente `banxico`, o `fred_ir3tib`
@@ -487,6 +505,9 @@ Precios alineados por fecha (INNER JOIN, sin rellenar precios).
 | `source` | string | sí |  |
 | `previous` | number \| null | sí |  |
 | `changeBp` | number \| null | sí |  |
+| `verified` | boolean | no | true solo si la serie es del SIE, tiene revisión humana en el catálogo y el SIE la confirmó hoy; los respaldos de FRED van en false |
+| `stale` | boolean | no | El último dato de ESTA serie es más viejo de lo que se tolera para su periodicidad |
+| `tenorDays` | 28 \| 91 \| 182 \| 364 \| null | no | Plazo en días de los CETES (el mismo de /v2/rates/rf); null en las demás series |
 
 #### RfSeriesResponse
 

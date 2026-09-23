@@ -74,6 +74,10 @@ LOOKBACK_DAYS = 420
 
 CETES_SERIES = {28: "cetes28", 91: "cetes91", 182: "cetes182", 364: "cetes364"}
 
+CETES_TENORS = {rate_id: days for days, rate_id in CETES_SERIES.items()}
+"""Plazo en días de cada id de CETES. Es el ``tenorDays`` de su renglón en ``/v2/rates/mx``: el
+cliente ya no tiene que sacarlo del id ni de la etiqueta. Las demás series no llevan plazo."""
+
 FRED_MX_FALLBACK = {
     "bonoM10": {
         "series": "IRLTLT01MXM156N",
@@ -176,7 +180,19 @@ def _change_bp(value: float, previous: float | None, unit: str) -> float | None:
     return round((value - previous) * 10_000, 2)
 
 
-def _item(rate_id: str, label: str, unit: str, series_id: str, source: str, dates, values, scale: float) -> dict:
+def _item(
+    rate_id: str,
+    label: str,
+    unit: str,
+    series_id: str,
+    source: str,
+    dates,
+    values,
+    scale: float,
+    *,
+    verified: bool,
+) -> dict:
+    """Un renglón de ``/v2/rates/mx``. ``stale`` se calcula después, cuando ya se sabe si es respaldo."""
     value = round(values[-1] * scale, 10)
     previous = round(values[-2] * scale, 10) if len(values) >= 2 else None
     return {
@@ -189,6 +205,8 @@ def _item(rate_id: str, label: str, unit: str, series_id: str, source: str, date
         "source": source,
         "previous": previous,
         "changeBp": _change_bp(value, previous, unit),
+        "verified": bool(verified),
+        "tenorDays": CETES_TENORS.get(rate_id),
     }
 
 
@@ -230,8 +248,20 @@ def _banxico_items() -> tuple[list[dict], list[str]]:
         if not data.get("values"):
             continue
         scale = 0.01 if info["sieUnit"] == "percent" else 1.0
+        # ``usable`` ya exige las dos cosas: revisión humana en el catálogo y confirmación del SIE hoy.
+        verified = banxico.reviewed(sid) and not checked[sid]
         items.append(
-            _item(info["rateId"], info["label"], info["unit"], sid, "banxico", data["dates"], data["values"], scale)
+            _item(
+                info["rateId"],
+                info["label"],
+                info["unit"],
+                sid,
+                "banxico",
+                data["dates"],
+                data["values"],
+                scale,
+                verified=verified,
+            )
         )
     return _keep_plausible(items, notes), notes
 
@@ -253,6 +283,8 @@ def _fred_items(notes: list[str]) -> list[dict]:
                 serie["dates"],
                 serie["values"],
                 spec["scale"],
+                # FRED no pasa por el candado del SIE: es un respaldo, no una serie verificada.
+                verified=False,
             )
         )
     return _keep_plausible(items, notes)
@@ -305,7 +337,11 @@ def get_mx_rates() -> dict:
     order = {rid: i for i, rid in enumerate(RATE_ORDER)}
     items.sort(key=lambda it: order.get(it["id"], len(order)))
     as_of = max(it["asOf"] for it in items)
-    stale = any(_stale(it["asOf"], _max_age(it["id"], fallback)) for it in items)
+    # La frescura se decide por serie, con la tolerancia de su periodicidad (la tasa objetivo y el
+    # FIX aguantan 5 días, los CETES de 14 a 35, la inflación 45), y ``meta.stale`` es que alguna lo sea.
+    for it in items:
+        it["stale"] = _stale(it["asOf"], _max_age(it["id"], fallback))
+    stale = any(it["stale"] for it in items)
     sources = sorted({it["source"] for it in items})
     return {
         "items": items,
