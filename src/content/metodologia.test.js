@@ -9,7 +9,14 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { glossary } from './glossary.js'
 import { MAX_STALE_DAYS, rfSeriesForDates } from '../lib/finance/rates.js'
-import { drawdowns, parametricCVaR, parametricVaR } from '../lib/finance/performance.js'
+import { drawdowns, parametricCVaR, parametricVaR, summary } from '../lib/finance/performance.js'
+import { twr } from '../lib/finance/performance-ledger.js'
+import { externalFlows } from '../lib/finance/ledger.js'
+import { isrOnGains } from '../lib/finance/tax-mx.js'
+import { alignPanel } from '../lib/finance/returns.js'
+import { meanVariance, riskParity } from '../lib/finance/optimize.js'
+import { jamesStein } from '../lib/finance/expected.js'
+import { ledoitWolfConstantCorrelation } from '../lib/finance/covariance.js'
 import { lognormalParams, simulate } from '../lib/finance/montecarlo.js'
 
 const leer = (nombre) => readFileSync(new URL(`../../docs/metodologia/${nombre}`, import.meta.url), 'utf8')
@@ -167,5 +174,102 @@ describe('remuestreo por bloques: los bloques son circulares', () => {
   it('el glosario cuenta los bloques posibles como la librería los sortea', () => {
     expect(glossary['bootstrap-por-bloques'].ejemplo).toContain('240 bloques posibles')
     expect(plano('simulador.md')).toMatch(/bloques son circulares/)
+  })
+})
+
+describe('portafolio: TWR, aportación implícita e ISR como los calcula la librería', () => {
+  it('el TWR resta el flujo del valor final, y así sale el −1 por ciento del ejemplo', () => {
+    const r = twr([100, 160, 144], [0, 50, 0])
+    expect(typeof r === 'number' ? r : r?.twr).toBeCloseTo(-0.01, 12)
+    expect(glossary.twr.formula).toContain('(V_fin_i − flujo_i) / V_ini_i')
+    expect(plano('portafolio.md')).toContain('r_i = (V_i − flujo_i) / V_(i−1) − 1')
+    expect(plano('portafolio.md')).not.toMatch(/El flujo se considera al inicio del periodo/)
+  })
+
+  it('una compra sin efectivo suficiente se financia por el faltante, no por el costo', () => {
+    const flujos = externalFlows([
+      { id: 'd', type: 'deposit', amount: 600, currency: 'MXN', date: '2026-01-01' },
+      { id: 'b', type: 'buy', symbol: 'X', quantity: 10, price: 100, currency: 'MXN', date: '2026-01-02' },
+    ])
+    expect(flujos.filter((f) => f.kind === 'funding').map((f) => f.amount)).toEqual([400])
+    expect(plano('portafolio.md')).toMatch(/por el faltante, no por el costo completo/)
+  })
+
+  it('el ISR amortiza pérdidas de ejercicios anteriores antes de aplicar el 10 por ciento', () => {
+    const r = isrOnGains({
+      sales: [
+        { saleDate: '2025-06-01', proceeds: 100, cost: 200, factor: 1 },
+        { saleDate: '2026-06-01', proceeds: 300, cost: 100, factor: 1 },
+      ],
+    })
+    expect(r?.years.find((y) => y.year === '2026')?.tax).toBeCloseTo(10, 12)
+    expect(glossary['isr-ganancia-de-capital'].formula).toMatch(/pérdidas pendientes/)
+    expect(plano('portafolio.md')).toMatch(/resta las pérdidas pendientes de ejercicios anteriores/)
+  })
+
+  it('el rebalanceo documenta la mejora por pares que la librería sí hace', () => {
+    expect(plano('portafolio.md')).toMatch(/Mejora por pares/)
+    expect(glossary.rebalanceo.formula).toMatch(/por pares/)
+  })
+})
+
+describe('optimizador: problemas y parámetros como los resuelve optimize.js', () => {
+  const cov = [[0.04, 0], [0, 0.09]]
+
+  it('media varianza minimiza ½ wᵀCw − τ wᵀμ: con τ = 0.5 da pesos iguales', () => {
+    const r = meanVariance([0.1, 0.15], cov, 0.5)
+    expect(r?.weights[0]).toBeCloseTo(0.5, 6)
+    expect(plano('optimizador.md')).toContain('min ½·wᵀCw − τ·wᵀμ')
+    expect(plano('optimizador.md')).not.toMatch(/nivel de aversión/)
+  })
+
+  it('la paridad de riesgo no acepta caja, y la página no dice que sí', () => {
+    const r = riskParity(cov, /** @type {any} */ ({ u: 0.5 }))
+    expect(r?.weights[0]).toBeCloseTo(0.6, 8)
+    expect(plano('optimizador.md')).toMatch(/La paridad de riesgo no acepta caja/)
+  })
+
+  it('el panel reporta activos descartados, no días', () => {
+    const panel = alignPanel({
+      A: { dates: ['2024-01-01', '2024-01-02', '2024-01-03'], values: [1, 2, 3] },
+      B: { dates: ['2024-01-01', '2024-01-03'], values: [1, 2] },
+    })
+    expect(panel?.dates).toEqual(['2024-01-01', '2024-01-03'])
+    expect(panel?.dropped).toEqual([])
+    expect(plano('optimizador.md')).not.toMatch(/la lista de días descartados se reporta/)
+  })
+
+  it('James y Stein contrae hacia la cartera de mínima varianza por omisión', () => {
+    const r = jamesStein([0.01, 0.02], [[0.04, 0], [0, 0.01]], 60)
+    // μ₀ = (1ᵀΣ⁻¹μ)/(1ᵀΣ⁻¹1) = (0.25 + 2) / (25 + 100) · 100 = .018, no el promedio .015
+    expect(r?.target).toBeCloseTo((0.01 / 0.04 + 0.02 / 0.01) / (1 / 0.04 + 1 / 0.01), 12)
+    expect(plano('optimizador.md')).toMatch(/cartera de mínima varianza/)
+    expect(plano('optimizador.md')).not.toMatch(/hacia el promedio general/)
+  })
+
+  it('el delta de Ledoit y Wolf del glosario es el del panel de prueba', () => {
+    const golden = JSON.parse(readFileSync(new URL('../../tests/golden/covariance.json', import.meta.url), 'utf8'))
+    const caso = golden.cases.find((c) => c.name.startsWith('panel fijo 60x5'))
+    const delta = ledoitWolfConstantCorrelation(caso.input.returns)?.shrinkage ?? NaN
+    expect(glossary['ledoit-wolf'].ejemplo).toContain(`delta sale ${delta.toFixed(2)}`)
+  })
+
+  it('el walk forward usa ventana móvil de 156 periodos por omisión', () => {
+    expect(glossary['walk-forward'].formula).toContain('los últimos 156 periodos')
+    expect(plano('optimizador.md')).toMatch(/Es móvil/)
+  })
+})
+
+describe('riesgo y backtest: lo que la librería supone y lo que no', () => {
+  it('riesgo.md ya no dice que no hay ningún 52 escondido: walkForward lo supone', () => {
+    expect(plano('riesgo.md')).not.toMatch(/No hay ningún 52 escondido/)
+    expect(plano('riesgo.md')).toMatch(/toma 52 si no se le indica otro/)
+  })
+
+  it('el resumen del backtest trae VaR y CVaR históricos, sin paramétrico', () => {
+    const s = summary([0.01, -0.02, 0.03, 0.0, -0.01, 0.02], { k: 52 })
+    expect(Object.keys(s ?? {})).toContain('var95')
+    expect(Object.keys(s ?? {}).some((k) => /param/i.test(k))).toBe(false)
+    expect(plano('backtest.md')).not.toMatch(/Histórico y paramétrico, los dos etiquetados/)
   })
 })

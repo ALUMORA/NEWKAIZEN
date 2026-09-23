@@ -19,8 +19,9 @@ esperados del CAPM por omisión y validación fuera de muestra.
 ## Datos de entrada
 
 Un panel de rendimientos alineado por fecha, en una sola moneda, con la periodicidad declarada. Si
-a un activo le faltan fechas, esas fechas se caen de todo el panel y la lista de días descartados se
-reporta. Nada se rellena hacia adelante.
+a un activo le faltan fechas, esas fechas se caen de todo el panel, en todos los activos. Lo que se
+reporta es la lista de activos descartados, por ejemplo uno que se quedó con menos fechas que el
+mínimo pedido; los días que se cayeron no se enumeran. Nada se rellena hacia adelante.
 
 ## Matriz de covarianzas
 
@@ -51,26 +52,31 @@ Esta es la parte frágil de toda optimización, así que se maneja con cuidado:
   28 y la prima como supuesto editable con su fuente y su fecha.
 - **Promedio histórico**, disponible pero marcado como ruidoso. Con 3 años de datos semanales, el
   error estándar del promedio es del mismo orden que el promedio.
-- **James y Stein**, contracción de los promedios hacia el promedio general, como punto intermedio.
+- **James y Stein**, como punto intermedio: contrae los promedios hacia el rendimiento de la
+  cartera de mínima varianza, `μ₀ = (1ᵀC⁻¹μ̂) / (1ᵀC⁻¹1)`, que es la variante de Jorion. Contraer
+  hacia el promedio simple de los activos también está disponible, pero no es la opción por omisión.
 
 Todos los supuestos son campos editables en la pantalla. Ninguno está escondido en el código.
 
 ## Los problemas que se resuelven
 
-Todos son solo largo, con caja `l ≤ w ≤ u` por activo y `Σ w_i = 1`.
+Todos son solo largo y suman `Σ w_i = 1`. Mínima varianza, media varianza, frontera y tangente
+aceptan además una caja `l ≤ w ≤ u` por activo. La paridad de riesgo no acepta caja: su solución
+ya es interior, y un tope por activo se ignora.
 
 | Cartera | Problema |
 | --- | --- |
 | Mínima varianza | `min wᵀCw` sujeto a las restricciones. No usa rendimientos esperados |
-| Media varianza | `min wᵀCw − τ·wᵀμ` para un nivel de aversión τ |
+| Media varianza | `min ½·wᵀCw − τ·wᵀμ`, con `τ ≥ 0` como tolerancia al riesgo: `τ = 0` es la mínima varianza y un `τ` grande se acerca al máximo rendimiento |
 | Frontera | Barrido de 30 puntos entre la mínima varianza y el máximo rendimiento alcanzable |
 | Tangente | `max (wᵀμ − rf) / √(wᵀCw)`: recorrido de la frontera y refinamiento por sección dorada |
 | Paridad de riesgo | `w` tal que `w_i · (C w)_i` sea igual para todo `i` |
 
 El método numérico es FISTA con proyección sobre el simplex con cajas. La proyección es
 `w = clip(v − θ, l, u)` con θ encontrado por bisección, y el paso es `1/λmax`, con λmax por
-iteración de potencia. La paridad de riesgo usa descenso coordenado cíclico hasta que las
-contribuciones coinciden dentro de 1e−8.
+iteración de potencia. La paridad de riesgo usa descenso coordenado cíclico y se detiene cuando el
+cambio relativo de los pesos entre dos vueltas baja de 1e−15; las pruebas verifican que las
+contribuciones al riesgo quedan iguales dentro de 1e−8.
 
 Si las restricciones son imposibles, o sea `Σ l > 1` o `Σ u < 1`, se lanza un error de
 infactibilidad con mensaje en español, no una cartera cualquiera. Por ejemplo, dos activos con
@@ -92,8 +98,12 @@ Estas se prueban a seis dígitos o más:
 
 El optimizador no se entrega sin su prueba fuera de muestra. El procedimiento:
 
-1. Ventana de estimación de 156 periodos por omisión.
-2. Se calculan los pesos usando solo esos datos.
+1. Ventana de estimación de 156 periodos por omisión. Es móvil: en cada vuelta se usan solo los
+   últimos 156 periodos. Una ventana que crece desde el inicio de la historia es opcional.
+2. Se calculan los pesos usando solo esos datos. Para la cartera tangente, el rendimiento esperado
+   de cada vuelta es el promedio histórico de la ventana, no el CAPM de la pantalla principal. O
+   sea que la validación fuera de muestra de la tangente mide la versión más ruidosa, no la que se
+   muestra por omisión.
 3. Se aplican durante los 13 periodos siguientes y se anota el resultado.
 4. La ventana se recorre y se repite hasta agotar la historia.
 
@@ -115,7 +125,9 @@ brecha entre los dos es la medida práctica de cuánto del desempeño era ajuste
   antes de confirmar, y mover una cartera hacia el óptimo tiene un costo real que puede superar la
   mejora estimada.
 - **Solo largo.** No hay ventas en corto ni apalancamiento, a propósito.
-- **Máximo 40 activos.** El álgebra lineal es de tamaño chico y directa.
+- **Pensado para 40 activos o menos.** El álgebra lineal es de tamaño chico y directa. El límite
+  no se valida: con más activos el cálculo corre, pero más lento y con una covarianza peor
+  estimada.
 - **Optimización no es diversificación.** Un resultado que concentra en dos activos es una señal
   de que la ventana o el universo son estrechos, no una indicación de concentrar.
 

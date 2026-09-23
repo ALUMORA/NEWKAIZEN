@@ -50,8 +50,8 @@ Nueva York se cae de la comparación, en los dos lados.
 | Volatilidad anualizada | Desviación muestral por la raíz de los periodos por año |
 | Caída máxima | Mínimo de `V_t / máx(V_0..V_t) − 1`, con fechas de pico, fondo y recuperación |
 | Calmar | CAGR entre el valor absoluto de la caída máxima |
-| Sharpe y Sortino | Sobre excesos contra la serie de CETES 28, no contra una constante |
-| VaR y CVaR al 95 | Histórico y paramétrico, los dos etiquetados |
+| Sharpe y Sortino | Sobre excesos contra la serie de CETES 28 alineada a las fechas del backtest. La librería no la busca sola: si quien llama no se la pasa, el exceso se mide contra cero |
+| VaR y CVaR al 95 | Históricos. El paramétrico existe en la librería, pero el resumen del backtest no lo trae |
 | Mejor y peor periodo | Y el porcentaje de periodos positivos |
 | Rendimiento activo | Contra el referente elegido, con tracking error e information ratio |
 

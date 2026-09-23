@@ -15,7 +15,11 @@ y los precios de cierre, en pesos. Tres reglas que no se rompen:
    días que le faltan a una se caen de la comparación. Esto suena obvio y era justo el defecto de la
    versión anterior, que emparejaba arreglos por índice y comparaba días distintos.
 3. **Periodicidad explícita.** La cantidad de periodos por año, 252 para diario, 52 para semanal y
-   12 para mensual, se pasa a cada función. No hay ningún 52 escondido.
+   12 para mensual, se pasa explícita. Las funciones de métricas la exigen y sin ella no calculan.
+   Las de comparación contra el referente, si no la reciben, no anualizan: el tracking error y la
+   alfa salen por periodo, y el resultado trae el valor usado para que nadie los etiquete como
+   anuales. La única que supone un valor es la validación walk forward del optimizador, que toma
+   52 si no se le indica otro.
 
 ## Volatilidad
 
