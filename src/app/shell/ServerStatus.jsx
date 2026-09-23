@@ -2,11 +2,11 @@
 import { useCapabilities } from '../../lib/api/capabilities.js'
 
 const STATES = {
-  probing: { tone: 'idle', short: 'Conectando', long: 'Conectando con el servidor' },
-  waking: { tone: 'idle', short: 'Despertando', long: 'El servidor está despertando' },
-  ready: { tone: 'up', short: 'En línea', long: 'Servidor en línea' },
-  legacy: { tone: 'stale', short: 'Sin actualizar', long: 'Servidor sin actualizar: algunas secciones no tienen datos' },
-  down: { tone: 'down', short: 'Sin conexión', long: 'Sin conexión con el servidor' },
+  probing: { tone: 'idle', short: 'Conectando', long: 'Estado del servidor: conectando' },
+  waking: { tone: 'idle', short: 'Despertando', long: 'Estado del servidor: despertando' },
+  ready: { tone: 'up', short: 'En línea', long: 'Estado del servidor: en línea' },
+  legacy: { tone: 'stale', short: 'Versión anterior', long: 'Estado del servidor: versión anterior, algunas secciones no tienen datos' },
+  down: { tone: 'down', short: 'Sin conexión', long: 'Estado del servidor: sin conexión' },
 }
 
 export default function ServerStatus() {

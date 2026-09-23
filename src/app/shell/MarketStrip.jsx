@@ -1,7 +1,9 @@
 // Tira compacta de mercado en la barra superior: IPC, S&P 500, USD/MXN, CETES 28 y VIX con valor
 // y cambio, y un DataStatus para toda la tira. En pantallas angostas se desplaza dentro de su
-// propio contenedor, nunca empuja la página a lo ancho. Solo consulta con el API v2 listo: con el
-// servidor viejo, dormido o caído no manda nada y dice "Sin datos".
+// propio contenedor, nunca empuja la página a lo ancho. Solo consulta cuando el API v2 está listo
+// y anuncia la capacidad "markets.overview" en /health: la tira va completa o no va (CETES 28 sale
+// además de /v2/rates/mx). Con el servidor viejo, dormido, caído o sin esa capacidad no manda nada
+// y dice "Sin datos".
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { DataStatus, Delta } from '../../components/ui/index.js'
@@ -43,13 +45,13 @@ function useOverflow() {
 
 export default function MarketStrip() {
   const [scrollRef, overflow] = useOverflow()
-  const { status } = useCapabilities()
-  const ready = status === 'ready'
+  const { status, capabilities } = useCapabilities()
+  const ready = status === 'ready' && Boolean(capabilities?.has('markets.overview'))
   const overview = useQuery({ ...marketsOverviewQuery(), enabled: ready })
-  const rates = useQuery({ ...ratesMxQuery(), enabled: ready })
+  const rates = useQuery({ ...ratesMxQuery(), enabled: ready && Boolean(capabilities?.has('rates.mx')) })
   const items = stripItems(overview.data, rates.data)
   const meta = mergeMeta(overview.data?.meta, rates.data?.meta)
-  const loading = ready && (overview.isPending || rates.isPending)
+  const loading = ready && (overview.isFetching || rates.isFetching) && !overview.data
   return (
     <section aria-busy={loading || undefined} aria-label="Mercado en breve" className="kz-strip">
       <div

@@ -15,7 +15,7 @@ import { searchQuery } from '../../lib/api/queries.js'
 import { useTheme } from '../../theme.js'
 import { flatNav } from '../nav.js'
 import { pathInstrument } from '../paths.js'
-import { buildGroups, isTickerLike, matchSymbol, pushRecent, readRecents } from './palette-model.js'
+import { buildGroups, fold, isTickerLike, matchSymbol, pushRecent, readRecents } from './palette-model.js'
 import { useLogout } from './useLogout.js'
 
 const SEARCH_LIMIT = 8
@@ -134,8 +134,10 @@ function PaletteBody({ onClose }) {
     } else if (event.key === 'Enter') {
       event.preventDefault()
       const text = q.trim()
-      // Un ticker cuya búsqueda todavía no llega gana sobre una ruta que coincidió de rebote.
-      const direct = text && isTickerLike(text) && activeOption?.kind !== 'symbol' && (searching || !activeOption)
+      // Una ruta o acción cuyo nombre empieza con lo tecleado gana ("fibras" abre FIBRAs). Si no,
+      // un ticker cuya búsqueda todavía no llega gana sobre lo que coincidió de rebote.
+      const named = activeOption && activeOption.kind !== 'symbol' && fold(activeOption.label).startsWith(fold(text))
+      const direct = text && !named && isTickerLike(text) && activeOption?.kind !== 'symbol' && (searching || !activeOption)
       if (direct) void openTicker()
       else if (activeOption) choose(activeOption)
     }
