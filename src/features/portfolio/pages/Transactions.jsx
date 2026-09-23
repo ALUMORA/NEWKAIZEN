@@ -9,6 +9,7 @@ import { fmtDate, fmtMoney, fmtNumber } from '../../../lib/format.js'
 import { getStorageError, isReadOnly, update, useStore } from '../../../lib/storage.js'
 import { PATHS } from '../../../app/paths.js'
 import TransactionDialog from '../TransactionDialog.jsx'
+import '../portfolio.css'
 import { TX_LABELS } from '../tx-labels.js'
 
 /** @param {any} s */
@@ -24,6 +25,9 @@ function editTransactions(portfolioId, fn) {
     portfolios: s.portfolios.map((p) => (p.id === portfolioId ? { ...p, transactions: fn(p.transactions) } : p)),
   }))
 }
+
+/** Títulos: enteros sin decimales, fracciones con hasta 4. @param {any} v */
+const fmtQty = (v) => fmtNumber(v, { decimals: Number.isInteger(v) ? 0 : 4 })
 
 /** @param {any} tx */
 function describeTx(tx) {
@@ -44,7 +48,7 @@ export default function Transactions() {
 
   if (!portfolio) {
     return (
-      <div className="kz-col" data-gap="6">
+      <div className="kz-container kz-col kz-portfolio-page" data-gap="6">
         <PageHeader title="Movimientos" description="Compras, ventas, dividendos, depósitos y retiros de tu portafolio." />
         <EmptyState
           title="Todavía no tienes un portafolio"
@@ -97,10 +101,10 @@ export default function Transactions() {
     { key: 'date', header: 'Fecha', format: (/** @type {any} */ v) => fmtDate(v), sortable: true, minWidth: 110 },
     { key: 'type', header: 'Tipo', format: (/** @type {string} */ v) => TX_LABELS[v] ?? v, sortable: true },
     { key: 'symbol', header: 'Clave', format: (/** @type {any} */ v) => v ?? '', sortable: true },
-    { key: 'quantity', header: 'Títulos', numeric: true, format: (/** @type {any} */ v) => fmtNumber(v) },
+    { key: 'quantity', header: 'Títulos', numeric: true, format: fmtQty },
     { key: 'price', header: 'Precio', numeric: true, format: money },
     { key: 'amount', header: 'Monto', numeric: true, format: money },
-    { key: 'fees', header: 'Comisión', numeric: true, format: money },
+    { key: 'fees', header: 'Comisión', numeric: true, format: (/** @type {any} */ v, /** @type {any} */ row) => (row.type === 'buy' || row.type === 'sell' ? money(v, row) : '') },
     { key: 'currency', header: 'Moneda' },
     { key: 'fxRate', header: 'Tipo de cambio', numeric: true, format: (/** @type {any} */ v) => fmtNumber(v, { decimals: 4 }) },
     {
@@ -117,7 +121,7 @@ export default function Transactions() {
 
   const posColumns = [
     { key: 'symbol', header: 'Clave', sortable: true },
-    { key: 'quantity', header: 'Títulos', numeric: true, format: (/** @type {any} */ v) => fmtNumber(v) },
+    { key: 'quantity', header: 'Títulos', numeric: true, format: fmtQty },
     {
       key: 'avgCost',
       header: 'Costo promedio',
@@ -130,7 +134,7 @@ export default function Transactions() {
   ]
 
   return (
-    <div className="kz-col" data-gap="6">
+    <div className="kz-container kz-col kz-portfolio-page" data-gap="6">
       <PageHeader
         title="Movimientos"
         eyebrow={portfolio.name}
