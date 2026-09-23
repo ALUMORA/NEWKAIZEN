@@ -8,21 +8,26 @@
 import { useCallback, useState } from 'react'
 import { Outlet } from 'react-router'
 import BottomNav from './BottomNav.jsx'
+import CommandPalette from './CommandPalette.jsx'
 import Footer from './Footer.jsx'
 import Sidebar from './Sidebar.jsx'
 import TopBar from './TopBar.jsx'
 import { ShellContext } from './shell-context.js'
 import { useCollapsed } from './useCollapsed.js'
+import { usePaletteShortcuts } from './useShortcuts.js'
 import './shell.css'
 import './topbar.css'
 import './bottomnav.css'
+import './palette.css'
 
 const EMBEDDED = Object.freeze({ embedded: true })
 
 export default function AppShell() {
   const [collapsed, toggleCollapsed] = useCollapsed()
-  const [, setPaletteOpen] = useState(false)
+  const [paletteOpen, setPaletteOpen] = useState(false)
   const openPalette = useCallback(() => setPaletteOpen(true), [])
+  const closePalette = useCallback(() => setPaletteOpen(false), [])
+  usePaletteShortcuts(openPalette)
   return (
     <ShellContext.Provider value={EMBEDDED}>
       <div className="kz-shell" data-collapsed={collapsed || undefined}>
@@ -38,6 +43,7 @@ export default function AppShell() {
           <Footer />
         </div>
         <BottomNav />
+        <CommandPalette onClose={closePalette} open={paletteOpen} />
       </div>
     </ShellContext.Provider>
   )
