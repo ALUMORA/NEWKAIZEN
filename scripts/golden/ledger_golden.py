@@ -39,6 +39,11 @@ def run(transactions, as_of=None):
 
     book = {}
     cash = {"MXN": Fraction(0), "USD": Fraction(0)}
+    # Lo que se dio por aportado para cubrir compras sin deposito previo. El faltante se mide
+    # contra cash + funded, o sea contra el efectivo ya financiado, porque medirlo solo contra
+    # cash vuelve a financiar lo que ya se habia financiado.
+    funded = {"MXN": Fraction(0), "USD": Fraction(0)}
+    external = []
     sales = []
 
     def lot_for(symbol, currency):
@@ -63,10 +68,16 @@ def run(transactions, as_of=None):
             fees = Fraction(0)
 
         if kind in ("deposit", "dividend"):
-            cash[ccy] += F(tx.get("amount") or 0) - fees
+            amount = F(tx.get("amount") or 0)
+            cash[ccy] += amount - fees
+            if kind == "deposit" and amount > 0:
+                external.append({"date": date, "currency": ccy, "amount": amount, "kind": "deposit"})
             continue
         if kind == "withdrawal":
-            cash[ccy] -= F(tx.get("amount") or 0) + fees
+            amount = F(tx.get("amount") or 0)
+            cash[ccy] -= amount + fees
+            if amount > 0:
+                external.append({"date": date, "currency": ccy, "amount": -amount, "kind": "withdrawal"})
             continue
         if kind == "fee":
             cash[ccy] -= F(tx["amount"]) if tx.get("amount") is not None else fees
@@ -93,8 +104,12 @@ def run(transactions, as_of=None):
                 )
             price = None if tx.get("price") is None else F(tx["price"])
             amount = None if price is None else qty * price + fees
+            same_currency = ccy == lot["currency"]
             lot["quantity"] += qty
-            lot["cost"] = None if lot["cost"] is None or amount is None else lot["cost"] + amount
+            # sumar pesos sobre dolares daria un costo promedio inventado
+            lot["cost"] = (
+                None if lot["cost"] is None or amount is None or not same_currency else lot["cost"] + amount
+            )
             if date is not None and (lot["first_buy"] is None or date < lot["first_buy"]):
                 lot["first_buy"] = date
             fx = tx.get("fxRate")
@@ -104,6 +119,10 @@ def run(transactions, as_of=None):
             else:
                 lot["fx_known"] = False
             if amount is not None:
+                short = amount - (cash[ccy] + funded[ccy])
+                if short > 0:
+                    funded[ccy] += short
+                    external.append({"date": date, "currency": ccy, "amount": short, "kind": "funding"})
                 cash[ccy] -= amount
             continue
 
@@ -135,7 +154,8 @@ def run(transactions, as_of=None):
             elif avg is not None and lot["cost"] is not None:
                 lot["cost"] -= avg * qty
             if proceeds is not None:
-                cash[lot["currency"]] += proceeds
+                # el dinero entra en la moneda del movimiento, no en la del lote
+                cash[ccy] += proceeds
             continue
 
         if kind == "split":
@@ -167,6 +187,11 @@ def run(transactions, as_of=None):
     return {
         "positions": positions,
         "cash": {k: float(v) for k, v in cash.items()},
+        "funded": {k: float(v) for k, v in funded.items()},
+        "fundedCash": {k: float(cash[k] + funded[k]) for k in cash},
+        "externalFlows": [
+            {**flow, "amount": float(flow["amount"])} for flow in external
+        ],
         "sales": [
             {
                 **sale,
@@ -333,6 +358,37 @@ def build():
                     tx("buy", id="b1", symbol="MSFT", quantity=2, price=None, currency="USD"),
                     tx("buy", id="b2", date="2026-01-05", symbol="MSFT", quantity=1, price=300, currency="USD"),
                     tx("sell", id="s1", date="2026-02-05", symbol="MSFT", quantity=1, price=400, currency="USD"),
+                ],
+                "asOf": None,
+            },
+            "tol": TOL,
+        }
+    )
+    cases.append(
+        {
+            "name": "cartera-migrada-varias-compras-sin-deposito",
+            "input": {
+                # Forma exacta de una migracion de v1: cada posicion legada entra como buy sin
+                # fecha y sin deposito. Con mas de una compra, el faltante no se puede volver a
+                # medir contra un efectivo que ya viene negativo.
+                "transactions": [
+                    tx("buy", id="m1", symbol="AAPL", quantity=80, price=100, currency="MXN"),
+                    tx("buy", id="m2", symbol="WALMEX.MX", quantity=5, price=100, currency="MXN"),
+                    tx("buy", id="m3", symbol="FUNO11.MX", quantity=5, price=100, currency="MXN"),
+                ],
+                "asOf": None,
+            },
+            "tol": TOL,
+        }
+    )
+    cases.append(
+        {
+            "name": "deposito-parcial-y-luego-compras-sin-fondear",
+            "input": {
+                "transactions": [
+                    tx("deposit", id="d1", date="2026-01-01", amount=3000, currency="MXN"),
+                    tx("buy", id="b1", date="2026-01-02", symbol="AAPL", quantity=80, price=100, currency="MXN"),
+                    tx("buy", id="b2", date="2026-01-03", symbol="AAPL", quantity=5, price=100, currency="MXN"),
                 ],
                 "asOf": None,
             },

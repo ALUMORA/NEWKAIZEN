@@ -52,10 +52,23 @@ describe('twr: respuesta conocida del spec', () => {
 
 describe('twr: huecos y bases imposibles', () => {
   it('se salta los cortes sin valuar y arrastra su flujo al siguiente periodo', () => {
-    const conHueco = twr([100, null, 160, 144], [0, 0, 50, 0])
-    expect(conHueco).toBeCloseTo(160 / 150 - 1 + ((160 / 150) * (144 / 160) - 160 / 150), 12)
-    // el flujo de 50 no se pierde: la base del periodo válido es 100 + 50
+    // el flujo de 50 no se pierde: entró dentro del periodo que va de 100 a 160, así que se
+    // descuenta del cierre y el rendimiento del periodo es (160 menos 50) / 100 menos 1 = .10
     expect(twrReturns([100, null, 160, 144], [0, 0, 50, 0])).toHaveLength(2)
+    expect(twr([100, null, 160, 144], [0, 0, 50, 0])).toBeCloseTo(1.1 * (144 / 160) - 1, 12)
+  })
+
+  it('al re-establecer la base después de un hueco, el flujo no se cuenta dos veces', () => {
+    // la valuación de 100 ya trae adentro el depósito de 50, así que el único periodo medible es
+    // 150 / 100 menos 1. Antes devolvía [0] porque el flujo seguía pendiente y se volvía a sumar.
+    expect(twrReturns([null, 100, 150], [0, 50, 0])).toEqual([0.5])
+    // lo mismo cuando el salto fue por una base en cero
+    expect(twrReturns([0, 100, 150], [0, 50, 0])).toEqual([0.5])
+  })
+
+  it('un depósito no castiga el rendimiento del día en que cae', () => {
+    // la posición pasó de 100 a 110 y ese mismo día entraron 50: el rendimiento es .10, no .0667
+    expect(twrReturns([100, 160], [0, 50])).toEqual([expect.closeTo(0.1, 12)])
   })
 
   it('una base en cero o negativa se salta', () => {

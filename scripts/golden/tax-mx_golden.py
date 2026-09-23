@@ -22,6 +22,7 @@ getcontext().prec = 28
 
 OUT = Path(__file__).resolve().parents[2] / "tests" / "golden" / "tax-mx.json"
 TOL = 1e-9
+LOSS_CARRY_YEARS = 10
 NO_YEAR = "sin fecha"
 
 
@@ -71,18 +72,35 @@ def isr(sales, inpc=None, rate=0.1, loss_carry_in=0):
         by_year[year] = by_year.get(year, Decimal(0)) + gain
 
     keys = sorted(by_year, key=lambda k: (k == NO_YEAR, k))
-    carry = D(loss_carry_in) if D(loss_carry_in) > 0 else Decimal(0)
+    # el arrastre se guarda por ejercicio de origen: caduca a los LOSS_CARRY_YEARS ejercicios.
+    # Lo que entra por loss_carry_in no trae ejercicio, asi que se toma como vigente.
+    carry_lots = []
+    if D(loss_carry_in) > 0:
+        carry_lots.append([NO_YEAR, D(loss_carry_in)])
     years, total_gain, total_taxable, total_tax = [], Decimal(0), Decimal(0), Decimal(0)
     for year in keys:
+        if year != NO_YEAR:
+            for lot in carry_lots:
+                if lot[0] != NO_YEAR and lot[1] > 0 and int(year) - int(lot[0]) > LOSS_CARRY_YEARS:
+                    lot[1] = Decimal(0)
         gain = by_year[year]
+        used = Decimal(0)
+        taxable = Decimal(0)
         if gain > 0:
-            used = min(carry, gain)
+            pending = gain
+            for lot in carry_lots:
+                if pending <= 0:
+                    break
+                take = min(lot[1], pending)
+                if take <= 0:
+                    continue
+                lot[1] -= take
+                pending -= take
+                used += take
             taxable = gain - used
-            carry -= used
-        else:
-            used = Decimal(0)
-            taxable = Decimal(0)
-            carry += -gain
+        elif gain < 0:
+            carry_lots.append([year, -gain])
+        carry = sum((lot[1] for lot in carry_lots), Decimal(0))
         tax = taxable * rate
         years.append(
             {
@@ -175,6 +193,33 @@ def build():
                     {"symbol": "B", "proceeds": 31000, "cost": 20000, "costDate": "2026-03-01", "saleDate": "2027-03-15"},
                 ],
                 "inpc": inpc_2026,
+                "rate": 0.1,
+                "lossCarryIn": 0,
+            },
+            "tol": TOL,
+        },
+        {
+            "name": "perdida-que-caduca-a-los-diez-ejercicios",
+            "input": {
+                # una perdida de 2012 ya no puede amortizar una ganancia de 2026
+                "sales": [
+                    {"symbol": "A", "proceeds": 300, "cost": 1000, "costDate": "2012-01-15", "saleDate": "2012-06-10"},
+                    {"symbol": "B", "proceeds": 1500, "cost": 1000, "costDate": "2026-01-15", "saleDate": "2026-06-10"},
+                ],
+                "inpc": {},
+                "rate": 0.1,
+                "lossCarryIn": 0,
+            },
+            "tol": TOL,
+        },
+        {
+            "name": "perdida-que-todavia-no-caduca",
+            "input": {
+                "sales": [
+                    {"symbol": "A", "proceeds": 300, "cost": 1000, "costDate": "2020-01-15", "saleDate": "2020-06-10"},
+                    {"symbol": "B", "proceeds": 1500, "cost": 1000, "costDate": "2026-01-15", "saleDate": "2026-06-10"},
+                ],
+                "inpc": {},
                 "rate": 0.1,
                 "lossCarryIn": 0,
             },

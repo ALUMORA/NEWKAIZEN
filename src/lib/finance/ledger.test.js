@@ -137,7 +137,7 @@ describe('cashBalances y flujos externos', () => {
 
   it('una compra sin depósito previo se cuenta como aportación externa', () => {
     const flows = externalFlows([buy('AAPL', 1, 100, { date: '2026-01-05' })])
-    expect(flows).toEqual([{ date: '2026-01-05', currency: 'MXN', amount: 100, kind: 'funding' }])
+    expect(flows).toEqual([{ date: '2026-01-05', currency: 'MXN', amount: 100, kind: 'funding', fxRate: null }])
   })
 
   it('con depósito previo no hay aportación implícita', () => {
@@ -316,10 +316,133 @@ describe('golden contra la referencia en Python (Fraction exacto)', () => {
         else expect(sale[key]).toBeCloseTo(want[key], digits)
       }
     })
+
+    // Los flujos externos y el efectivo ya financiado no se comparaban, y por eso pasó sin ruido
+    // que el faltante de cada compra se midiera contra un efectivo que ya venía negativo.
+    const flows = externalFlows(testCase.input.transactions, { asOf: testCase.input.asOf })
+    expect(flows.map((f) => f.kind)).toEqual(testCase.expected.externalFlows.map((f) => f.kind))
+    flows.forEach((flow, i) => {
+      const want = testCase.expected.externalFlows[i]
+      expect(flow.date).toBe(want.date)
+      expect(flow.currency).toBe(want.currency)
+      expect(flow.amount).toBeCloseTo(want.amount, digits)
+    })
+
+    const [snapshot] = ledgerSnapshots(testCase.input.transactions, [testCase.input.asOf ?? '9999-12-31'])
+    expect(snapshot.fundedCash.MXN).toBeCloseTo(testCase.expected.fundedCash.MXN, digits)
+    expect(snapshot.fundedCash.USD).toBeCloseTo(testCase.expected.fundedCash.USD, digits)
   })
 
   it('el golden trae los casos esperados', () => {
-    expect(golden.cases.length).toBeGreaterThanOrEqual(9)
+    expect(golden.cases.length).toBeGreaterThanOrEqual(11)
     expect(golden.cases.map((c) => c.name)).toContain('costo-promedio-venta-y-split')
+    expect(golden.cases.map((c) => c.name)).toContain('cartera-migrada-varias-compras-sin-deposito')
+  })
+})
+
+describe('compras sin depósito: la aportación implícita no se recalcula sobre sí misma', () => {
+  // Es la forma exacta de una cartera migrada de la v1: cada posición legada entra como compra
+  // sin fecha y sin depósito. Con más de una compra, medir el faltante contra cash (que ya viene
+  // negativo) refinancia dinero ya financiado y el error se acumula en cascada.
+  const migrada = [
+    buy('AAPL', 80, 100, { currency: 'MXN' }),
+    buy('WALMEX.MX', 5, 100, { currency: 'MXN' }),
+    buy('FUNO11.MX', 5, 100, { currency: 'MXN' }),
+  ]
+
+  it('cada compra aporta solo lo que le falta', () => {
+    expect(externalFlows(migrada).map((f) => f.amount)).toEqual([8000, 500, 500])
+    expect(externalFlows(migrada).every((f) => f.kind === 'funding')).toBe(true)
+  })
+
+  it('el efectivo ya financiado queda en cero, no en dinero fantasma', () => {
+    const [snapshot] = ledgerSnapshots(migrada, ['2026-12-31'])
+    expect(snapshot.fundedCash.MXN).toBeCloseTo(0, 9)
+    expect(cashBalances(migrada).MXN).toBeCloseTo(-9000, 9)
+  })
+
+  it('con un depósito parcial, solo se aporta la diferencia', () => {
+    const mixto = [
+      { ...buy('AAPL', 0, 0), id: 'd1', type: 'deposit', symbol: null, quantity: null, price: null, amount: 3000, date: '2026-01-01' },
+      buy('AAPL', 80, 100, { date: '2026-01-02' }),
+      buy('AAPL', 5, 100, { date: '2026-01-03' }),
+    ]
+    expect(externalFlows(mixto).map((f) => [f.kind, f.amount])).toEqual([
+      ['deposit', 3000],
+      ['funding', 5000],
+      ['funding', 500],
+    ])
+  })
+})
+
+describe('no se mezclan monedas dentro de un mismo símbolo', () => {
+  const compraUsd = buy('AAPL', 10, 150, { currency: 'USD' })
+
+  it('la venta se abona a la moneda del movimiento, no a la del lote', () => {
+    const ventaMxn = sell('AAPL', 10, 180, { currency: 'MXN' })
+    // 1,800 pesos son 1,800 pesos, no 1,800 dólares
+    expect(cashBalances([compraUsd, ventaMxn])).toEqual({ MXN: 1800, USD: -1500 })
+  })
+
+  it('validateTransaction rechaza la venta en otra moneda', () => {
+    const result = validateTransaction(sell('AAPL', 10, 180, { currency: 'MXN' }), [compraUsd])
+    expect(result.ok).toBe(false)
+    expect(result.errors[0]).toContain('Ya tienes AAPL en USD')
+  })
+
+  it('validateTransaction rechaza la compra en otra moneda', () => {
+    const result = validateTransaction(buy('AAPL', 10, 3600, { currency: 'MXN' }), [compraUsd])
+    expect(result.ok).toBe(false)
+    expect(result.errors[0]).toContain('Ya tienes AAPL en USD')
+  })
+
+  it('si de todos modos llega mezclado, el costo queda en s/d y no en un número inventado', () => {
+    const [p] = derivePositions([compraUsd, buy('AAPL', 10, 3600, { currency: 'MXN' })])
+    expect(p.quantity).toBe(20)
+    expect(p.avgCost).toBeNull()
+    expect(p.costBasis).toBeNull()
+  })
+
+  it('la misma moneda sigue pasando sin errores', () => {
+    expect(validateTransaction(sell('AAPL', 5, 180, { currency: 'USD' }), [compraUsd])).toEqual({
+      ok: true,
+      errors: [],
+    })
+  })
+})
+
+describe('los flujos externos llevan el tipo de cambio que se capturó', () => {
+  it('el fxRate del movimiento manda sobre la tabla por fecha', () => {
+    const deposito = {
+      id: 'd1',
+      type: 'deposit',
+      date: '2026-01-01',
+      symbol: null,
+      quantity: null,
+      price: null,
+      currency: 'USD',
+      fxRate: 18,
+      fees: 0,
+      amount: 1000,
+      ratio: null,
+      note: '',
+    }
+    expect(externalFlows([deposito])[0].fxRate).toBe(18)
+    // sin fxRate el flujo lo dice en vez de dejar que alguien suponga cuál usó
+    expect(externalFlows([buy('AAPL', 1, 100, { date: '2026-01-05' })])[0].fxRate).toBeNull()
+  })
+})
+
+describe('una venta recortada lo dice en vez de callárselo', () => {
+  it('vender más de lo que hay se recorta y queda marcado', () => {
+    const [venta] = realizedSales([buy('A', 10, 100), sell('A', 25, 130)])
+    expect(venta.quantity).toBe(10)
+    expect(venta.trimmed).toBe(true)
+  })
+
+  it('una venta normal no queda marcada', () => {
+    const [venta] = realizedSales([buy('A', 10, 100), sell('A', 4, 130)])
+    expect(venta.quantity).toBe(4)
+    expect(venta.trimmed).toBe(false)
   })
 })

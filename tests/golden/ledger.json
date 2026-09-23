@@ -6,6 +6,28 @@
           "MXN": 0.0,
           "USD": -1550.0
         },
+        "externalFlows": [
+          {
+            "amount": 1000.0,
+            "currency": "USD",
+            "date": "2026-01-05",
+            "kind": "funding"
+          },
+          {
+            "amount": 1200.0,
+            "currency": "USD",
+            "date": "2026-02-05",
+            "kind": "funding"
+          }
+        ],
+        "funded": {
+          "MXN": 0.0,
+          "USD": 2200.0
+        },
+        "fundedCash": {
+          "MXN": 0.0,
+          "USD": 650.0
+        },
         "positions": [
           {
             "avgCost": 55.0,
@@ -98,6 +120,22 @@
     {
       "expected": {
         "cash": {
+          "MXN": 92994.5,
+          "USD": 0.0
+        },
+        "externalFlows": [
+          {
+            "amount": 100000.0,
+            "currency": "MXN",
+            "date": "2026-01-01",
+            "kind": "deposit"
+          }
+        ],
+        "funded": {
+          "MXN": 0.0,
+          "USD": 0.0
+        },
+        "fundedCash": {
           "MXN": 92994.5,
           "USD": 0.0
         },
@@ -196,6 +234,22 @@
           "MXN": -260.0,
           "USD": 0.0
         },
+        "externalFlows": [
+          {
+            "amount": 1200.0,
+            "currency": "MXN",
+            "date": "2026-01-05",
+            "kind": "funding"
+          }
+        ],
+        "funded": {
+          "MXN": 1200.0,
+          "USD": 0.0
+        },
+        "fundedCash": {
+          "MXN": 940.0,
+          "USD": 0.0
+        },
         "positions": [
           {
             "avgCost": 14.0,
@@ -274,6 +328,28 @@
     {
       "expected": {
         "cash": {
+          "MXN": 46120.0,
+          "USD": 600.0
+        },
+        "externalFlows": [
+          {
+            "amount": 50000.0,
+            "currency": "MXN",
+            "date": "2026-01-01",
+            "kind": "deposit"
+          },
+          {
+            "amount": 3000.0,
+            "currency": "USD",
+            "date": "2026-01-01",
+            "kind": "deposit"
+          }
+        ],
+        "funded": {
+          "MXN": 0.0,
+          "USD": 0.0
+        },
+        "fundedCash": {
           "MXN": 46120.0,
           "USD": 600.0
         },
@@ -399,6 +475,28 @@
           "MXN": 0.0,
           "USD": -1500.0
         },
+        "externalFlows": [
+          {
+            "amount": 1000.0,
+            "currency": "USD",
+            "date": null,
+            "kind": "funding"
+          },
+          {
+            "amount": 500.0,
+            "currency": "USD",
+            "date": "2026-03-01",
+            "kind": "funding"
+          }
+        ],
+        "funded": {
+          "MXN": 0.0,
+          "USD": 1500.0
+        },
+        "fundedCash": {
+          "MXN": 0.0,
+          "USD": 0.0
+        },
         "positions": [
           {
             "avgCost": 150.0,
@@ -468,6 +566,22 @@
         "cash": {
           "MXN": 0.0,
           "USD": 100.0
+        },
+        "externalFlows": [
+          {
+            "amount": 300.0,
+            "currency": "USD",
+            "date": "2026-01-05",
+            "kind": "funding"
+          }
+        ],
+        "funded": {
+          "MXN": 0.0,
+          "USD": 300.0
+        },
+        "fundedCash": {
+          "MXN": 0.0,
+          "USD": 400.0
         },
         "positions": [
           {
@@ -547,8 +661,264 @@
     {
       "expected": {
         "cash": {
+          "MXN": -9000.0,
+          "USD": 0.0
+        },
+        "externalFlows": [
+          {
+            "amount": 8000.0,
+            "currency": "MXN",
+            "date": null,
+            "kind": "funding"
+          },
+          {
+            "amount": 500.0,
+            "currency": "MXN",
+            "date": null,
+            "kind": "funding"
+          },
+          {
+            "amount": 500.0,
+            "currency": "MXN",
+            "date": null,
+            "kind": "funding"
+          }
+        ],
+        "funded": {
+          "MXN": 9000.0,
+          "USD": 0.0
+        },
+        "fundedCash": {
+          "MXN": 0.0,
+          "USD": 0.0
+        },
+        "positions": [
+          {
+            "avgCost": 100.0,
+            "avgFx": null,
+            "costBasis": 8000.0,
+            "currency": "MXN",
+            "firstBuyDate": null,
+            "quantity": 80.0,
+            "realizedPnl": 0.0,
+            "symbol": "AAPL"
+          },
+          {
+            "avgCost": 100.0,
+            "avgFx": null,
+            "costBasis": 500.0,
+            "currency": "MXN",
+            "firstBuyDate": null,
+            "quantity": 5.0,
+            "realizedPnl": 0.0,
+            "symbol": "FUNO11.MX"
+          },
+          {
+            "avgCost": 100.0,
+            "avgFx": null,
+            "costBasis": 500.0,
+            "currency": "MXN",
+            "firstBuyDate": null,
+            "quantity": 5.0,
+            "realizedPnl": 0.0,
+            "symbol": "WALMEX.MX"
+          }
+        ],
+        "sales": []
+      },
+      "input": {
+        "asOf": null,
+        "transactions": [
+          {
+            "amount": null,
+            "currency": "MXN",
+            "date": null,
+            "fees": 0,
+            "fxRate": null,
+            "id": "m1",
+            "note": "",
+            "price": 100,
+            "quantity": 80,
+            "ratio": null,
+            "symbol": "AAPL",
+            "type": "buy"
+          },
+          {
+            "amount": null,
+            "currency": "MXN",
+            "date": null,
+            "fees": 0,
+            "fxRate": null,
+            "id": "m2",
+            "note": "",
+            "price": 100,
+            "quantity": 5,
+            "ratio": null,
+            "symbol": "WALMEX.MX",
+            "type": "buy"
+          },
+          {
+            "amount": null,
+            "currency": "MXN",
+            "date": null,
+            "fees": 0,
+            "fxRate": null,
+            "id": "m3",
+            "note": "",
+            "price": 100,
+            "quantity": 5,
+            "ratio": null,
+            "symbol": "FUNO11.MX",
+            "type": "buy"
+          }
+        ]
+      },
+      "name": "cartera-migrada-varias-compras-sin-deposito",
+      "tol": 1e-09
+    },
+    {
+      "expected": {
+        "cash": {
+          "MXN": -5500.0,
+          "USD": 0.0
+        },
+        "externalFlows": [
+          {
+            "amount": 3000.0,
+            "currency": "MXN",
+            "date": "2026-01-01",
+            "kind": "deposit"
+          },
+          {
+            "amount": 5000.0,
+            "currency": "MXN",
+            "date": "2026-01-02",
+            "kind": "funding"
+          },
+          {
+            "amount": 500.0,
+            "currency": "MXN",
+            "date": "2026-01-03",
+            "kind": "funding"
+          }
+        ],
+        "funded": {
+          "MXN": 5500.0,
+          "USD": 0.0
+        },
+        "fundedCash": {
+          "MXN": 0.0,
+          "USD": 0.0
+        },
+        "positions": [
+          {
+            "avgCost": 100.0,
+            "avgFx": null,
+            "costBasis": 8500.0,
+            "currency": "MXN",
+            "firstBuyDate": "2026-01-02",
+            "quantity": 85.0,
+            "realizedPnl": 0.0,
+            "symbol": "AAPL"
+          }
+        ],
+        "sales": []
+      },
+      "input": {
+        "asOf": null,
+        "transactions": [
+          {
+            "amount": 3000,
+            "currency": "MXN",
+            "date": "2026-01-01",
+            "fees": 0,
+            "fxRate": null,
+            "id": "d1",
+            "note": "",
+            "price": null,
+            "quantity": null,
+            "ratio": null,
+            "symbol": null,
+            "type": "deposit"
+          },
+          {
+            "amount": null,
+            "currency": "MXN",
+            "date": "2026-01-02",
+            "fees": 0,
+            "fxRate": null,
+            "id": "b1",
+            "note": "",
+            "price": 100,
+            "quantity": 80,
+            "ratio": null,
+            "symbol": "AAPL",
+            "type": "buy"
+          },
+          {
+            "amount": null,
+            "currency": "MXN",
+            "date": "2026-01-03",
+            "fees": 0,
+            "fxRate": null,
+            "id": "b2",
+            "note": "",
+            "price": 100,
+            "quantity": 5,
+            "ratio": null,
+            "symbol": "AAPL",
+            "type": "buy"
+          }
+        ]
+      },
+      "name": "deposito-parcial-y-luego-compras-sin-fondear",
+      "tol": 1e-09
+    },
+    {
+      "expected": {
+        "cash": {
           "MXN": 526055.78,
           "USD": 22022.43
+        },
+        "externalFlows": [
+          {
+            "amount": 7824.47,
+            "currency": "MXN",
+            "date": "2025-01-01",
+            "kind": "funding"
+          },
+          {
+            "amount": 500000.0,
+            "currency": "MXN",
+            "date": "2025-01-02",
+            "kind": "deposit"
+          },
+          {
+            "amount": 6212.32,
+            "currency": "USD",
+            "date": "2025-01-22",
+            "kind": "funding"
+          },
+          {
+            "amount": 5447.74,
+            "currency": "USD",
+            "date": "2025-04-01",
+            "kind": "funding"
+          },
+          {
+            "amount": 1113.07,
+            "currency": "USD",
+            "date": "2025-04-22",
+            "kind": "funding"
+          }
+        ],
+        "funded": {
+          "MXN": 7824.47,
+          "USD": 12773.13
+        },
+        "fundedCash": {
+          "MXN": 533880.25,
+          "USD": 34795.56
         },
         "positions": [
           {
@@ -1300,6 +1670,52 @@
         "cash": {
           "MXN": 489509.56,
           "USD": -89.12
+        },
+        "externalFlows": [
+          {
+            "amount": 86.61,
+            "currency": "MXN",
+            "date": "2025-01-01",
+            "kind": "funding"
+          },
+          {
+            "amount": 500000.0,
+            "currency": "MXN",
+            "date": "2025-01-02",
+            "kind": "deposit"
+          },
+          {
+            "amount": 4091.14,
+            "currency": "USD",
+            "date": "2025-01-15",
+            "kind": "funding"
+          },
+          {
+            "amount": 396.22,
+            "currency": "USD",
+            "date": "2025-02-01",
+            "kind": "funding"
+          },
+          {
+            "amount": 2342.04,
+            "currency": "USD",
+            "date": "2025-03-01",
+            "kind": "funding"
+          },
+          {
+            "amount": 1868.95,
+            "currency": "USD",
+            "date": "2025-03-08",
+            "kind": "funding"
+          }
+        ],
+        "funded": {
+          "MXN": 86.61,
+          "USD": 8698.35
+        },
+        "fundedCash": {
+          "MXN": 489596.17,
+          "USD": 8609.23
         },
         "positions": [
           {
@@ -2111,6 +2527,46 @@
         "cash": {
           "MXN": 502630.56,
           "USD": 32609.17
+        },
+        "externalFlows": [
+          {
+            "amount": 528.77,
+            "currency": "USD",
+            "date": "2025-01-01",
+            "kind": "funding"
+          },
+          {
+            "amount": 500000.0,
+            "currency": "MXN",
+            "date": "2025-01-02",
+            "kind": "deposit"
+          },
+          {
+            "amount": 740.56,
+            "currency": "USD",
+            "date": "2025-06-08",
+            "kind": "funding"
+          },
+          {
+            "amount": 143.52,
+            "currency": "USD",
+            "date": "2025-06-22",
+            "kind": "funding"
+          },
+          {
+            "amount": 3737.97,
+            "currency": "USD",
+            "date": "2025-08-15",
+            "kind": "funding"
+          }
+        ],
+        "funded": {
+          "MXN": 0.0,
+          "USD": 5150.82
+        },
+        "fundedCash": {
+          "MXN": 502630.56,
+          "USD": 37759.99
         },
         "positions": [
           {

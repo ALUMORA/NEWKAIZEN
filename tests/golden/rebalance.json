@@ -43,21 +43,21 @@
     },
     {
       "expected": {
-        "cash": 43.19999999999709,
+        "cash": 15.399999999997085,
         "deviation": {
-          "after": 0.0009440000000000004,
+          "after": 0.0008040000000000547,
           "before": 1.0
         },
         "holdings": {
           "AAPL": 146,
-          "FUNO11.MX": 534,
-          "WALMEX.MX": 341
+          "FUNO11.MX": 533,
+          "WALMEX.MX": 342
         },
         "value": 50000.0,
         "weights": {
           "AAPL": 0.40004,
-          "FUNO11.MX": 0.24991199999999997,
-          "WALMEX.MX": 0.349184
+          "FUNO11.MX": 0.24944399999999997,
+          "WALMEX.MX": 0.350208
         }
       },
       "input": {
@@ -253,16 +253,16 @@
     },
     {
       "expected": {
-        "cash": 1200,
+        "cash": 200,
         "deviation": {
-          "after": 0.17910447761194034,
+          "after": 0.12537313432835823,
           "before": 0.27462686567164174
         },
         "holdings": {
-          "A": 16,
-          "B": 1
+          "A": 14,
+          "B": 2
         },
-        "matchesOptimal": false,
+        "matchesOptimal": true,
         "optimal": {
           "deviation": 0.12537313432835823,
           "holdings": {
@@ -272,8 +272,8 @@
         },
         "value": 6700,
         "weights": {
-          "A": 0.5970149253731343,
-          "B": 0.22388059701492538
+          "A": 0.5223880597014925,
+          "B": 0.44776119402985076
         }
       },
       "input": {

@@ -29,7 +29,13 @@ TOL = 1e-9
 
 
 def twr_by_units(values, flows):
-    """TWR por valor de la unidad. flows[i] entra al inicio del periodo i."""
+    """TWR por valor de la unidad.
+
+    flows[i] ocurre DENTRO del periodo i y ya viene sumado en values[i], porque el corte del libro
+    se toma despues de aplicar los movimientos de esa fecha. Por eso la unidad se suscribe al
+    precio de CIERRE del periodo y no al de apertura: si se suscribiera a la apertura, el flujo
+    ganaria un periodo completo de exposicion que no tuvo.
+    """
     values = np.asarray(values, dtype=float)
     flows = np.asarray(flows, dtype=float)
     if values.size < 2 or values[0] <= 0:
@@ -39,12 +45,15 @@ def twr_by_units(values, flows):
     prices = [unit_price]
     for i in range(1, values.size):
         flow = float(flows[i]) if i < flows.size else 0.0
+        # valor de cierre sin el flujo: lo que de verdad rindio la inversion en el periodo
+        unit_price = (float(values[i]) - flow) / units
+        prices.append(unit_price)
         if flow != 0.0:
+            if unit_price == 0.0:
+                return None, None
             units += flow / unit_price
         if units <= 0:
             return None, None
-        unit_price = float(values[i]) / units
-        prices.append(unit_price)
     total = prices[-1] / prices[0] - 1.0
     returns = [prices[i] / prices[i - 1] - 1.0 for i in range(1, len(prices))]
     return total, returns

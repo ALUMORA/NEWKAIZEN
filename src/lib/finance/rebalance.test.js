@@ -228,12 +228,39 @@ describe('golden contra la referencia en Python (piso y codicioso, más búsqued
     }
   })
 
-  it('el golden deja medido el único caso donde el codicioso no llega al óptimo', () => {
+  it('la mejora local cierra el caso donde el paso codicioso se quedaba corto', () => {
+    // Antes este caso se quedaba en 16 A y 1 B con desviación .179104 y dejaba los 1,200 de
+    // efectivo sin invertir, o sea 17.9 % del portafolio. El óptimo entero es 14 A y 2 B.
     const caso = golden.cases.find((c) => c.name === 'greedy-vs-optimo')
-    expect(caso.expected.matchesOptimal).toBe(false)
-    expect(caso.expected.deviation.after).toBeCloseTo(0.179104, 6)
+    expect(caso.expected.holdings).toEqual({ A: 14, B: 2 })
+    expect(caso.expected.deviation.after).toBeCloseTo(0.125373, 6)
     expect(caso.expected.optimal.deviation).toBeCloseTo(0.125373, 6)
+    expect(caso.expected.matchesOptimal).toBe(true)
     const fallan = golden.cases.filter((c) => c.expected.matchesOptimal === false)
-    expect(fallan.map((c) => c.name)).toEqual(['greedy-vs-optimo'])
+    expect(fallan.map((c) => c.name)).toEqual([])
+  })
+
+  it('vender para financiar una compra que el efectivo solo no alcanza', () => {
+    // Peor caso medido en el fuzz contra la búsqueda exhaustiva: el piso bajó S0 de 1.895 a 1 y
+    // el paso codicioso ya no alcanzaba los 643 de otro S0, así que dejaba 607 de efectivo, el
+    // 37 % del portafolio, sin invertir.
+    const plan = wholeShareRebalance({
+      holdings: { S0: 1, S1: 10 },
+      prices: { S0: 643, S1: 65 },
+      targets: { S0: 0.7432, S1: 0.2568 },
+      cash: 347,
+    })
+    expect(plan.after.holdings).toEqual({ S0: 2, S1: 5 })
+    expect(plan.deviation.after).toBeLessThan(0.1)
+    expect(plan.after.cash).toBeLessThan(65)
+  })
+
+  it('una tenencia fraccionaria no genera un movimiento fraccionario', () => {
+    // La migración de la v1 lee `shares` sin redondear, así que las fracciones son reales.
+    const plan = wholeShareRebalance({ holdings: { A: 10.5 }, prices: { A: 100 }, targets: { A: 1 }, cash: 0 })
+    expect(plan.trades).toEqual([])
+    const conEfectivo = wholeShareRebalance({ holdings: { A: 10.5 }, prices: { A: 100 }, targets: { A: 1 }, cash: 250 })
+    expect(conEfectivo.trades.every((t) => Number.isInteger(t.quantity))).toBe(true)
+    expect(conEfectivo.after.holdings.A).toBeCloseTo(12.5, 9)
   })
 })

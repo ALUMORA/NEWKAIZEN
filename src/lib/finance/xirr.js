@@ -140,12 +140,47 @@ function bracket(flows) {
 }
 
 /**
+ * Cuántas veces cambian de signo los flujos, ya ordenados por fecha. Con más de un cambio, la
+ * ecuación del XIRR puede tener varias raíces y `xirr` devuelve aquella a la que llegue desde el
+ * punto de partida, así que la pantalla no debe presentarla como única. Los ceros no cuentan.
+ * Devuelve 0 cuando los flujos no sirven o no cambian de signo.
+ * @param {CashFlow[]} cashflows
+ * @returns {number}
+ */
+export function signChanges(cashflows) {
+  const flows = normalize(cashflows)
+  if (flows === null) return 0
+  let changes = 0
+  let previous = 0
+  for (const flow of flows) {
+    const sign = flow.amount > 0 ? 1 : flow.amount < 0 ? -1 : 0
+    if (sign === 0) continue
+    if (previous !== 0 && sign !== previous) changes += 1
+    previous = sign
+  }
+  return changes
+}
+
+/**
  * Tasa interna de retorno con fechas irregulares (XIRR), Actual/365.
  *
  * Mínimo: 2 flujos con fecha válida, con al menos un monto positivo y uno negativo. Devuelve null
  * (nunca 0 ni NaN) si falta algo de eso, si no existe cambio de signo en el VPN o si ni Newton ni
  * la bisección convergen. Un empate de fechas no estorba: los flujos del mismo día se suman solos
  * al descontarse con el mismo exponente.
+ *
+ * TAMBIÉN DEVUELVE NULL POR TOPE, que es una causa distinta de "no converge": la búsqueda se
+ * limita a MAX_RATE = 1e6, o sea 100,000,000 % anual, así que una anualización por arriba de eso
+ * sale null aunque la raíz exista. Medido: −100 hoy y +10,000 a 30 días devuelve null.
+ *
+ * VARIAS SOLUCIONES: cuando los flujos cambian de signo más de una vez, la ecuación puede tener
+ * más de una tasa que la satisface, y la que se devuelve depende del punto de partida. Medido con
+ * −1000 (2020), +2600 (2021) y −1680 (2022): con guess .1 devuelve .203752 y con guess .3 devuelve
+ * .390834, y las dos son raíces de verdad (xnpv da 0 y 1.1e−13). No es un error del solucionador,
+ * es la ambigüedad propia de la TIR. Quien lo pinte no debe presentarlo como único cuando la serie
+ * alterna aportaciones y retiros; `signChanges` dice cuántos cambios de signo hubo, justo para
+ * poder avisarlo. Ese helper se exporta desde este módulo; el barril de `index.js` es de A1, así
+ * que quien lo mantenga decide si también lo saca por ahí.
  *
  * @param {CashFlow[]} cashflows [{ date: 'AAAA-MM-DD' o Date, amount }]; negativo = sale dinero
  * @param {{ guess?: number, tolerance?: number, maxIterations?: number }} [options]
