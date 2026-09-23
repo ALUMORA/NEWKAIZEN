@@ -149,3 +149,14 @@ def test_the_guard_is_inside_cors_and_outside_gzip():
     chain = middleware_chain(create_app(Settings.from_env({})))
     assert chain.index(CORSMiddleware.__name__) < chain.index(ConcurrencyLimitMiddleware.__name__)
     assert chain.index(ConcurrencyLimitMiddleware.__name__) < chain.index(GZipMiddleware.__name__)
+
+
+def test_openapi_announces_rate_limited_on_the_503():
+    """La guarda contesta 503 con código RATE_LIMITED: el contrato tiene que decir que puede pasar."""
+    spec = TestClient(create_app(Settings.from_env({}))).get("/openapi.json").json()
+    data_routes = [p for p in spec["paths"] if p.startswith("/v2/")]
+    assert data_routes
+    for path in data_routes:
+        for op in spec["paths"][path].values():
+            desc = op["responses"]["503"]["description"]
+            assert "RATE_LIMITED" in desc and "Retry-After" in desc, (path, desc)

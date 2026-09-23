@@ -221,11 +221,13 @@ def test_login_rate_limit_per_ip_returns_429_with_retry_after(ana_hash):
     assert other_ip.status_code == 200
 
 
-def test_login_rate_limit_per_username_across_ips(ana_hash):
-    client = client_for(make_settings(ana_hash))
+def test_login_rate_limit_per_username_and_ip(ana_hash):
+    # Las fallas se cuentan por (usuario, IP): 10 por hora desde la misma red, y la 11 da 429. El
+    # límite por IP se relaja para que no sea él quien conteste el 429.
+    client = client_for(make_settings(ana_hash, LOGIN_RATE_LIMIT_IP_PER_MINUTE="100"))
     codes = [
         client.post(
-            "/auth/login", json={"username": "ana", "password": "mala"}, headers={"X-Forwarded-For": f"192.0.2.{i}"}
+            "/auth/login", json={"username": "ana", "password": "mala"}, headers={"X-Forwarded-For": "192.0.2.1"}
         ).status_code
         for i in range(11)
     ]
@@ -305,8 +307,9 @@ def test_hash_password_script_prints_a_usable_hash(capsys):
 
 def test_rate_limit_keys_are_bounded():
     limiter = LoginRateLimiter()
-    limiter.check("1.2.3.4", "x" * 5000)
-    assert max(len(k) for k in limiter.by_user._buckets) <= len("user:") + 64
+    limiter.check("9" * 5000, "x" * 5000)
+    assert max(len(k) for k in limiter.by_user_ip._buckets) <= len("user:|ip:") + 64 + 64
+    assert max(len(k) for k in limiter.by_ip._buckets) <= len("ip:") + 64
     for i in range(20):
         limiter.by_ip.max_keys = 10
         limiter.check(f"10.0.0.{i}", "ana")

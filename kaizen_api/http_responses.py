@@ -28,6 +28,9 @@ ERROR_RESPONSES: dict[int | str, dict] = {
     422: _error("Parámetro inválido (VALIDATION_ERROR)"),
     500: _error("Error interno (INTERNAL)"),
     501: _error("Todavía no implementado (NOT_IMPLEMENTED)"),
-    503: _error("Fuente caída o sin configurar (UPSTREAM_UNAVAILABLE, NOT_CONFIGURED)"),
+    503: _error(
+        "Fuente caída o sin configurar (UPSTREAM_UNAVAILABLE, NOT_CONFIGURED), "
+        "o servidor saturado (RATE_LIMITED, con Retry-After)"
+    ),
 }
 """Códigos de error que anuncia en OpenAPI cada ruta de datos v2."""

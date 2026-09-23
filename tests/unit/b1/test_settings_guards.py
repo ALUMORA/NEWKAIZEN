@@ -14,7 +14,7 @@ from fastapi.testclient import TestClient
 
 from kaizen_api.main import create_app
 from kaizen_api.security.auth import authenticate, hash_password, parse_hash
-from kaizen_api.settings import DEFAULT_ORIGIN_REGEX, Settings, SettingsError
+from kaizen_api.settings import DEFAULT_ORIGIN_REGEX, PRODUCTION_ORIGIN_REGEX, Settings, SettingsError
 
 from .conftest import PASSWORD, SECRET
 
@@ -98,11 +98,13 @@ def test_team_slug_is_validated_and_yields_to_an_explicit_regex():
     assert any("VERCEL_TEAM_SLUG se ignora" in w for w in explicit.warnings)
 
 
-def test_production_warns_when_the_wide_default_regex_is_in_use():
-    wide = Settings.from_env(PROD)
-    assert any("newkaizen-" in w for w in wide.warnings)
+def test_production_default_regex_is_the_exact_origin_and_says_so():
+    narrow = Settings.from_env(PROD)
+    assert narrow.allowed_origin_regex == PRODUCTION_ORIGIN_REGEX
+    assert any("previews" in w for w in narrow.warnings)
     quiet = Settings.from_env({**PROD, "VERCEL_TEAM_SLUG": "alumora"})
-    assert not any("newkaizen-" in w for w in quiet.warnings)
+    assert not any("previews" in w for w in quiet.warnings)
+    assert Settings.from_env({}).allowed_origin_regex == DEFAULT_ORIGIN_REGEX  # desarrollo, sin cambio
 
 
 # ─── rutas v1 ────────────────────────────────────────────────────────────────
@@ -129,3 +131,22 @@ def test_legacy_routes_are_on_by_default_outside_production():
     dev = Settings.from_env({})
     assert dev.legacy_routes and not any("KAIZEN_LEGACY_ROUTES" in w for w in dev.warnings)
     assert "legacy.v1" in _client().get("/health").json()["capabilities"]
+
+
+def test_production_default_does_not_open_cors_to_any_newkaizen_project():
+    """Revisión de fase 2: en producción la regex default aceptaba newkaizen-<lo que sea>.vercel.app."""
+    s = Settings.from_env(PROD)
+    client = TestClient(create_app(s))
+    for ajeno in ("https://newkaizen-evil-attacker.vercel.app", "https://newkaizen-git-rama-luis.vercel.app"):
+        r = client.get("/health", headers={"Origin": ajeno})
+        assert "access-control-allow-origin" not in r.headers, ajeno
+    # El dominio de producción sigue entrando sin configurar nada, así que el arranque no cambia.
+    prod = client.get("/health", headers={"Origin": "https://newkaizen.vercel.app"})
+    assert prod.headers["access-control-allow-origin"] == "https://newkaizen.vercel.app"
+    assert any("VERCEL_TEAM_SLUG" in w for w in s.warnings)
+
+
+def test_previews_stay_open_outside_production():
+    dev = TestClient(create_app(Settings.from_env({})))
+    r = dev.get("/health", headers={"Origin": "https://newkaizen-git-rama-luis.vercel.app"})
+    assert r.headers["access-control-allow-origin"] == "https://newkaizen-git-rama-luis.vercel.app"

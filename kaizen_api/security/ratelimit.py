@@ -96,14 +96,27 @@ def retry_after_header(seconds: float) -> str:
 
 
 class LoginRateLimiter:
-    """Límites del login: por IP y por minuto, y por usuario y por hora **solo intentos fallidos**.
+    """Límites del login: intentos por IP y por minuto, y fallas por (usuario, IP) y por hora.
 
-    Los defaults son los de la spec v2: 5 por minuto por IP y 10 por hora por usuario.
+    Los defaults son los de la spec v2: 5 por minuto por IP y 10 por hora por usuario, donde el 10
+    se cuenta **por usuario y por IP de origen**. Las dos cubetas se gastan al empezar el intento y
+    ``refund`` devuelve las dos cuando las credenciales resultaron buenas, así que cuentan fallas y
+    no logins.
 
-    La cubeta por usuario se gasta al empezar el intento y se **devuelve** con ``refund_user`` cuando
-    las credenciales resultaron buenas. Así la cubeta cuenta fallas, no logins: nadie puede dejar a
-    una persona fuera de su cuenta a punta de contraseñas malas mientras ella sí sabe la suya, y una
-    suite e2e que entra muchas veces seguidas tampoco se auto bloquea.
+    Por qué la cubeta de fallas lleva también la IP: si fuera solo por usuario, quien supiera un
+    nombre de usuario podría agotarla con contraseñas malas desde donde fuera y la dueña recibiría
+    429 aun con su contraseña buena (una mala cada 6 minutos bastaba para dejarla fuera para
+    siempre). Con la IP en la llave, la cubeta agotada frena a la red atacante y nunca a la legítima.
+
+    Por qué se gasta ANTES de verificar la contraseña y no después: si la cubeta agotada solo se
+    consultara al fallar, desde la IP atacante una contraseña mala daría 429 y la buena 200, y el
+    429 dejaría de frenar la fuerza bruta (sería un oráculo). Así, desde esa IP todo es 429.
+
+    Lo que se deja a propósito: no hay tope global por usuario. Uno que no pueda dejar fuera a la
+    dueña tiene que dejar pasar el primer intento de cada IP nueva, así que no baja el ritmo de un
+    ataque repartido entre muchas IPs; uno que sí lo baje vuelve a abrir el bloqueo de cuenta
+    ajena. Contra ataques repartidos, lo que protege es el costo de scrypt y la longitud de la
+    contraseña, y el tope por IP.
     """
 
     def __init__(
@@ -114,7 +127,7 @@ class LoginRateLimiter:
         clock: Callable[[], float] = time.monotonic,
     ):
         self.by_ip = TokenBucket.per_period(*per_ip, clock=clock)
-        self.by_user = TokenBucket.per_period(*per_user, clock=clock)
+        self.by_user_ip = TokenBucket.per_period(*per_user, clock=clock)
 
     @classmethod
     def from_settings(cls, settings, *, clock: Callable[[], float] = time.monotonic) -> LoginRateLimiter:
@@ -126,27 +139,36 @@ class LoginRateLimiter:
         )
 
     @staticmethod
-    def user_key(username: str) -> str:
+    def ip_key(ip: str) -> str:
+        return f"ip:{(ip or '')[:64]}"
+
+    @staticmethod
+    def user_key(ip: str, username: str) -> str:
         # Acotado: el POST /login v1 acepta cuerpos de hasta 10 KB y cada llave vive en memoria.
-        return f"user:{(username or '').strip().lower()[:64]}"
+        return f"user:{(username or '').strip().lower()[:64]}|ip:{(ip or '')[:64]}"
 
     def check(self, ip: str, username: str) -> float | None:
         """Gasta un intento. Devuelve ``None`` si pasa o los segundos a esperar si no."""
-        allowed, wait = self.by_ip.take(f"ip:{ip}")
+        allowed, wait = self.by_ip.take(self.ip_key(ip))
         if not allowed:
             return wait
-        allowed, wait = self.by_user.take(self.user_key(username))
+        allowed, wait = self.by_user_ip.take(self.user_key(ip, username))
         if not allowed:
             return wait
         return None
 
-    def refund_user(self, username: str) -> None:
-        """Devuelve el intento de ``username``: se llama cuando el login SÍ fue correcto."""
-        self.by_user.refund(self.user_key(username))
+    def refund(self, ip: str, username: str) -> None:
+        """Devuelve el intento de ``username`` desde ``ip``: se llama cuando el login SÍ fue correcto.
+
+        Devuelve también la ficha por IP, para que una oficina detrás de una sola IP de salida no se
+        bloquee sola a las 9 de la mañana: el tope por IP queda como tope de intentos fallidos.
+        """
+        self.by_ip.refund(self.ip_key(ip))
+        self.by_user_ip.refund(self.user_key(ip, username))
 
     def reset(self) -> None:
         self.by_ip.reset()
-        self.by_user.reset()
+        self.by_user_ip.reset()
 
 
 def client_ip(headers, client_host: str | None, trusted_hops: int = 1) -> str:
@@ -160,9 +182,14 @@ def client_ip(headers, client_host: str | None, trusted_hops: int = 1) -> str:
     Tomar el primero, como hacía S1, deja pasar ``X-Forwarded-For: <lo que sea>``: el atacante se
     cambia de llave en cada intento y el límite por IP no existe. Con 0 saltos la cabecera se ignora
     por completo y manda la IP del socket, que es lo correcto cuando el API se expone directo.
+
+    Si la petición trae la cabecera repetida, se unen todas en orden (lo mismo que hace el
+    ``ProxyHeadersMiddleware`` de uvicorn): ``headers.get`` devolvería solo la PRIMERA, que es la
+    que escribió el cliente, y bastaría mandar la propia delante de la del proxy para volver a
+    elegir la llave.
     """
     hops = max(0, int(trusted_hops))
-    forwarded = headers.get("x-forwarded-for") if (headers is not None and hops) else None
+    forwarded = _forwarded_for(headers) if hops else ""
     if forwarded:
         chain = [h.strip() for h in forwarded.split(",") if h.strip()]
         if len(chain) >= hops:
@@ -170,3 +197,12 @@ def client_ip(headers, client_host: str | None, trusted_hops: int = 1) -> str:
         # Cadena más corta que los saltos configurados: no cuadra con la infraestructura declarada,
         # así que no se confía en ella y manda el socket.
     return client_host or "desconocido"
+
+
+def _forwarded_for(headers) -> str:
+    """Todas las cabeceras ``X-Forwarded-For`` unidas con coma, en el orden en que llegaron."""
+    if headers is None:
+        return ""
+    getlist = getattr(headers, "getlist", None)
+    values = getlist("x-forwarded-for") if getlist is not None else [headers.get("x-forwarded-for")]
+    return ", ".join(v for v in values if v)
