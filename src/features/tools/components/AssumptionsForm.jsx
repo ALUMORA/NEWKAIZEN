@@ -74,7 +74,7 @@ export function AssumptionsForm({ value, errors, onChange, apiRf, rfLoading }) {
         <SegmentedControl label="Estimador de covarianza" hideLabel items={COV_ITEMS} value={value.covMethod} onChange={(v) => onChange({ covMethod: v })} name="opt-cov" />
         <p className="kz-tool__hint" data-tone={value.covMethod === 'sample' ? 'warning' : undefined}>
           {value.covMethod === 'sample'
-            ? 'Ojo: la muestral cruda exagera las correlaciones extremas y el optimizador las aprovecha. Úsala para comparar.'
+            ? 'Ojo: la muestral cruda exagera las correlaciones extremas y el optimizador carga sus pesos en ellas. Úsala para comparar.'
             : 'Contracción hacia una correlación constante: más estable cuando hay muchas emisoras y pocos datos.'}
         </p>
       </fieldset>
