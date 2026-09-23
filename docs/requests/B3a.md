@@ -3,45 +3,43 @@
 Cosas que B3a necesita de archivos que no le pertenecen. Mientras no existan, el código las
 rodea dentro de sus propios archivos y lo dice en `meta.notes`, nunca con un dato inventado.
 
-## 1. `fx.convert` no reporta la fecha del tipo de cambio (dueño: B2a, `kaizen_api/domain/fx.py`)
+## 1. La fecha del tipo de cambio (`fxUsed.asOf`): resuelto sin tocar `fx.py`
 
-**Qué pasa.** El contrato pide `fxUsed: {pair, rate, asOf}` en `/v2/instrument/{symbol}`, pero la
-costura congelada `convert(amount_or_series, from_ccy, to_ccy, on=None)` solo devuelve el monto
-convertido. Para sacar el tipo de cambio, B3a convierte una unidad (`convert(1.0, fin, px)`), y la
-fecha no hay de dónde sacarla: hoy `fxUsed.asOf` sale en `null`.
+**Qué pasaba.** `Converter` pedía el tipo con `fx.convert(1.0, de, a)`, que solo devuelve el monto,
+así que `fxUsed.asOf` salía en `null` y la ficha no decía que el tipo venía de Yahoo y no del FIX.
 
-**Qué se pide.** Una función hermana en el mismo módulo, sin tocar la firma congelada:
+**Cómo quedó.** `fx.convert(monto, de, a)` sin fecha es, por dentro, `fx.spot().rate` aplicado con
+`fx.apply_rate`. `domain/currency.py` ahora llama a esas mismas tres funciones públicas de `fx.py`
+(`check_pair`, `spot`, `apply_rate`), así que el número es idéntico al de `convert` y además trae
+`FxQuote.as_of`, `source`, `fallback` y `stale`. Con eso:
 
-```python
-def rate(from_ccy: str, to_ccy: str, on: date | str | None = None) -> tuple[float, str, bool]:
-    """Tipo de cambio, fecha ISO del dato y si es sustituto (Yahoo en vez del FIX)."""
-```
+- `fxUsed.asOf` es la fecha de la barra de FX que se usó (en el replay del 22 de septiembre,
+  `2026-09-22`).
+- Si el tipo salió de Yahoo, `meta.fallback` va en `true` con una nota; si salió del FIX,
+  `banxico` se agrega a `meta.source`.
+- Si la barra de FX pasó la tolerancia de `fx.STALE_AFTER_DAYS`, `meta.stale` va en `true`.
 
-Con eso, `domain/currency.py::Converter.used()` llena `asOf` y `meta.fallback` puede quedar en
-`true` cuando el tipo de cambio salió de Yahoo y no del FIX de Banxico, que es información que hoy
-se pierde. Si no llega, todo sigue funcionando: `asOf` en `null` y una nota.
+La función hermana `rate(from, to, on)` que se pedía ya no hace falta. Si B2a cambia algún día
+cómo `convert` elige el tipo sin fecha, esta costura tiene que cambiar igual; hoy son la misma.
 
-**Mientras tanto.** `Converter` pide el tipo con `convert(1.0, ...)`, y si eso levanta
-`NotImplementedError` deja en `null` toda razón que mezcle precio con estados (P/S, EV/EBITDA,
-P/FCF, rendimiento de flujo libre y valor de empresa) y lo explica en `meta.notes`. Es lo que se ve
-hoy en `/v2/instrument/AAPL.MX`.
+## 2. `history.get_series` y el referente local de la beta (dueño: B2a): ya existe
 
-## 2. `history.get_series` y el referente local de la beta (dueño: B2a, `kaizen_api/domain/history.py`)
+La costura aterrizó en M2 y la beta se calcula contra `NAFTRAC.MX` (pesos) o `SPY` (dólares). Dos
+cosas que quedan escritas:
 
-**Qué pasa.** La beta se calcula contra un referente local en la MISMA moneda: `NAFTRAC.MX` para
-pesos y `SPY` para dólares, dos años de cierres semanales emparejados por fecha. Eso se pide con
-`get_series(symbol, "2y", "1wk", "native")`, que hoy levanta `NotImplementedError`, así que
-`beta` sale `null` (o, solo para papeles en dólares, la de Yahoo marcada como respaldo).
+- `PriceSeries.currency` tiene que traer la moneda real del papel: B3a se niega a calcular la beta
+  si no coincide con la del referente.
+- Los rendimientos se emparejan solo si coinciden la fecha inicial Y la final del intervalo. Si a
+  una serie le falta un cierre, las semanas que tocan el hueco se descartan y la nota dice cuántas.
 
-**Qué se pide.** Nada nuevo: la costura ya está documentada y basta con implementarla. Dos avisos:
+## 2b. `meta.stale` de `/v2/instrument`
 
-- `PriceSeries.currency` tiene que traer la moneda real del papel. B3a compara esa moneda con la
-  del referente y se niega a calcular la beta si no coinciden.
-- `NAFTRAC.MX` no estaba en el set base de fixtures. B3a ya grabó en su capa `2026-09-22-b3a`
-  `yf:NAFTRAC.MX:history?interval=1wk&period=2y` (y también `1y`, `5y` e `info`), con la misma
-  forma de llave que usa `_fetch_hist`. Si la implementación de `get_series` llama a Yahoo con
-  otros parámetros, hay que grabar esa llave; el dato de NAFTRAC ya está ahí para no volver a
-  salir a la red.
+El contrato no fija umbral, así que B3a usa el de las series de B2a: `history.is_stale(symbol,
+quote.asOf, "1d")`, que marca atrasada la cotización más vieja que la última sesión cerrada de su
+bolsa (BMV o NYSE) y cae a días naturales para lo que no tiene calendario. También cuenta como
+`stale` un tipo de cambio que `fx.py` ya marca atrasado. Las demás rutas de B3a (estados,
+dividendos, eventos, insiders) dejan `stale` en `false`: son datos que se publican cada trimestre o
+cuando ocurre el hecho, y no hay un "atrasado" que se pueda afirmar sin inventar una regla.
 
 ## 3. `sectorMedians` de `/v2/instrument` sale en `null` (dueño del dato: B3c)
 

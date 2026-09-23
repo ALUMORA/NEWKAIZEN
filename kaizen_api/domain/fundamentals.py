@@ -392,15 +392,20 @@ def instrument_type(info: dict, symbol: str) -> str | None:
     return kind
 
 
-def _weekly_returns(series) -> dict[str, float]:
-    """``{fecha: rendimiento simple}`` de una ``PriceSeries``, emparejable por fecha."""
-    out: dict[str, float] = {}
+def _weekly_returns(series) -> dict[str, tuple[str, float]]:
+    """``{fecha final: (fecha inicial, rendimiento simple)}`` de una ``PriceSeries``.
+
+    Se guardan las DOS fechas del intervalo: si a una serie le falta una semana, su rendimiento
+    siguiente abarca dos, y solo comparando también la fecha inicial se ve que no es el mismo
+    intervalo que el de la otra serie.
+    """
+    out: dict[str, tuple[str, float]] = {}
     dates, close = series.dates, series.close
     for i in range(1, len(close)):
         prev, cur = safe(close[i - 1]), safe(close[i])
         if prev is None or cur is None or prev <= 0:
             continue
-        out[dates[i]] = cur / prev - 1.0
+        out[dates[i]] = (dates[i - 1], cur / prev - 1.0)
     return out
 
 
@@ -435,13 +440,23 @@ def compute_beta(symbol: str, price_currency: str | None, notes: list[str]) -> d
         return None
     own_returns = _weekly_returns(own)
     market_returns = _weekly_returns(market)
-    dates = sorted(set(own_returns) & set(market_returns))
+    common = sorted(set(own_returns) & set(market_returns))
+    # Se empareja solo cuando coinciden las DOS fechas del intervalo; si no, uno de los dos
+    # rendimientos abarca más semanas que el otro por un hueco en su serie.
+    dates = [d for d in common if own_returns[d][0] == market_returns[d][0]]
+    dropped = len(common) - len(dates)
+    if dropped:
+        weeks = "1 semana" if dropped == 1 else f"{dropped} semanas"
+        notes.append(
+            f"Para la beta se descartó {weeks} en la que las dos series no coinciden en el intervalo "
+            "(a una le falta un cierre)."
+        )
     n = len(dates)
     if n < BETA_MIN_OBS:
         notes.append(f"La beta necesita al menos {BETA_MIN_OBS} semanas emparejadas y solo hubo {n}.")
         return None
-    xs = [market_returns[d] for d in dates]
-    ys = [own_returns[d] for d in dates]
+    xs = [market_returns[d][1] for d in dates]
+    ys = [own_returns[d][1] for d in dates]
     mx = sum(xs) / n
     my = sum(ys) / n
     var = sum((x - mx) ** 2 for x in xs)
@@ -544,7 +559,8 @@ def get_instrument(symbol: str) -> dict:
     """Ficha completa de la emisora para ``/v2/instrument/{symbol}``.
 
     Levanta ``ApiError`` 404 cuando Yahoo no conoce el símbolo. Devuelve el cuerpo del contrato sin
-    ``meta``, más las llaves auxiliares ``notes``, ``sources`` y ``fallback`` que arma el router.
+    ``meta``, más las llaves auxiliares ``notes``, ``sources``, ``fallback`` y ``stale`` que arma
+    el router.
     """
     symbol = symbol.upper()
     info = _yahoo.get_info(symbol)
@@ -570,6 +586,15 @@ def get_instrument(symbol: str) -> dict:
     conv = Converter(financial_currency, price_currency)
     if not conv.same and conv.failure:
         notes.append(conv.failure + " Las razones que mezclan precio con estados quedan vacías.")
+    fx_fallback = False
+    if conv.used() is not None and conv.fallback:
+        # Una fuente sustituta es ``fallback`` aunque el precio sea en vivo: las razones que mezclan
+        # precio con estados se hicieron con ese tipo de cambio.
+        fx_fallback = True
+        notes.append(
+            f"El tipo de cambio {conv.pair} con el que se convirtieron los estados viene del mercado "
+            "en Yahoo, no del FIX de Banxico."
+        )
 
     # En la moneda de los ESTADOS (se convierten antes de mezclarlas con el precio).
     revenue = scale_minor(info.get("totalRevenue"), fin_divisor)
@@ -651,14 +676,31 @@ def get_instrument(symbol: str) -> dict:
             "El rendimiento de la utilidad se sacó del P/U que publica Yahoo, no de los estados financieros."
         )
 
-    fallback = False
+    fallback = fx_fallback
     beta = compute_beta(symbol, price_currency, notes)
     if beta is None:
         beta = _yahoo_beta(info, price_currency, notes)
-        fallback = beta is not None
+        fallback = fallback or beta is not None
     sources = ["yahoo"] + (["computed"] if beta and beta["source"] == "computed" else [])
+    if conv.used() is not None and conv.source and conv.source not in sources:
+        sources.append(conv.source)
     available = sum(1 for key in FUNDAMENTAL_KEYS if fundamentals[key] is not None)
     quote = _quote(info, price, px_divisor)
+    # ``stale``: la cotización es más vieja que la última sesión cerrada de su bolsa (la regla de
+    # ``history.is_stale`` de B2a, la misma que usan las series), o el tipo de cambio con el que se
+    # convirtieron los estados pasó la tolerancia de ``domain.fx``.
+    quote_stale = _history.is_stale(symbol, quote["asOf"], "1d")
+    if quote_stale:
+        notes.append(
+            f"La última cotización que trae Yahoo es del {quote['asOf'][:10]}, así que no es el precio "
+            "de la sesión más reciente."
+        )
+    fx_stale = conv.used() is not None and conv.stale
+    if fx_stale:
+        notes.append(
+            f"El tipo de cambio {conv.pair} que se usó es del {conv.used()['asOf']}, más viejo de lo "
+            "que se tolera."
+        )
     return {
         "symbol": symbol,
         "name": str(info.get("longName") or info.get("shortName") or symbol),
@@ -681,6 +723,7 @@ def get_instrument(symbol: str) -> dict:
         "sources": sources,
         "as_of": quote["asOf"],
         "fallback": fallback,
+        "stale": bool(quote_stale or fx_stale),
     }
 
 

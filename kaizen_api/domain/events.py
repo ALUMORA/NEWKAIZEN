@@ -14,7 +14,7 @@ import datetime as _dt
 from typing import Any
 
 from kaizen_api.domain import safe
-from kaizen_api.domain.currency import normalize_currency
+from kaizen_api.domain.currency import normalize_currency, scale_minor
 from kaizen_api.provenance import utc_now
 from kaizen_api.providers.yahoo import fundamentals as _yahoo
 
@@ -60,8 +60,10 @@ def _as_date(value: Any) -> str | None:
 def _symbol_events(symbol: str, today: str, notes: list[str]) -> list[dict]:
     calendar = _yahoo.get_calendar(symbol)
     info = _yahoo.get_info(symbol)
-    currency, _divisor = normalize_currency(info.get("currency"))
-    estimate = safe(calendar.get("Earnings Average")) if isinstance(calendar, dict) else None
+    currency, divisor = normalize_currency(info.get("currency"))
+    # El consenso de UPA de Yahoo viene en la moneda de COTIZACIÓN (peniques para Londres), así
+    # que se lleva a la moneda mayor igual que el precio y se entrega con esa moneda.
+    estimate = scale_minor(calendar.get("Earnings Average"), divisor) if isinstance(calendar, dict) else None
     found: set[tuple[str, str]] = set()
     items: list[dict] = []
 
@@ -79,7 +81,7 @@ def _symbol_events(symbol: str, today: str, notes: list[str]) -> list[dict]:
             "date": date,
             "estimate": round(estimate, 4) if upcoming else None,
             "amount": None,
-            "currency": currency if kind in ("exDividend", "dividendPay") else None,
+            "currency": currency if kind in ("exDividend", "dividendPay") or upcoming else None,
         })
 
     if isinstance(calendar, dict):

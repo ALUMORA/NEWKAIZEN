@@ -28,7 +28,7 @@ import pandas as pd
 
 from kaizen_api.domain import safe
 from kaizen_api.domain.currency import normalize_currency, scale_minor
-from kaizen_api.providers.sec_edgar import get_companyfacts, get_edgar_financials
+from kaizen_api.providers.sec_edgar import SEC_UNAVAILABLE, companyfacts_lookup, get_edgar_financials
 from kaizen_api.providers.yahoo import fundamentals as yahoo_fundamentals
 
 __all__ = ["ROW_IDS", "ROW_LABELS", "get_edgar_financials", "get_statements"]
@@ -135,6 +135,32 @@ def _period_fiscal_year(end: str) -> int:
     return year - 1 if (month == 1 and day <= 7) else year
 
 
+SEC_ORIGINAL_FILING_DAYS = 150
+"""Un hecho presentado a más de 150 días de su cierre ya no es el del expediente que lo estrenó."""
+
+
+def _fiscal_year(source_fact: dict | None, end: str) -> int:
+    """Año fiscal del periodo: el ``fy`` de la SEC si el hecho es del expediente original.
+
+    En ``companyfacts`` el ``fy`` es el ejercicio del DOCUMENTO, no del periodo. En el expediente
+    que estrena un cierre los dos coinciden (el 10-Q de Apple a diciembre de 2024 dice fy 2025, fp
+    Q1), pero un cierre que solo aparece como comparativo en el 10-K del año siguiente trae el fy
+    de ese 10-K. Por eso solo se confía en ``fy`` si el hecho se presentó a 150 días o menos del
+    cierre (un 10-K se presenta a más tardar a 90 días y un 10-Q a 45); si no, se usa la regla de
+    la fecha, que es lo único que queda.
+    """
+    fact = source_fact or {}
+    fy, filed = fact.get("fy"), fact.get("filed")
+    if isinstance(fy, int) and not isinstance(fy, bool) and isinstance(filed, str):
+        try:
+            lag = (_dt.date.fromisoformat(filed[:10]) - _dt.date.fromisoformat(end)).days
+        except ValueError:
+            lag = None
+        if lag is not None and 0 <= lag <= SEC_ORIGINAL_FILING_DAYS:
+            return fy
+    return _period_fiscal_year(end)
+
+
 def _duration_days(fact: dict) -> int | None:
     start, end = fact.get("start"), fact.get("end")
     if not start or not end:
@@ -205,8 +231,7 @@ def _sec_currency(facts: dict) -> str | None:
     return "USD"
 
 
-def _sec_statements(symbol: str, freq: str) -> dict[str, Any] | None:
-    facts = get_companyfacts(symbol)
+def _sec_statements(symbol: str, freq: str, facts: dict | None) -> dict[str, Any] | None:
     if not facts:
         return None
     notes: list[str] = []
@@ -253,7 +278,7 @@ def _sec_statements(symbol: str, freq: str) -> dict[str, Any] | None:
         quarter = int(fp[1]) if len(fp) == 2 and fp[0] == "Q" and fp[1].isdigit() else None
         periods.append({
             "end": end,
-            "fiscalYear": _period_fiscal_year(end),
+            "fiscalYear": _fiscal_year(source_fact, end),
             "fiscalQuarter": quarter if freq == "quarterly" else None,
             "form": (source_fact or {}).get("form"),
         })
@@ -364,7 +389,9 @@ def _yahoo_statements(symbol: str, freq: str, currency: str | None = None) -> di
                 notes.append("El flujo libre es flujo operativo menos inversión en activo fijo.")
         if values is None or not any(v is not None for v in values):
             continue
-        if row_id != "eps" and divisor != 1.0:
+        if divisor != 1.0:
+            # La UPA también: viene en la misma unidad menor que el resto del estado, y la
+            # respuesta declara la moneda mayor para todos los renglones.
             values = [scale_minor(v, divisor) for v in values]
         rows.append({"id": row_id, "label": ROW_LABELS[row_id], "values": values})
 
@@ -397,24 +424,38 @@ def get_statements(symbol: str, freq: str = "annual", financial_currency: str | 
 
     Primero la SEC para emisores de EE. UU. y, si no hay expediente, Yahoo. Sin ninguna de las dos,
     devuelve ``periods`` y ``rows`` vacíos con la nota de por qué, nunca cifras inventadas.
+
+    Trae la llave auxiliar ``fallback`` para ``meta``: va en ``True`` cuando la SEC no se pudo leer
+    (timeout, límite de tasa, error del servidor) y lo que se entrega salió de otra fuente o no
+    salió. Un emisor que simplemente no reporta ante la SEC no es sustituto de nada.
     """
     symbol = symbol.upper()
     freq = freq if freq in ("annual", "quarterly") else "annual"
-    payload = _sec_statements(symbol, freq)
+    facts, sec_status = companyfacts_lookup(symbol)
+    sec_down = sec_status == SEC_UNAVAILABLE
+    payload = _sec_statements(symbol, freq, facts)
     if payload is None:
         if financial_currency is None:
             financial_currency = yahoo_fundamentals.get_info(symbol).get("financialCurrency")
         payload = _yahoo_statements(symbol, freq, financial_currency)
+        if payload is not None and sec_down:
+            payload["notes"].insert(0, "La SEC no respondió; estos renglones salen de Yahoo.")
     if payload is None:
         iso, _div = normalize_currency(financial_currency)
+        note = (
+            "No se pudo consultar a la SEC y Yahoo no trae estados de este símbolo. Intenta más tarde."
+            if sec_down
+            else "No hay estados financieros publicados para este símbolo."
+        )
         payload = {
             "currency": iso,
             "source": "yahoo",
             "periods": [],
             "rows": [],
-            "notes": ["No hay estados financieros publicados para este símbolo."],
+            "notes": [note],
             "as_of": None,
         }
+    payload["fallback"] = sec_down
     payload["symbol"] = symbol
     payload["freq"] = freq
     return payload

@@ -173,32 +173,71 @@ def cik_for(symbol: str) -> str | None:
     return mapping.get(base) if mapping else None
 
 
-def get_companyfacts(symbol: str) -> dict | None:
-    """``companyfacts`` XBRL del emisor, o ``None`` si no está registrado o la SEC no respondió.
+SEC_OK = "ok"
+SEC_NOT_FILER = "not_filer"
+SEC_NO_FACTS = "no_facts"
+SEC_UNAVAILABLE = "unavailable"
 
-    El resultado es el JSON tal cual lo publica la SEC (``{"entityName", "facts": {...}}``).
+
+def companyfacts_lookup(symbol: str) -> tuple[dict | None, str]:
+    """``companyfacts`` XBRL del emisor y POR QUÉ no llegó, si no llegó.
+
+    El segundo valor distingue lo que ``get_companyfacts`` junta en un solo ``None``:
+
+    * ``"ok"``: hay hechos.
+    * ``"not_filer"``: el símbolo no está registrado ante la SEC (toda la BMV, por ejemplo).
+    * ``"no_facts"``: la SEC contestó y no tiene hechos XBRL de esa emisora (un 404, como SPY).
+    * ``"unavailable"``: no se pudo leer a la SEC (timeout, 429 por límite de tasa, 5xx, JSON
+      malo o el índice de tickers caído). Aquí no se sabe nada de la emisora, y quien sirva otra
+      fuente en su lugar tiene que marcarla como sustituta.
     """
+    if symbol.upper().endswith(".MX"):
+        return None, SEC_NOT_FILER
+    mapping = _edgar_ticker_map()
+    if not mapping:
+        # Sin índice no sabemos si es emisor de EE. UU. Un sufijo de plaza (``BMW.DE``) sí lo dice.
+        return None, SEC_NOT_FILER if "." in symbol else SEC_UNAVAILABLE
     cik = cik_for(symbol)
     if not cik:
-        return None
+        return None, SEC_NOT_FILER
+    status = {"value": SEC_OK}
 
     def fetch() -> dict | None:
         try:
             resp = _edgar_session.get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json", timeout=15)
         except Exception:
+            status["value"] = SEC_UNAVAILABLE
+            return None
+        if resp.status_code == 404:
+            status["value"] = SEC_NO_FACTS
             return None
         if resp.status_code != 200:
+            status["value"] = SEC_UNAVAILABLE
             return None
         try:
             data = resp.json()
         except Exception:
+            status["value"] = SEC_UNAVAILABLE
             return None
         if not isinstance(data, dict) or not data.get("facts"):
+            status["value"] = SEC_NO_FACTS
             return None
         data["cik"] = cik
         return data
 
-    return _cached(f"v2:sec:facts:{cik}", fetch, ttl=SEC_FACTS_TTL, ok=lambda d: bool(d))
+    data = _cached(f"v2:sec:facts:{cik}", fetch, ttl=SEC_FACTS_TTL, ok=lambda d: bool(d))
+    if data:
+        return data, SEC_OK
+    return None, status["value"] if status["value"] != SEC_OK else SEC_UNAVAILABLE
+
+
+def get_companyfacts(symbol: str) -> dict | None:
+    """``companyfacts`` XBRL del emisor, o ``None`` si no está registrado o la SEC no respondió.
+
+    El resultado es el JSON tal cual lo publica la SEC (``{"entityName", "facts": {...}}``). Para
+    saber CUÁL de los dos casos fue, usa ``companyfacts_lookup``.
+    """
+    return companyfacts_lookup(symbol)[0]
 
 
 def _submissions(cik: str) -> dict | None:
@@ -277,19 +316,45 @@ def raw_document_name(document: str) -> str:
     return str(document)
 
 
-def get_form4_documents(symbol: str, limit: int = FORM4_MAX) -> list[dict]:
-    """Las Formas 4 recientes del emisor con su XML ya descargado.
+def form4_lookup(symbol: str, limit: int = FORM4_MAX) -> dict:
+    """Las Formas 4 recientes del emisor con su XML, y cuánto NO se pudo leer.
 
-    Devuelve ``[{accession, filingDate, xml}]``. Lista vacía cuando el símbolo no es de un emisor
-    registrado ante la SEC (toda la BMV) o cuando EDGAR no respondió.
+    Devuelve ``{"documents", "listed", "unreadable", "unavailable"}``:
+
+    * ``documents``: ``[{accession, filingDate, xml}]`` de los expedientes que sí se leyeron.
+    * ``listed``: cuántas Formas 4 recientes lista la SEC para el emisor (hasta ``limit``).
+    * ``unreadable``: cuántas de esas no se pudieron descargar.
+    * ``unavailable``: ``True`` si ni siquiera se pudo leer la lista de expedientes. Entonces no se
+      sabe si la emisora tiene Formas 4, y decir que no tiene sería falso.
+
+    Un símbolo que no reporta ante la SEC (toda la BMV) sale con todo en cero y ``False``.
     """
+    empty = {"documents": [], "listed": 0, "unreadable": 0, "unavailable": False}
+    cik = cik_for(symbol)
+    if not cik:
+        return empty
+    if not _submissions(cik):
+        return {**empty, "unavailable": True}
     out: list[dict] = []
+    listed = unreadable = 0
     for filing in recent_filings(symbol, "4", limit):
         document = raw_document_name(filing["document"])
         if not document.lower().endswith(".xml"):
             continue
+        listed += 1
         xml = get_filing_document(filing["cik"], filing["accession"], document)
         if not xml:
+            unreadable += 1
             continue
         out.append({"accession": filing["accession"], "filingDate": filing["filingDate"], "xml": xml})
-    return out
+    return {"documents": out, "listed": listed, "unreadable": unreadable, "unavailable": False}
+
+
+def get_form4_documents(symbol: str, limit: int = FORM4_MAX) -> list[dict]:
+    """Las Formas 4 recientes del emisor con su XML ya descargado.
+
+    Devuelve ``[{accession, filingDate, xml}]``. Lista vacía cuando el símbolo no es de un emisor
+    registrado ante la SEC (toda la BMV) o cuando EDGAR no respondió; ``form4_lookup`` distingue
+    los dos casos.
+    """
+    return form4_lookup(symbol, limit)["documents"]
