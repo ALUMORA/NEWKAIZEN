@@ -79,12 +79,17 @@ async function expectNoAxeViolations(page, context) {
   expect(results.violations, `${context}:\n${detail}`).toEqual([])
 }
 
+// Se compara contra el ancho del viewport que pidió la prueba, no contra window.innerWidth: en el
+// proyecto mobile (Pixel 7, isMobile) el viewport de layout crece con el contenido que se desborda,
+// así que innerWidth sube junto con scrollWidth y la comparación pasaba sin comparar nada.
 async function noHorizontalScroll(page) {
-  const { scrollWidth, innerWidth, frame } = await page.evaluate(() => {
+  const width = page.viewportSize()?.width ?? 0
+  const { scrollWidth, clientWidth, frame } = await page.evaluate(() => {
     const el = document.querySelector('.kz-shell__frame')
-    return { scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth, frame: el ? el.scrollWidth - el.clientWidth : 0 }
+    return { scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth, frame: el ? el.scrollWidth - el.clientWidth : 0 }
   })
-  expect(scrollWidth, 'la página no se desplaza a lo ancho').toBeLessThanOrEqual(innerWidth)
+  expect(scrollWidth, 'la página no se desplaza a lo ancho').toBeLessThanOrEqual(width)
+  expect(clientWidth, 'el viewport de layout no crece más que la pantalla').toBeLessThanOrEqual(width)
   expect(frame, 'el marco del shell no se desplaza a lo ancho').toBeLessThanOrEqual(0)
 }
 
