@@ -128,7 +128,19 @@ están en `docs/OWNERSHIP.md`).
 ### Datos de mercado (B2a: `routers/quotes.py`, `routers/history.py` y `routers/search.py`)
 
 - `GET /v2/quotes?symbols=A,B` (hasta 50) → `QuotesResponse`. Los símbolos sin cotización van en
-  `missing`, no como error.
+  `missing`, no como error. Cada `Quote` trae `sector` e `industry` (fase 3, pedido de F1 para la
+  concentración por sector de /portafolio/riesgo), tomados del mismo `info` de Yahoo que da el
+  precio, así que pedirlos no cuesta otra llamada. `sector` va en español de México con la misma
+  tabla que los screeners (`domain/universe.py`, `SECTOR_ES`: `Technology` sale como `Tecnología`,
+  `Financial Services` y `Financials` salen los dos como `Servicios financieros`, y `Materials` y
+  `Basic Materials` los dos como `Materiales`); un sector sin traducción sale tal cual lo manda
+  Yahoo. Como la traducción junta sectores distintos, `sector` es para mostrar y `sectorKey`, el
+  sector crudo de Yahoo en inglés, es la llave para agrupar y para cruzar: es el mismo texto que
+  `InstrumentResponse.sector`, que todavía sale crudo en la ficha. `industry` no tiene catálogo de
+  traducción y sale en inglés. Índices, fondos, ETF, divisas y cripto no traen sector en Yahoo y
+  salen con los tres en `null`: la UI los muestra como "s/d" o los agrupa por `type`, nunca les
+  adivina un sector. El servidor siempre manda los tres campos; son opcionales en el contrato solo
+  para que un cliente tolere un API desplegado antes de este cambio.
 - `GET /v2/search?q=&limit=10` (`q` de 1 a 64 caracteres, `limit` de 1 a 50) → `SearchResponse`.
   Fuentes: `company_tickers.json` de la SEC y la lista curada `kaizen_api/data/symbols_mx.json` con
   alias en español (sin red para México).
@@ -138,8 +150,10 @@ están en `docs/OWNERSHIP.md`).
   de la MISMA fecha, con relleno hacia adelante de a lo más 3 días en huecos del FX, anotado en
   `meta.notes`.
 - `GET /v2/panel?symbols=A,B&range=1y&interval=1d&ccy=MXN` → `PanelResponse`. INNER JOIN por fecha,
-  sin rellenar precios; los símbolos que no se pudieron alinear van en `dropped` con su motivo. Los
-  rendimientos se calculan en el cliente.
+  sin rellenar precios; los símbolos que no se pudieron alinear van en `dropped` con su motivo.
+  Mismos cierres ajustados que `/v2/history`: un cierre anterior a un dividendo no sirve como precio
+  de compra. Los rendimientos se calculan en el cliente. Para separar efecto precio y efecto tipo de
+  cambio, ver "Panel en moneda nativa y en MXN" en las recetas para el cliente, más abajo.
 - `GET /v2/fx?pair=USDMXN` → `FxResponse`. FIX de Banxico (`banxico_fix`) si hay token, si no Yahoo
   marcado en `meta`.
 - `GET /v2/fx/history?pair=USDMXN&start=&end=` → `FxHistoryResponse`. Banxico FIX SF43718 con token,
@@ -150,7 +164,29 @@ están en `docs/OWNERSHIP.md`).
 - `GET /v2/rates/mx` → `MxRatesResponse`. Ids: `target` (objetivo, SF61745), `tiie28`,
   `tiieFondeo`, `cetes28`, `cetes91`, `cetes182`, `cetes364`, `bonoM10` (si existe), `inflationYoY`,
   `coreInflationYoY`, `udi`, `fix`. Cualquier serie del SIE distinta de SF43718 y SF61745 se verifica
-  contra el endpoint de metadatos del SIE en una prueba antes de usarse.
+  contra el endpoint de metadatos del SIE en una prueba antes de usarse. Desde la fase 3 (pedidos 2
+  y 3 de F2) cada renglón dice tres cosas por serie:
+  - `verified`: `true` solo si la serie viene del SIE, tiene revisión humana en el catálogo
+    (`verified: true` en `kaizen_api/data/banxico_series.json`) y el SIE la confirmó en las
+    últimas 24 horas con su título, periodicidad y unidad. No es "hoy": la verificación se guarda un
+    día, así que una serie confirmada ayer a las 10:00 cuenta como confirmada hasta hoy a las 10:00.
+    Una serie del SIE que no pase ese candado no se publica (su id y la razón quedan en
+    `meta.notes`), así que en la práctica `verified` equivale a `source: "banxico"` y hoy
+    `verified: false` solo lo lleva el respaldo de FRED (`bonoM10` con `source: "fred"`), que nunca
+    pasa por el SIE. La UI lo marca como no verificado.
+  - `stale`: el último dato de ESA serie es más viejo de lo que se tolera para su periodicidad
+    (`maxAgeDays` del catálogo: 5 días naturales para objetivo, TIIE, FIX y UDI; 14 a 35 para los
+    CETES; 7 para el Bono M del SIE; 45 para la inflación quincenal; y 70 para el Bono M mensual de
+    FRED, en `FRED_MX_FALLBACK` de `domain/rates.py`). `meta.stale` es exactamente que alguna serie
+    tenga `stale: true`.
+  - `tenorDays`: plazo en días de los CETES (`cetes28` 28, `cetes91` 91, `cetes182` 182,
+    `cetes364` 364), el mismo que acepta `/v2/rates/rf`; `null` en todas las demás series, incluida
+    la TIIE. Ya no hace falta sacarlo del id ni de la etiqueta.
+
+  El servidor siempre manda los tres campos; son opcionales en el contrato solo para que un cliente
+  tolere un API desplegado antes de este cambio (ahí, sin `verified`, la serie no se da por
+  verificada, y sin `stale` se usa `meta.stale`). Por eso `stale` es `boolean | null` con `null` por
+  omisión: la ausencia es "sin dato", nunca "fresca".
 - `GET /v2/rates/rf?start=&end=&tenorDays=28` (`tenorDays`: 28, 91, 182 o 364) →
   `RfSeriesResponse`. Rendimientos anualizados simples act/360 como fracción. El cliente convierte a
   tasa por periodo: `rf_d = (1 + y * 28 / 360)^(d / 28) - 1`. Fuente `banxico`, o `fred_ir3tib`
@@ -175,7 +211,9 @@ están en `docs/OWNERSHIP.md`).
 ### Investigación (B3a: `routers/research.py`, `routers/events.py` y `routers/insiders.py`)
 
 - `GET /v2/instrument/{symbol}` → `InstrumentResponse`: cotización, fundamentales en la moneda del
-  precio, beta (calculada o de Yahoo, con ventana y observaciones), medianas del sector y cobertura.
+  precio, beta (calculada o de Yahoo, con ventana y observaciones), `sectorMedians` y cobertura.
+  `sectorMedians` hoy siempre sale en `null`; qué llaves tiene y dónde está la referencia del sector
+  que sí existe, en "Referencias del sector", más abajo.
 - `GET /v2/instrument/{symbol}/statements?freq=annual` (`annual` o `quarterly`) →
   `StatementsResponse`. Solo renglones reales (SEC para emisores de EE. UU., Yahoo para el resto),
   nunca sintetizados; sin datos, `periods` vacío.
@@ -190,7 +228,8 @@ están en `docs/OWNERSHIP.md`).
 - `GET /v2/valuation/{symbol}?erp=&crp=&terminalGrowth=&years=&growth=` → `ValuationResponse`.
   Límites: `erp` y `crp` de 0 a 0.2, `terminalGrowth` de -0.02 a 0.06, `years` de 1 a 15, `growth`
   de -0.5 a 1.0. Múltiplos contra el sector (mercado `US` o `EM`), DCF de flujo a la empresa con
-  sensibilidad WACC por crecimiento, y P/B justificado para bancos.
+  sensibilidad WACC por crecimiento, y P/B justificado para bancos. Cómo leer `benchmark` contra
+  `current` en `multiples.methods`, en "Referencias del sector", más abajo.
 - `GET /v2/momentum/{symbol}` → `MomentumResponse`. `r12m1` es el rendimiento de 12 meses sin el
   último mes; `relative12m1` contra `benchmark`.
 
@@ -203,6 +242,113 @@ están en `docs/OWNERSHIP.md`).
 - `GET /v2/screeners/fibras?extra=A,B` (hasta 20 extra) → `FibrasResponse`. `signal` es
   `descuento`, `en_linea`, `prima` o `sin_datos` (descripción del precio contra el NAV, no una
   recomendación). `ltv` es deuda entre activos totales.
+
+## Recetas y referencias para el cliente
+
+Respuestas a pedidos de los streams de la fase 3 que no cambian el contrato: dicen qué trae cada
+campo y cómo combinar rutas que ya existen. Las pruebas `tests/contract/test_pb_docs_referencias.py`,
+`tests/unit/b3b/test_pb_referencia_sectorial.py` y `tests/unit/b2a/test_pb_panel_nativo_y_mxn.py`
+comprueban contra el servidor lo que dice esta sección.
+
+### Referencias del sector: `sectorMedians` y `multiples.methods`
+
+Pedido 3 de F3. Hay dos lugares que hablan del sector y no son lo mismo.
+
+**`sectorMedians` vive en `GET /v2/instrument/{symbol}`, no en `GET /v2/valuation/{symbol}`.** Es un
+objeto cuyas llaves son un subconjunto de `FundamentalKey`, las mismas 22 de `fundamentals`: `pe`,
+`forwardPe`, `pb`, `ps`, `evEbitda`, `pfcf`, `earningsYield`, `fcfYield`, `dividendYield`,
+`payoutRatio`, `roe`, `roa`, `grossMargin`, `operatingMargin`, `netMargin`, `revenueGrowthYoY`,
+`epsGrowthYoY`, `debtToEquity`, `netDebtToEbitda`, `currentRatio`, `enterpriseValue` y
+`sharesOutstanding`. Cada valor iría en la misma unidad que su gemelo de `fundamentals` (fracción,
+razón o monto) o en `null`. **Hoy el servidor siempre lo manda en `null`**: la ficha no arma un
+universo de emisoras comparables, así que no hay mediana que publicar, y no se rellena con otra
+cosa. La UI lo trata como "sin referencia del sector" y no la inventa.
+
+**La referencia del sector que sí existe está en `GET /v2/valuation/{symbol}`, en
+`multiples.methods`.** Siempre son cuatro renglones, en este orden:
+
+| `id` | Múltiplo | Gemelo en `fundamentals` | `benchmark` |
+| --- | --- | --- | --- |
+| `pe` | Precio / utilidad | `pe` | Mediana del sector |
+| `pb` | Precio / valor en libros | `pb` | Mediana del sector |
+| `evEbitda` | Valor empresa / EBITDA | `evEbitda` | Mediana del sector |
+| `pfcf` | Precio / flujo libre | `pfcf` | Siempre `null`: Damodaran no publica P/FCF por industria, y la razón va en `meta.notes` |
+
+- `benchmark` es la mediana, solo de valores positivos, de los múltiplos de las industrias de
+  Damodaran (datos de enero 2026) que caen en el sector de Yahoo de la emisora, en el mercado
+  `multiples.market`: `US` si la emisora es de Estados Unidos y `EM` para cualquier otro país,
+  México incluido. Es una mediana de industrias, no de emisoras comparables. Si el sector de Yahoo
+  no se reconoce, la referencia es el total del mercado sin financieras. Fecha y fuente de la tabla:
+  `multiples.asOf` y `multiples.source`.
+- Cuál de las dos fue (sector o total del mercado) hoy solo se dice en texto, en `meta.notes`
+  ("Mediana de N industrias de Damodaran del sector ..." o "Total del mercado ..."), y solo cuando
+  `multiples.applicable` es `true`. No hay un campo que lo diga.
+- `current` es el múltiplo de la emisora calculado por la propia valuación, en la moneda del precio.
+  Compara `benchmark` contra `current` de la misma respuesta, no contra `fundamentals` de la ficha:
+  los dos cálculos no usan las mismas definiciones de valor empresa y de flujo libre. Con las
+  grabaciones del 22 de septiembre de 2026, el EV/EBITDA de AAPL sale 34.73 en la valuación y 29.80
+  en la ficha; el P/U sí coincide.
+- `applicable` de cada renglón es `true` solo si hubo precio implícito. En bancos, aseguradoras,
+  FIBRAs, fondos y con utilidades negativas todo el bloque sale con `multiples.applicable: false` y
+  su `reason`; `current` y `benchmark` se siguen publicando como contexto, sin precio implícito.
+
+### Panel en moneda nativa y en MXN: efecto precio y efecto tipo de cambio
+
+Pedido 2 de F1. No hay una ruta que devuelva las dos monedas juntas y no hace falta: con dos
+llamadas, casi siempre, el cliente tiene todo, y el tipo de cambio le sale exacto, el mismo que usó
+el servidor para convertir.
+
+Antes de la receta, lo que el panel NO da: sus cierres están ajustados por splits y dividendos
+(rendimiento total), igual que `/v2/history`. Todo cierre anterior a una fecha ex dividendo queda
+por debajo del precio al que de verdad cotizó la emisora. Con las grabaciones del 22 de septiembre
+de 2026, el primer cierre de AAPL en la ventana de un año sale 255.14 dólares en el panel contra
+256.08 de mercado, por los 1.06 dólares de dividendos que pagó en esa ventana. El último cierre no
+tiene ajuste por delante y ese sí es el de mercado. De ahí salen dos usos distintos:
+
+- **Una posición desde su compra.** `price0` y `fx0` son el precio y el tipo de cambio del
+  movimiento, como dice `docs/metodologia/portafolio.md`, nunca los del panel: el cierre ajustado
+  metería los dividendos al efecto precio, y el tipo de cambio del movimiento es el FIX de esa
+  fecha que la persona pudo corregir. Si el movimiento no trae tipo de cambio, la separación sale
+  `s/d`; el panel no lo suple. Del panel salen solo `price1` y `fx1`, de la última fecha común. Los
+  dividendos cobrados son efectivo aparte, como en la metodología.
+- **Una ventana de fechas** (el último año, por ejemplo). Ahí `price0` y `price1` salen del panel
+  nativo, y el efecto "precio" es rendimiento total en la moneda original: ya trae los dividendos
+  de la ventana como si se hubieran reinvertido. La UI lo nombra así, y no le suma los dividendos
+  cobrados en esas fechas, porque los contaría dos veces.
+
+La receta:
+
+1. La moneda de cada posición sale del `currency` de `/v2/quotes`.
+2. `GET /v2/panel?symbols=<todas>&ccy=MXN` da los precios en pesos, que es lo que ya usa el riesgo.
+   Revisa `dropped`: hoy el servidor solo publica el tipo de cambio USDMXN, así que una emisora en
+   euros, libras, dólares canadienses o cualquier otra moneda que no sea peso ni dólar sale ahí,
+   con su motivo, y no en `prices`. Esa posición queda con la separación en `s/d` y el motivo del
+   servidor a la vista, y no se pide su panel nativo: sin precio en pesos no hay tipo de cambio que
+   sacar.
+3. `GET /v2/panel?symbols=<las emisoras en dólares>&ccy=native`, una sola llamada con las emisoras
+   en dólares. Pedir `ccy=native` con monedas mezcladas responde `400 BAD_REQUEST` a propósito,
+   porque un panel tiene un solo `currency`. Las emisoras en pesos no necesitan el panel nativo: en
+   MXN su precio es el mismo.
+4. Cruza por fecha y usa solo las fechas que estén en los dos paneles. No coinciden: cada panel es
+   un INNER JOIN de sus propios símbolos, y la conversión omite las fechas sin tipo de cambio
+   cercano.
+5. El tipo de cambio de cada fecha es `X = precio en MXN / precio nativo`. Es exactamente el que usó
+   el servidor (FIX de Banxico o Yahoo, con el mismo relleno de hasta 3 días), así que para esto no
+   hace falta `/v2/fx/history`, que sirve para mostrar la serie del tipo de cambio pero no reproduce
+   la conversión fecha por fecha. Como el ajuste por dividendos multiplica igual el precio nativo y
+   el precio en pesos, el cociente no se ve afectado.
+6. La separación la hace `pnlDecomposition` de `src/lib/finance/fx.js`. `price1` es el cierre del
+   panel nativo en la última fecha común y `fx1` el del paso 5 en esa fecha. `price0` y `fx0` son
+   los del movimiento para una posición, o los de la primera fecha común para una ventana. Para las
+   posiciones en pesos, `fx0` y `fx1` van en 1. El efecto precio va a tipo de cambio inicial y el
+   efecto cambiario a precio final, y los dos suman exactamente `q × P₁ × X₁ − q × P₀ × X₀` con esos
+   mismos cuatro datos.
+
+Procedencia: el efecto cambiario hereda el `meta` del panel en MXN. Si ahí `meta.fallback` es
+`true`, el tipo de cambio vino de Yahoo y no del FIX, y la UI lo dice junto al efecto cambiario; el
+panel nativo no convierte nada y su `meta` habla solo de precios. Pide los dos paneles con el mismo
+`range` e `interval`. El segundo casi nunca vuelve a salir a Yahoo por los precios, porque el
+servidor guarda la serie de cada símbolo una hora.
 
 ## Rutas v1 (legado)
 
@@ -373,6 +519,9 @@ Cuerpo de ``POST /auth/login``. Acepta y descarta campos extra.
 | `type` | "equity" \| "etf" \| "fibra" \| "index" \| "fx" \| "crypto" \| "commodity" \| "fund" \| null | sí |  |
 | `marketState` | string \| null | sí |  |
 | `asOf` | date o instant \| null | sí |  |
+| `sector` | string \| null | no | Sector de Yahoo en español de México (el mismo que usan los screeners), para mostrar; null si Yahoo no lo trae. Para agrupar o cruzar usa sectorKey: la traducción junta sectores distintos |
+| `sectorKey` | string \| null | no | Sector crudo de Yahoo, en inglés y sin traducir (el mismo texto que InstrumentResponse.sector); null si Yahoo no lo trae |
+| `industry` | string \| null | no | Industria tal como la publica Yahoo, en inglés; null si no viene |
 
 #### SearchResponse
 
@@ -475,6 +624,9 @@ Precios alineados por fecha (INNER JOIN, sin rellenar precios).
 | `source` | string | sí |  |
 | `previous` | number \| null | sí |  |
 | `changeBp` | number \| null | sí |  |
+| `verified` | boolean | no | true solo si la serie es del SIE, tiene revisión humana en el catálogo y el SIE la confirmó en las últimas 24 horas (la verificación se guarda un día); los respaldos de FRED van en false |
+| `stale` | boolean \| null | no | El último dato de ESTA serie es más viejo de lo que se tolera para su periodicidad. El servidor siempre lo manda; null o ausente es un API anterior a la fase 3 y el cliente usa meta.stale |
+| `tenorDays` | 28 \| 91 \| 182 \| 364 \| null | no | Plazo en días de los CETES (el mismo de /v2/rates/rf); null en las demás series |
 
 #### RfSeriesResponse
 

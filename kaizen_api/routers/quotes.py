@@ -17,6 +17,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 
 from kaizen_api.domain import fx as fx_domain
+from kaizen_api.domain.universe import sector_label
 from kaizen_api.provenance import iso_instant, meta
 from kaizen_api.providers.yahoo import prices
 from kaizen_api.routers import ERROR_RESPONSES, Symbols, cache_control
@@ -50,6 +51,12 @@ def _instrument_type(symbol: str, info: dict) -> str | None:
     return kind
 
 
+def _text(raw: object) -> str | None:
+    """Texto sin espacios sobrantes, o ``None`` si Yahoo lo manda vacío o no lo manda."""
+    text = str(raw).strip() if isinstance(raw, str) else ""
+    return text or None
+
+
 def _as_of(info: dict) -> str | None:
     """Instante del último precio, desde el epoch que manda Yahoo."""
     raw = info.get("regularMarketTime")
@@ -76,6 +83,7 @@ def _quote(symbol: str, info: dict) -> dict | None:
     change = price - previous if previous is not None else None
     # El porcentaje se recalcula: Yahoo lo manda en puntos porcentuales y el contrato pide fracción.
     change_pct = (change / previous) if (change is not None and previous) else None
+    sector_key = _text(info.get("sector"))
     return {
         "symbol": symbol,
         "name": str(info.get("longName") or info.get("shortName") or symbol),
@@ -88,6 +96,13 @@ def _quote(symbol: str, info: dict) -> dict | None:
         "type": _instrument_type(symbol, info),
         "marketState": info.get("marketState"),
         "asOf": _as_of(info),
+        # Del mismo ``info`` que trae el precio: el sector no cuesta otra llamada a Yahoo. ``sector``
+        # va en español, como en los screeners, para mostrar; la traducción junta sectores que Yahoo
+        # separa, así que ``sectorKey`` lleva el crudo para agrupar y para cruzar con la ficha. La
+        # industria no tiene catálogo de traducción y va tal cual.
+        "sector": sector_label(sector_key),
+        "sectorKey": sector_key,
+        "industry": _text(info.get("industry")),
     }
 
 

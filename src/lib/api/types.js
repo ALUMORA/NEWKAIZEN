@@ -52,10 +52,17 @@
 // ─── Datos de mercado ───────────────────────────────────────────────────────
 
 /**
+ * `sector` viene en español de México ("Tecnología", "Consumo básico") y es para mostrar. La
+ * traducción junta sectores que Yahoo separa ("Financial Services" y "Financials" salen los dos
+ * como "Servicios financieros"), así que para agrupar o para cruzar con `InstrumentResponse.sector`
+ * se usa `sectorKey`, el sector crudo de Yahoo en inglés. `industry` viene en inglés, tal como la
+ * publica Yahoo. Los tres son null en índices, fondos, ETF, divisas y cripto, y no existen en un
+ * API anterior a la fase 3 ni en el adaptador del API viejo: trátalos como "s/d".
  * @typedef {{
  *   symbol: string, name: string, price: number | null, previousClose: number | null,
  *   change: number | null, changePct: number | null, currency: string, exchange: string,
  *   type: string, marketState: string | null, asOf: string | null,
+ *   sector?: string | null, sectorKey?: string | null, industry?: string | null,
  * }} Quote
  */
 /** @typedef {{ quotes: Quote[], missing: string[], meta: Meta }} QuotesResponse */
@@ -94,9 +101,15 @@
 // ─── Tasas y macro ──────────────────────────────────────────────────────────
 
 /**
+ * Por serie: `verified` es true solo si viene del SIE con revisión humana y el SIE la confirmó en
+ * las últimas 24 horas, no necesariamente hoy (el respaldo de FRED va en false); `stale` dice si
+ * ESTA serie ya es vieja para su periodicidad (`meta.stale` es que alguna lo sea); `tenorDays` es
+ * el plazo de los CETES y null en lo demás. Los tres faltan en un API anterior a la fase 3: sin
+ * `verified` no se da la serie por verificada y sin `stale` se usa `meta.stale`.
  * @typedef {{
  *   id: string, label: string, value: number | null, unit: 'fraction' | 'index' | 'mxn',
  *   asOf: string | null, seriesId: string, source: string, previous: number | null, changeBp: number | null,
+ *   verified?: boolean, stale?: boolean, tenorDays?: 28 | 91 | 182 | 364 | null,
  * }} RateItem
  * @typedef {{ items: RateItem[], meta: Meta }} RatesMxResponse
  */

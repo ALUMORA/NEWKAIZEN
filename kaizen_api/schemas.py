@@ -228,6 +228,24 @@ class Quote(ContractModel):
     type: InstrumentType | None
     marketState: str | None
     asOf: DateOrInstant | None
+    sector: str | None = Field(
+        default=None,
+        description=(
+            "Sector de Yahoo en español de México (el mismo que usan los screeners), para mostrar; null si"
+            " Yahoo no lo trae. Para agrupar o cruzar usa sectorKey: la traducción junta sectores distintos"
+        ),
+    )
+    sectorKey: str | None = Field(
+        default=None,
+        description=(
+            "Sector crudo de Yahoo, en inglés y sin traducir (el mismo texto que InstrumentResponse.sector);"
+            " null si Yahoo no lo trae"
+        ),
+    )
+    industry: str | None = Field(
+        default=None,
+        description="Industria tal como la publica Yahoo, en inglés; null si no viene",
+    )
 
 
 class QuotesResponse(ContractModel):
@@ -344,6 +362,24 @@ class MxRateItem(ContractModel):
     source: str
     previous: float | None
     changeBp: float | None
+    verified: bool = Field(
+        default=False,
+        description=(
+            "true solo si la serie es del SIE, tiene revisión humana en el catálogo y el SIE la confirmó en"
+            " las últimas 24 horas (la verificación se guarda un día); los respaldos de FRED van en false"
+        ),
+    )
+    stale: bool | None = Field(
+        default=None,
+        description=(
+            "El último dato de ESTA serie es más viejo de lo que se tolera para su periodicidad. El servidor"
+            " siempre lo manda; null o ausente es un API anterior a la fase 3 y el cliente usa meta.stale"
+        ),
+    )
+    tenorDays: Literal[28, 91, 182, 364] | None = Field(
+        default=None,
+        description="Plazo en días de los CETES (el mismo de /v2/rates/rf); null en las demás series",
+    )
 
 
 class MxRatesResponse(ContractModel):
