@@ -27,6 +27,7 @@ import {
   NumberInput,
   PageHeader,
   SectionHeading,
+  SearchCombobox,
   SegmentedControl,
   Select,
   Sheet,
@@ -357,6 +358,26 @@ function FiguresSection() {
 
 // ─── Formularios ────────────────────────────────────────────────────────────
 
+/** Buscador de emisoras: lo elegido sale de la lista (exclude) para no repetirlo. */
+function ComboboxDemo() {
+  const [picked, setPicked] = useState(/** @type {string[]} */ ([]))
+  return (
+    <Card title="Buscador de emisoras" titleAs="h3">
+      <div className="dev-stack">
+        <SearchCombobox
+          label="Agregar emisora"
+          hint="Nombre o clave. Busca en /v2/search 200 ms después de la última tecla."
+          exclude={picked}
+          onSelect={(option) => setPicked((list) => [...list, String(option.symbol)])}
+        />
+        <p className="dev-note" data-testid="combobox-picked">
+          {picked.length ? `Elegidas: ${picked.join(', ')}` : 'Todavía no eliges ninguna emisora.'}
+        </p>
+      </div>
+    </Card>
+  )
+}
+
 function FormsSection() {
   const [amount, setAmount] = useState(/** @type {number | null} */ (25000))
   const [rate, setRate] = useState(/** @type {number | null} */ (null))
@@ -400,6 +421,7 @@ function FormsSection() {
             <Input label="Nota (deshabilitado)" value="Saldo inicial migrado" disabled readOnly />
           </div>
         </Card>
+        <ComboboxDemo />
         <Card title="Selección" titleAs="h3">
           <div className="dev-stack">
             <SegmentedControl

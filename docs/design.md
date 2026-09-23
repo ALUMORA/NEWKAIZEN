@@ -343,6 +343,50 @@ pestaña)". Un `target="_blank"` suelto también recibe el `rel` seguro.
 <InlineLink href="https://www.banxico.org.mx/">sitio de Banxico</InlineLink>.</p>
 ```
 
+### SearchCombobox
+
+Buscador de emisoras: combobox con lista (ARIA 1.2). El foco se queda en el campo y la opción activa
+se anuncia con `aria-activedescendant`; flechas (con vuelta), Ctrl+Inicio y Ctrl+Fin mueven, Enter
+elige, el clic elige sin sacar el foco. Busca en `/v2/search` **200 ms** después de la última tecla
+(`SEARCH_DEBOUNCE_MS`), una búsqueda por pausa, y solo si `useCapabilities()` ya dice `ready`: con
+un servidor viejo no llama y lo dice. Necesita el `QueryClientProvider` de `AppRoot`. Es el mismo
+buscador de la paleta ⌘K del shell, que lo usa en modo `inline` con sus grupos de rutas y acciones.
+
+| Prop | Tipo | Por omisión | Notas |
+| --- | --- | --- | --- |
+| `label` | string | | obligatorio; nombre del campo |
+| `hideLabel` | boolean | false | true: sin `<label>` visible, el nombre va en `aria-label` |
+| `hint` | nodo | | ayuda debajo, conectada con `aria-describedby` |
+| `value`, `defaultValue`, `onValueChange` | string, string, `(v) => void` | `''` | texto controlado o no |
+| `onSelect` | `(option, { q, results }) => void` | | opción elegida; `option.symbol` y `option.result` (el resultado de `/v2/search`) en las de emisora |
+| `exclude` | `string[]` | | símbolos que no se ofrecen (sin importar mayúsculas), p. ej. los ya agregados |
+| `limit` | number | 8 | `limit` de `/v2/search` |
+| `inline` | boolean | false | lista siempre visible y en el flujo (la paleta); si no, panel desplegable |
+| `clearOnSelect` | boolean | `!inline` | borra el texto al elegir |
+| `getGroups` | `({ q, results }) => { id, label, options }[]` | un grupo "Emisoras" | grupos propios; cada opción `{ id, label, detail? }` con `id` único |
+| `onEnter` | `({ q, activeOption, searching, results }) => boolean` | | true si ya resolvió el Enter (la paleta abre un ticker tecleado) |
+| `renderOption` | `(option, { selected }) => nodo` | etiqueta y detalle | contenido de cada opción (la paleta le pone icono) |
+| `placeholder` | string | "Nombre o clave, por ejemplo WALMEX" | |
+| `inputRef`, `id`, `className`, `inputClassName`, `disabled` | | | el campo lleva `.kz-input` |
+
+Estados, en una región `role="status"` (visible en línea, solo para lectores en el desplegable, que
+además los pinta en el panel): "Buscando emisoras…", "Sin resultados", "N resultados", "No se pudo
+buscar ahora. Intenta de nuevo en un momento." y "La búsqueda de emisoras no está disponible por
+ahora.". Desplegable: Esc cierra la lista y un segundo Esc borra el texto; al salir del campo se
+cierra. En línea, Esc no se detiene (le toca al diálogo). El panel es absoluto con `--z-sticky`:
+no lo metas en un contenedor con `overflow: hidden`.
+
+Utilidades puras (`search-combobox.js`, con pruebas): `resultOptions(results, { exclude })` arma las
+opciones de emisora y `symbolOptionId(symbol)` da su id ("WALMEX.MX" → "sym-WALMEX_MX").
+
+```jsx
+<SearchCombobox
+  label="Agregar emisora"
+  exclude={symbols}
+  onSelect={(option) => setSymbols((list) => [...list, option.symbol])}
+/>
+```
+
 ## Galería /dev/ui
 
 `src/features/dev-ui/routes.jsx` solo declara la ruta cuando `import.meta.env.MODE !== 'production'`,
