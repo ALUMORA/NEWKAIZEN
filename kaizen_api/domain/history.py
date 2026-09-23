@@ -107,7 +107,15 @@ def exchange_for(symbol: str) -> str | None:
             return exchange
     if up.endswith("-USD") or up.endswith("=X") or up.endswith("=F") or up.startswith("^"):
         return None
-    return "nyse" if up.isalpha() else None
+    if up.isalpha():
+        return "nyse"
+    # Las clases de acción de EE. UU. llevan guion en Yahoo (BRK-B, BF-B). Sin esto caían a la
+    # tolerancia genérica de días naturales y una serie a la que le faltaban jornadas salía fresca.
+    # El punto NO se trata igual: ahí un sufijo es la plaza (.L, .JO, .TO), no la clase.
+    head, sep, tail = up.partition("-")
+    if sep and head.isalpha() and tail.isalpha() and len(tail) <= 2:
+        return "nyse"
+    return None
 
 
 def is_stale(symbol: str, last_date: str | None, interval: str = "1d", now=None) -> bool:
@@ -133,6 +141,52 @@ def is_stale(symbol: str, last_date: str | None, interval: str = "1d", now=None)
     return (today - newest).days > GENERIC_STALE_DAYS.get(interval, 4)
 
 
+def _only_trading_sessions(
+    symbol: str, dates: list[str], closes: list[float], notes: list[str]
+) -> tuple[list[str], list[float], list[str]]:
+    """Quita las barras diarias fechadas en días en que esa bolsa no operó.
+
+    Yahoo arrastra el cierre anterior a algunos días inhábiles: en la serie de un año de
+    ``NAFTRAC.MX`` el 16 de septiembre (Independencia) trae el mismo cierre, bit a bit, que el 15.
+    Publicarlo como observación real mete rendimientos diarios de 0.00% que nadie operó, y eso baja
+    la volatilidad medida y sesga beta y Sharpe. El contrato pide fechas REALES: un cierre repetido
+    en día cerrado es relleno, solo que hecho río arriba.
+
+    Solo se descarta lo que se puede afirmar: si no tenemos calendario de esa bolsa, o si la fecha
+    cae fuera de los años que cubre el archivo, la barra se queda y se anota el límite.
+    """
+    import datetime as _dt
+
+    from kaizen_api.domain import market_calendar
+
+    exchange = exchange_for(symbol)
+    if exchange is None:
+        return dates, closes, notes
+    calendar = market_calendar.load_calendar(exchange)
+    years = set(calendar["years"])
+    kept_dates: list[str] = []
+    kept_closes: list[float] = []
+    removed: list[str] = []
+    for date, value in zip(dates, closes, strict=True):
+        day = _dt.date.fromisoformat(date)
+        if day.year in years and market_calendar.session(calendar, day) is None:
+            removed.append(date)
+            continue
+        kept_dates.append(date)
+        kept_closes.append(value)
+    if removed:
+        notes.append(
+            f"Se descartaron {len(removed)} barras fechadas en días en que {calendar['label']} no "
+            "operó; el proveedor las trae con el cierre anterior repetido y no son observaciones reales."
+        )
+    if kept_dates and _dt.date.fromisoformat(kept_dates[0]).year < min(years):
+        notes.append(
+            f"El calendario de {calendar['label']} cubre {min(years)} y {max(years)}: antes de "
+            f"{min(years)} solo se verificaron fines de semana, no días inhábiles."
+        )
+    return kept_dates, kept_closes, notes
+
+
 def get_series(symbol: str, range: str = "1y", interval: str = "1d", ccy: str = "native") -> PriceSeries:
     """Costura CONGELADA de históricos v2 (ver el docstring del módulo). La implementa B2."""
     sym = str(symbol).upper()
@@ -153,6 +207,22 @@ def get_series(symbol: str, range: str = "1y", interval: str = "1d", ccy: str = 
     notes: list[str] = []
     if inferred:
         notes.append(f"Yahoo no reporta la moneda de {sym}; se tomó {currency} por el tipo de símbolo.")
+
+    # Solo las plazas con unidad menor (Londres, Johannesburgo) obligan a mirar el divisor; para
+    # todo lo demás ni siquiera se consulta el ``info``, que es el camino de esta app.
+    divisor = prices.minor_unit_divisor(sym) if currency in prices.MAJOR_WITH_MINOR else 1.0
+    if divisor != 1.0:
+        # Los cierres vienen en la misma unidad menor que el precio puntual (peniques, centavos).
+        closes = [value / divisor for value in closes]
+        notes.append(
+            f"Yahoo publica {sym} en unidad menor; los cierres se dividieron entre "
+            f"{divisor:g} para dejarlos en {currency}."
+        )
+
+    if interval == "1d":
+        dates, closes, notes = _only_trading_sessions(sym, dates, closes, notes)
+        if not dates:
+            raise ApiError(404, "NOT_FOUND", f"No encontramos histórico de {sym}. Revisa el símbolo.")
 
     target = currency if ccy == "native" else ccy
     if target == currency:
