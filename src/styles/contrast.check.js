@@ -161,6 +161,8 @@ const PAIRS = [
   // Acento
   { fg: '--accent', bg: '--surface', min: 4.5, note: 'liga y etiqueta de acento' },
   { fg: '--accent', bg: '--bg', min: 4.5, note: 'acento sobre el fondo' },
+  { fg: '--accent-strong', bg: '--surface', min: 4.5, note: 'liga en línea con el cursor encima' },
+  { fg: '--accent', bg: '--surface-raised', min: 4.5, note: 'liga en línea en popover y aviso' },
   { fg: '--accent', bg: '--accent-faint', min: 4.5, note: 'acento sobre su fondo tenue' },
   { fg: '--accent-strong', bg: '--accent-soft', min: 4.5, note: 'acento fuerte sobre su fondo suave' },
   { fg: '--on-accent', bg: '--accent', min: 4.5, note: 'texto del botón primario' },

@@ -231,6 +231,31 @@ test('aviso: borrar con confirmación y Deshacer lo regresa, anunciado con aria-
   await expect(region).not.toContainText('Movimiento borrado')
 })
 
+test('InlineLink: acento y subrayado; la externa abre otra pestaña con rel seguro y lo avisa', async ({ page, baseURL }) => {
+  await openGallery(page, baseURL)
+  const inner = page.getByRole('link', { name: 'metodología de la volatilidad' })
+  await expect(inner).toHaveAttribute('href', '/aprender/volatilidad')
+  await expect(inner).not.toHaveAttribute('target', /./)
+  const outer = page.getByRole('link', { name: 'sitio de Banxico (se abre en otra pestaña)' })
+  await expect(outer).toHaveAttribute('target', '_blank')
+  await expect(outer).toHaveAttribute('rel', 'noopener noreferrer')
+  const look = await inner.evaluate((el) => {
+    const probe = document.createElement('span')
+    probe.style.color = 'var(--accent)'
+    document.body.append(probe)
+    const accent = getComputedStyle(probe).color
+    probe.remove()
+    const cs = getComputedStyle(el)
+    return { color: cs.color, accent, line: cs.textDecorationLine }
+  })
+  expect(look.color, 'color de acento').toBe(look.accent)
+  expect(look.line, 'subrayada: no depende solo del color').toBe('underline')
+  // Con teclado se llega y se sigue con Enter, como cualquier liga.
+  await inner.focus()
+  await page.keyboard.press('Enter')
+  await expect(page).toHaveURL(/\/aprender\/volatilidad$/)
+})
+
 test('.kz-page: medianil de 16 px en teléfono y 24 px desde 820 px, con tope --content-max', async ({ page, baseURL }, testInfo) => {
   await openGallery(page, baseURL)
   const main = page.locator('main.kz-page')

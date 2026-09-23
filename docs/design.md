@@ -320,6 +320,29 @@ actual), `className`.
 `Mark`: `size` (32), `on` `'auto' | 'light' | 'dark'` (auto sigue al tema; fija para fondos que no
 cambian), `label` (con texto es imagen con nombre; sin él, decorativa), `className`.
 
+### InlineLink
+
+Liga dentro de un párrafo (`.kz-link`): `--accent` (hover `--accent-strong`, los dos medidos en
+`contrast.check.js`) y **siempre subrayada**, para que no dependa solo del color. Para acciones usa
+`Button`; para navegación del shell, lo del shell.
+
+| Prop | Tipo | Por omisión | Notas |
+| --- | --- | --- | --- |
+| `to` | string | | ruta interna: `<Link>` de react-router con router, `<a href>` sin él |
+| `href` | string | | liga cruda (ancla, `mailto:`, sitio de fuera); gana sobre `to` |
+| `external` | boolean | `true` si `href` es absoluta (`https://...`) | fuerza (`true`) o evita (`false`) otra pestaña |
+| `rel` | string | | con otra pestaña se le suman `noopener noreferrer` sin repetir |
+| `className`, `children`, `...rest` | | | `rest` va al `<a>` |
+
+Externa: `target="_blank"`, `rel` seguro, icono decorativo (`aria-hidden`) y "(se abre en otra
+pestaña)" solo para lectores de pantalla, así que su nombre accesible es "Banxico (se abre en otra
+pestaña)". Un `target="_blank"` suelto también recibe el `rel` seguro.
+
+```jsx
+<p>Lee la <InlineLink to={pathLearnTerm('volatilidad')}>metodología</InlineLink> o la fuente en el{' '}
+<InlineLink href="https://www.banxico.org.mx/">sitio de Banxico</InlineLink>.</p>
+```
+
 ## Galería /dev/ui
 
 `src/features/dev-ui/routes.jsx` solo declara la ruta cuando `import.meta.env.MODE !== 'production'`,

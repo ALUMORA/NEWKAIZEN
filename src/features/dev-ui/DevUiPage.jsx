@@ -20,6 +20,7 @@ import {
   ErrorState,
   IconButton,
   InfoTip,
+  InlineLink,
   Input,
   Mark,
   Money,
@@ -733,6 +734,12 @@ function TextsSection() {
               <span className="dev-inline">
                 Texto propio <InfoTip term="Costo promedio" text="Lo que pagaste por título en promedio, con comisiones." link={false} />
               </span>
+            </Specimen>
+            <Specimen label="InlineLink">
+              <p className="dev-note">
+                Lee la <InlineLink to="/aprender/volatilidad">metodología de la volatilidad</InlineLink> o consulta la fuente en el{' '}
+                <InlineLink href="https://www.banxico.org.mx/">sitio de Banxico</InlineLink>.
+              </p>
             </Specimen>
           </div>
         </Card>

@@ -924,3 +924,20 @@ html.kz-scroll-lock { overflow: hidden; }
 /* El JPG trae su propio fondo horneado: mix-blend-mode lo funde con el real. */
 .kz-mark[data-on="light"] img { mix-blend-mode: multiply; }
 .kz-mark[data-on="dark"] img { mix-blend-mode: screen; }
+
+/* ═══ Liga en línea ═════════════════════════════════════════════════════════ */
+
+/* Acento y subrayado: la liga se distingue del texto sin depender solo del color. */
+.kz-link {
+  color: var(--accent);
+  font-weight: var(--weight-semibold);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.kz-link:hover { color: var(--accent-strong); text-decoration-thickness: 2px; }
+.kz-link__icon { display: inline-block; margin-left: 2px; vertical-align: -1px; }
+@media (prefers-reduced-motion: reduce) {
+  .kz-link { transition: none; }
+}
