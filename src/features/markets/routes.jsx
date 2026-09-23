@@ -1,15 +1,20 @@
 // Mercados (F2). /mercados monta la tab "Noticias" de la app legada hasta que exista la página
 // nueva; el resto son rutas nuevas. Para migrar una ruta: crear ./pages/X.jsx, cargarla con
 // lazy() y cambiar legacyRoute(...) por { path: route(PATHS.x), element: <Pages.X />, handle }.
+import { lazy } from 'react'
 import ComingSoon from '../../app/ComingSoon.jsx'
 import { legacyRoute } from '../../app/legacyRoute.jsx'
 import { PATHS, route } from '../../app/paths.js'
+
+const Pages = {
+  Mexico: lazy(() => import('./pages/MexicoPage.jsx')),
+}
 
 export const routes = [
   legacyRoute(PATHS.markets, { title: 'Mercados' }),
   {
     path: route(PATHS.marketsMexico),
-    element: <ComingSoon />,
+    element: <Pages.Mexico />,
     handle: {
       title: 'México: tasas, CETES e inflación',
       description: 'Tasa objetivo de Banxico, TIIE, CETES, inflación y tipo de cambio FIX, cada dato con su fuente y su fecha.',

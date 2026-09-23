@@ -1,0 +1,68 @@
+/* Mercados (F2). Solo tokens. */
+.markets-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+.markets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: var(--space-4);
+}
+.markets-notes {
+  border: 1px solid var(--stale);
+  background: var(--stale-soft);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+}
+.markets-notes__title {
+  margin: 0 0 var(--space-1);
+  font-weight: var(--weight-semibold);
+}
+.markets-notes ul {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+.markets-calc {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: var(--space-4);
+  align-items: end;
+}
+.markets-formula {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  line-height: var(--leading-normal);
+  max-width: 70ch;
+}
+.markets-formula p {
+  margin: 0 0 var(--space-2);
+}
+.markets-news {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.markets-news li {
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+.markets-news li:last-child {
+  border-bottom: 0;
+}
+.markets-news a {
+  display: inline-block;
+  min-height: 24px;
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.markets-news__meta {
+  margin: var(--space-1) 0 0;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
