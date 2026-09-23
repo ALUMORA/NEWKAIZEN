@@ -2,7 +2,7 @@
 
 /** Ancho aproximado de una etiqueta de 12px en la fuente de la interfaz. */
 export function textWidth(text) {
-  return String(text).length * 6.8
+  return String(text).length * 7.2
 }
 
 /**
@@ -30,7 +30,7 @@ export function placeXTicks(ticks, x, x0, x1) {
 /** Recorta una etiqueta para que quepa en `px` de ancho, con puntos suspensivos. */
 export function fitText(text, px) {
   const s = String(text)
-  const max = Math.floor(px / 6.8)
+  const max = Math.floor(px / 7.2)
   if (s.length <= max) return s
   return max <= 1 ? '' : `${s.slice(0, max - 1).trimEnd()}…`
 }

@@ -65,7 +65,7 @@ export function Bars({
 
 function HBars({ items, width, rowHeight, lo, hi, fmt, colorOf, valueLabels }) {
   const labelW = Math.min(Math.max(...items.map((d) => textWidth(d.label))) + 10, width * 0.38)
-  const valW = valueLabels ? Math.max(...items.map((d) => textWidth(fmt(d.v)))) + 8 : 4
+  const valW = valueLabels ? Math.max(...items.map((d) => textWidth(fmt(d.v)))) + 12 : 4
   const left = labelW + (lo < 0 ? valW : 0)
   const right = width - (hi > 0 ? valW : 4)
   const sx = linearScale([lo, hi], [left, Math.max(left + 1, right)])

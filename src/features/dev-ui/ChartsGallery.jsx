@@ -101,6 +101,8 @@ const SPARKS = [
   { label: 'Plano', values: [5, 5, 5, 5] },
   { label: 'Con hueco', values: [3, 4, null, 5, 4, 6] },
 ]
+const GAPPY = IPC.slice(0, 60).map((p, i) => ({ date: p.date, value: i >= 20 && i < 28 ? null : p.value * 1000 - 100000 }))
+const FOUR = ['uno', 'dos', 'tres', 'cuatro'].map((seed, k) => ({ label: `Fondo ${k + 1}`, points: walk(seed, 90, 100, 0.0003 * k, 0.008) }))
 const STATUS = { asOf: '2026-09-22T20:40:00Z', source: 'BMV', delayMinutes: 15, now: GALLERY_NOW }
 const STALE = { asOf: '2026-09-19', source: 'FRED', fallback: true, stale: true, now: GALLERY_NOW }
 
@@ -162,6 +164,28 @@ export default function ChartsGallery() {
         <Card>
           <FrontierChart title="Frontera eficiente" description="Riesgo y rendimiento anuales esperados." assets={ASSETS} frontier={FRONT}
             markers={{ minVar: FRONT[0], tangency: FRONT[14], current: { risk: 0.12, ret: 0.105 } }} />
+        </Card>
+      </div>
+      <h3 className="dev-note" style={{ margin: 0 }}><strong>Casos borde</strong></h3>
+      <div className="dev-grid dev-grid--2">
+        <Card>
+          <TimeSeries title="Serie con hueco y negativos" description="Sin dato entre el 20 y el 28 de octubre; dinero con signo." format="money" zeroBaseline
+            series={[{ label: 'Resultado', points: GAPPY }]} height={200} />
+        </Card>
+        <Card>
+          <TimeSeries title="Cuatro fondos" description="Cuatro series con la paleta en orden fijo." series={FOUR} height={200} />
+        </Card>
+        <Card>
+          <Bars title="Barras con un faltante" data={[{ label: 'Enero', value: 0.02 }, { label: 'Febrero', value: null }, { label: 'Marzo', value: -0.011 }]} signed format="pct" />
+        </Card>
+        <Card>
+          <FrontierChart title="Solo activos" assets={ASSETS} height={240} />
+        </Card>
+        <Card>
+          <Heatmap title="Mapa sin datos" rows={[]} columns={[]} values={[]} />
+        </Card>
+        <Card>
+          <Bars title="Barras sin datos" data={[]} />
         </Card>
       </div>
       <Card title="Sparkline" titleAs="h3" description="Decorativa: el dato va en el texto de al lado.">
