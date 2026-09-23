@@ -15,7 +15,7 @@ const KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home',
 /**
  * @param {{
  *   series: { id?: string, label: string, points: { date?: any, x?: number, value: number | null }[], color?: string | number, area?: boolean, dash?: boolean }[],
- *   bands?: { id?: string, label: string, points: { date?: any, x?: number, lower: number, upper: number }[], color?: string | number }[],
+ *   bands?: { id?: string, label: string, points: { date?: any, x?: number, lower: number, upper: number }[], color?: string | number, opacity?: number }[],
  *   format?: 'number' | 'money' | 'pct' | 'pp' | 'bp', currency?: string, decimals?: number,
  *   log?: boolean, area?: boolean, zeroBaseline?: boolean, yDomain?: [number?, number?],
  *   xType?: 'time' | 'number', xFormat?: (x: number) => string, xLabel?: string,
@@ -65,7 +65,7 @@ export function TimeSeries({
     const xTicks = single
       ? [{ value: xs[0], label: xType === 'time' ? fmtAxisDate(xs[0]) : fmtX(xs[0]) }]
       : xType === 'time'
-        ? timeTicks(xDomain[0], xDomain[1], Math.max(2, Math.floor(innerW / 90)))
+        ? timeTicks(xDomain[0], xDomain[1], Math.max(3, Math.floor(innerW / 75)))
         : niceTicks(xDomain[0], xDomain[1], Math.max(2, Math.floor(innerW / 80))).ticks.filter((t) => t >= xDomain[0] && t <= xDomain[1]).map((t) => ({ value: t, label: fmtX(t) }))
     const px = xs.map((x) => sx(x))
     const lines = data.series.map((s) => ({ s, ...linePaths(xs, s.map, sx, sy, (s.area ?? area) ? baseY : null) }))
@@ -99,14 +99,14 @@ export function TimeSeries({
   const activeX = active !== null && active < n ? xs[active] : null
   const rows = activeX === null ? [] : [
     ...data.series.map((s) => ({ key: s.id, label: s.label, color: s.color, kind: s.dash ? 'dash' : 'line', text: fmtValue(s.map.get(activeX)) })),
-    ...data.bands.filter((b) => b.map.has(activeX)).map((b) => ({ key: b.id, label: b.label, color: b.color, kind: 'band', text: `${fmtValue(b.map.get(activeX)[0])} a ${fmtValue(b.map.get(activeX)[1])}` })),
+    ...data.bands.filter((b) => b.map.has(activeX)).map((b) => ({ key: b.id, label: b.label, color: b.color, kind: 'band', opacity: bandOpacity(b, data.bands.indexOf(b)), text: `${fmtValue(b.map.get(activeX)[0])} a ${fmtValue(b.map.get(activeX)[1])}` })),
   ]
   const activeLabel = activeX === null ? '' : fmtX(activeX)
   const liveText = viaKeyboard && activeX !== null ? `${activeLabel}. ${rows.map((r) => `${r.label}: ${r.text}`).join('. ')}` : ''
 
   const legendItems = (legend ?? (data.series.length + data.bands.length > 1)) ? [
     ...data.series.map((s) => ({ label: s.label, color: s.color, kind: /** @type {'line' | 'dash'} */ (s.dash ? 'dash' : 'line') })),
-    ...data.bands.map((b) => ({ label: b.label, color: b.color, kind: /** @type {'band'} */ ('band') })),
+    ...data.bands.map((b, i) => ({ label: b.label, color: b.color, kind: /** @type {'band'} */ ('band'), opacity: bandOpacity(b, i) })),
   ] : undefined
 
   const tableData = table ? {
@@ -159,7 +159,7 @@ export function TimeSeries({
                 <YGrid ticks={yInfo.ticks} y={geo.sy} x0={x0} x1={x1} format={fmtTick} />
                 {geo.zeroIn && zeroBaseline && <line className="kz-chart__zero" x1={x0} x2={x1} y1={Math.round(geo.sy(0)) + 0.5} y2={Math.round(geo.sy(0)) + 0.5} />}
                 <XTicks ticks={geo.xTicks} x={geo.sx} y={yBot} x0={x0} x1={x1} />
-                {geo.bandShapes.map(({ b, d }, i) => d && <path key={b.id} className="kz-chart__band" d={d} fill={b.color} opacity={b.opacity ?? (i === 0 ? 0.18 : 0.32)} />)}
+                {geo.bandShapes.map(({ b, d }, i) => d && <path key={b.id} className="kz-chart__band" d={d} fill={b.color} opacity={bandOpacity(b, i)} />)}
                 {geo.lines.map(({ s, area: a }) => a && <path key={`a${s.id}`} className="kz-chart__area" d={a} fill={s.color} />)}
                 {geo.lines.map(({ s, line }) => line && <path key={`l${s.id}`} className="kz-chart__line" d={line} stroke={s.color} strokeDasharray={s.dash ? '5 4' : undefined} />)}
                 {geo.lines.flatMap(({ s, singles }) => singles.map(([cx, cy]) => <circle key={`p${s.id}${cx}`} className="kz-chart__dot" cx={cx} cy={cy} r={4} fill={s.color} />))}
@@ -183,7 +183,7 @@ export function TimeSeries({
             <p className="kz-chart__tooltip-title num">{activeLabel}</p>
             {rows.map((r) => (
               <div key={r.key} className="kz-chart__tooltip-row">
-                <span className="kz-chart__tooltip-name"><Swatch color={r.color} kind={r.kind} />{r.label}</span>
+                <span className="kz-chart__tooltip-name"><Swatch color={r.color} kind={r.kind} opacity={r.opacity} />{r.label}</span>
                 <span className="kz-chart__tooltip-value">{r.text}</span>
               </div>
             ))}
@@ -193,6 +193,11 @@ export function TimeSeries({
       <p id={liveId} className="sr-only" aria-live="polite">{liveText}</p>
     </ChartFrame>
   )
+}
+
+/** Opacidad de una banda: la exterior más tenue que la interior. */
+function bandOpacity(b, i) {
+  return b.opacity ?? (i === 0 ? 0.24 : 0.45)
 }
 
 /** Resumen para lector de pantalla: primer y último valor de cada serie, con mínimo y máximo. */

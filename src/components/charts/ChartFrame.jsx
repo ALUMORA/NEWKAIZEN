@@ -8,18 +8,18 @@ import './charts.css'
 
 /**
  * @typedef {{ label: import('react').ReactNode, color: string, value?: import('react').ReactNode,
- *   shape?: string, kind?: 'line' | 'area' | 'marker' | 'band' | 'dash' }} LegendItem
+ *   shape?: string, kind?: 'line' | 'area' | 'marker' | 'band' | 'dash', opacity?: number }} LegendItem
  * @typedef {{ columns: any[], rows: any[], rowKey: string | ((row: any) => string) }} ChartTable
  */
 
 /** Muestra de color de la leyenda: línea, área, banda o marcador con su forma. */
-export function Swatch({ color, shape = 'circle', kind = 'line' }) {
+export function Swatch({ color, shape = 'circle', kind = 'line', opacity = undefined }) {
   return (
     <svg className="kz-chart__swatch" width="16" height="12" viewBox="0 0 16 12" aria-hidden="true" focusable="false">
       {kind === 'marker' && <path d={markerPath(shape, 8, 6, 4.5)} fill={color} />}
       {kind === 'line' && <line x1="1" x2="15" y1="6" y2="6" stroke={color} strokeWidth="2.5" strokeLinecap="round" />}
       {kind === 'dash' && <line x1="1" x2="15" y1="6" y2="6" stroke={color} strokeWidth="2" strokeDasharray="3 2" />}
-      {(kind === 'area' || kind === 'band') && <rect x="1" y="1" width="14" height="10" rx="2" fill={color} />}
+      {(kind === 'area' || kind === 'band') && <rect x="1" y="1" width="14" height="10" rx="2" fill={color} opacity={opacity} />}
     </svg>
   )
 }
@@ -31,7 +31,7 @@ export function Legend({ items }) {
     <ul className="kz-chart__legend" aria-label="Leyenda">
       {items.map((item, i) => (
         <li key={i} className="kz-chart__legend-item">
-          <Swatch color={item.color} shape={item.shape} kind={item.kind} />
+          <Swatch color={item.color} shape={item.shape} kind={item.kind} opacity={item.opacity} />
           <span>{item.label}</span>
           {item.value != null && <span className="kz-chart__legend-value num">{item.value}</span>}
         </li>
