@@ -52,13 +52,27 @@ def _instant(raw) -> str | None:
     return moment.astimezone(_dt.UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
+def _dek(item: dict) -> str | None:
+    """El sumario que declara la fuente, nunca ``content.body``: eso es el arranque del artículo.
+
+    Solo sirve adentro (para adivinar el idioma); ``/v2/news`` no lo publica.
+    """
+    content = item.get("content") or {}
+    for raw in (item.get("summary"), content.get("summary"), item.get("description"), content.get("description")):
+        text = str(raw or "").strip()
+        if text:
+            return text
+    return None
+
+
 def normalize(item: dict) -> dict:
     """Un elemento de ``Ticker.news`` (forma vieja o nueva) a ``{title, url, summary, published, source}``."""
-    base = _extract_news_item(item if isinstance(item, dict) else {})
+    item = item if isinstance(item, dict) else {}
+    base = _extract_news_item(item)
     return {
         "title": str(base["title"] or "").strip(),
         "url": str(base["url"] or "").strip(),
-        "summary": (str(base["summary"] or "").strip() or None),
+        "summary": _dek(item),
         "published": _instant(base["time"]),
         "source": str(base["publisher"] or "").strip() or "Yahoo Finanzas",
     }

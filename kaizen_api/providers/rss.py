@@ -4,8 +4,8 @@ El lector v2 parsea **los bytes**, no ``resp.text``: varios feeds mexicanos sale
 ``text/xml`` sin ``charset``, y ahí ``requests`` asume ISO-8859-1 y "económico" se lee
 "econÃ³mico". ``ElementTree`` respeta la declaración del XML, así que los acentos llegan bien.
 
-Solo se saca **titular, liga, fuente y fecha**. El resumen se guarda aparte y ``/v2/news`` lo
-publica recortado; nunca se reproduce el cuerpo de la nota.
+Solo se publica **titular, liga, fuente y fecha**. El resumen del feed se lee recortado nada más
+para adivinar el idioma; ``/v2/news`` no lo publica y nunca se reproduce el cuerpo de la nota.
 """
 
 from __future__ import annotations
