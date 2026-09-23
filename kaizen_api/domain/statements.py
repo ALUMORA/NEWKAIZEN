@@ -389,7 +389,9 @@ def _yahoo_statements(symbol: str, freq: str, currency: str | None = None) -> di
                 notes.append("El flujo libre es flujo operativo menos inversión en activo fijo.")
         if values is None or not any(v is not None for v in values):
             continue
-        if row_id != "eps" and divisor != 1.0:
+        if divisor != 1.0:
+            # La UPA también: viene en la misma unidad menor que el resto del estado, y la
+            # respuesta declara la moneda mayor para todos los renglones.
             values = [scale_minor(v, divisor) for v in values]
         rows.append({"id": row_id, "label": ROW_LABELS[row_id], "values": values})
 

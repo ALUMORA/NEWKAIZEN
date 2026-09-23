@@ -99,7 +99,11 @@ def test_an_etf_has_no_statements_and_says_so(replay_b3a):
 
 
 def test_yahoo_statements_scale_minor_units(monkeypatch):
-    """Una emisora de Londres reporta en peniques: los montos se dividen entre 100, la UPA no."""
+    """Una emisora de Londres reporta en peniques: TODO se divide entre 100, la UPA incluida.
+
+    La respuesta declara ``currency: GBP``; una UPA de 55 peniques que saliera como 55 diría 55
+    libras junto a unos ingresos bien convertidos, o sea 100 veces la cifra.
+    """
     columns = [pd.Timestamp("2024-12-31"), pd.Timestamp("2025-12-31")]
     income = pd.DataFrame(
         [[1_000_000.0, 1_200_000.0], [55.0, 60.0]],
@@ -115,7 +119,7 @@ def test_yahoo_statements_scale_minor_units(monkeypatch):
     payload = mod.get_statements("LON.L", "annual", financial_currency="GBp")
     assert payload["currency"] == "GBP"
     assert _row(payload, "revenue") == [10_000.0, 12_000.0]
-    assert _row(payload, "eps") == [55.0, 60.0], "la UPA ya viene por acción en la unidad de cotización"
+    assert _row(payload, "eps") == [0.55, 0.60], "la UPA viene en peniques como el resto del estado"
 
 
 def test_periods_without_a_single_value_are_dropped(monkeypatch):
