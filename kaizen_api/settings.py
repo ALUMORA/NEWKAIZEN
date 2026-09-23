@@ -24,7 +24,7 @@ TRUSTED_PROXY_HOPS     Cuántos saltos finales de ``X-Forwarded-For`` escribe in
                        confianza. Default 1 (Render). Con 0 se ignora la cabecera y se usa la IP del
                        socket. Es lo que decide con qué llave limita el login por IP.
 LOGIN_RATE_LIMIT_IP_PER_MINUTE    Intentos de login por minuto y por IP. Default 5.
-LOGIN_RATE_LIMIT_USER_PER_HOUR    Intentos FALLIDOS de login por hora y por usuario. Default 10.
+LOGIN_RATE_LIMIT_USER_PER_HOUR    Intentos FALLIDOS de login por hora, por usuario y por IP. Default 10.
                        Los dos solo se pueden RELAJAR fuera de producción.
 MAX_CONCURRENCY        Requests en vuelo que atiende la app antes de contestar 503. Default 48, y
                        tiene que quedar por debajo del ``limit_concurrency`` de uvicorn (64).
@@ -68,7 +68,7 @@ SCRYPT_PREFIX = "scrypt$"
 DEFAULT_LOGIN_IP_PER_MINUTE = 5
 """Intentos de login por minuto y por IP (spec v2). En producción no se puede subir."""
 DEFAULT_LOGIN_USER_PER_HOUR = 10
-"""Intentos FALLIDOS de login por hora y por usuario (spec v2). En producción no se puede subir."""
+"""Intentos FALLIDOS de login por hora, por usuario y por IP (spec v2). En producción no se puede subir."""
 DEFAULT_TRUSTED_PROXY_HOPS = 1
 """Saltos finales de ``X-Forwarded-For`` que escribe infraestructura de confianza (1 = Render)."""
 MAX_TRUSTED_PROXY_HOPS = 8
@@ -325,7 +325,7 @@ class Settings:
         if production:
             _check_login_limits(ip_per_minute, user_per_hour)
         elif (ip_per_minute, user_per_hour) != (DEFAULT_LOGIN_IP_PER_MINUTE, DEFAULT_LOGIN_USER_PER_HOUR):
-            warnings.append(f"límites del login fuera del default: {ip_per_minute}/min por IP, {user_per_hour}/h por usuario")
+            warnings.append(f"límites del login fuera del default: {ip_per_minute}/min por IP, {user_per_hour}/h por usuario e IP")
 
         legacy_routes = _flag(env, "KAIZEN_LEGACY_ROUTES", not production)
         if legacy_routes and production:
