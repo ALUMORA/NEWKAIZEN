@@ -4,7 +4,7 @@
 import { Suspense, lazy, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { Card, EmptyState, ErrorState, NumberInput, PageHeader, SegmentedControl, Skeleton, Stat } from '../../../components/ui/index.js'
-import { MISSING, fmtMoney, fmtPct } from '../../../lib/format.js'
+import { MISSING, fmtMoney, fmtNumber, fmtPct } from '../../../lib/format.js'
 import { PATHS } from '../../../app/paths.js'
 import { DEFAULT_INPUTS, DEFAULT_PATHS, fanPoints, retirementFromSim, summarize, validateInputs } from '../simulator.js'
 import { useSimulation } from '../useSimulation.js'
@@ -163,7 +163,7 @@ export default function SimulatorPage() {
                       decimals={0}
                       xType="number"
                       xLabel="Año"
-                      xFormat={(x) => `Año ${Math.round(x)}`}
+                      xFormat={(x) => `Año ${Number.isInteger(x) ? x : fmtNumber(x, { decimals: 1 })}`}
                       source="Simulación de Kaizen con tus supuestos (rendimientos lognormales mensuales)."
                     />
                   </Suspense>
