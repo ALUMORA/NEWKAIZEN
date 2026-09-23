@@ -52,14 +52,17 @@
 // ─── Datos de mercado ───────────────────────────────────────────────────────
 
 /**
- * `sector` viene en español de México ("Tecnología", "Consumo básico"); `industry` viene en inglés,
- * tal como la publica Yahoo. Los dos son null en índices, fondos, ETF, divisas y cripto, y no
- * existen en un API anterior a la fase 3 ni en el adaptador del API viejo: trátalos como "s/d".
+ * `sector` viene en español de México ("Tecnología", "Consumo básico") y es para mostrar. La
+ * traducción junta sectores que Yahoo separa ("Financial Services" y "Financials" salen los dos
+ * como "Servicios financieros"), así que para agrupar o para cruzar con `InstrumentResponse.sector`
+ * se usa `sectorKey`, el sector crudo de Yahoo en inglés. `industry` viene en inglés, tal como la
+ * publica Yahoo. Los tres son null en índices, fondos, ETF, divisas y cripto, y no existen en un
+ * API anterior a la fase 3 ni en el adaptador del API viejo: trátalos como "s/d".
  * @typedef {{
  *   symbol: string, name: string, price: number | null, previousClose: number | null,
  *   change: number | null, changePct: number | null, currency: string, exchange: string,
  *   type: string, marketState: string | null, asOf: string | null,
- *   sector?: string | null, industry?: string | null,
+ *   sector?: string | null, sectorKey?: string | null, industry?: string | null,
  * }} Quote
  */
 /** @typedef {{ quotes: Quote[], missing: string[], meta: Meta }} QuotesResponse */

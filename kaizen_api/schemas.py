@@ -230,7 +230,17 @@ class Quote(ContractModel):
     asOf: DateOrInstant | None
     sector: str | None = Field(
         default=None,
-        description="Sector de Yahoo en español de México (el mismo que usan los screeners); null si Yahoo no lo trae",
+        description=(
+            "Sector de Yahoo en español de México (el mismo que usan los screeners), para mostrar; null si"
+            " Yahoo no lo trae. Para agrupar o cruzar usa sectorKey: la traducción junta sectores distintos"
+        ),
+    )
+    sectorKey: str | None = Field(
+        default=None,
+        description=(
+            "Sector crudo de Yahoo, en inglés y sin traducir (el mismo texto que InstrumentResponse.sector);"
+            " null si Yahoo no lo trae"
+        ),
     )
     industry: str | None = Field(
         default=None,

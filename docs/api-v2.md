@@ -132,12 +132,14 @@ están en `docs/OWNERSHIP.md`).
   concentración por sector de /portafolio/riesgo), tomados del mismo `info` de Yahoo que da el
   precio, así que pedirlos no cuesta otra llamada. `sector` va en español de México con la misma
   tabla que los screeners (`domain/universe.py`, `SECTOR_ES`: `Technology` sale como `Tecnología`,
-  `Financial Services` y `Financials` salen los dos como `Servicios financieros`); un sector sin
-  traducción sale tal cual lo manda Yahoo. `industry` no tiene catálogo de traducción y sale en
-  inglés, así que para agrupar y para mostrar conviene `sector`. Índices, fondos, ETF, divisas y
-  cripto no traen sector en Yahoo y salen con los dos en `null`: la UI los muestra como "s/d" o los
-  agrupa por `type`, nunca les adivina un sector. Ojo: `InstrumentResponse.sector` todavía sale
-  crudo, en inglés. El servidor siempre manda los dos campos; son opcionales en el contrato solo
+  `Financial Services` y `Financials` salen los dos como `Servicios financieros`, y `Materials` y
+  `Basic Materials` los dos como `Materiales`); un sector sin traducción sale tal cual lo manda
+  Yahoo. Como la traducción junta sectores distintos, `sector` es para mostrar y `sectorKey`, el
+  sector crudo de Yahoo en inglés, es la llave para agrupar y para cruzar: es el mismo texto que
+  `InstrumentResponse.sector`, que todavía sale crudo en la ficha. `industry` no tiene catálogo de
+  traducción y sale en inglés. Índices, fondos, ETF, divisas y cripto no traen sector en Yahoo y
+  salen con los tres en `null`: la UI los muestra como "s/d" o los agrupa por `type`, nunca les
+  adivina un sector. El servidor siempre manda los tres campos; son opcionales en el contrato solo
   para que un cliente tolere un API desplegado antes de este cambio.
 - `GET /v2/search?q=&limit=10` (`q` de 1 a 64 caracteres, `limit` de 1 a 50) → `SearchResponse`.
   Fuentes: `company_tickers.json` de la SEC y la lista curada `kaizen_api/data/symbols_mx.json` con
@@ -517,7 +519,8 @@ Cuerpo de ``POST /auth/login``. Acepta y descarta campos extra.
 | `type` | "equity" \| "etf" \| "fibra" \| "index" \| "fx" \| "crypto" \| "commodity" \| "fund" \| null | sí |  |
 | `marketState` | string \| null | sí |  |
 | `asOf` | date o instant \| null | sí |  |
-| `sector` | string \| null | no | Sector de Yahoo en español de México (el mismo que usan los screeners); null si Yahoo no lo trae |
+| `sector` | string \| null | no | Sector de Yahoo en español de México (el mismo que usan los screeners), para mostrar; null si Yahoo no lo trae. Para agrupar o cruzar usa sectorKey: la traducción junta sectores distintos |
+| `sectorKey` | string \| null | no | Sector crudo de Yahoo, en inglés y sin traducir (el mismo texto que InstrumentResponse.sector); null si Yahoo no lo trae |
 | `industry` | string \| null | no | Industria tal como la publica Yahoo, en inglés; null si no viene |
 
 #### SearchResponse
