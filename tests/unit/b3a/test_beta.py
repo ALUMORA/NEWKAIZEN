@@ -126,8 +126,8 @@ def test_pairs_by_date_not_by_position(monkeypatch):
     # Lo que habría dado emparejar por posición, que es como lo hacía el legado.
     own = mod._weekly_returns(late)
     mkt = mod._weekly_returns(market_series)
-    ys = list(own.values())
-    xs = list(mkt.values())[: len(ys)]
+    ys = [ret for _start, ret in own.values()]
+    xs = [ret for _start, ret in mkt.values()][: len(ys)]
     mx = sum(xs) / len(xs)
     my = sum(ys) / len(ys)
     positional = sum((xs[i] - mx) * (ys[i] - my) for i in range(len(xs))) / sum((x - mx) ** 2 for x in xs)
@@ -199,3 +199,31 @@ def test_yahoo_beta_is_only_a_fallback_for_dollars_and_says_what_it_is():
     assert fallback["value"] == 1.085
     assert fallback["adjusted"] == round(0.67 * 1.085 + 0.33, 4)  # 1.057
     assert any("S&P 500" in note for note in notes)
+
+
+def test_a_gap_in_one_series_does_not_pair_a_two_week_return_with_a_one_week_one(monkeypatch):
+    """Si al referente le falta una semana, su rendimiento siguiente abarca DOS semanas. Emparejarlo
+    con el de una semana de la acción sesgaba la beta en silencio (2.0 exacta salía 1.9979)."""
+    n = 60
+    market = _market_returns(n)
+    stock = [2.0 * r for r in market]
+    full_market = _series("SPY", "USD", market)
+    gap = 30
+    holed = PriceSeries(
+        symbol="SPY",
+        currency="USD",
+        interval="1wk",
+        dates=full_market.dates[:gap] + full_market.dates[gap + 1 :],
+        close=full_market.close[:gap] + full_market.close[gap + 1 :],
+        source="yahoo",
+    )
+    monkeypatch.setattr(
+        mod._history,
+        "get_series",
+        _fake_series({"AAPL": _series("AAPL", "USD", stock), "SPY": holed}),
+    )
+    notes: list[str] = []
+    beta = mod.compute_beta("AAPL", "USD", notes)
+    assert beta["value"] == pytest.approx(2.0, abs=1e-9)
+    assert beta["observations"] == n - 2, "se pierden las dos semanas que tocan el hueco"
+    assert any("1 semana" in note and "no coinciden" in note for note in notes)

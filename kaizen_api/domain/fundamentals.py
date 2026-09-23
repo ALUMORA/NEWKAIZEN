@@ -392,15 +392,20 @@ def instrument_type(info: dict, symbol: str) -> str | None:
     return kind
 
 
-def _weekly_returns(series) -> dict[str, float]:
-    """``{fecha: rendimiento simple}`` de una ``PriceSeries``, emparejable por fecha."""
-    out: dict[str, float] = {}
+def _weekly_returns(series) -> dict[str, tuple[str, float]]:
+    """``{fecha final: (fecha inicial, rendimiento simple)}`` de una ``PriceSeries``.
+
+    Se guardan las DOS fechas del intervalo: si a una serie le falta una semana, su rendimiento
+    siguiente abarca dos, y solo comparando también la fecha inicial se ve que no es el mismo
+    intervalo que el de la otra serie.
+    """
+    out: dict[str, tuple[str, float]] = {}
     dates, close = series.dates, series.close
     for i in range(1, len(close)):
         prev, cur = safe(close[i - 1]), safe(close[i])
         if prev is None or cur is None or prev <= 0:
             continue
-        out[dates[i]] = cur / prev - 1.0
+        out[dates[i]] = (dates[i - 1], cur / prev - 1.0)
     return out
 
 
@@ -435,13 +440,23 @@ def compute_beta(symbol: str, price_currency: str | None, notes: list[str]) -> d
         return None
     own_returns = _weekly_returns(own)
     market_returns = _weekly_returns(market)
-    dates = sorted(set(own_returns) & set(market_returns))
+    common = sorted(set(own_returns) & set(market_returns))
+    # Se empareja solo cuando coinciden las DOS fechas del intervalo; si no, uno de los dos
+    # rendimientos abarca más semanas que el otro por un hueco en su serie.
+    dates = [d for d in common if own_returns[d][0] == market_returns[d][0]]
+    dropped = len(common) - len(dates)
+    if dropped:
+        weeks = "1 semana" if dropped == 1 else f"{dropped} semanas"
+        notes.append(
+            f"Para la beta se descartó {weeks} en la que las dos series no coinciden en el intervalo "
+            "(a una le falta un cierre)."
+        )
     n = len(dates)
     if n < BETA_MIN_OBS:
         notes.append(f"La beta necesita al menos {BETA_MIN_OBS} semanas emparejadas y solo hubo {n}.")
         return None
-    xs = [market_returns[d] for d in dates]
-    ys = [own_returns[d] for d in dates]
+    xs = [market_returns[d][1] for d in dates]
+    ys = [own_returns[d][1] for d in dates]
     mx = sum(xs) / n
     my = sum(ys) / n
     var = sum((x - mx) ** 2 for x in xs)
