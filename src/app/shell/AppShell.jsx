@@ -10,6 +10,7 @@ import { Outlet } from 'react-router'
 import BottomNav from './BottomNav.jsx'
 import CommandPalette from './CommandPalette.jsx'
 import Footer from './Footer.jsx'
+import QueryFallback from './QueryFallback.jsx'
 import Sidebar from './Sidebar.jsx'
 import TopBar from './TopBar.jsx'
 import { ShellContext } from './shell-context.js'
@@ -24,6 +25,14 @@ import './palette.css'
 const EMBEDDED = Object.freeze({ embedded: true })
 
 export default function AppShell() {
+  return (
+    <QueryFallback>
+      <Shell />
+    </QueryFallback>
+  )
+}
+
+function Shell() {
   const [collapsed, toggleCollapsed] = useCollapsed()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const openPalette = useCallback(() => setPaletteOpen(true), [])
