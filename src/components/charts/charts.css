@@ -1,0 +1,65 @@
+/* Gráficas de C2. Solo tokens de C1; ningún color suelto. */
+.kz-chart { display: flex; flex-direction: column; gap: var(--space-3); margin: 0; min-width: 0; }
+.kz-chart__header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--space-2) var(--space-3); }
+.kz-chart__heading { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.kz-chart__title { color: var(--ink); font-size: var(--text-md); font-weight: var(--weight-semibold); line-height: var(--leading-tight); margin: 0; }
+.kz-chart__caption { color: var(--muted); font-size: var(--text-xs); line-height: var(--leading-normal); margin: 0; max-width: 68ch; }
+.kz-chart__actions { display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+.kz-chart__legend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); list-style: none; margin: 0; padding: 0; }
+.kz-chart__legend-item { align-items: center; color: var(--ink-soft); display: inline-flex; font-size: var(--text-xs); gap: var(--space-2); min-height: 20px; }
+.kz-chart__legend-value { color: var(--ink); font-weight: var(--weight-semibold); }
+.kz-chart__swatch { flex-shrink: 0; overflow: visible; }
+.kz-chart__body { position: relative; min-width: 0; }
+.kz-chart__plot { display: block; position: relative; width: 100%; }
+.kz-chart__plot:focus { outline: none; }
+.kz-chart__plot:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--radius-sm); }
+.kz-chart__svg { display: block; overflow: visible; width: 100%; height: 100%; }
+.kz-chart__footer { align-items: center; color: var(--muted); display: flex; flex-wrap: wrap; font-size: var(--text-xs); gap: var(--space-2) var(--space-3); justify-content: space-between; }
+.kz-chart__source { margin: 0; }
+.kz-chart__table { min-width: 0; }
+.kz-chart__empty { align-items: center; color: var(--muted); display: flex; font-size: var(--text-sm); height: 100%; justify-content: center; text-align: center; padding: var(--space-4); }
+
+/* Marcas del SVG */
+.kz-chart__grid { stroke: var(--grid); stroke-width: 1; shape-rendering: crispEdges; }
+.kz-chart__axis-line { stroke: var(--axis); stroke-width: 1; shape-rendering: crispEdges; }
+.kz-chart__zero { stroke: var(--axis); stroke-width: 1.5; shape-rendering: crispEdges; }
+.kz-chart__tick { fill: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums lining-nums; }
+.kz-chart__label { fill: var(--ink-soft); font-size: 12px; font-variant-numeric: tabular-nums lining-nums; }
+.kz-chart__label--strong { fill: var(--ink); font-weight: var(--weight-semibold); }
+.kz-chart__line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.kz-chart__area { stroke: none; opacity: .16; }
+.kz-chart__band { stroke: none; }
+.kz-chart__crosshair { stroke: var(--crosshair); stroke-width: 1; stroke-dasharray: 3 3; pointer-events: none; }
+.kz-chart__dot { stroke: var(--chart-surface); stroke-width: 2; }
+.kz-chart__marker { stroke: var(--chart-surface); stroke-width: 1.5; }
+.kz-chart__halo { fill: none; stroke: var(--chart-surface); stroke-width: 4; stroke-linejoin: round; paint-order: stroke; }
+
+/* Tooltip: vive en el flujo del marco (posición absoluta), nunca empuja el layout. */
+.kz-chart__tooltip {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  color: var(--ink);
+  font-size: var(--text-xs);
+  left: 0;
+  line-height: var(--leading-normal);
+  max-width: min(260px, 80%);
+  padding: var(--space-2) var(--space-3);
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  z-index: 2;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.kz-chart__tooltip-title { color: var(--muted); font-weight: var(--weight-semibold); margin: 0 0 var(--space-1); }
+.kz-chart__tooltip-row { align-items: center; display: flex; gap: var(--space-2); justify-content: space-between; white-space: nowrap; }
+.kz-chart__tooltip-name { align-items: center; color: var(--ink-soft); display: inline-flex; gap: var(--space-2); }
+.kz-chart__tooltip-value { font-variant-numeric: tabular-nums lining-nums; font-weight: var(--weight-semibold); }
+
+@media (prefers-reduced-motion: reduce) {
+  .kz-chart__tooltip { transition: none; }
+}
+
+.kz-sparkline { display: inline-flex; align-items: center; gap: var(--space-2); vertical-align: middle; }
+.kz-sparkline svg { display: block; overflow: visible; }
