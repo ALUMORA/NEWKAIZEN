@@ -1,18 +1,24 @@
-// Mercados (F2). /mercados monta la tab "Noticias" de la app legada hasta que exista la página
-// nueva; el resto son rutas nuevas. Para migrar una ruta: crear ./pages/X.jsx, cargarla con
-// lazy() y cambiar legacyRoute(...) por { path: route(PATHS.x), element: <Pages.X />, handle }.
+// Mercados (F2). Las cuatro rutas son páginas nuevas; /mercados ya no monta la tab "Noticias" del
+// legado: es el panorama del día.
 import { lazy } from 'react'
-import { legacyRoute } from '../../app/legacyRoute.jsx'
 import { PATHS, route } from '../../app/paths.js'
 
 const Pages = {
+  Overview: lazy(() => import('./pages/OverviewPage.jsx')),
   Mexico: lazy(() => import('./pages/MexicoPage.jsx')),
   Cetes: lazy(() => import('./pages/CetesPage.jsx')),
   News: lazy(() => import('./pages/NewsPage.jsx')),
 }
 
 export const routes = [
-  legacyRoute(PATHS.markets, { title: 'Mercados' }),
+  {
+    path: route(PATHS.markets),
+    element: <Pages.Overview />,
+    handle: {
+      title: 'Mercados',
+      description: 'Estado de la BMV y la NYSE, resumen del día, VIX con su percentil, tasas de EE. UU. y el mundo en dólares.',
+    },
+  },
   {
     path: route(PATHS.marketsMexico),
     element: <Pages.Mexico />,
