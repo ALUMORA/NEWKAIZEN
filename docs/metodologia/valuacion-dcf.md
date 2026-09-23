@@ -55,6 +55,31 @@ Caso probado: `FCFF₀ = 100`, crecimiento de 10 por ciento durante 5 años, cre
 3 por ciento y WACC de 9 por ciento dan 513.93 de la primera etapa, 1,796.87 de valor terminal
 descontado y **2,310.80** de valor empresa.
 
+### Supuestos por omisión
+
+Si no se piden otros, Kaizen usa estos, que están escritos junto con su fuente en el código:
+
+- **Crecimiento terminal**: la meta de inflación del banco central de la moneda más 1 punto de
+  crecimiento real. Da 3 por ciento en dólares (meta de la Reserva Federal de 2 por ciento) y 4 por
+  ciento en pesos (meta de Banxico de 3 por ciento). La tasa libre de riesgo queda solo como tope.
+- **Crecimiento de la primera etapa**: arranca en el crecimiento esperado de utilidades del sector
+  que publica Damodaran y baja en línea recta, año por año, hasta el crecimiento terminal. Es
+  crecimiento de utilidades, no de flujo, y la pantalla lo dice. Si se pide un crecimiento propio,
+  se respeta constante durante toda la etapa.
+- **Aviso de valor terminal**: si más de 75 por ciento del valor empresa sale del valor terminal,
+  la valuación lo avisa, porque entonces el resultado depende sobre todo de dos supuestos de largo
+  plazo.
+
+Antes, el crecimiento terminal por omisión era el tope permitido y la primera etapa usaba el
+crecimiento de utilidades constante los cinco años. Con eso el DCF salía inflado sin avisar: en
+algunas emisoras mexicanas el valor por acción salía más de 50 por ciento arriba del precio con cerca de 80
+por ciento del valor en el terminal.
+
+Cuando la emisora cotiza en una moneda y reporta en otra, como las del SIC, el valor por acción del
+DCF sale en la moneda de reporte, y la valuación trae un aviso con su equivalente en la moneda de
+cotización y el tipo de cambio usado. Si no hay tasa libre de riesgo real en la moneda de reporte,
+el DCF se marca como no aplicable con la razón, y los múltiplos se siguen publicando.
+
 ## Costo del capital
 
 Con CAPM, incluyendo riesgo país:
@@ -129,9 +154,8 @@ El valor central de un DCF no es el resultado: el rango lo es. Se muestra una ma
 acción variando WACC y crecimiento terminal alrededor de los supuestos, para que se vea de
 inmediato cuánto se mueve el resultado con cambios chicos: cinco valores de WACC, de 1.5 puntos
 abajo a 1.5 arriba, por cinco de crecimiento terminal, de 1 punto abajo a 1 arriba. Las celdas donde
-`WACC − g` queda a menos de 2 puntos salen vacías, como `s/d`, en vez de recortarse. La guarda de la
-tasa libre de riesgo no se aplica dentro de la malla, así que sus celdas de crecimiento más alto
-pueden pasar de esa tasa.
+`WACC − g` queda a menos de 2 puntos, o donde el crecimiento pasa de la tasa libre de riesgo, salen
+vacías, como `s/d`, en vez de recortarse.
 
 Si la malla va de 30 a 90 pesos, el mensaje es que el DCF no está diciendo mucho con esos insumos, y
 eso es información útil, no un fracaso del método.
@@ -147,7 +171,8 @@ que ya viene apalancada, en vez de reapalancar con Hamada:
 P/VL justificado = (ROE − g) / (Re − g)
 ```
 
-Caso probado: `ROE = 15%`, `g = 5%` y `Re = 12%` dan **1.4286**.
+Caso probado: `ROE = 15%`, `g = 5%` y `Re = 12%` dan **1.4286**. El crecimiento de esta fórmula pasa
+por las mismas dos guardas que el DCF, con el costo del capital en lugar del WACC.
 
 Las FIBRAs tampoco: su pantalla usa el rendimiento por distribución, el flujo de operación, el cap
 rate implícito, el LTV y el precio contra valor en libros, y está en [fibras.md](fibras.md).

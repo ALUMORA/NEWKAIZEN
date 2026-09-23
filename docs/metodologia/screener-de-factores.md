@@ -80,7 +80,7 @@ del orden es parte de la información.
 | --- | --- |
 | Valor | Promedio de los puntajes de earnings yield, flujo libre a capitalización, EBITDA a valor empresa y libros a precio |
 | Calidad | Promedio de los puntajes de ROE, ROA y margen operativo, y de deuda a capital con signo invertido |
-| Momentum | Puntaje del rendimiento de 12 meses saltándose el más reciente, sobre cierres de fin de mes, de la emisora sola y en su moneda de cotización, sin restar un referente |
+| Momentum | Puntaje del rendimiento de 12 meses saltándose el más reciente, sobre el último cierre diario de cada mes, de la emisora sola y en su moneda de cotización, sin restar un referente. Es el mismo cálculo de la ficha de momentum |
 | Baja volatilidad | Puntaje de la volatilidad anualizada de rendimientos semanales de dos años, con signo invertido |
 | Crecimiento | Promedio de los puntajes de crecimiento de ingresos y de utilidades contra el mismo periodo del año anterior |
 
