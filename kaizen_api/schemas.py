@@ -228,6 +228,14 @@ class Quote(ContractModel):
     type: InstrumentType | None
     marketState: str | None
     asOf: DateOrInstant | None
+    sector: str | None = Field(
+        default=None,
+        description="Sector de Yahoo en español de México (el mismo que usan los screeners); null si Yahoo no lo trae",
+    )
+    industry: str | None = Field(
+        default=None,
+        description="Industria tal como la publica Yahoo, en inglés; null si no viene",
+    )
 
 
 class QuotesResponse(ContractModel):

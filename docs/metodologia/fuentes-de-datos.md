@@ -29,6 +29,7 @@ fuente alterna.
 | --- | --- | --- | --- |
 | Precios y cotizaciones | Yahoo Finance | Ninguno | 15 a 20 minutos, o cierre del último día hábil |
 | Historia de precios | Yahoo Finance, cierre ajustado | Ninguno | Fin de día |
+| Sector de cada emisora | Yahoo Finance, la misma consulta del precio; el sector se traduce al español y la industria queda como la publica Yahoo | Ninguno: sin sector sale s/d, nunca adivinado | Cambia rara vez |
 | Tipo de cambio USD/MXN | Banxico FIX, serie SF43718 | Yahoo `MXN=X`, marcado | Un día hábil, por definición del FIX |
 | Tasa objetivo | Banxico, serie SF61745 | Ninguno | Día del anuncio |
 | CETES, TIIE, UDI, INPC | Banxico SIE e Inegi | FRED para la tasa libre de riesgo | Un día hábil; el INPC es quincenal |

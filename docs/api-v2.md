@@ -128,7 +128,17 @@ están en `docs/OWNERSHIP.md`).
 ### Datos de mercado (B2a: `routers/quotes.py`, `routers/history.py` y `routers/search.py`)
 
 - `GET /v2/quotes?symbols=A,B` (hasta 50) → `QuotesResponse`. Los símbolos sin cotización van en
-  `missing`, no como error.
+  `missing`, no como error. Cada `Quote` trae `sector` e `industry` (fase 3, pedido de F1 para la
+  concentración por sector de /portafolio/riesgo), tomados del mismo `info` de Yahoo que da el
+  precio, así que pedirlos no cuesta otra llamada. `sector` va en español de México con la misma
+  tabla que los screeners (`domain/universe.py`, `SECTOR_ES`: `Technology` sale como `Tecnología`,
+  `Financial Services` y `Financials` salen los dos como `Servicios financieros`); un sector sin
+  traducción sale tal cual lo manda Yahoo. `industry` no tiene catálogo de traducción y sale en
+  inglés, así que para agrupar y para mostrar conviene `sector`. Índices, fondos, ETF, divisas y
+  cripto no traen sector en Yahoo y salen con los dos en `null`: la UI los muestra como "s/d" o los
+  agrupa por `type`, nunca les adivina un sector. Ojo: `InstrumentResponse.sector` todavía sale
+  crudo, en inglés. El servidor siempre manda los dos campos; son opcionales en el contrato solo
+  para que un cliente tolere un API desplegado antes de este cambio.
 - `GET /v2/search?q=&limit=10` (`q` de 1 a 64 caracteres, `limit` de 1 a 50) → `SearchResponse`.
   Fuentes: `company_tickers.json` de la SEC y la lista curada `kaizen_api/data/symbols_mx.json` con
   alias en español (sin red para México).
@@ -373,6 +383,8 @@ Cuerpo de ``POST /auth/login``. Acepta y descarta campos extra.
 | `type` | "equity" \| "etf" \| "fibra" \| "index" \| "fx" \| "crypto" \| "commodity" \| "fund" \| null | sí |  |
 | `marketState` | string \| null | sí |  |
 | `asOf` | date o instant \| null | sí |  |
+| `sector` | string \| null | no | Sector de Yahoo en español de México (el mismo que usan los screeners); null si Yahoo no lo trae |
+| `industry` | string \| null | no | Industria tal como la publica Yahoo, en inglés; null si no viene |
 
 #### SearchResponse
 

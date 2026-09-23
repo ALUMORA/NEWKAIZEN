@@ -17,6 +17,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query
 
 from kaizen_api.domain import fx as fx_domain
+from kaizen_api.domain.universe import sector_label
 from kaizen_api.provenance import iso_instant, meta
 from kaizen_api.providers.yahoo import prices
 from kaizen_api.routers import ERROR_RESPONSES, Symbols, cache_control
@@ -48,6 +49,12 @@ def _instrument_type(symbol: str, info: dict) -> str | None:
     if kind == "equity" and symbol.endswith(".MX") and symbol.startswith(FIBRA_PREFIXES):
         return "fibra"
     return kind
+
+
+def _text(raw: object) -> str | None:
+    """Texto sin espacios sobrantes, o ``None`` si Yahoo lo manda vacío o no lo manda."""
+    text = str(raw).strip() if isinstance(raw, str) else ""
+    return text or None
 
 
 def _as_of(info: dict) -> str | None:
@@ -88,6 +95,10 @@ def _quote(symbol: str, info: dict) -> dict | None:
         "type": _instrument_type(symbol, info),
         "marketState": info.get("marketState"),
         "asOf": _as_of(info),
+        # Del mismo ``info`` que trae el precio: el sector no cuesta otra llamada a Yahoo. Va en
+        # español, como en los screeners; la industria no tiene catálogo de traducción y va tal cual.
+        "sector": sector_label(_text(info.get("sector"))),
+        "industry": _text(info.get("industry")),
     }
 
 
