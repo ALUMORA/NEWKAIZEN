@@ -94,7 +94,7 @@ def momentum(symbol: SymbolPath) -> MomentumResponse:
         "yahoo,computed",
         as_of=payload.get("_asOf"),
         delay_minutes=None,
-        stale=False,
+        stale=bool(payload.get("_stale")),
         fallback=False,
         notes=payload.get("_notes") or [],
     )
