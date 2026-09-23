@@ -47,6 +47,17 @@ LONG_RATE_SERIES = {
 }
 """Serie de FRED con el rendimiento del bono largo de cada moneda que sabemos descontar."""
 
+RATE_FREQUENCY = {"DGS10": "daily", "IRLTLT01MXM156N": "monthly"}
+"""``DGS10`` es diaria. La de México es el PROMEDIO MENSUAL que publica la OCDE, fechado el día 1."""
+
+RF_STALE_DAYS = 7
+"""Días naturales que puede tener el último dato de una serie diaria antes de marcarse ``stale``.
+FRED publica ``DGS10`` con un día hábil de rezago; siete días cubren un fin de semana largo."""
+
+RF_STALE_MONTHS = 2
+"""Meses que puede quedarse atrás una serie mensual. En septiembre lo normal es tener el promedio de
+agosto (un mes); si solo hay el de julio o uno más viejo, la tasa viene atrasada."""
+
 COUNTRY_BY_CURRENCY = {"USD": "United States", "MXN": "Mexico"}
 
 COUNTRY_LABELS = {"Mexico": "México", "United States": "Estados Unidos"}
@@ -64,8 +75,36 @@ INFLATION_ANCHORS = {
         "asOf": "2026-01-01",
     },
 }
-"""Inflación esperada de largo plazo por moneda. Solo se usa para pasar una WACC de una moneda a
-otra cuando no hay tasa larga de la moneda de cotización; siempre sale marcada como supuesto."""
+"""Inflación esperada de largo plazo por moneda: la META del banco central, que es un dato público y
+verificable, no un pronóstico nuestro. Se usa para pasar una WACC de una moneda a otra cuando no
+hay tasa larga de esa moneda, y como ancla del crecimiento terminal por omisión."""
+
+# ─── supuestos por omisión del DCF (revisión de B3b, punto 6) ───────────────
+#
+# Antes el crecimiento terminal por omisión era la tasa libre de riesgo (o 6 %) y la etapa 1 crecía
+# todo el horizonte al crecimiento de UPA de analistas del sector. Con WALMEX, CEMEX y AAPL eso daba
+# un valor terminal de 79 % a 85 % del valor de empresa sin ningún aviso. Los valores de abajo son
+# SUPUESTOS NUESTROS, escritos aquí para que se puedan discutir; ninguno sale de una fuente externa
+# salvo la meta de inflación.
+
+TERMINAL_REAL_GROWTH = 0.01
+"""Crecimiento REAL a perpetuidad que se suma a la meta de inflación para el crecimiento terminal por
+omisión: 3 % nominal en dólares (2 % de la Fed más 1 %) y 4 % en pesos (3 % de Banxico más 1 %).
+
+Es deliberadamente modesto: a perpetuidad una empresa no puede crecer más que la economía en la que
+vive (Damodaran, "Investment Valuation", cap. 12), y un 1 % real queda por debajo del crecimiento
+real de largo plazo de México y de Estados Unidos. La tasa libre de riesgo de la moneda sigue siendo
+el TOPE (lo aplica ``dcf.clamp_terminal_growth``), ya no el valor por omisión."""
+
+FADE_STAGE_ONE = True
+"""Con el crecimiento por omisión, la etapa 1 arranca en el crecimiento esperado a 5 años del sector
+(Damodaran) y baja en línea recta hasta el crecimiento terminal. Ese dato es crecimiento de UPA de
+analistas, no del flujo libre, y sostenerlo cinco años completos inflaba el último flujo y con él
+el valor terminal. Un crecimiento que el usuario pide en la consulta NO se desvanece: se respeta."""
+
+TV_SHARE_WARNING = 0.75
+"""Arriba de este peso del valor terminal en el valor de empresa, ``dcf.warnings`` avisa que el
+resultado depende sobre todo de lo que se suponga después del horizonte explícito."""
 
 SECTOR_ALIASES = {
     "financials": "Financial Services",
@@ -250,6 +289,7 @@ class RiskFree:
     label: str
     fallback: bool = False
     notes: list[str] = field(default_factory=list)
+    frequency: str = "daily"
 
 
 def _fred_last(series: str) -> tuple[float, str] | None:
@@ -318,11 +358,17 @@ def risk_free(currency: str) -> RiskFree | None:
         if found:
             gross, as_of = found
             net = gross - risk.default_spread
+            frequency = RATE_FREQUENCY.get(series[0], "daily")
             notes.append(
                 f"A la tasa del bono a 10 años ({gross:.2%}) se le restó el diferencial de "
                 f"incumplimiento soberano de {risk.label} ({risk.default_spread:.2%}), "
                 "como pide el CAPM."
             )
+            if frequency == "monthly":
+                notes.append(
+                    f"La tasa larga de {risk.label} es el promedio mensual que publica la OCDE; el "
+                    f"último es el del mes que empieza el {as_of}."
+                )
             return RiskFree(
                 currency=ccy,
                 rate=round(net, 6),
@@ -332,6 +378,7 @@ def risk_free(currency: str) -> RiskFree | None:
                 label=series[1],
                 fallback=False,
                 notes=notes,
+                frequency=frequency,
             )
     seam = _from_b2b_seam(ccy)
     if seam:
@@ -355,6 +402,30 @@ def risk_free(currency: str) -> RiskFree | None:
 
 def inflation_anchor(currency: str) -> dict | None:
     return INFLATION_ANCHORS.get((currency or "").upper())
+
+
+def default_terminal_growth(currency: str) -> float | None:
+    """Meta de inflación de la moneda más ``TERMINAL_REAL_GROWTH``. ``None`` sin ancla de inflación."""
+    anchor = inflation_anchor(currency)
+    if anchor is None:
+        return None
+    return round(float(anchor["value"]) + TERMINAL_REAL_GROWTH, 6)
+
+
+def today() -> _dt.date:
+    return _dt.date.today()
+
+
+def rf_is_stale(rf: RiskFree, now: _dt.date | None = None) -> bool:
+    """¿La tasa libre de riesgo es más vieja de lo esperado para la frecuencia de su serie?"""
+    if not rf.as_of:
+        return False
+    day = now or today()
+    as_of = _dt.date.fromisoformat(str(rf.as_of)[:10])
+    if rf.frequency == "monthly":
+        behind = (day.year * 12 + day.month) - (as_of.year * 12 + as_of.month)
+        return behind > RF_STALE_MONTHS
+    return (day - as_of).days > RF_STALE_DAYS
 
 
 # ─── clasificación de la emisora ─────────────────────────────────────────────
@@ -389,8 +460,8 @@ class Classification:
             )
         if self.is_reit:
             return (
-                "Es una FIBRA o REIT: se compara por FFO, cap rate y P/NAV, no por P/U ni "
-                "EV/EBITDA. El screener de FIBRAs es el lugar correcto."
+                "Es una FIBRA o REIT: se compara por su flujo, su distribución y el precio contra el "
+                "valor en libros, no por P/U ni EV/EBITDA. El screener de FIBRAs es el lugar correcto."
             )
         return None
 
@@ -401,8 +472,9 @@ class Classification:
         if self.is_reit:
             return (
                 "Es una FIBRA o REIT: su utilidad de operación incluye la revaluación de los "
-                "inmuebles, que no es efectivo, así que proyectar ese EBIT infla el valor. Se mide "
-                "con FFO y AFFO en el screener de FIBRAs."
+                "inmuebles, que no es efectivo, así que proyectar ese EBIT infla el valor. En el "
+                "screener de FIBRAs se compara con el flujo de la operación entre capitalización, el "
+                "rendimiento por distribución y el precio contra el valor en libros."
             )
         if self.is_bank or self.is_insurer:
             return (

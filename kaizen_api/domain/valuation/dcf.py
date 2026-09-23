@@ -11,7 +11,9 @@ Definiciones:
 
 * ``FCFF = EBIT(1 − t) + D&A − capex − ΔCTN`` (capital de trabajo neto sin efectivo ni deuda de
   corto plazo).
-* Etapa 1: ``FCFF_n = FCFF_0 (1+g)^n`` descontado a la WACC.
+* Etapa 1: ``FCFF_n = FCFF_{n−1} (1+g_n)`` descontado a la WACC. Con ``fade=False`` (lo que usan
+  las respuestas conocidas del spec) ``g_n = g`` todos los años; con ``fade=True`` el crecimiento
+  baja en línea recta del ``g`` del año 1 hacia el terminal: ``g_n = g − (g − g_t)(n − 1)/N``.
 * Valor terminal con Gordon: ``VT = FCFF_{N+1} / (WACC − g_t)``, descontado ``N`` años.
 * Hamada: ``β_L = β_U [1 + (1 − t) D/E]``.
 * CAPM con riesgo país: ``Re = rf + β_L · ERP + λ · CRP``.
@@ -19,7 +21,8 @@ Definiciones:
 * Cambio de moneda de la WACC por diferencial de inflación esperada:
   ``(1 + WACC_base)(1 + π_local)/(1 + π_base) − 1``.
 
-Dos guardas que el spec exige y que aquí devuelven aviso en vez de un número absurdo:
+Dos guardas que el spec exige y que aquí devuelven aviso en vez de un número absurdo (en la tabla
+de sensibilidad, el cruce que las viola queda vacío):
 
 * el crecimiento terminal no puede pasar de la tasa libre de riesgo de ESA moneda;
 * ``WACC − g_t`` tiene que ser de al menos 2 puntos porcentuales.
@@ -124,8 +127,13 @@ def clamp_terminal_growth(
     wacc_value: float,
     rf: float | None,
     warnings: list[str],
+    rate_label: str = "la WACC",
 ) -> float:
-    """Aplica las dos guardas del spec y deja el aviso en español en ``warnings``."""
+    """Aplica las dos guardas del spec y deja el aviso en español en ``warnings``.
+
+    ``wacc_value`` es la tasa de descuento contra la que se mide el margen de 2 puntos: la WACC en
+    el DCF, el costo de capital propio en el P/VL justificado. ``rate_label`` la nombra en el aviso.
+    """
     g = terminal_growth
     if rf is not None and g > rf:
         warnings.append(
@@ -136,11 +144,22 @@ def clamp_terminal_growth(
     if wacc_value - g < MIN_SPREAD:
         nuevo = wacc_value - MIN_SPREAD
         warnings.append(
-            f"El crecimiento terminal ({g:.2%}) deja menos de 2 puntos contra la WACC "
+            f"El crecimiento terminal ({g:.2%}) deja menos de 2 puntos contra {rate_label} "
             f"({wacc_value:.2%}); se recortó a {nuevo:.2%}."
         )
         g = nuevo
     return g
+
+
+def stage_one_growths(growth: float, years: int, terminal_growth: float, fade: bool = False) -> list[float]:
+    """Crecimiento de cada año de la etapa 1. Con ``fade`` baja en línea recta hacia ``terminal_growth``.
+
+    Año ``n`` de ``N``: ``g − (g − g_t)(n − 1)/N``. El año 1 crece a ``g`` y el año ``N + 1`` (el que
+    arranca el valor terminal) ya crece a ``g_t``, así que no hay escalón entre las dos etapas.
+    """
+    if not fade:
+        return [growth] * years
+    return [growth - (growth - terminal_growth) * (n - 1) / years for n in range(1, years + 1)]
 
 
 def two_stage_fcff(
@@ -150,11 +169,13 @@ def two_stage_fcff(
     terminal_growth: float,
     wacc_value: float,
     rf: float | None = None,
+    fade: bool = False,
 ) -> DcfResult:
     """DCF de dos etapas sobre el FCFF. Devuelve proyección, valor terminal y valor empresa.
 
     ``rf`` solo se usa para la guarda "crecimiento terminal ≤ tasa libre de riesgo"; si es ``None``
-    esa guarda no aplica (por ejemplo en las pruebas de respuesta conocida).
+    esa guarda no aplica (por ejemplo en las pruebas de respuesta conocida). ``fade`` desvanece el
+    crecimiento de la etapa 1 hacia el terminal ya recortado (ver ``stage_one_growths``).
     """
     if years < 1:
         raise ValueError("years tiene que ser 1 o más")
@@ -166,8 +187,8 @@ def two_stage_fcff(
 
     projection: list[ProjectionYear] = []
     fcff = fcff0
-    for n in range(1, years + 1):
-        fcff = fcff * (1.0 + growth)
+    for n, g_n in enumerate(stage_one_growths(growth, years, g_t, fade), start=1):
+        fcff = fcff * (1.0 + g_n)
         factor = 1.0 / (1.0 + wacc_value) ** n
         projection.append(ProjectionYear(year=n, fcff=fcff, discount_factor=factor, pv=fcff * factor))
 
@@ -219,12 +240,15 @@ def sensitivity(
     shares: float | None,
     wacc_steps: tuple[float, ...] = (-0.015, -0.0075, 0.0, 0.0075, 0.015),
     growth_steps: tuple[float, ...] = (-0.01, -0.005, 0.0, 0.005, 0.01),
+    rf: float | None = None,
+    fade: bool = False,
 ) -> dict:
     """Tabla WACC x crecimiento terminal con el valor por acción en cada cruce.
 
-    ``grid[i][j]`` corresponde a ``waccs[i]`` y ``growths[j]``. Un cruce donde la guarda de los
-    2 puntos no se cumple queda en ``None``: no se recorta el supuesto a escondidas, se deja vacío
-    para que la UI muestre "s/d".
+    ``grid[i][j]`` corresponde a ``waccs[i]`` y ``growths[j]``. Un cruce que viola una de las dos
+    guardas (menos de 2 puntos entre WACC y g, o g arriba de ``rf`` cuando se pasa) queda en
+    ``None``: no se recorta el supuesto a escondidas, se deja vacío para que la UI muestre "s/d".
+    ``fade`` tiene que ser el mismo que el del caso base para que el centro de la tabla lo repita.
     """
     waccs = [round(base_wacc + s, 6) for s in wacc_steps]
     growths = [round(base_terminal_growth + s, 6) for s in growth_steps]
@@ -232,10 +256,10 @@ def sensitivity(
     for w in waccs:
         row: list[float | None] = []
         for g in growths:
-            if w <= 0 or w - g < MIN_SPREAD:
+            if w <= 0 or w - g < MIN_SPREAD or (rf is not None and g > rf + 1e-12):
                 row.append(None)
                 continue
-            result = two_stage_fcff(fcff0, growth, years, g, w)
+            result = two_stage_fcff(fcff0, growth, years, g, w, fade=fade)
             _, per_share = equity_bridge(result.enterprise_value, net_debt, minority_interest, shares)
             row.append(None if per_share is None else round(per_share, 4))
         grid.append(row)
