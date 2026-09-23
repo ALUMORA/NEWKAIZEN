@@ -19,6 +19,8 @@
 .kz-shell__main {
   flex: 1;
   min-width: 0;
+  /* Lo que se salga de lado (tablas anchas del legado) no ensancha la página. */
+  overflow-x: clip;
 }
 .kz-shell__main:focus { outline: none; }
 
@@ -186,4 +188,18 @@
 .kz-foot__links a:hover { color: var(--ink); }
 @media (max-width: 767.98px) {
   .kz-foot { padding: var(--space-4) var(--space-3); }
+}
+
+/* ─── Legado incrustado (src/legacy/App.legacy.jsx con embedded) ──────────
+   El legado trae su propio marco (.app-shell con barra lateral fija de 224 px). Dentro del
+   shell solo queda su contenido: sin margen para la barra vieja y con el ancho de contenido de
+   siempre en escritorio (1440 − 240 − 2 × 24 = 1152 px, igual que 1440 − 224 − 2 × 32), para
+   que el baseline visual del contenido no cambie. */
+.app-shell[data-embedded] { background: transparent; display: block; min-height: 0; }
+.app-shell[data-embedded] .app-frame { margin-left: 0; width: auto; }
+@media (min-width: 768px) {
+  .app-shell[data-embedded] .workspace-page { padding-inline: var(--space-6); }
+}
+@media (max-width: 768px) {
+  .app-shell[data-embedded] .workspace-page { padding-bottom: var(--space-6); }
 }
