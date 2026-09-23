@@ -132,10 +132,12 @@ export function sortino(returns, rfPerPeriod, k, marPerPeriod) {
  */
 export function drawdowns(values) {
   const w = numericArray(values, 2)
+  // El arranque tiene que ser positivo: es el primer pico y de ahí sale toda la división.
   if (w === null || !(w[0] > 0)) return null
-  // Un valor en cero o negativo no es un patrimonio: la caída contra el pico dejaría de tener
-  // sentido (daría -100 % y de ahí no se sale), así que no hay dato en vez de un número raro.
-  for (let i = 0; i < w.length; i++) if (!(w[i] > 0)) return null
+  // Un valor NEGATIVO no es un patrimonio y no hay caída que medir contra él. Un CERO sí: es la
+  // ruina total, o sea −100 %, y es el número más seguro de toda la ficha. Como el pico solo
+  // crece a partir de w[0] > 0, nunca vale 0 y `w[i] / pico − 1` sigue bien definido: da −1.
+  for (let i = 1; i < w.length; i++) if (w[i] < 0) return null
   /** @type {number[]} */
   const series = new Array(w.length)
   let peak = w[0]

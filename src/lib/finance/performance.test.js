@@ -176,9 +176,36 @@ describe('drawdowns y calmar', () => {
     expect(calmar(NaN, -0.2)).toBeNull()
   })
 
-  it('pide dos valores positivos', () => {
+  // La ruina total es el único caso donde la caída máxima no admite duda: vale −1. Antes salía
+  // en null porque la guarda exigía que TODOS los valores fueran positivos, así que la ficha de
+  // un portafolio que se fue a cero mostraba "s/d" justo en el número más seguro que tenía.
+  it('una cartera que se va a cero reporta caída máxima −1, no s/d', () => {
+    const dd = drawdowns([100, 0])
+    expect(dd.maxDrawdown).toBe(-1)
+    expect(dd.peakIndex).toBe(0)
+    expect(dd.troughIndex).toBe(1)
+    expect(dd.recoveryIndex).toBeNull()
+    expect(dd.series).toEqual([0, -1])
+  })
+
+  it('un cero a media serie no tapa la caída ni rompe el pico', () => {
+    const dd = drawdowns([100, 120, 0, 60])
+    expect(dd.maxDrawdown).toBe(-1)
+    expect(dd.peakIndex).toBe(1)
+    expect(dd.troughIndex).toBe(2)
+    expect(dd.recoveryIndex).toBeNull()
+  })
+
+  it('summary de una pérdida total trae la caída máxima llena', () => {
+    const s = summary([-1, 0.1], { k: 12 })
+    expect(s.maxDrawdown).toBe(-1)
+    expect(s.worst).toBe(-1)
+  })
+
+  it('pide un arranque positivo y ningún valor negativo', () => {
     expect(drawdowns([100])).toBeNull()
-    expect(drawdowns([100, 0])).toBeNull()
+    expect(drawdowns([0, 100])).toBeNull()
+    expect(drawdowns([-1, 100])).toBeNull()
     expect(drawdowns([100, -50])).toBeNull()
     expect(drawdowns([100, NaN])).toBeNull()
   })
