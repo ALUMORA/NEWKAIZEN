@@ -11,9 +11,12 @@ Dos problemas distintos y los dos son de moneda:
    AAPL.MX vale 182.6 porque divide la capitalización en pesos entre los ingresos en dólares.
    Cualquier razón que mezcle precio (o capitalización) con estados tiene que convertir primero.
 
-La conversión se pide a la costura ``domain.fx.convert`` (de B2a). Mientras esa costura no exista
-para monedas distintas, ``Converter.ok`` es ``False`` y quien la usa deja la razón en ``None`` con
-una nota, en vez de mezclar monedas en silencio.
+El tipo de cambio sale de ``domain.fx.spot`` (de B2a), que es exactamente lo que usa
+``fx.convert(monto, de, a)`` cuando no se le da fecha, pero además dice de qué día es la barra, de
+qué fuente salió y si es sustituta. Así ``fxUsed.asOf`` trae la fecha real y la ficha puede marcar
+``fallback`` cuando el tipo vino de Yahoo y no del FIX de Banxico. Si no hay tipo de cambio,
+``Converter.ok`` es ``False`` y quien la usa deja la razón en ``None`` con una nota, en vez de
+mezclar monedas en silencio.
 """
 
 from __future__ import annotations
@@ -21,7 +24,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 from kaizen_api.domain import safe
-from kaizen_api.domain.fx import convert as fx_convert
+from kaizen_api.domain.fx import BANXICO_FIX_SOURCE, FxQuote
+from kaizen_api.domain.fx import apply_rate as fx_apply_rate
+from kaizen_api.domain.fx import check_pair as fx_check_pair
+from kaizen_api.domain.fx import spot as fx_spot
 from kaizen_api.errors import ApiError
 
 # Código que publica Yahoo -> (ISO 4217, entre cuánto hay que dividir el monto).
@@ -72,13 +78,14 @@ class Converter:
 
         conv = Converter("USD", "MXN")
         ingresos_mxn = conv.to_price(466_822_987_776)   # None si todavía no hay tipo de cambio
-        conv.used()                                     # {"pair": "USDMXN", "rate": ..., "asOf": None}
+        conv.used()                                     # {"pair": "USDMXN", "rate": ..., "asOf": "2026-09-22"}
 
     Cuando las dos monedas son iguales, ``to_price`` es la identidad y ``used()`` es ``None``: no
     hubo conversión que reportar. Cuando son distintas, el tipo de cambio se pide UNA vez a
-    ``domain.fx.convert`` (costura de B2a) convirtiendo una unidad, y se guarda. Si esa costura
-    todavía no existe o la fuente no responde, ``ok`` queda en ``False``, ``failure`` explica por
-    qué en español y todo ``to_price`` devuelve ``None``.
+    ``domain.fx.spot`` (costura de B2a) y se guarda junto con su fecha, su fuente y si es sustituto;
+    la dirección del par la resuelve ``fx.apply_rate``, igual que dentro de ``fx.convert``. Si la
+    costura no existe, el par no está soportado o la fuente no responde, ``ok`` queda en ``False``,
+    ``failure`` explica por qué en español y todo ``to_price`` devuelve ``None``.
     """
 
     financial_currency: str | None
@@ -86,6 +93,7 @@ class Converter:
     _rate: float | None = field(default=None, init=False, repr=False)
     _resolved: bool = field(default=False, init=False, repr=False)
     _failure: str | None = field(default=None, init=False, repr=False)
+    _quote: FxQuote | None = field(default=None, init=False, repr=False)
 
     @property
     def same(self) -> bool:
@@ -113,7 +121,9 @@ class Converter:
             self._failure = "Yahoo no dice en qué moneda están los estados financieros."
             return
         try:
-            rate = safe(fx_convert(1.0, self.financial_currency, self.price_currency))
+            origin, target = fx_check_pair(self.financial_currency, self.price_currency)
+            quote = fx_spot()
+            rate = safe(fx_apply_rate(1.0, quote.rate, origin, target))
         except NotImplementedError:
             self._failure = f"Todavía no hay tipo de cambio {self.pair} para convertir los estados financieros."
             return
@@ -127,6 +137,7 @@ class Converter:
             self._failure = f"No se pudo obtener el tipo de cambio {self.pair}."
             return
         self._rate = rate
+        self._quote = quote
 
     @property
     def ok(self) -> bool:
@@ -155,12 +166,41 @@ class Converter:
         rate = self._rate or 1.0
         return value if rate == 1.0 else value * rate
 
+    @property
+    def fallback(self) -> bool:
+        """¿El tipo de cambio que se usó es de una fuente sustituta (Yahoo en vez del FIX)?"""
+        self._resolve()
+        return bool(self._quote and self._quote.fallback)
+
+    @property
+    def stale(self) -> bool:
+        """¿La barra de FX que se usó es más vieja de lo tolerado por ``domain.fx``?"""
+        self._resolve()
+        return bool(self._quote and self._quote.stale)
+
+    @property
+    def source(self) -> str | None:
+        """Token de ``meta.source`` del tipo de cambio: ``banxico`` o ``yahoo``. ``None`` si no hubo."""
+        self._resolve()
+        if self._quote is None:
+            return None
+        return "banxico" if self._quote.source == BANXICO_FIX_SOURCE else "yahoo"
+
+    @property
+    def notes(self) -> list[str]:
+        """Avisos que ``domain.fx`` dejó sobre el tipo de cambio (por ejemplo, que no es el FIX)."""
+        self._resolve()
+        return list(self._quote.notes) if self._quote else []
+
     def used(self) -> dict | None:
         """``fxUsed`` del contrato, o ``None`` si no hizo falta convertir o no se pudo.
 
-        ``asOf`` va en ``None`` porque la costura ``fx.convert`` todavía no reporta la fecha del
-        tipo de cambio que usó (está pedido en ``docs/requests/B3a.md``).
+        ``asOf`` es la fecha de la barra de FX que se usó, tal como la reporta ``domain.fx.spot``.
         """
         if self.same or not self.ok:
             return None
-        return {"pair": self.pair, "rate": round(self._rate, 6) if self._rate else None, "asOf": None}
+        return {
+            "pair": self.pair,
+            "rate": round(self._rate, 6) if self._rate else None,
+            "asOf": self._quote.as_of if self._quote else None,
+        }

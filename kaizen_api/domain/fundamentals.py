@@ -570,6 +570,15 @@ def get_instrument(symbol: str) -> dict:
     conv = Converter(financial_currency, price_currency)
     if not conv.same and conv.failure:
         notes.append(conv.failure + " Las razones que mezclan precio con estados quedan vacías.")
+    fx_fallback = False
+    if conv.used() is not None and conv.fallback:
+        # Una fuente sustituta es ``fallback`` aunque el precio sea en vivo: las razones que mezclan
+        # precio con estados se hicieron con ese tipo de cambio.
+        fx_fallback = True
+        notes.append(
+            f"El tipo de cambio {conv.pair} con el que se convirtieron los estados viene del mercado "
+            "en Yahoo, no del FIX de Banxico."
+        )
 
     # En la moneda de los ESTADOS (se convierten antes de mezclarlas con el precio).
     revenue = scale_minor(info.get("totalRevenue"), fin_divisor)
@@ -651,12 +660,14 @@ def get_instrument(symbol: str) -> dict:
             "El rendimiento de la utilidad se sacó del P/U que publica Yahoo, no de los estados financieros."
         )
 
-    fallback = False
+    fallback = fx_fallback
     beta = compute_beta(symbol, price_currency, notes)
     if beta is None:
         beta = _yahoo_beta(info, price_currency, notes)
-        fallback = beta is not None
+        fallback = fallback or beta is not None
     sources = ["yahoo"] + (["computed"] if beta and beta["source"] == "computed" else [])
+    if conv.used() is not None and conv.source and conv.source not in sources:
+        sources.append(conv.source)
     available = sum(1 for key in FUNDAMENTAL_KEYS if fundamentals[key] is not None)
     quote = _quote(info, price, px_divisor)
     return {

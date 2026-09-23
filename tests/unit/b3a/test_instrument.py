@@ -25,6 +25,12 @@ AAPLMX_MARKET_CAP = 85_230_153_105_408.0
 AAPLMX_REVENUE_USD = 466_822_987_776.0
 
 
+def _fx_quote(rate: float, as_of: str):
+    from kaizen_api.domain.fx import BANXICO_FIX_SOURCE, FxQuote
+
+    return FxQuote(rate=rate, as_of=as_of, source=BANXICO_FIX_SOURCE, stale=False, fallback=False)
+
+
 def test_walmex_ratios_are_the_arithmetic_they_claim(replay_b3a):
     """WALMEX cotiza y reporta en pesos: sin conversión de por medio, todo tiene que cuadrar."""
     data = mod.get_instrument("WALMEX.MX")
@@ -104,9 +110,9 @@ def test_the_earnings_yield_from_the_statements_does_not_claim_the_fallback(repl
 
 def test_aapl_mx_converts_the_statements_when_there_is_an_fx(replay_b3a, monkeypatch):
     """Con la costura de B2a disponible, P/S es capitalización en pesos entre ingresos EN PESOS."""
-    monkeypatch.setattr(currency_mod, "fx_convert", lambda amount, f, t, on=None: amount * 18.5)
+    monkeypatch.setattr(currency_mod, "fx_spot", lambda: _fx_quote(18.5, "2026-09-21"))
     data = mod.get_instrument("AAPL.MX")
-    assert data["fxUsed"] == {"pair": "USDMXN", "rate": 18.5, "asOf": None}
+    assert data["fxUsed"] == {"pair": "USDMXN", "rate": 18.5, "asOf": "2026-09-21"}
     expected = AAPLMX_MARKET_CAP / (AAPLMX_REVENUE_USD * 18.5)
     assert data["fundamentals"]["ps"] == pytest.approx(expected, rel=1e-4)
     assert data["fundamentals"]["ps"] < 20, "P/S de dos dígitos bajos, no 182"
@@ -184,3 +190,25 @@ def test_the_response_carries_no_em_dashes(replay_b3a):
 
     for text in strings(mod.get_instrument("WALMEX.MX")):
         assert "—" not in text and "–" not in text, text
+
+
+def test_fx_used_carries_the_date_of_the_bar_it_used(replay_b3a):
+    """AAPL.MX convierte con el USDMXN grabado: ``asOf`` es el día de esa barra, no ``null``.
+
+    Sin token de Banxico el tipo sale de Yahoo, y eso es una fuente sustituta: ``fallback`` va en
+    ``true`` y la nota lo dice. Antes la ficha lo callaba.
+    """
+    from kaizen_api.domain import fx
+
+    quote = fx.spot()
+    data = mod.get_instrument("AAPL.MX")
+    assert data["fxUsed"] == {"pair": "USDMXN", "rate": round(quote.rate, 6), "asOf": quote.as_of}
+    assert data["fxUsed"]["asOf"] == "2026-09-22"
+    assert data["fallback"] is True
+    assert any("tipo de cambio USDMXN" in note and "Yahoo" in note for note in data["notes"])
+
+
+def test_same_currency_has_no_fx_and_no_fx_fallback(replay_b3a):
+    data = mod.get_instrument("WALMEX.MX")
+    assert data["fxUsed"] is None
+    assert not any("tipo de cambio" in note for note in data["notes"])
