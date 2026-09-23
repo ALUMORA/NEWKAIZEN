@@ -407,6 +407,27 @@ def test_mismatches_dice_por_que_no_cuadra_una_serie():
     assert banxico.mismatches(buena, item) == []
 
 
+def test_mismatches_acepta_la_unidad_que_reporta_el_sie_solo_en_esas_series():
+    """Con el token real: SF61745 y SF43783 dicen "Sin Unidad" y SP68257 dice "Unidades de Inversión"."""
+    cat = banxico.catalog()
+    casos = {
+        "SF61745": ("Tasa objetivo", "Sin Unidad"),
+        "SF43783": ("TIIE a 28 días", "Sin Unidad"),
+        "SP68257": ("Valor de UDIS", "Unidades de Inversión"),
+    }
+    for sid, (titulo, unidad) in casos.items():
+        info = {"titulo": titulo, "unidad": unidad, "periodicidad": "Diaria"}
+        assert banxico.mismatches(info, cat[sid]) == [], sid
+    # El candado no se relaja para las demás: otra serie en por ciento o en pesos sigue rechazando esas unidades.
+    cetes = {"titulo": "Cetes a 28 días, Tasa de rendimiento", "unidad": "Sin Unidad", "periodicidad": "Semanal"}
+    assert any("unidad" in r for r in banxico.mismatches(cetes, cat["SF43936"]))
+    fix = {"titulo": "Tipo de cambio FIX", "unidad": "Unidades de Inversión", "periodicidad": "Diaria"}
+    assert any("unidad" in r for r in banxico.mismatches(fix, cat["SF43718"]))
+    # Y en la UDI, "Sin Unidad" no pasa: la excepción es la unidad exacta de cada serie, no cualquiera.
+    udi = {"titulo": "Valor de UDIS", "unidad": "Sin Unidad", "periodicidad": "Diaria"}
+    assert any("unidad" in r for r in banxico.mismatches(udi, cat["SP68257"]))
+
+
 def test_classify_es_lo_que_usa_la_prueba_en_vivo_y_no_da_ok_por_el_titulo_solo():
     """La prueba con token decide qué se marca ``verified: true``: tiene que usar el mismo candado."""
     catalogo = {sid: banxico.catalog()[sid] for sid in ("SF43718", "SF43936", "SF43939")}

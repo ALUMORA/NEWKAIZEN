@@ -40,7 +40,7 @@
   .kz-banner-dot { animation: none; }
 }
 
-/* ─── Páginas de mensaje (No encontrada, Próximamente, error) ─── */
+/* ─── Páginas de mensaje (No encontrada, error) ─── */
 .kz-message-page {
   align-items: center;
   background: var(--bg);
@@ -50,10 +50,6 @@
   padding: 32px 16px;
 }
 
-.kz-message-page--embedded {
-  background: transparent;
-  min-height: 60vh;
-}
 .kz-message {
   display: grid;
   gap: 12px;
@@ -64,7 +60,6 @@
 .kz-message h1 { font-size: clamp(1.5rem, 4vw, 2rem); }
 .kz-message p { color: var(--muted); font-size: 0.85rem; line-height: 1.55; }
 .kz-message code { background: var(--surface-2); border-radius: 6px; color: var(--ink); font-size: 0.8rem; padding: 1px 6px; word-break: break-all; }
-.kz-message .badge { justify-self: start; }
 .kz-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .kz-stack {
   background: var(--surface-2);

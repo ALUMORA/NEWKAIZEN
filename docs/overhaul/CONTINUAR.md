@@ -201,6 +201,24 @@ portafolio, optimizador, backtest, screeners) y M3.
 - Bloqueo para `main`: no existe el servicio v2 en Render; la app nueva no puede iniciar sesión
   contra el backend viejo.
 
+### 23 de septiembre de 2026, mediodía: e2e en verde (`19199f1`)
+
+- Las 47 fallas e2e se cerraron: `e2e/app.spec.js` y `e2e/shell.spec.js` ya prueban las rutas
+  nuevas (login, `?next`, cierre de sesión, avisos, paleta y axe sobre `/mercados` completo, sin
+  excluir contenido). Las 6 del shell no eran un defecto: esperaban `.app-shell[data-embedded]` del
+  legado y pedían `/v2/markets/world` y `/v2/screeners/*` sin mock (501). Suite completa: **409
+  pasadas, 0 fallas**, 47 omitidas (las de un solo viewport); `npm run check` en verde.
+- Se borró la prueba de "Próximamente" en `/portafolio/rendimiento`: ninguna ruta usa ya
+  `ComingSoon`.
+- `ComingSoon.jsx` y su CSS exclusivo se borraron (código muerto). `useShell()` quedó sin uso.
+- SIE: el candado acepta por serie la unidad literal que reporta Banxico (`unidadExacta` en
+  `banxico_series.json`: "Sin Unidad" en SF61745 y SF43783, "Unidades de Inversión" en SP68257),
+  sin relajar las demás. **Falta** correr la prueba en vivo con el token para decidir `verified`, y
+  siguen abiertos los ids equivocados (SF43881, SP74625/SP74626) y la periodicidad de los CETES.
+- Sigue pendiente limpiar la infraestructura e2e del legado (`e2e/support/legacy.js`,
+  `e2e/fixtures/legacy`, proyectos baseline de `playwright.config.js` y la opción `legacyApi` de
+  `setupApp`, que todavía pasan varios specs aunque ya no haga falta).
+
 ### Lo que falta, en orden
 
 1. ~~C1, C2 y C3, el sistema de diseño~~: cerrado el 23 de septiembre, ver arriba.

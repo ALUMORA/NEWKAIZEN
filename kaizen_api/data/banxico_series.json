@@ -36,6 +36,9 @@
       "label": "Tasa objetivo de Banxico",
       "unit": "fraction",
       "sieUnit": "percent",
+      "unidadExacta": [
+        "Sin Unidad"
+      ],
       "verified": true,
       "periodicidad": "Diaria",
       "maxAgeDays": 5,
@@ -51,6 +54,9 @@
       "label": "TIIE a 28 días",
       "unit": "fraction",
       "sieUnit": "percent",
+      "unidadExacta": [
+        "Sin Unidad"
+      ],
       "verified": false,
       "periodicidad": "Diaria",
       "maxAgeDays": 5,
@@ -216,6 +222,9 @@
       "label": "Valor de la UDI",
       "unit": "mxn",
       "sieUnit": "mxn",
+      "unidadExacta": [
+        "Unidades de Inversión"
+      ],
       "verified": false,
       "periodicidad": "Diaria",
       "maxAgeDays": 5,

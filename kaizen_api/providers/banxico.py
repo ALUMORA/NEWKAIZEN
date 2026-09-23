@@ -12,7 +12,8 @@ de esos dos se verifica en una prueba antes de usarse.
 Además, con token, :func:`verified_ids` vuelve a preguntar los metadatos al SIE (24 h de caché) y
 pasa cada serie por :func:`mismatches`: el título tiene que traer las palabras de
 ``tituloContiene`` y ninguna de ``tituloExcluye``, la periodicidad tiene que ser la del catálogo y
-la unidad tiene que cuadrar con ``sieUnit`` (por ciento o pesos). Una serie que no pase no se
+la unidad tiene que cuadrar con ``sieUnit`` (por ciento o pesos) o ser, exacta, la
+``unidadExacta`` de esa serie en el catálogo. Una serie que no pase no se
 publica, aunque esté marcada ``verified: true``.
 
 Cómo confirmarlas de una vez, cuando el dueño saque su token (es gratis en
@@ -288,7 +289,11 @@ def mismatches(info: dict | None, item: dict) -> list[str]:
         reasons.append(f'la periodicidad es "{got}" y el catálogo dice "{want}"')
     unidad = str(info.get("unidad") or "")
     words = UNIT_WORDS.get(str(item.get("sieUnit") or ""), ())
-    if not any(word in _fold(unidad) for word in words):
+    # ``unidadExacta``: la etiqueta literal que el SIE reporta para ESA serie aunque no diga por ciento
+    # ni pesos ("Sin Unidad" en SF61745 y SF43783, "Unidades de Inversión" en SP68257). Es por serie
+    # y compara la unidad completa, así que no relaja el candado de las demás.
+    exactas = {_fold(str(u)).strip() for u in item.get("unidadExacta") or []}
+    if not any(word in _fold(unidad) for word in words) and _fold(unidad).strip() not in exactas:
         esperada = UNIT_NAMES.get(str(item.get("sieUnit") or ""), "la del catálogo")
         reasons.append(f'la unidad es "{unidad}" y el catálogo espera {esperada}')
     return reasons
