@@ -300,3 +300,22 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+.kz-tool__caveats,
+.kz-tool__weights {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.kz-tool__weights {
+  justify-items: stretch;
+}
+.kz-tool__weights > .kz-button {
+  justify-self: start;
+}
+.kz-tool__rf {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-top: var(--space-3);
+}

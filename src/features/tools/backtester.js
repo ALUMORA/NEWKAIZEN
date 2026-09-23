@@ -26,6 +26,13 @@ export const REBALANCE = /** @type {const} */ ([
   { value: 'annual', label: 'Cada año' },
 ])
 
+/** Nombre corto del referente, para encabezados de tabla. @param {string} id */
+export function benchmarkShort(id) {
+  if (id === 'spx') return 'S&P 500'
+  if (id === 'blend') return 'Mezcla'
+  return 'IPC'
+}
+
 /** Nombre del referente para la pantalla. @param {string} id @param {number} blendIpc */
 export function benchmarkLabel(id, blendIpc) {
   if (id === 'spx') return 'S&P 500 en pesos'

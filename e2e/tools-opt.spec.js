@@ -182,7 +182,19 @@ async function optimizerReady(page) {
   await expect(page.getByRole('table', { name: 'Walk forward contra toda la historia' })).toBeVisible()
 }
 
-const PAGES = [{ path: '/herramientas/optimizador', ready: optimizerReady, name: 'optimizador' }]
+/** El backtest terminó de correr. */
+async function backtestReady(page) {
+  await expect(page.getByRole('heading', { level: 1, name: 'Backtest' })).toBeVisible()
+  const result = page.getByRole('region', { name: 'Resultado' })
+  await expect(result.getByRole('table', { name: 'Métricas contra el referente' })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByRole('figure', { name: 'Crecimiento de 1 peso' })).toBeVisible()
+  await expect(page.getByRole('figure', { name: 'Caídas desde el máximo' })).toBeVisible()
+}
+
+const PAGES = [
+  { path: '/herramientas/optimizador', ready: optimizerReady, name: 'optimizador' },
+  { path: '/herramientas/backtest', ready: backtestReady, name: 'backtest' },
+]
 
 test.describe('herramientas: optimizador', () => {
   test('arranca con las emisoras del portafolio: tres carteras, frontera, walk forward e insumos', async ({ page, baseURL }) => {
@@ -249,6 +261,74 @@ test.describe('herramientas: optimizador', () => {
     await optimizerReady(page)
     await expect(page.getByText('Sin historia suficiente en estas fechas, quedaron fuera: NOPE.MX.')).toBeVisible()
     await expect(page.getByRole('table', { name: 'Pesos por cartera' }).getByRole('row')).toHaveCount(3)
+  })
+})
+
+test.describe('herramientas: backtest', () => {
+  test('con tu cartera: aviso de pesos de hoy, CAGR, métricas contra el IPC y las dos gráficas', async ({ page, baseURL }) => {
+    await open(page, /** @type {string} */ (baseURL))
+    await page.goto('/herramientas/backtest')
+    await backtestReady(page)
+    await expect(page).toHaveTitle('Backtest · Kaizen')
+    await expect(page.locator('h1')).toHaveCount(1)
+    await expect(page.getByRole('radio', { name: 'Mi cartera hoy' })).toBeChecked()
+    await expect(page.getByText('Pesos de hoy sobre historia anterior.')).toBeVisible()
+    await expect(page.getByRole('radio', { name: 'Comprar y mantener' })).toBeChecked()
+    const metrics = page.getByRole('table', { name: 'Métricas contra el referente' })
+    await expect(metrics.getByRole('columnheader', { name: 'Tu cartera' })).toBeVisible()
+    await expect(metrics.getByRole('columnheader', { name: 'IPC' })).toBeVisible()
+    await expect(metrics.getByRole('row')).toHaveCount(12)
+    const result = page.getByRole('region', { name: 'Resultado' })
+    await expect(result.getByText(/260 semanas, del/)).toBeVisible()
+    await expect(result.getByText('contra el referente', { exact: true })).toBeVisible()
+    await expect(result.getByText('Sobre CETES 28 de cada semana.')).toBeVisible()
+    await expect(page.getByRole('table', { name: 'Pesos al inicio' }).getByRole('row')).toHaveCount(4)
+    await expect(page.getByRole('link', { name: 'Lee la metodología del backtest' })).toHaveAttribute('href', '/aprender/metodologia/backtest')
+    await noHorizontalScroll(page)
+  })
+
+  test('pesos a mano, mezcla constante, otro referente y otro periodo', async ({ page, baseURL }) => {
+    await open(page, /** @type {string} */ (baseURL))
+    await page.goto('/herramientas/backtest')
+    await backtestReady(page)
+    await page.getByRole('radio', { name: 'Los escribo yo' }).check()
+    await expect(page.getByText('Pesos de hoy sobre historia anterior.')).toHaveCount(0)
+    await expect(page.getByRole('heading', { name: 'Elige qué probar' })).toBeVisible()
+    const search = page.getByRole('textbox', { name: 'Agregar emisora' })
+    await search.fill('WALMEX.MX')
+    await search.press('Enter')
+    await search.fill('AAPL')
+    await search.press('Enter')
+    await expect(page.getByLabel('Peso de AAPL', { exact: true })).toHaveValue('50')
+    await backtestReady(page)
+    await expect(page.getByRole('table', { name: 'Métricas contra el referente' }).getByRole('columnheader', { name: 'Tu mezcla' })).toBeVisible()
+    await page.getByLabel('Peso de AAPL', { exact: true }).fill('30')
+    await expect(page.getByText('Los pesos suman 80 % y tienen que sumar 100 %.')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Revisa los pesos' })).toBeVisible()
+    await page.getByRole('button', { name: 'Repartir parejo' }).click()
+    await backtestReady(page)
+    await page.getByRole('radio', { name: 'Mezcla constante' }).check()
+    await expect(page.getByLabel('Regresar a los pesos', { exact: true })).toHaveValue('monthly')
+    await expect(page.getByText('Rotación anual')).toBeVisible()
+    await page.getByLabel('Referente', { exact: true }).selectOption('spx')
+    await expect(page.getByRole('table', { name: 'Métricas contra el referente' }).getByRole('columnheader', { name: 'S&P 500', exact: true })).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Resultado' }).getByText(/Referente: S&P 500 en pesos\./)).toBeVisible()
+    await page.getByLabel('Referente', { exact: true }).selectOption('blend')
+    await page.getByLabel('Parte del IPC en la mezcla', { exact: true }).fill('70')
+    await expect(page.getByRole('table', { name: 'Métricas contra el referente' }).getByRole('columnheader', { name: 'Mezcla', exact: true })).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Resultado' }).getByText(/Referente: Mezcla: 70 % IPC y 30 % S&P 500\./)).toBeVisible()
+    await page.getByRole('radio', { name: '10 años' }).check()
+    await expect(page.getByRole('region', { name: 'Resultado' }).getByText(/520 semanas, del/)).toBeVisible()
+    await noHorizontalScroll(page)
+  })
+
+  test('una emisora sin historia se avisa y el resto se reescala', async ({ page, baseURL }) => {
+    await open(page, /** @type {string} */ (baseURL), { state: EMPTY_STATE })
+    await page.goto('/herramientas/backtest?symbols=WALMEX.MX,NOPE.MX')
+    await backtestReady(page)
+    await expect(page.getByRole('radio', { name: 'Mi cartera hoy' })).toBeDisabled()
+    await expect(page.getByText(/quedaron fuera: NOPE\.MX\. Los demás pesos se reescalaron/)).toBeVisible()
+    await expect(page.getByRole('table', { name: 'Pesos al inicio' }).getByRole('row')).toHaveCount(2)
   })
 })
 
