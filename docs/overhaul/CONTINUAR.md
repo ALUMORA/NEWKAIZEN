@@ -179,6 +179,28 @@ descripción de la emisora llega en inglés desde Yahoo.
 Lo siguiente: `/portafolio/rendimiento`, luego reemplazar las rutas del legado (panorama,
 portafolio, optimizador, backtest, screeners) y M3.
 
+### Estado al 23 de septiembre de 2026, tarde: M3 hecho, pendiente para `main`
+
+- Segunda tanda de la fase 3 integrada (las 8 pantallas del legado reemplazadas, PF y PB). El
+  workflow se detuvo por cuota: solo F5 y PB pasaron por revisión adversaria; F1, F2, F3b, F3c, F4
+  y PF no. Hallazgos abiertos de F5: CSV con coma decimal y columnas desconocidas, la tendencia de
+  la watchlist sin su meta, páginas públicas sin salida a la app.
+- M3 hecho (`84b572f`): `src/legacy`, LegacyPage, legacyRoute, legacyTabs y el baseline visual
+  retirados. `npm run check` en verde (2,009 pruebas). **e2e: 47 fallas**: 41 son pruebas del
+  legado en `e2e/app.spec.js` que hay que borrar, 6 son de `e2e/shell.spec.js` sin diagnosticar.
+  La infraestructura e2e del legado (`e2e/support/legacy.js`, `e2e/fixtures/legacy`, proyectos
+  baseline en `playwright.config.js`, `legacyApi` de setupApp) sigue ahí y se limpia después.
+- **Banxico, verificado con el token del dueño (en `.env.local`, nunca en el repo)**: el SIE solo
+  confirma `SF331451` (TIIE de fondeo) y `SF43718` (FIX). `SF61745` (tasa objetivo) y `SF43783`
+  fallan solo porque el SIE reporta la unidad como "Sin Unidad"; `SP68257` (UDI) por "Unidades de
+  Inversión": hay que aceptar esas unidades en el catálogo. Los CETES `SF43936/39/42/45` salen con
+  periodicidad "Diaria" contra "Semanal": revisar si son los de subasta. **Ids equivocados**:
+  `SF43881` es un BPA a 1092 días, no el Bono M 10 años, y `SP74625`/`SP74626` son índices del INPC
+  subyacente, no inflación anual. Sin arreglar esto, con token en producción la tasa objetivo NO se
+  publica. Comando: `KAIZEN_LIVE=1` con `tests/unit/b2b/test_banxico_live.py -s`.
+- Bloqueo para `main`: no existe el servicio v2 en Render; la app nueva no puede iniciar sesión
+  contra el backend viejo.
+
 ### Lo que falta, en orden
 
 1. ~~C1, C2 y C3, el sistema de diseño~~: cerrado el 23 de septiembre, ver arriba.
