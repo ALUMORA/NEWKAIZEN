@@ -118,6 +118,47 @@ describe('jamesStein', () => {
     expect(r.mu[0]).toBe(0.12)
   })
 
+  it('por omisión encoge hacia el promedio simple de las medias, como pide el spec', () => {
+    const r = /** @type {any} */ (jamesStein([0.05, 0.11, 0.2], cov, 156))
+    const explicito = /** @type {any} */ (jamesStein([0.05, 0.11, 0.2], cov, 156, { target: 'average' }))
+    expect(r.target).toBeCloseTo((0.05 + 0.11 + 0.2) / 3, 14)
+    expect(r.shrinkage).toBe(explicito.shrinkage)
+  })
+
+  it('la contracción no depende de si las medias vienen por periodo o anualizadas (con k)', () => {
+    // Panel semanal de 156 x 5 con un factor común. Sin `k` la versión anualizada encogía ~30 veces
+    // menos, porque d crece con k y λ = (N + 2)/d se encoge: era como tener k·T observaciones.
+    let state = 20260922
+    const uniform = () => {
+      state = (1664525 * state + 1013904223) >>> 0
+      return (state + 0.5) / 4294967296
+    }
+    const normal = () => Math.sqrt(-2 * Math.log(uniform())) * Math.cos(2 * Math.PI * uniform())
+    const T = 156
+    const returns = []
+    for (let t = 0; t < T; t += 1) {
+      const f = normal() * 0.02
+      returns.push([0, 1, 2, 3, 4].map((i) => 0.001 * (i + 1) + f + normal() * 0.02))
+    }
+    const hm = /** @type {any} */ (historicalMean(returns, 52))
+    const perPeriodCov = [0, 1, 2, 3, 4].map((i) =>
+      [0, 1, 2, 3, 4].map((j) => {
+        let s = 0
+        for (const row of returns) s += (row[i] - hm.perPeriod[i]) * (row[j] - hm.perPeriod[j])
+        return s / (T - 1)
+      }),
+    )
+    const annualCov = perPeriodCov.map((row) => row.map((v) => v * 52))
+    for (const target of /** @type {const} */ (['average', 'minVariance'])) {
+      const semanal = /** @type {any} */ (jamesStein(hm.perPeriod, perPeriodCov, T, { target }))
+      const anual = /** @type {any} */ (jamesStein(hm.mu, annualCov, T, { target, k: 52 }))
+      expect(semanal.shrinkage).toBeGreaterThan(0.05)
+      expect(anual.shrinkage).toBeCloseTo(semanal.shrinkage, 12)
+      expect(anual.target).toBeCloseTo(semanal.target * 52, 12)
+      for (let i = 0; i < 5; i += 1) expect(anual.mu[i]).toBeCloseTo(semanal.mu[i] * 52, 12)
+    }
+  })
+
   it('el objetivo "average" es el promedio simple', () => {
     const r = /** @type {any} */ (jamesStein([0.05, 0.11, 0.2], cov, 156, { target: 'average' }))
     expect(r.target).toBeCloseTo((0.05 + 0.11 + 0.2) / 3, 14)
@@ -128,6 +169,8 @@ describe('jamesStein', () => {
     expect(() => jamesStein([0.05, 0.11], cov, 156)).toThrow(InvalidInputError)
     expect(() => jamesStein([0.05, 0.11, 0.2], cov, 0)).toThrow(InvalidInputError)
     expect(() => jamesStein([], cov, 156)).toThrow(InvalidInputError)
+    expect(() => jamesStein([0.05, 0.11, 0.2], cov, 156, { k: 0 })).toThrow(InvalidInputError)
+    expect(() => jamesStein([0.05, 0.11, 0.2], cov, 156, { k: Number.NaN })).toThrow(InvalidInputError)
   })
 })
 
@@ -150,7 +193,7 @@ describe('goldens contra numpy', () => {
         }
         return
       }
-      const r = /** @type {any} */ (jamesStein(input.means, input.cov, input.T, { target: input.target }))
+      const r = /** @type {any} */ (jamesStein(input.means, input.cov, input.T, { target: input.target, k: input.k ?? 1 }))
       expect(Math.abs(r.shrinkage - expected.shrinkage)).toBeLessThanOrEqual(tol)
       expect(Math.abs(r.target - expected.target)).toBeLessThanOrEqual(tol)
       for (let i = 0; i < r.mu.length; i += 1) {
