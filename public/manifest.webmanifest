@@ -1,0 +1,15 @@
+{
+  "name": "Kaizen",
+  "short_name": "Kaizen",
+  "description": "Herramienta educativa y de análisis de inversiones para México. No es recomendación de inversión.",
+  "lang": "es-MX",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f3f2ec",
+  "theme_color": "#f3f2ec",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
