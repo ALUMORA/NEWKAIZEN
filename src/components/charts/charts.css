@@ -1,0 +1,83 @@
+/* Gráficas de C2. Solo tokens de C1; ningún color suelto. */
+.kz-chart { display: flex; flex-direction: column; gap: var(--space-3); margin: 0; min-width: 0; }
+.kz-chart__header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: var(--space-2) var(--space-3); }
+.kz-chart__heading { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.kz-chart__title { color: var(--ink); font-size: var(--text-md); font-weight: var(--weight-semibold); line-height: var(--leading-tight); margin: 0; }
+.kz-chart__caption { color: var(--muted); font-size: var(--text-xs); line-height: var(--leading-normal); margin: 0; max-width: 68ch; }
+.kz-chart__actions { display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+.kz-chart__legend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); list-style: none; margin: 0; padding: 0; }
+.kz-chart__legend-item { align-items: center; color: var(--ink-soft); display: inline-flex; font-size: var(--text-xs); gap: var(--space-2); min-height: 20px; }
+.kz-chart__legend-value { color: var(--ink); font-weight: var(--weight-semibold); }
+.kz-chart__swatch { flex-shrink: 0; overflow: visible; }
+.kz-chart__body { position: relative; min-width: 0; }
+.kz-chart__plot { display: block; position: relative; width: 100%; }
+.kz-chart__plot:focus { outline: none; }
+.kz-chart__plot:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: var(--radius-sm); }
+.kz-chart__svg { display: block; overflow: visible; width: 100%; height: 100%; }
+.kz-chart__footer { align-items: center; color: var(--muted); display: flex; flex-wrap: wrap; font-size: var(--text-xs); gap: var(--space-2) var(--space-3); justify-content: space-between; }
+.kz-chart__source { margin: 0; }
+.kz-chart__table { min-width: 0; }
+.kz-chart__empty { align-items: center; color: var(--muted); display: flex; font-size: var(--text-sm); height: 100%; justify-content: center; text-align: center; padding: var(--space-4); }
+
+/* Marcas del SVG */
+.kz-chart__grid { stroke: var(--grid); stroke-width: 1; shape-rendering: crispEdges; }
+.kz-chart__axis-line { stroke: var(--axis); stroke-width: 1; shape-rendering: crispEdges; }
+.kz-chart__zero { stroke: var(--axis); stroke-width: 1.5; shape-rendering: crispEdges; }
+.kz-chart__tick { fill: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums lining-nums; }
+.kz-chart__label { fill: var(--ink-soft); font-size: 12px; font-variant-numeric: tabular-nums lining-nums; }
+.kz-chart__label--strong { fill: var(--ink); font-weight: var(--weight-semibold); }
+.kz-chart__line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.kz-chart__area { stroke: none; opacity: .16; }
+.kz-chart__band { stroke: none; }
+.kz-chart__crosshair { stroke: var(--crosshair); stroke-width: 1; stroke-dasharray: 3 3; pointer-events: none; }
+.kz-chart__dot { stroke: var(--chart-surface); stroke-width: 2; }
+.kz-chart__marker { stroke: var(--chart-surface); stroke-width: 1.5; }
+.kz-chart__halo { fill: none; stroke: var(--chart-surface); stroke-width: 4; stroke-linejoin: round; paint-order: stroke; }
+
+/* Tooltip: vive en el flujo del marco (posición absoluta), nunca empuja el layout. */
+.kz-chart__tooltip {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  color: var(--ink);
+  font-size: var(--text-xs);
+  left: 0;
+  line-height: var(--leading-normal);
+  max-width: min(260px, 80%);
+  padding: var(--space-2) var(--space-3);
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  z-index: 2;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.kz-chart__tooltip-title { color: var(--muted); font-weight: var(--weight-semibold); margin: 0 0 var(--space-1); }
+.kz-chart__tooltip-row { align-items: center; display: flex; gap: var(--space-4); justify-content: space-between; white-space: nowrap; }
+.kz-chart__tooltip-name { align-items: center; color: var(--ink-soft); display: inline-flex; gap: var(--space-2); }
+.kz-chart__tooltip-value { font-variant-numeric: tabular-nums lining-nums; font-weight: var(--weight-semibold); }
+
+@media (prefers-reduced-motion: reduce) {
+  .kz-chart__tooltip { transition: none; }
+}
+
+.kz-sparkline { display: inline-flex; align-items: center; gap: var(--space-2); vertical-align: middle; }
+.kz-sparkline svg { display: block; overflow: visible; }
+
+/* Dona */
+.kz-donut { align-items: center; display: flex; flex-wrap: wrap; gap: var(--space-5); }
+.kz-donut__ring { flex-shrink: 0; position: relative; }
+.kz-donut__ring svg { display: block; }
+.kz-donut__center { align-items: center; display: flex; flex-direction: column; inset: 0; justify-content: center; position: absolute; text-align: center; padding: 0 18%; }
+.kz-donut__center-label { color: var(--muted); font-size: var(--text-xs); }
+.kz-donut__center-value { color: var(--ink); font-size: var(--text-md); font-weight: var(--weight-semibold); line-height: var(--leading-tight); overflow-wrap: anywhere; }
+.kz-donut__legend { display: flex; flex: 1 1 220px; flex-direction: column; gap: var(--space-2); list-style: none; margin: 0; min-width: 0; padding: 0; }
+.kz-donut__item { align-items: center; column-gap: var(--space-2); display: grid; font-size: var(--text-xs); grid-template-columns: 16px minmax(0, 1fr) auto 6ch; }
+.kz-donut__name { color: var(--ink-soft); font-size: var(--text-xs); min-width: 0; overflow-wrap: anywhere; }
+.kz-donut__value { color: var(--ink); font-size: var(--text-xs); font-weight: var(--weight-semibold); text-align: right; }
+.kz-donut__share { color: var(--muted); font-size: var(--text-xs); text-align: right; min-width: 4.5ch; }
+
+/* Heatmap: el texto de celda va en --ink, que pasa AA sobre los cinco tonos en los dos temas. */
+.kz-heatmap__value { fill: var(--ink); font-size: 12px; font-variant-numeric: tabular-nums lining-nums; }
+/* Etiqueta directa con halo del color de fondo para que se lea sobre líneas y marcas. */
+.kz-chart__halo-text { paint-order: stroke; stroke: var(--chart-surface); stroke-width: 3px; stroke-linejoin: round; }
