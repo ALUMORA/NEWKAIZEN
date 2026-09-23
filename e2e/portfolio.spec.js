@@ -3,8 +3,9 @@
 // La fixture `guards` tumba la prueba ante cualquier console.error, request fallido o >= 400.
 import { readFile } from 'node:fs/promises'
 import AxeBuilder from '@axe-core/playwright'
-import { test, expect } from './support/guards.js'
-import { HEALTH_V2, setupApp } from './support/app.js'
+import { test as plainTest } from '@playwright/test'
+import { test, expect, attachGuards } from './support/guards.js'
+import { HEALTH_V2, expectedHttpError, setupApp } from './support/app.js'
 
 const WCAG_AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const THEMES = /** @type {const} */ (['light', 'dark'])
@@ -37,12 +38,22 @@ const RATES = {
   items: [{ id: 'cetes28', label: 'CETES 28 días', value: 0.0725, unit: 'fraction', asOf: '2026-09-18', seriesId: 'SF43936', source: 'banxico', previous: 0.073, changeBp: -5 }],
   meta: meta({ asOf: '2026-09-18', source: 'banxico', delayMinutes: null }),
 }
-const FX_HISTORY = {
-  pair: 'USDMXN',
-  dates: ['2026-09-17', '2026-09-18', '2026-09-21'],
-  values: [18.35, 18.39, 18.4125],
-  source: 'banxico_fix',
-  meta: meta({ asOf: '2026-09-21', source: 'banxico_fix', delayMinutes: null }),
+// FIX por día hábil desde junio; los tres últimos, fijos para el prellenado del alta en USD.
+const FIX = (() => {
+  /** @type {Record<string, number>} */
+  const out = {}
+  const d = new Date('2026-06-01T12:00:00Z')
+  for (let i = 0; d.toISOString().slice(0, 10) <= '2026-09-16'; i += 1, d.setUTCDate(d.getUTCDate() + 1)) {
+    if (d.getUTCDay() !== 0 && d.getUTCDay() !== 6) out[d.toISOString().slice(0, 10)] = Math.round((18.1 + 0.2 * Math.sin(i / 9)) * 10000) / 10000
+  }
+  return { ...out, '2026-09-17': 18.35, '2026-09-18': 18.39, '2026-09-21': 18.4125 }
+})()
+/** FxHistoryResponse entre start y end. */
+const FX_HISTORY = ({ url }) => {
+  const start = url.searchParams.get('start') ?? '0000'
+  const end = url.searchParams.get('end') ?? '9999'
+  const dates = Object.keys(FIX).filter((d) => d >= start && d <= end).sort()
+  return { json: { pair: 'USDMXN', dates, values: dates.map((d) => FIX[d]), source: 'banxico_fix', meta: meta({ asOf: dates[dates.length - 1] ?? null, source: 'banxico_fix', delayMinutes: null }) } }
 }
 
 const quote = (symbol, name, price) => ({ symbol, name, price, previousClose: price, change: 0, changePct: 0, currency: 'MXN', exchange: 'BMV', type: 'equity', marketState: 'REGULAR', asOf: '2026-09-22T14:40:00Z' })
@@ -61,25 +72,40 @@ const QUOTES = ({ url }) => {
 // PanelResponse: 12 semanas de precios en pesos, sin rellenar.
 const weeks = Array.from({ length: 12 }, (_, i) => `2026-${String(7 + Math.floor(i / 4)).padStart(2, '0')}-${String(1 + (i % 4) * 7).padStart(2, '0')}`)
 const walk = (start, steps) => steps.map((_, i) => Math.round(start * (1 + 0.01 * Math.sin(i * 1.3) + 0.002 * i) * 100) / 100)
-const PANEL = {
-  currency: 'MXN',
-  interval: '1wk',
-  dates: weeks,
-  prices: {
+const USD_PRICES = { AAPL: walk(228, weeks) }
+const PANEL_PRICES = {
+  MXN: {
     'WALMEX.MX': walk(62, weeks),
     'NAFTRAC.MX': walk(55, weeks).map((v, i) => Math.round((v * (1 + 0.004 * Math.cos(i))) * 100) / 100),
     '^MXX': walk(60000, weeks),
     '^GSPC': walk(120000, weeks).map((v, i) => Math.round(v * (1 + 0.006 * Math.cos(i * 0.7)))),
+    // En pesos, con el FIX vigente de cada fecha (el mismo que usa el servidor).
+    AAPL: USD_PRICES.AAPL.map((v, i) => Math.round(v * (FIX[weeks[i]] ?? 18.4125) * 100) / 100),
   },
-  dropped: [],
-  meta: meta({ asOf: '2026-09-19', delayMinutes: null }),
+  USD: USD_PRICES,
+}
+/** PanelResponse con lo que se pidió y en la moneda que se pidió; lo desconocido va en `dropped`. */
+const PANEL = ({ url }) => {
+  const ccy = url.searchParams.get('ccy') === 'USD' ? 'USD' : 'MXN'
+  const table = PANEL_PRICES[ccy]
+  const symbols = (url.searchParams.get('symbols') ?? '').split(',').filter(Boolean)
+  return {
+    json: {
+      currency: ccy,
+      interval: '1wk',
+      dates: weeks,
+      prices: Object.fromEntries(symbols.filter((sym) => table[sym]).map((sym) => [sym, table[sym]])),
+      dropped: symbols.filter((sym) => !table[sym]).map((sym) => ({ symbol: sym, reason: 'No hay observaciones en el periodo pedido.' })),
+      meta: meta({ asOf: '2026-09-19', delayMinutes: null }),
+    },
+  }
 }
 
 const V2_ROUTES = {
-  'GET /v2/panel': { json: PANEL },
+  'GET /v2/panel': PANEL,
   'GET /v2/markets/overview': { json: OVERVIEW },
   'GET /v2/rates/mx': { json: RATES },
-  'GET /v2/fx/history': { json: FX_HISTORY },
+  'GET /v2/fx/history': FX_HISTORY,
   'GET /v2/search': { json: { results: [], meta: meta({ source: 'kaizen', delayMinutes: null }) } },
   'GET /v2/fx': { json: { pair: 'USDMXN', rate: 18.4321, asOf: '2026-09-22T14:40:00Z', source: 'yahoo', stale: false, meta: meta() } },
   'GET /v2/quotes': QUOTES,
@@ -324,6 +350,79 @@ test.describe('portafolio: rebalanceo', () => {
   })
 })
 
+const PERF_STATE = {
+  ...STATE,
+  portfolios: [
+    {
+      ...STATE.portfolios[0],
+      transactions: [
+        ...STATE.portfolios[0].transactions,
+        tx({ id: 'tx5', type: 'buy', date: '2026-09-09', symbol: 'AAPL', quantity: 5, price: 225, currency: 'USD', fxRate: 18.3 }),
+        tx({ id: 'tx6', type: 'sell', date: '2026-09-16', symbol: 'WALMEX.MX', quantity: 50, price: 66 }),
+      ],
+    },
+  ],
+}
+
+test.describe('portafolio: rendimiento', () => {
+  for (const theme of THEMES) {
+    test(`carga con su h1, TWR, XIRR, referencia, P&L e ISR sin violaciones (${theme})`, async ({ page, baseURL }) => {
+      await open(page, baseURL, { theme, state: PERF_STATE })
+      await page.goto('/portafolio/rendimiento')
+      await expect(page.getByRole('heading', { level: 1, name: 'Rendimiento' })).toBeVisible()
+      await expect(page.locator('h1')).toHaveCount(1)
+      const summary = page.getByRole('region', { name: 'Resumen del periodo' })
+      await expect(summary).toContainText('Del 1 sep 2026 al 22 sep 2026, 4 cierres semanales')
+      await expect(summary).toContainText('TWR del periodo')
+      await expect(summary).toContainText('Referencia: NAFTRAC.MX')
+      // Ninguna cifra del resumen falta (la insignia de fuente sí dice "Retraso s/d", y es correcto).
+      await expect(summary.locator('.kz-stat__value').filter({ hasText: 's/d' })).toHaveCount(0)
+      await expect(summary.locator('.kz-stat')).toHaveCount(6)
+      await expect(page.getByRole('figure', { name: 'Tu portafolio contra NAFTRAC.MX' })).toBeVisible()
+      await expect(page.getByRole('figure', { name: 'Valor del portafolio en pesos' })).toBeVisible()
+      const pnl = page.getByRole('table', { name: 'Resultado por posición' })
+      const aapl = pnl.getByRole('row', { name: /AAPL/ })
+      await expect(aapl).toContainText('18.3000')
+      await expect(aapl).toContainText('18.4125')
+      await expect(pnl.getByRole('row', { name: /WALMEX\.MX/ })).toContainText('150')
+      // Venta de 50 a 66 con costo promedio de 65: 50 de ganancia y 5 de ISR estimado.
+      await expect(page.getByRole('table', { name: 'ISR estimado por ejercicio' }).getByRole('row', { name: /2026/ })).toContainText('$5.00')
+      await expect(page.getByRole('link', { name: 'Metodología completa del portafolio' })).toHaveAttribute('href', '/aprender/metodologia/portafolio')
+      await noHorizontalScroll(page)
+      await expectNoAxeViolations(page, `rendimiento ${theme}`)
+    })
+  }
+
+  test('sin compras lleva a Movimientos y sin portafolio a la bienvenida', async ({ page, baseURL }) => {
+    await open(page, baseURL, { state: { ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: [STATE.portfolios[0].transactions[0]] }] } })
+    await page.goto('/portafolio/rendimiento')
+    await expect(page.getByRole('link', { name: 'Ir a Movimientos' })).toHaveAttribute('href', '/portafolio/movimientos')
+    await page.addInitScript((st) => window.localStorage.setItem('kaizen:v2', st), JSON.stringify({ ...STATE, portfolios: [], activePortfolioId: null }))
+    await page.goto('/portafolio/rendimiento')
+    await expect(page.getByRole('heading', { level: 1, name: 'Rendimiento' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Ir a la bienvenida' })).toHaveAttribute('href', '/bienvenida')
+  })
+})
+
+// Sin la fixture automática: la prueba tumba el panel a propósito y lo permite con su motivo.
+plainTest('portafolio: rendimiento con el panel caído avisa y deja el ISR', async ({ page, baseURL }) => {
+  const guards = attachGuards(page, { allow: expectedHttpError(404, 'GET', '/v2/panel', 'la prueba tumba el panel a propósito') })
+  await open(page, /** @type {string} */ (baseURL), { state: PERF_STATE })
+  await page.route(/\/v2\/panel/, (route, request) =>
+    route.fulfill({
+      status: 404,
+      headers: { 'access-control-allow-origin': request.headers().origin ?? '*', vary: 'Origin' },
+      contentType: 'application/json',
+      body: JSON.stringify({ error: { code: 'NOT_FOUND', message: 'Ningún símbolo de la lista tiene histórico para alinear.' } }),
+    }),
+  )
+  await page.goto('/portafolio/rendimiento')
+  await expect(page.getByRole('alert')).toContainText('No pudimos traer los precios o el tipo de cambio')
+  await expect(page.getByRole('button', { name: 'Reintentar' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'ISR estimado por tus ventas' })).toBeVisible()
+  guards.assertClean()
+})
+
 const RISK_STATE = {
   ...STATE,
   portfolios: [{ ...STATE.portfolios[0], transactions: [...STATE.portfolios[0].transactions, tx({ id: 'tx4', type: 'buy', date: '2026-09-11', symbol: 'NAFTRAC.MX', quantity: 50, price: 55 })] }],
@@ -353,18 +452,27 @@ test.describe('portafolio: riesgo', () => {
 })
 
 // Capturas para revisión: con F1_CAPTURE_DIR=/ruta guarda cada página nueva; sin la variable se salta.
+// F1_CAPTURE_THEME=dark las toma en tema oscuro.
 test('capturas', async ({ page, baseURL }, testInfo) => {
   const dir = process.env.F1_CAPTURE_DIR ?? ''
   test.skip(!dir, 'sin F1_CAPTURE_DIR')
-  await open(page, baseURL)
-  await page.goto('/portafolio/movimientos')
-  await expect(page.getByRole('heading', { level: 1, name: 'Movimientos' })).toBeVisible()
-  await settleAnimations(page)
-  await page.screenshot({ path: `${dir}/movimientos-${testInfo.project.name}.png`, fullPage: true })
-  await page.addInitScript((st) => window.localStorage.setItem('kaizen:v2', st), JSON.stringify(REBALANCE_STATE))
-  await page.goto('/portafolio/rebalanceo')
-  await expect(page.getByRole('heading', { level: 1, name: 'Rebalanceo' })).toBeVisible()
-  await expect(planTable(page)).toBeVisible()
-  await settleAnimations(page)
-  await page.screenshot({ path: `${dir}/rebalanceo-${testInfo.project.name}.png`, fullPage: true })
+  test.setTimeout(60_000)
+  const theme = process.env.F1_CAPTURE_THEME === 'dark' ? 'dark' : 'light'
+  const pages = [
+    ['/portafolio', 'Mi portafolio', PERF_STATE, 'resumen'],
+    ['/portafolio/rendimiento', 'Rendimiento', PERF_STATE, 'rendimiento'],
+    ['/portafolio/movimientos', 'Movimientos', OVERSELL_STATE, 'movimientos'],
+    ['/portafolio/rebalanceo', 'Rebalanceo', REBALANCE_STATE, 'rebalanceo'],
+  ]
+  await open(page, baseURL, { theme, state: null })
+  for (const [route, h1, state, name] of pages) {
+    await page.evaluate((st) => window.localStorage.setItem('kaizen:v2', st), JSON.stringify(state)).catch(() => null)
+    await page.goto(route)
+    await page.evaluate((st) => window.localStorage.setItem('kaizen:v2', st), JSON.stringify(state))
+    await page.reload()
+    await expect(page.getByRole('heading', { level: 1, name: h1 })).toBeVisible()
+    await page.waitForLoadState('networkidle')
+    await settleAnimations(page)
+    await page.screenshot({ path: `${dir}/${name}-${testInfo.project.name}-${theme}.png`, fullPage: true })
+  }
 })
