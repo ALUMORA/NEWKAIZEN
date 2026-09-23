@@ -177,12 +177,22 @@ export function valueSeries(
 }
 
 /**
- * Rendimientos por subperiodo del TWR encadenado. El flujo de `flows[i]` se considera al inicio
- * del periodo i, así que r_i = values[i] / (values[i−1] + flows[i]) − 1.
+ * Rendimientos por subperiodo del TWR encadenado. El flujo de `flows[i]` ocurre DENTRO del periodo
+ * i y ya viene sumado en `values[i]`, porque el corte del libro se toma después de aplicar los
+ * movimientos de esa fecha. Por eso se descuenta del valor final y no se agrega a la base:
+ *   r_i = (values[i] − flows[i]) / values[i−1] − 1
+ * Meterlo en la base le regalaría al flujo un periodo completo de exposición que no tuvo, y eso
+ * castiga el rendimiento cada vez que alguien aporta.
  *
  * Los periodos cuyos extremos no se pudieron valuar (null) se saltan y su flujo se acumula al
- * siguiente periodo válido, para no perder el dinero que entró en medio. Un periodo cuya base
- * queda en cero o negativa también se salta: ahí el rendimiento porcentual no está definido.
+ * siguiente periodo válido, para no perder el dinero que entró en medio. Cuando el salto termina
+ * porque se pudo valuar de nuevo, esa valuación ya trae el flujo adentro, así que el acumulado se
+ * reinicia: si no, se contaría dos veces. Un periodo cuya base queda en cero o negativa también se
+ * salta: ahí el rendimiento porcentual no está definido.
+ *
+ * LÍMITE CONOCIDO: con cortes semanales o mensuales, un flujo a media semana no queda bien ni con
+ * esta convención ni con la de inicio de periodo. Para eso haría falta Dietz modificado, que este
+ * módulo no implementa.
  *
  * Mínimo: 2 valores. Devuelve null si no alcanza o si no quedó ningún subperiodo utilizable.
  * @param {(number | null)[]} values
@@ -200,15 +210,19 @@ export function twrReturns(values, flows = []) {
     pending += flow
     const current = isNum(values[i]) ? /** @type {number} */ (values[i]) : null
     if (previous === null || current === null) {
-      if (current !== null) previous = current
+      if (current !== null) {
+        // La base nueva ya trae el flujo pendiente adentro, así que deja de estar pendiente.
+        previous = current
+        pending = 0
+      }
       continue
     }
-    const start = previous + pending
-    if (!(start > 0)) {
+    if (!(previous > 0)) {
       previous = current
+      pending = 0
       continue
     }
-    out.push(current / start - 1)
+    out.push((current - pending) / previous - 1)
     pending = 0
     previous = current
   }

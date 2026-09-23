@@ -229,8 +229,11 @@ function runLedger(transactions, { asOf = null, dates = null } = {}) {
       }
       const price = isNum(tx.price) ? /** @type {number} */ (tx.price) : null
       const amount = price === null ? null : qty * price + fees
+      const sameCurrency = ccy === lot.currency
       lot.quantity += qty
-      lot.cost = lot.cost === null || amount === null ? null : lot.cost + amount
+      // Sumar pesos sobre dólares daría un costo promedio inventado. Cuando la moneda no coincide
+      // con la del lote, el costo pasa a desconocido y avgCost sale null, o sea "s/d".
+      lot.cost = lot.cost === null || amount === null || !sameCurrency ? null : lot.cost + amount
       if (isIsoDate(tx.date) && (lot.firstBuyDate === null || tx.date < lot.firstBuyDate)) {
         lot.firstBuyDate = tx.date
       }
@@ -241,7 +244,10 @@ function runLedger(transactions, { asOf = null, dates = null } = {}) {
         lot.fxKnown = false
       }
       if (amount !== null) {
-        const short = Math.max(0, amount - cash[ccy])
+        // El faltante se mide contra el efectivo YA considerando lo que se dio por aportado antes
+        // (cash + funded). Medirlo solo contra cash vuelve a financiar dinero ya financiado, porque
+        // cash queda negativo después de la primera compra sin depósito.
+        const short = Math.max(0, amount - (cash[ccy] + funded[ccy]))
         if (short > EPSILON) {
           funded[ccy] += short
           external.push({ date: tx.date ?? null, currency: ccy, amount: short, kind: 'funding' })
@@ -280,7 +286,10 @@ function runLedger(transactions, { asOf = null, dates = null } = {}) {
       } else if (avg !== null && lot.cost !== null) {
         lot.cost -= avg * qty
       }
-      if (proceeds !== null) cash[lot.currency] += proceeds
+      // El dinero entra en la moneda del movimiento, no en la del lote: abonarlo a lot.currency
+      // convertiría 1,800 pesos en 1,800 dólares sin avisar. validateTransaction rechaza la mezcla
+      // antes de guardar; aquí solo se respeta lo que de verdad se capturó.
+      if (proceeds !== null) cash[ccy] += proceeds
       book.set(symbol, lot)
       continue
     }
@@ -472,7 +481,7 @@ export function validateTransaction(tx, existing = []) {
     }
   }
 
-  if (type === 'sell' || type === 'split') {
+  if (type === 'buy' || type === 'sell' || type === 'split') {
     const symbol = typeof tx.symbol === 'string' ? tx.symbol : ''
     if (symbol) {
       const held = derivePositions(existing, { asOf: tx.date ?? null }).find((p) => p.symbol === symbol)
@@ -482,6 +491,13 @@ export function validateTransaction(tx, existing = []) {
       }
       if (type === 'split' && quantity <= EPSILON) {
         errors.push(`No tienes ${symbol} a esa fecha, así que el split no aplica.`)
+      }
+      // Nunca se mezclan monedas dentro de un mismo símbolo. El selector de moneda va por
+      // movimiento, así que equivocarse es un clic, y el saldo queda irrecuperable si pasa.
+      if (held && (tx.currency === 'MXN' || tx.currency === 'USD') && tx.currency !== held.currency) {
+        errors.push(
+          `Ya tienes ${symbol} en ${held.currency}, así que este movimiento también va en ${held.currency}. Si es de otra bolsa, captúralo con el símbolo de esa bolsa.`,
+        )
       }
     }
   }
