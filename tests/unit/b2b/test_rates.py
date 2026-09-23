@@ -112,7 +112,7 @@ def test_rates_rf_sin_token_es_la_serie_de_fred_marcada(client):
     assert body.source == "fred_ir3tib"
     assert body.fallback is True and body.meta.fallback is True
     assert body.convention == "simple_act360"
-    assert body.tenorDays == 28
+    assert body.tenorDays == 91, "la serie de respaldo es a 3 meses: el plazo servido es 91, no el pedido"
     assert len(body.dates) == len(body.values) > 12
     assert body.dates == sorted(body.dates)
     assert all(0 < v < 0.5 for v in body.values), "rendimientos anualizados como fracción"
@@ -130,7 +130,6 @@ def test_el_aviso_del_respaldo_nombra_el_plazo_pedido(client, tenor):
     r = client.get(f"/v2/rates/rf?tenorDays={tenor}")
     assert r.status_code == 200, r.text
     body = RfSeriesResponse.model_validate(r.json())
-    assert body.tenorDays == tenor
     assert body.fallback is True
     aviso = next(n for n in body.meta.notes if "no son cetes" in n.lower())
     assert f"de {tenor} d\u00edas" in aviso, f"el aviso no nombra el plazo pedido: {aviso}"
@@ -304,3 +303,16 @@ def test_con_token_una_tasa_de_descuento_mensual_no_sale_como_rf(cetes28_revisad
     assert "cetes28" not in {item.id for item in mx.items}
     assert any("SF43936" in nota and "Mensual" in nota for nota in mx.meta.notes), mx.meta.notes
     assert rf.source == "fred_ir3tib" and rf.fallback is True
+
+
+@pytest.mark.parametrize("tenor", [28, 91, 182, 364])
+def test_el_respaldo_declara_el_plazo_que_sirve_y_no_el_pedido(client, tenor):
+    """``tenorDays`` es lo único legible por máquina que nombra el plazo, y el cliente lo usa en
+    ``rf_d = (1 + y * T / 360) ** (d / T) - 1``. Con T=28 o T=364 sobre la misma serie de 3 meses
+    salen rf distintos a partir de datos idénticos; con 91 el número y la etiqueta dicen lo mismo.
+    """
+    body = RfSeriesResponse.model_validate(client.get(f"/v2/rates/rf?tenorDays={tenor}").json())
+    assert body.source == "fred_ir3tib" and body.fallback is True
+    assert body.tenorDays == rates_domain.FRED_RF_TENOR_DAYS == 91
+    if tenor != 91:
+        assert any(f"se pidió el plazo de {tenor} días" in n.lower() for n in body.meta.notes), body.meta.notes

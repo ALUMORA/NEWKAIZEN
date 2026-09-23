@@ -92,17 +92,30 @@ como respaldo, en ``/v2/rates/rf``, donde el contrato la nombra (``source: "fred
 """
 
 FRED_RF_SERIES = "IR3TIB01MXM156N"
+FRED_RF_TENOR_DAYS = 91
+"""Plazo que de verdad tiene la serie de respaldo (3 meses). Es el ``tenorDays`` que se publica
+con ``fallback`` en ``true``, pida el cliente el plazo que pida: el cliente lo usa en la fórmula
+``rf_d = (1 + y * T / 360) ** (d / T) - 1``, y con el plazo pedido sacaría rf distintos a partir de
+datos idénticos."""
+
+
 def rf_fallback_note(tenor_days: int) -> str:
     """Aviso del respaldo de FRED, nombrando el plazo que de verdad se pidió.
 
     La serie es interbancaria a 3 meses pase lo que pase, así que el aviso tiene que decir contra
     qué plazo no corresponde: si alguien pide 364 días, hablarle de 28 no le aclara nada.
     """
-    return (
+    note = (
         f"Respaldo: serie interbancaria de México a 3 meses de la OCDE en FRED, mensual. No son CETES"
         f" de {int(tenor_days)} días ni tiene la convención de la subasta; se publica solo mientras no"
         " haya token de Banxico."
     )
+    if int(tenor_days) != FRED_RF_TENOR_DAYS:
+        note += (
+            f" Se pidió el plazo de {int(tenor_days)} días, que sin CETES de Banxico no está disponible, así que tenorDays"
+            f" dice {FRED_RF_TENOR_DAYS}, que es el plazo de la serie que se sirve."
+        )
+    return note
 
 
 def _today() -> _dt.date:
@@ -270,9 +283,11 @@ def get_mx_rates() -> dict:
 def get_rf_series(start: str | None = None, end: str | None = None, tenor_days: int = 28) -> dict:
     """``/v2/rates/rf``: serie de rendimientos anualizados simples act/360, como fracción.
 
-    Primero CETES del plazo pedido desde Banxico (solo si el SIE confirma la serie); si no, la serie
-    interbancaria de la OCDE en FRED, con ``fallback`` en ``true`` y ``source`` ``fred_ir3tib``. El
-    cliente convierte a tasa por periodo con ``rf_d = (1 + y * plazo / 360) ** (d / plazo) - 1``.
+    Primero CETES del plazo pedido desde Banxico (solo si la serie está revisada en el catálogo y el
+    SIE la confirma); si no, la serie interbancaria de la OCDE en FRED, con ``fallback`` en ``true``,
+    ``source`` ``fred_ir3tib`` y ``tenorDays`` en 91, que es el plazo de esa serie y no el pedido. El
+    cliente convierte a tasa por periodo con ``rf_d = (1 + y * tenorDays / 360) ** (d / tenorDays) - 1``
+    usando el ``tenorDays`` de la respuesta.
     """
     end_date = _dt.date.fromisoformat(end) if end else _today()
     start_date = _dt.date.fromisoformat(start) if start else end_date - _dt.timedelta(days=3 * 365)
@@ -318,7 +333,7 @@ def get_rf_series(start: str | None = None, end: str | None = None, tenor_days: 
         )
     notes.append(rf_fallback_note(tenor_days))
     return {
-        "tenorDays": int(tenor_days),
+        "tenorDays": FRED_RF_TENOR_DAYS,
         "dates": serie["dates"],
         "values": [round(v / 100, 8) for v in serie["values"]],
         "source": "fred_ir3tib",
