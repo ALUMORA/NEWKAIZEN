@@ -1,4 +1,4 @@
-import { BOM, csvCell, objectsToCSV, parseCSV, rowsToObjects, toCSV } from './csv.js'
+import { BOM, csvCell, detectDelimiter, objectsToCSV, parseCSV, parseLocaleNumber, rowsToObjects, toCSV } from './csv.js'
 
 describe('csvCell', () => {
   it.each([
@@ -134,5 +134,42 @@ describe('ida y vuelta', () => {
       { Símbolo: 'MSFT', Cantidad: '' },
     ])
     expect(rowsToObjects([])).toEqual([])
+  })
+})
+
+describe('detectDelimiter y parseLocaleNumber (revisión RT)', () => {
+  it('reconoce el punto y coma de Excel en español', () => {
+    expect(detectDelimiter('Tipo;Fecha;Precio\ncompra;2026-01-02;1234,56')).toBe(';')
+    expect(detectDelimiter('Tipo,Fecha\ncompra,2026-01-02')).toBe(',')
+  })
+
+  it.each([
+    ['1234.56', {}, 1234.56],
+    ['1,234.56', {}, 1234.56],
+    ['$1,060.50', {}, 1060.5],
+    ['1.234,56', {}, 1234.56],
+    ['1234,56', {}, 1234.56],
+    ['1,234', {}, 1234],
+    ['1.234.567', {}, 1234567],
+    ['1.234.567,5', {}, 1234567.5],
+    ['−12,5', {}, -12.5],
+    ['1 234,56', {}, 1234.56],
+    ['1234,56', { decimalComma: true }, 1234.56],
+    ['1,5', { decimalComma: true }, 1.5],
+    ['1.234', { decimalComma: true }, 1234],
+    ['1.234,56', { decimalComma: true }, 1234.56],
+    ['12', {}, 12],
+  ])('%s %o → %d', (text, opts, expected) => {
+    expect(parseLocaleNumber(text, opts)).toBeCloseTo(expected, 10)
+  })
+
+  it('vacío es null y lo que no es número es NaN', () => {
+    expect(parseLocaleNumber('')).toBeNull()
+    expect(parseLocaleNumber('  ')).toBeNull()
+    expect(parseLocaleNumber(null)).toBeNull()
+    expect(parseLocaleNumber('abc')).toBeNaN()
+    expect(parseLocaleNumber('1,2,3')).toBeNaN()
+    expect(parseLocaleNumber('1,5', { decimalComma: true })).toBe(1.5)
+    expect(parseLocaleNumber('1,2,3', { decimalComma: true })).toBeNaN()
   })
 })
