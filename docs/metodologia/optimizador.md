@@ -36,8 +36,8 @@ promedio, y `δ` entre 0 y 1 sale de la fórmula cerrada que minimiza el error c
 
 El resultado es siempre positivo definido, que es la condición para que el optimizador se comporte.
 Se verifica contra `CovarianceShrinkage(...).ledoit_wolf(shrinkage_target="constant_correlation")`
-de PyPortfolioOpt sobre un panel fijo de 60 por 5, con tolerancia de 1e−10, y ese golden vive en
-`tests/golden/`.
+de PyPortfolioOpt sobre un panel fijo de 60 por 5, con tolerancia de 1e−10, y esa comparación es parte
+de las pruebas automáticas.
 
 El valor de `δ` se muestra en la pantalla. Un delta alto quiere decir que la ventana trae poca
 información para tantos activos, y eso es información útil por sí sola.

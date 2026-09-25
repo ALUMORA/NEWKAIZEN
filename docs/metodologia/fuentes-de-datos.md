@@ -128,13 +128,6 @@ salen a internet, así que corren igual en cualquier máquina y no dependen de q
 Cuando una llamada grabada viene vacía porque el proveedor falló ese día, eso queda registrado como
 tal en vez de convertirse en un cero.
 
-## Nota para quien programe la interfaz
-
-El glosario `src/content/glossary.js` pesa alrededor de 150 KB de texto. Cárgalo con
-`src/content/glossary-lazy.js`, que usa `import()` dinámico, para que Vite lo deje en su propio
-fragmento y no entre al paquete de la primera ruta. El InfoTip solo lo necesita cuando alguien abre
-un globo de ayuda, y la página de aprender cuando alguien entra a ella.
-
 ## Términos relacionados en el glosario
 
 dato-con-retraso, dato-de-respaldo, tipo-de-cambio-fix, tasa-libre-de-riesgo, inpc, cetes, bmv, sic,
