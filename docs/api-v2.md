@@ -203,6 +203,10 @@ están en `docs/OWNERSHIP.md`).
 - `GET /v2/markets/overview` → `MarketsOverviewResponse`. Grupos `mx`, `us`, `global`, `fx`,
   `commodities`, `crypto`, más `marketStatus` de BMV y NYSE (calendario de B2a en
   `domain/market_calendar.py`).
+  - `lastClose` (opcional, aditivo de la fase 3, pedido F2-7a): fecha `AAAA-MM-DD`, en la zona de
+    cada bolsa, de la última jornada que ya cerró según el calendario. Con la bolsa abierta es la
+    jornada anterior a hoy; en fin de semana o feriado, la última hábil. No depende de que el grupo
+    traiga datos. `null` solo si no hubo jornada en los 30 días previos; ausente en un API anterior.
 - `GET /v2/markets/world` → `WorldResponse`. Variación por país con ETF de iShares en USD;
   `country` es ISO 3166-1 numérico de 3 dígitos (484 = México).
 
@@ -710,6 +714,7 @@ Rendimientos anualizados simples act/360 como fracción. El cliente convierte po
 | `label` | string | sí |  |
 | `nextOpen` | instant \| null | sí |  |
 | `nextClose` | instant \| null | sí |  |
+| `lastClose` | date \| null | no | Fecha, en la zona de la bolsa, de la última jornada que ya cerró (con la bolsa abierta es la anterior a hoy). Sale del calendario; null si no hay jornada en los últimos 30 días o el API es anterior a la fase 3 |
 
 #### WorldResponse
 

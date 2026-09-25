@@ -448,6 +448,14 @@ class ExchangeStatus(ContractModel):
     label: str
     nextOpen: Instant | None
     nextClose: Instant | None
+    lastClose: IsoDate | None = Field(
+        default=None,
+        description=(
+            "Fecha, en la zona de la bolsa, de la última jornada que ya cerró (con la bolsa abierta es la"
+            " anterior a hoy). Sale del calendario; null si no hay jornada en los últimos 30 días o el API"
+            " es anterior a la fase 3"
+        ),
+    )
 
 
 class MarketStatus(ContractModel):
