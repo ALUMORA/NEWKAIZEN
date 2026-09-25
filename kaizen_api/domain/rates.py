@@ -314,8 +314,9 @@ def get_mx_rates() -> dict:
     if configured:
         try:
             items, notes = _banxico_items()
-        except ApiError as exc:
-            notes.append(f"Banxico no respondió ({exc.code}); se usa el respaldo de FRED.")
+        except ApiError:
+            # Sin el código interno (UPSTREAM_UNAVAILABLE): la nota se lee en pantalla.
+            notes.append("Banxico no respondió; se usa el respaldo de FRED.")
             items = []
     if not items:
         fallback = True
@@ -394,8 +395,8 @@ def get_rf_series(start: str | None = None, end: str | None = None, tenor_days: 
                     f"La serie {series_id} todavía no tiene revisión humana (verified: false en el catálogo),"
                     " así que no se usó."
                 )
-        except ApiError as exc:
-            notes.append(f"Banxico no respondió ({exc.code}).")
+        except ApiError:
+            notes.append("Banxico no respondió, así que no hay CETES del SIE en esta respuesta.")
     elif not banxico.configured():
         notes.append("Falta el token de Banxico (BANXICO_TOKEN) para servir CETES del SIE.")
     serie = fred.fetch_series(FRED_RF_SERIES, start_date.isoformat(), end_date.isoformat())

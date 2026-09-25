@@ -238,6 +238,9 @@ def test_si_banxico_no_responde_se_cae_al_respaldo_y_se_avisa(clean_state):
     assert body.meta.fallback is True
     assert [item.id for item in body.items] == ["bonoM10"]
     assert any("respaldo" in nota.lower() for nota in body.meta.notes)
+    # la nota se lee en pantalla: sin el código interno del error
+    assert "Banxico no respondió; se usa el respaldo de FRED." in body.meta.notes
+    assert not any("UPSTREAM_UNAVAILABLE" in nota for nota in body.meta.notes)
 
 
 # ─── unidades y frescura ─────────────────────────────────────────────────────

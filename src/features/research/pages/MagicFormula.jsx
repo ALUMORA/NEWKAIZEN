@@ -257,7 +257,7 @@ export default function MagicFormula() {
                 </div>
                 {data.partial ? (
                   <div role="note" aria-label="Tabla incompleta" className="kz-research-warning">
-                    <strong>Tabla incompleta.</strong> El proveedor no respondió por algunas emisoras, así que el
+                    <strong>Tabla incompleta.</strong> El proveedor no respondió para algunas emisoras, así que el
                     ranking no cubre todo el universo y los lugares pueden cambiar cuando lleguen sus datos.
                   </div>
                 ) : null}

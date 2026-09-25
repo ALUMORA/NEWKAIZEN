@@ -783,7 +783,7 @@ def build(extra: list[str] | None = None) -> dict:
             "diferencial van en s/d: " + ", ".join(sorted(no_history)) + "."
         )
     if pending:
-        notes.append("El proveedor no respondió por: " + ", ".join(sorted(pending)) + ".")
+        notes.append("Sin respuesta del proveedor para: " + ", ".join(sorted(pending)) + ".")
     missing = [r["symbol"] for r in rows if r["signal"] == "sin_datos"]
     if missing:
         notes.append("Sin NAV para calcular P/NAV: " + ", ".join(missing) + ".")

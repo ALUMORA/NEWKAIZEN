@@ -70,7 +70,7 @@ const MX_ROWS = [
   factorRow('CEMEXCPO.MX', 'CEMEX, S.A.B. de C.V.', 'Materiales', [null, null, null, null, 0.06, 0.03, 0.11, 0.7, 0.04, 0.33, 0.01, -0.2], [null, -0.6, 0.3, -1.2, 0.2, -0.33], FX),
   factorRow('ORBIA.MX', 'Orbia Advance Corporation, S.A.B. de C.V.', 'Materiales', [0.03, null, 0.09, 0.8, 0.02, null, null, 1.3, null, null, null, null], [0.1, -0.2, null, null, null, null], SMALL),
   factorRow('TLEVISACPO.MX', 'Grupo Televisa, S.A.B.', 'Comunicaciones', [null, null, null, 1.2, -0.04, null, 0.05, 1.1, -0.3, null, null, null], null, 'Cobertura de 42 %: hacen falta al menos 50 % de las métricas para compararla.'),
-  factorRow('LIVEPOLC-1.MX', 'El Puerto de Liverpool, S.A.B. de C.V.', 'Consumo discrecional', null, null, 'El proveedor no respondió por esta emisora.'),
+  factorRow('LIVEPOLC-1.MX', 'El Puerto de Liverpool, S.A.B. de C.V.', 'Consumo discrecional', null, null, 'El proveedor no respondió para esta emisora.'),
 ]
 const US_ROWS = [
   factorRow('MSFT', 'Microsoft Corporation', 'Tecnología', [0.03, 0.025, 0.04, 0.08, 0.33, 0.17, 0.45, 0.2, 0.15, 0.22, 0.16, 0.18], [-0.6, 1.5, 0.4, 0.3, 0.9, 0.5]),
@@ -81,7 +81,7 @@ const FACTOR_META = meta({ asOf: '2026-09-22', source: 'yahoo', delayMinutes: nu
 const MX_NOTES = [
   'Sectores con menos de 5 emisoras, comparados contra todo el universo: Comunicaciones, Consumo discrecional, Industriales, Materiales, Servicios financieros.',
   '2 de 13 emisoras quedaron fuera por falta de datos.',
-  'El proveedor no respondió por: LIVEPOLC-1.MX.',
+  'Sin respuesta del proveedor para: LIVEPOLC-1.MX.',
 ]
 const METHOD = 'Puntaje z robusto relativo al sector: z = (x menos la mediana) entre 1.4826 por la MAD, recortado a más menos 3.'
 
@@ -93,7 +93,7 @@ function factorsFor(universe, symbols) {
   if (universe === 'custom') {
     const list = String(symbols ?? '').split(',').filter(Boolean)
     const all = [...MX_ROWS, ...US_ROWS]
-    const rows = list.map((s) => all.find((r) => r.symbol === s) ?? factorRow(s, null, null, null, null, 'El proveedor no respondió por esta emisora.'))
+    const rows = list.map((s) => all.find((r) => r.symbol === s) ?? factorRow(s, null, null, null, null, 'El proveedor no respondió para esta emisora.'))
     return { universe: { id: 'custom', name: 'Lista propia', size: list.length }, method: METHOD, rows, meta: FACTOR_META }
   }
   return { universe: { id: 'mx', name: 'México, emisoras grandes de la BMV', size: MX_ROWS.length }, method: METHOD, rows: MX_ROWS, meta: { ...FACTOR_META, notes: MX_NOTES } }
@@ -336,7 +336,7 @@ test.describe('screener de factores', () => {
     const out = page.getByRole('region', { name: 'Fuera del tablero', exact: true })
     await expect(out).toContainText('TLEVISACPO.MX')
     await expect(out).toContainText('Cobertura de 42 %')
-    await expect(out).toContainText('El proveedor no respondió por esta emisora.')
+    await expect(out).toContainText('El proveedor no respondió para esta emisora.')
 
     // Nada de comprar o vender: ni columnas ni etiquetas.
     await expect(page.getByRole('main').getByText(/\b(compra|compre|vende|venta|comprar|vender)\b/i)).toHaveCount(0)
