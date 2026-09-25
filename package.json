@@ -18,8 +18,6 @@
     "e2e": "playwright test",
     "bundle": "node scripts/check-bundle.mjs",
     "check": "npm run lint && npm run typecheck && npm run test && npm run build && npm run bundle",
-    "fixtures:legacy": "node scripts/record-legacy-fixtures.mjs",
-    "fixtures:api": "node scripts/record-api-fixtures.mjs",
     "ownership": "node scripts/check-ownership.mjs"
   },
   "dependencies": {

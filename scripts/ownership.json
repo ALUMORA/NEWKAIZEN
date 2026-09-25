@@ -69,10 +69,6 @@
     ".env.e2e",
     "src/test/**",
     "e2e/support/**",
-    "e2e/baseline.spec.js",
-    "e2e/baseline.spec.js-snapshots/**",
-    "e2e/fixtures/legacy/**",
-    "scripts/record-legacy-fixtures.mjs",
     "scripts/check-bundle.mjs",
     ".github/**",
     "docs/requests/Q0.md"
@@ -114,7 +110,6 @@
     "src/App.jsx",
     "src/app/*.jsx",
     "src/app/*.js",
-    "src/legacy/**",
     "src/lib/api/**",
     "src/lib/auth/**",
     "src/lib/format.js",
@@ -168,12 +163,15 @@
   "F3": [
     "src/features/research/**",
     "e2e/research.spec.js",
-    "docs/requests/F3.md"
+    "docs/requests/F3.md",
+    "e2e/screeners.spec.js",
+    "e2e/research-search.spec.js"
   ],
   "F4": [
     "src/features/tools/**",
     "e2e/tools.spec.js",
-    "docs/requests/F4.md"
+    "docs/requests/F4.md",
+    "e2e/tools-opt.spec.js"
   ],
   "F5": [
     "src/features/learn/**",
@@ -387,10 +385,7 @@
   "C3": [
     "src/app/nav.js",
     "src/app/shell/**",
-    "src/legacy/**",
     "e2e/shell.spec.js",
-    "docs/requests/C3.md",
-    "e2e/baseline.spec.js",
-    "e2e/baseline.spec.js-snapshots/**"
+    "docs/requests/C3.md"
   ]
 }

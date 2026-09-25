@@ -1,9 +1,8 @@
-// Viewports y opciones de contexto comunes. Los usan playwright.config.js y el grabador de
-// fixtures del legado, para que grabación y replay corran exactamente con el mismo navegador.
+// Viewports y opciones de contexto comunes de playwright.config.js.
 import { devices } from '@playwright/test'
 
 // Locale y zona fijos: la app formatea horas y fechas con toLocale*("es-MX") y sin esto la
-// captura cambia según la máquina (en CI la zona es UTC).
+// prueba cambia según la máquina (en CI la zona es UTC).
 export const COMMON_CONTEXT = {
   locale: 'es-MX',
   timezoneId: 'America/Mexico_City',

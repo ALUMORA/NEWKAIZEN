@@ -29,7 +29,7 @@ worktree (`05 NEWKAIZEN.wt/<stream>`, rama `ws/<stream>`). Para que los merges s
 | Stream | Qué hace |
 | --- | --- |
 | O | Orquestador: git, dependencias, merges, gates |
-| Q0 | Configuración de Vitest, Playwright, ESLint; baseline visual del legado |
+| Q0 | Configuración de Vitest, Playwright, ESLint y CI |
 | R0 | Grabación y replay de proveedores (yfinance/HTTP) y goldens del backend viejo |
 | S1 | Backend como paquete `kaizen_api/` con FastAPI, mismo comportamiento |
 | S2 | Esqueleto del frontend: router, cliente API, sesión, formato, storage |

@@ -7,6 +7,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { test as plainTest } from '@playwright/test'
 import { test, expect, attachGuards } from './support/guards.js'
 import { HEALTH_V2, expectedHttpError, setupApp } from './support/app.js'
+import { expectNoHorizontalScroll } from './support/layout.js'
 
 const WCAG_AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const THEMES = /** @type {const} */ (['light', 'dark'])
@@ -145,7 +146,7 @@ const STATE = {
  * @param {{ theme?: 'light' | 'dark', state?: object | null }} [options]
  */
 async function open(page, baseURL, { theme, state = STATE } = {}) {
-  await setupApp(page, { baseURL, session: true, legacyApi: true, health: HEALTH, routes: V2_ROUTES })
+  await setupApp(page, { baseURL, session: true, health: HEALTH, routes: V2_ROUTES })
   if (theme) await page.addInitScript((t) => window.localStorage.setItem('kaizen_theme', t), theme)
   if (state) await page.addInitScript((s) => window.localStorage.setItem('kaizen:v2', s), JSON.stringify(state))
 }
@@ -171,8 +172,7 @@ async function expectNoAxeViolations(page, context) {
 }
 
 async function noHorizontalScroll(page) {
-  const { scrollWidth, innerWidth } = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }))
-  expect(scrollWidth, 'la página no se desplaza a lo ancho').toBeLessThanOrEqual(innerWidth)
+  await expectNoHorizontalScroll(page)
 }
 
 const txTable = (page) => page.getByRole('table', { name: 'Movimientos del portafolio' })
