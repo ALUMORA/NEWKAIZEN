@@ -126,7 +126,7 @@ def test_cada_anio_del_archivo_cita_su_fuente(exchange: str) -> None:
 def test_la_nyse_cerro_el_9_de_enero_de_2025_por_el_duelo_nacional_por_carter() -> None:
     state = cal.status("nyse", _dt.datetime(2025, 1, 9, 11, 0, tzinfo=NY))
     assert state.open is False
-    assert state.label.startswith("Cerrado por Duelo nacional")
+    assert state.label.startswith("Cerrada por Duelo nacional")  # femenino como la insignia (F2-7b)
     assert state.next_open == "2025-01-10T14:30:00Z"
     assert state.notes == []
     # Y la frescura no espera la barra del 9: la última jornada cerrada antes del 10 es la del 8.
