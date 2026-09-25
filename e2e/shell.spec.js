@@ -250,6 +250,24 @@ test.describe('shell: navegación', () => {
     await expectNoHorizontalScroll(page)
   })
 
+  test('móvil: cada sección lista sus páginas hermanas y la activa queda a la vista', async ({ page, baseURL }, testInfo) => {
+    const sub = page.getByRole('navigation', { name: 'Páginas de Mi portafolio' })
+    await openShell(page, /** @type {string} */ (baseURL))
+    await page.goto('/portafolio/rebalanceo')
+    if (!isMobile(testInfo)) {
+      // En escritorio la barra lateral ya las lista: la tira no se pinta.
+      await expect(sub).toBeHidden()
+      return
+    }
+    await expect(sub.getByRole('link')).toHaveText(['Resumen', 'Movimientos', 'Rendimiento', 'Riesgo', 'Rebalanceo'])
+    const active = sub.getByRole('link', { name: 'Rebalanceo' })
+    await expect(active).toHaveAttribute('aria-current', 'page')
+    await expect(active).toBeInViewport({ ratio: 1 })
+    await sub.getByRole('link', { name: 'Riesgo' }).click()
+    await expect(page).toHaveURL(/\/portafolio\/riesgo$/)
+    await expectNoHorizontalScroll(page)
+  })
+
   test('móvil: barra inferior, "Más" con Lista de seguimiento, Aprender, Tema y Cerrar sesión', async ({ page, baseURL }, testInfo) => {
     test.skip(!isMobile(testInfo), 'La barra inferior solo existe debajo de 768 px.')
     await openShell(page, /** @type {string} */ (baseURL))
