@@ -15,9 +15,14 @@ export default function HowToRead({ transactions, perf }) {
   if (undated > 0) {
     caveats.push('Tienes saldos migrados sin fecha de compra: el rendimiento se mide desde el primer cierre del periodo, como si ese día los hubieras aportado.')
   }
+  // Con cierres sin ajustar por dividendos (perf.adjustment 'splits') el efectivo del dividendo es
+  // el único lugar donde cuenta; con cierres ajustados (respaldo) el TWR no lo suma.
   if (dividends > 0) {
+    const count = `${fmtNumber(dividends, { decimals: 0 })} ${dividends === 1 ? 'dividendo' : 'dividendos'}`
     caveats.push(
-      `Registraste ${fmtNumber(dividends, { decimals: 0 })} ${dividends === 1 ? 'dividendo' : 'dividendos'}. Los cierres históricos vienen ajustados por dividendos, así que el TWR ya los cuenta como si se hubieran reinvertido en la misma emisora y no les vuelve a sumar su efectivo. El valor, la ganancia y el XIRR sí llevan ese efectivo, porque es dinero que tienes.`,
+      perf?.adjustment === 'splits'
+        ? `Registraste ${count}. Los cierres históricos van sin ajustar por dividendos, así que el TWR, el valor, la ganancia y el XIRR cuentan su efectivo una sola vez, el día que lo cobraste.`
+        : `Registraste ${count}. Los cierres históricos vienen ajustados por dividendos, así que el TWR ya los cuenta como si se hubieran reinvertido en la misma emisora y no les vuelve a sumar su efectivo. El valor, la ganancia y el XIRR sí llevan ese efectivo, porque es dinero que tienes.`,
     )
   }
   if (perf?.xirrAmbiguous) {

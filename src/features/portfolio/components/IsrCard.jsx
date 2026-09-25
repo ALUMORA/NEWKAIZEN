@@ -21,10 +21,13 @@ const COLUMNS = [
  */
 export default function IsrCard({ isr }) {
   const est = isr.estimate
-  // Sin serie de INPC la regla general "el costo se actualiza con el INPC" no aplica aquí: se
-  // cambia por la explicación de por qué va sin actualizar.
-  const notes = (est?.notes ?? []).filter((n) => !n.startsWith('El costo se actualiza con el INPC'))
-  notes.push('Todavía no tenemos la serie mensual del INPC, así que el costo va sin actualizar y la ganancia estimada puede salir más alta que la real.')
+  // Con la serie del INPC (/v2/rates/mx/inpc) las notas de isrOnGains ya dicen cómo se actualizó
+  // y cuántas ventas quedaron sin actualizar. Sin ella, la regla general "el costo se actualiza con
+  // el INPC" no aplica aquí: se cambia por la explicación de por qué va sin actualizar.
+  const notes = isr.inpc ? [...(est?.notes ?? [])] : (est?.notes ?? []).filter((n) => !n.startsWith('El costo se actualiza con el INPC'))
+  if (!isr.inpc) {
+    notes.push('Todavía no tenemos la serie mensual del INPC, así que el costo va sin actualizar y la ganancia estimada puede salir más alta que la real.')
+  }
   if (isr.usdSales > 0) {
     notes.push(`${fmtNumber(isr.usdSales, { decimals: 0 })} ventas en dólares no entran: si las hiciste con una casa de bolsa del extranjero, se declaran distinto.`)
   }

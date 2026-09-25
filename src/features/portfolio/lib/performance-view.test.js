@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { twr, valueSeries } from '../../../lib/finance/performance-ledger.js'
-import { computePerformance, isrView, lastKnown, nativePriceTable, pickWindow, pnlByPosition, splitAdjusted, tradeGapFlows, twrIndex } from './performance-view.js'
+import { computePerformance, inpcStart, isrView, lastKnown, panelAdjustment, nativePriceTable, pickWindow, pnlByPosition, splitAdjusted, tradeGapFlows, twrIndex } from './performance-view.js'
 
 const base = { fees: 0, currency: 'MXN', fxRate: null, amount: null, ratio: null, price: null, quantity: null, symbol: null, note: '' }
 const tx = (/** @type {any} */ over) => ({ ...base, ...over })
@@ -109,6 +109,29 @@ describe('computePerformance', () => {
     expect(res.xirr).toBeCloseTo(0, 6)
   })
 
+  it('con cierres sin ajustar por dividendos (adjust=splits) el TWR cuenta el efectivo del dividendo una vez y es exacto', () => {
+    // La misma emisora con cierres crudos: 100 hasta el 11 y 98 después de la fecha ex (paga 2).
+    // Rendimiento real de la estrategia: 0 (98 más 2 de dividendo en efectivo).
+    const raw = { X: { '2026-09-04': 100, '2026-09-11': 100, '2026-09-18': 98, '2026-09-25': 98 } }
+    const book = [
+      tx({ id: 'a', type: 'buy', date: '2026-09-04', symbol: 'X', quantity: 10, price: 100 }),
+      tx({ id: 'b', type: 'buy', date: '2026-09-11', symbol: 'X', quantity: 30, price: 100 }),
+      tx({ id: 'c', type: 'dividend', date: '2026-09-15', symbol: 'X', amount: 80 }),
+    ]
+    const days = ['2026-08-28', '2026-09-04', '2026-09-11', '2026-09-18', '2026-09-25']
+    const exact = computePerformance({ transactions: book, prices: raw, fx: {}, dates: days, adjustment: 'splits' })
+    if (!exact.ok) throw new Error('sin resultado')
+    expect(exact.adjustment).toBe('splits')
+    expect(exact.twr).toBeCloseTo(0, 12)
+    expect(exact.endValue).toBe(40 * 98 + 80)
+    expect(exact.gain).toBeCloseTo(0, 9)
+    // La mitigación de respaldo (quitar el dividendo del TWR) sobre cierres crudos lo perdería: −2 %.
+    const fallback = computePerformance({ transactions: book, prices: raw, fx: {}, dates: days })
+    if (!fallback.ok) throw new Error('sin resultado')
+    expect(fallback.adjustment).toBe('total')
+    expect(fallback.twr).toBeCloseTo(98 / 100 - 1, 12)
+  })
+
   it('sin precios dice por qué y no inventa', () => {
     const res = computePerformance({ transactions: txs, prices: {}, fx: {}, dates })
     expect(res.ok).toBe(false)
@@ -159,7 +182,49 @@ describe('pnlByPosition', () => {
   })
 })
 
+describe('panelAdjustment', () => {
+  it('splits solo si todos los paneles que llegaron lo dicen; un API viejo no trae el campo', () => {
+    expect(panelAdjustment({ adjustment: 'splits' }, null)).toBe('splits')
+    expect(panelAdjustment({ adjustment: 'splits' }, { adjustment: 'splits' })).toBe('splits')
+    expect(panelAdjustment({ adjustment: 'splits' }, {})).toBe('total')
+    expect(panelAdjustment({})).toBe('total')
+    expect(panelAdjustment()).toBe('total')
+  })
+})
+
+describe('inpcStart', () => {
+  it('pide el INPC desde el mes de la compra más vieja vendida en pesos', () => {
+    const txs = [
+      tx({ type: 'buy', date: '2025-03-15', symbol: 'W', quantity: 10, price: 100 }),
+      tx({ type: 'buy', date: '2024-11-02', symbol: 'AAPL', quantity: 1, price: 150, currency: 'USD' }),
+      tx({ type: 'sell', date: '2026-03-02', symbol: 'W', quantity: 5, price: 130 }),
+      tx({ type: 'sell', date: '2026-03-02', symbol: 'AAPL', quantity: 1, price: 200, currency: 'USD' }),
+    ]
+    expect(inpcStart(txs)).toBe('2025-03-01')
+    expect(inpcStart(txs.filter((t) => t.type === 'buy'))).toBeNull()
+  })
+})
+
 describe('isrView', () => {
+  it('con la serie del INPC actualiza el costo y lo marca', () => {
+    const txs = [
+      tx({ type: 'buy', date: '2025-01-10', symbol: 'W', quantity: 10, price: 100 }),
+      tx({ type: 'sell', date: '2026-03-02', symbol: 'W', quantity: 10, price: 130 }),
+    ]
+    // Costo 1,000 actualizado con INPC feb 2026 / ene 2025 = 1.04: 1,040. Ganancia 260, ISR 26.
+    const res = isrView(txs, { '2025-01': 100, '2026-02': 104 })
+    expect(res.inpc).toBe(true)
+    expect(res.estimate?.detail[0]).toMatchObject({ factor: 1.04, indexed: true })
+    expect(res.estimate?.years[0].gain).toBeCloseTo(260, 9)
+    expect(res.estimate?.years[0].tax).toBeCloseTo(26, 9)
+    // Sin serie (API sin rates.inpc o 503): costo sin actualizar y marcado.
+    const without = isrView(txs, null)
+    expect(without.inpc).toBe(false)
+    expect(without.estimate?.years[0].gain).toBe(300)
+    expect(isrView(txs, {}).inpc).toBe(false)
+  })
+
+
   it('el caso de la metodología: vender 5 a 130 con costo promedio de 110 da 100 de ganancia', () => {
     const txs = [
       tx({ type: 'buy', date: '2026-01-02', symbol: 'W', quantity: 10, price: 100 }),
