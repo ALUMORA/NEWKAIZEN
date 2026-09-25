@@ -159,6 +159,9 @@ describe('detectDelimiter y parseLocaleNumber (revisión RT)', () => {
     ['1.234', { decimalComma: true }, 1234],
     ['1.234,56', { decimalComma: true }, 1234.56],
     ['12', {}, 12],
+    // Un grupo de miles no empieza en 0.
+    ['0,375', {}, 0.375],
+    ['-0,375', {}, -0.375],
   ])('%s %o → %d', (text, opts, expected) => {
     expect(parseLocaleNumber(text, opts)).toBeCloseTo(expected, 10)
   })

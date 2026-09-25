@@ -101,7 +101,7 @@ export function SearchCombobox({
   const popupVisible = !inline && open && q.trim().length > 0
   const expanded = inline || (popupVisible && flat.length > 0)
   const optionDomId = (/** @type {string} */ optionId) => `${listId}-${optionId}`
-  const statusText = comboboxStatus({ q, searching, error: search.isError, available, total: flat.length })
+  const statusText = comboboxStatus({ q, searching, error: search.isError, available, total: flat.length, connecting: status === 'probing' || status === 'waking' })
   const activeDomId = expanded && activeOption ? optionDomId(activeOption.id) : undefined
 
   useEffect(() => {

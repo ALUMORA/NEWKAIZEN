@@ -13,7 +13,9 @@ describe('search-combobox: lógica pura', () => {
 
   it('id estable por emisora, igual al de la paleta', () => {
     expect(symbolOptionId('WALMEX.MX')).toBe('sym-WALMEX_MX')
-    expect(symbolOptionId('^mxx')).toBe('sym-_MXX')
+    expect(symbolOptionId('^mxx')).toBe('sym-_x5eMXX')
+    expect(symbolOptionId('BRK.B')).not.toBe(symbolOptionId('BRK-B'))
+    expect(symbolOptionId('A.X20')).not.toBe(symbolOptionId('A 20'))
   })
 
   it('arma opciones sin repetidos, con nombre y bolsa como detalle', () => {
@@ -54,6 +56,7 @@ describe('search-combobox: lógica pura', () => {
     expect(comboboxStatus({ ...base, searching: true })).toBe('Buscando emisoras…')
     expect(comboboxStatus({ ...base, error: true })).toBe('No se pudo buscar ahora. Intenta de nuevo en un momento.')
     expect(comboboxStatus({ ...base, available: false })).toBe('La búsqueda de emisoras no está disponible por ahora.')
+    expect(comboboxStatus({ ...base, available: false, connecting: true })).toBe('Conectando con el servidor…')
     expect(comboboxStatus(base)).toBe('Sin resultados')
     expect(comboboxStatus({ ...base, total: 1 })).toBe('1 resultado')
     expect(comboboxStatus({ ...base, total: 2, error: true })).toBe('2 resultados')

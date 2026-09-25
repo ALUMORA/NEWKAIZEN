@@ -29,7 +29,7 @@ export const LOSS_CARRY_YEARS = 10
 export const INTEREST_WITHHOLDING_RATE = 0.009
 /** De dónde sale la tasa anterior, para mostrarlo junto al cálculo. */
 export const INTEREST_WITHHOLDING_SOURCE =
-  'Ley de Ingresos de la Federación 2026, art. 21: tasa anual de retención de 0.90 % sobre el capital (LISR arts. 54 y 135)'
+  'Ley de Ingresos de la Federación 2026, art. 24: tasa anual de retención de 0.90 % sobre el capital (LISR arts. 54 y 135)'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 const NO_YEAR = 'sin fecha'
@@ -122,7 +122,8 @@ export function inpcFactor({ costDate, saleDate, inpc = {} }) {
  */
 export function isrOnGains({ sales, inpc = {}, rate = ISR_GAINS_RATE, lossCarryIn = 0 }) {
   if (!Array.isArray(sales)) return null
-  const taxRate = isNum(rate) && rate >= 0 ? rate : ISR_GAINS_RATE
+  // Fracción entre 0 y 1: una tasa en porcentaje (10 en vez de .1) multiplicaría el impuesto por 100.
+  const taxRate = isNum(rate) && rate >= 0 && rate <= 1 ? rate : ISR_GAINS_RATE
 
   /** @type {IsrEstimate['detail']} */
   const detail = []
@@ -269,7 +270,7 @@ export function isrOnGains({ sales, inpc = {}, rate = ISR_GAINS_RATE, lossCarryI
  */
 export function dividendWithholding(amount, { rate = DIVIDEND_WITHHOLDING_RATE } = {}) {
   if (!isNum(amount)) return null
-  const applied = isNum(rate) && rate >= 0 ? rate : DIVIDEND_WITHHOLDING_RATE
+  const applied = isNum(rate) && rate >= 0 && rate <= 1 ? rate : DIVIDEND_WITHHOLDING_RATE
   const withholding = amount * applied
   return {
     amount,
@@ -296,6 +297,6 @@ export function dividendWithholding(amount, { rate = DIVIDEND_WITHHOLDING_RATE }
  */
 export function interestWithholding(capital, days, { rate = INTEREST_WITHHOLDING_RATE } = {}) {
   if (!isNum(capital) || !isNum(days) || capital < 0 || days < 0) return null
-  const applied = isNum(rate) && rate >= 0 ? rate : INTEREST_WITHHOLDING_RATE
+  const applied = isNum(rate) && rate >= 0 && rate <= 1 ? rate : INTEREST_WITHHOLDING_RATE
   return (capital * applied * days) / 365
 }

@@ -35,7 +35,7 @@ const COLUMNS = [
     sortable: true,
     format: (/** @type {any} */ v, /** @type {any} */ r) => (
       <span className="kz-portfolio-pnl">
-        <Delta value={v} kind="money" currency={r.currency} />
+        <Delta value={v} kind="money" currency={r.pnlCurrency} />
         <Delta value={r.pnlPct} />
       </span>
     ),
@@ -148,7 +148,7 @@ export default function Summary() {
           </Card>
 
           <div className="kz-split">
-            <Card title="Posiciones" padding="none" status={quotes.data?.meta} description="Precio de hoy con el retraso de la fuente. El resultado va en la moneda de cada emisora.">
+            <Card title="Posiciones" padding="none" status={quotes.data?.meta} description="Precio de hoy con el retraso de la fuente. El resultado va en la moneda en que compraste cada emisora.">
               <DataTable
                 caption="Posiciones a precio de hoy"
                 captionHidden
@@ -165,7 +165,7 @@ export default function Summary() {
                 <p className="kz-portfolio-note">{`Sin cotización hoy para ${view.unquoted.join(', ')}: no entra al valor total.`}</p>
               )}
               {view.mismatched.length > 0 && (
-                <p className="kz-portfolio-note">{`${view.mismatched.join(', ')} cotiza en otra moneda que la de tus compras, así que su resultado sale s/d. Revisa la moneda en Movimientos.`}</p>
+                <p className="kz-portfolio-note">{`${view.mismatched.join(', ')} ${view.mismatched.length === 1 ? 'cotiza' : 'cotizan'} en otra moneda que la de tus compras (por ejemplo, una emisora del SIC que compraste en pesos), así que su resultado va en pesos: valor de hoy con el tipo de cambio del día contra lo que pagaste en pesos.`}</p>
               )}
             </Card>
 

@@ -74,7 +74,7 @@ export default function Risk() {
     <PageHeader
       title="Riesgo"
       eyebrow={portfolio?.name}
-      description="Qué tanto se mueve tu portafolio con los pesos de hoy, medido con precios semanales en pesos de los últimos tres años."
+      description="Qué tanto se mueve tu portafolio con los pesos de hoy, medido con precios semanales en pesos de los últimos tres años. Cuenta solo tus posiciones, sin el efectivo."
     />
   )
 
@@ -114,7 +114,7 @@ export default function Risk() {
               <Stat loading={loading} label="Beta contra el IPC" value={risk ? fmtNumber(risk.betaIpc) : undefined} info={{ termKey: 'beta', term: 'Beta' }} />
               <Stat loading={loading} label="Beta contra el S&P 500 en pesos" value={risk ? fmtNumber(risk.betaSpx) : undefined} />
               <Stat loading={loading} label="Número efectivo de activos" value={risk ? fmtNumber(risk.effectiveN, { decimals: 1 }) : undefined} info={{ termKey: 'numero-efectivo-de-activos', term: 'Número efectivo de activos' }} />
-              <Stat loading={loading} label="Exposición a dólares" value={risk ? fmtPct(risk.usdShare) : undefined} sublabel="Parte del portafolio en emisoras que cotizan en USD" />
+              <Stat loading={loading} label="Exposición a dólares" value={risk ? fmtPct(risk.usdShare) : undefined} sublabel="Parte de tus posiciones que registraste en dólares; lo del SIC comprado en pesos no entra aquí" />
             </div>
             {dropped.length > 0 && (
               <p className="kz-portfolio-note">Sin historia suficiente, quedaron fuera: {dropped.map((/** @type {any} */ d) => d.symbol).join(', ')}.</p>

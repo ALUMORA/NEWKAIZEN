@@ -17,7 +17,7 @@ export default function HowToRead({ transactions, perf }) {
   }
   if (dividends > 0) {
     caveats.push(
-      `Registraste ${fmtNumber(dividends, { decimals: 0 })} ${dividends === 1 ? 'dividendo' : 'dividendos'}. Los cierres históricos ya vienen ajustados por dividendos, así que el TWR y el XIRR pueden salir algo más altos de lo real, a lo mucho por lo que suman esos dividendos.`,
+      `Registraste ${fmtNumber(dividends, { decimals: 0 })} ${dividends === 1 ? 'dividendo' : 'dividendos'}. Los cierres históricos vienen ajustados por dividendos, así que el TWR ya los cuenta como si se hubieran reinvertido en la misma emisora y no les vuelve a sumar su efectivo. El valor, la ganancia y el XIRR sí llevan ese efectivo, porque es dinero que tienes.`,
     )
   }
   if (perf?.xirrAmbiguous) {
@@ -38,8 +38,9 @@ export default function HowToRead({ transactions, perf }) {
           que el TWR, tus aportaciones llegaron en malos momentos; si sale más alto, en buenos. Ninguno es el correcto: contestan preguntas distintas.
         </p>
         <p>
-          Con cierres semanales, un depósito a media semana se cuenta al cierre de esa semana. Los precios son de cierre y con retraso, no una valuación en
-          vivo.
+          Con cierres semanales, un depósito a media semana se cuenta al cierre de esa semana. Para el TWR, cada compra y venta se toma al cierre del día o
+          de la semana en que cae: lo que haya entre tu precio y ese cierre no cuenta como rendimiento. Los precios son de cierre y con retraso, no una
+          valuación en vivo.
         </p>
         {caveats.length > 0 && (
           <ul className="kz-portfolio-list" aria-label="Límites que aplican a tu portafolio">

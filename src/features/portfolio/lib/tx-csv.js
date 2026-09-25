@@ -1,7 +1,7 @@
 // Movimientos del libro de ida y vuelta en CSV (src/lib/csv.js). El encabezado va en español y
 // al importar también se aceptan los nombres en inglés, los mismos que acepta la bienvenida.
 // Cada fila pasa por validateTransaction de storage, igual que lo que se captura a mano.
-import { objectsToCSV, parseCSV, rowsToObjects } from '../../../lib/csv.js'
+import { objectsToCSV, parseCSV, parseLocaleNumber, rowsToObjects } from '../../../lib/csv.js'
 import { validateTransaction } from '../../../lib/storage.js'
 import { TX_LABELS } from '../tx-labels.js'
 
@@ -57,20 +57,16 @@ const TYPES = {
 const NUMERIC = new Set(['quantity', 'price', 'amount', 'fees', 'fxRate', 'ratio'])
 
 /**
- * Número de una celda: acepta "1,234.56", "$ 2 500", "−5" y "0,375" (coma decimal cuando no
- * puede ser de miles). Vacío es null; lo que no se entiende es NaN, y validateTransaction lo
- * rechaza con su motivo.
+ * Número de una celda con parseLocaleNumber de src/lib/csv.js, el mismo que usa la bienvenida:
+ * "1,234.56", "1.234,56", "$ 2 500", "−5" y "0,375". No se fuerza la coma decimal por venir separado
+ * por punto y coma: hay archivos así con "1,000" de miles. Vacío es null; lo que no se entiende es
+ * NaN, y validateTransaction lo rechaza con su motivo.
  * @param {string} text
+ * @param {{ decimalComma?: boolean }} [options]
  * @returns {number | null}
  */
-export function parseCell(text) {
-  let s = String(text ?? '').trim().replace(/−/g, '-').replace(/[$\s]|MXN|USD/gi, '')
-  if (s === '') return null
-  if (s.includes(',') && s.includes('.')) s = s.replace(/,/g, '')
-  else if (/^-?[1-9]\d{0,2}(,\d{3})+$/.test(s)) s = s.replace(/,/g, '')
-  else if (s.includes(',')) s = s.replace(',', '.')
-  const n = Number(s)
-  return Number.isFinite(n) ? n : Number.NaN
+export function parseCell(text, { decimalComma = false } = {}) {
+  return parseLocaleNumber(text, { decimalComma })
 }
 
 /**

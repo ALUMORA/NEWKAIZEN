@@ -37,7 +37,7 @@ export default function PnlCard({ pnl, loading, status, footer }) {
     >
       <div className="kz-metric-grid kz-portfolio-stats">
         <Stat loading={loading} label="Efecto precio" value={pnl ? signedMxn(pnl.priceEffect) : undefined} />
-        <Stat loading={loading} label="Efecto tipo de cambio" value={pnl ? signedMxn(pnl.fxEffect) : undefined} sublabel="Solo mueve lo que cotiza en dólares" />
+        <Stat loading={loading} label="Efecto tipo de cambio" value={pnl ? signedMxn(pnl.fxEffect) : undefined} sublabel="Solo lo que registraste en dólares; lo del SIC comprado en pesos va todo en precio" />
         <Stat loading={loading} label="Resultado no realizado" value={pnl ? signedMxn(pnl.total) : undefined} sublabel="De las posiciones abiertas" />
       </div>
       <DataTable

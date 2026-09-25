@@ -1,6 +1,7 @@
 // Lógica pura de la paleta de comandos: filtrar rutas, armar los grupos (Emisoras, Ir a,
 // Acciones), elegir la emisora para un ticker tecleado y recordar las emisoras recientes.
 import { pathInstrument } from '../paths.js'
+import { symbolOptionId } from '../../components/ui/search-combobox.js'
 
 /**
  * @typedef {{ id: string, kind: 'symbol' | 'route' | 'action', label: string, detail?: string,
@@ -72,7 +73,7 @@ export function buildGroups({ q, results = [], recents = [], routes, dark }) {
     if (seen.has(key)) return
     seen.add(key)
     symbols.push({
-      id: `sym-${key.replace(/[^A-Z0-9]/g, '_')}`,
+      id: symbolOptionId(key),
       kind: 'symbol',
       label: r.symbol,
       detail: [r.name, recent ? 'Reciente' : r.exchange].filter(Boolean).join(' · '),

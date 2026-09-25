@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { twr, valueSeries } from '../../../lib/finance/performance-ledger.js'
-import { computePerformance, isrView, lastKnown, nativePriceTable, pickWindow, pnlByPosition, splitAdjusted, twrIndex } from './performance-view.js'
+import { computePerformance, isrView, lastKnown, nativePriceTable, pickWindow, pnlByPosition, splitAdjusted, tradeGapFlows, twrIndex } from './performance-view.js'
 
 const base = { fees: 0, currency: 'MXN', fxRate: null, amount: null, ratio: null, price: null, quantity: null, symbol: null, note: '' }
 const tx = (/** @type {any} */ over) => ({ ...base, ...over })
@@ -76,10 +76,13 @@ describe('computePerformance', () => {
     // 100 títulos a 62 más 14,000 de efectivo; luego 200 a 71 más 7,000; luego 200 a 72 más 8,000.
     expect(res.values).toEqual([20200, 21200, 22400])
     expect(res.flows).toEqual([20000, 0, 1000])
-    expect(res.twr).toBeCloseTo(twr(res.values, res.flows), 12)
-    expect(res.twr).toBeCloseTo((21200 / 20200) * (21400 / 21200) - 1, 12)
+    // La compra del 10 a 70 cae en el corte del 11, que cierra en 71: esos 100 pesos son flujo,
+    // no rendimiento (la compra se toma al cierre).
+    expect(res.twr).toBeCloseTo(((21200 - 100) / 20200) * ((22400 - 1000) / 21200) - 1, 12)
     expect(/** @type {number} */ (res.index.at(-1)) - 1).toBeCloseTo(res.twr, 12)
-    expect(res.gain).toBeCloseTo(22400 - 20200 - 1000, 9)
+    // El libro arranca en ceros: la ganancia es contra lo que de verdad entró (21,000).
+    expect(res.fromZero).toBe(true)
+    expect(res.gain).toBeCloseTo(22400 - 21000, 9)
     expect(res.benchReturn).toBeCloseTo(52 / 51 - 1, 12)
     expect(res.benchIndex[0]).toBe(1)
     expect(res.twrAnnual).toBeNull()
@@ -87,10 +90,50 @@ describe('computePerformance', () => {
     expect(res.xirrAmbiguous).toBe(false)
   })
 
+  it('con cierres ajustados por dividendos, comprar seguido no se anota como pérdida ni el dividendo se cuenta dos veces', () => {
+    // Emisora que de verdad cotizó a 100 y paga 2 por título el 15: el cierre ajustado queda en 98
+    // todo el periodo. Rendimiento real de la estrategia: 0 (98 más 2 de dividendo).
+    const flat = { X: { '2026-09-04': 98, '2026-09-11': 98, '2026-09-18': 98, '2026-09-25': 98 } }
+    const book = [
+      tx({ id: 'a', type: 'buy', date: '2026-09-04', symbol: 'X', quantity: 10, price: 100 }),
+      tx({ id: 'b', type: 'buy', date: '2026-09-11', symbol: 'X', quantity: 30, price: 100 }),
+      tx({ id: 'c', type: 'dividend', date: '2026-09-15', symbol: 'X', amount: 80 }),
+    ]
+    const days = ['2026-08-28', '2026-09-04', '2026-09-11', '2026-09-18', '2026-09-25']
+    const res = computePerformance({ transactions: book, prices: flat, fx: {}, dates: days })
+    if (!res.ok) throw new Error('sin resultado')
+    // Antes: −6.1 % el día de la segunda compra y +2 % el del dividendo, −4.2 % en total.
+    expect(res.twr).toBeCloseTo(0, 12)
+    expect(res.endValue).toBe(40 * 98 + 80)
+    expect(res.gain).toBeCloseTo(0, 9)
+    expect(res.xirr).toBeCloseTo(0, 6)
+  })
+
   it('sin precios dice por qué y no inventa', () => {
     const res = computePerformance({ transactions: txs, prices: {}, fx: {}, dates })
     expect(res.ok).toBe(false)
     expect(res.missing[0].reason).toBe('Falta el precio de W.')
+  })
+})
+
+describe('tradeGapFlows', () => {
+  it('lleva al cierre del corte la diferencia de cada compra y venta, también en dólares', () => {
+    const dates = ['2026-09-04', '2026-09-11']
+    const prices = { W: { '2026-09-04': 62, '2026-09-11': 71 }, AAPL: { '2026-09-04': 200, '2026-09-11': 210 } }
+    const fx = { '2026-09-04': 18, '2026-09-11': 19 }
+    const gaps = tradeGapFlows(
+      [
+        tx({ type: 'buy', date: '2026-09-02', symbol: 'W', quantity: 10, price: 60 }),
+        tx({ type: 'sell', date: '2026-09-10', symbol: 'W', quantity: 5, price: 70 }),
+        tx({ type: 'buy', date: '2026-09-09', symbol: 'AAPL', quantity: 2, price: 205, currency: 'USD', fxRate: 18.5 }),
+        tx({ type: 'dividend', date: '2026-09-09', symbol: 'W', amount: 10 }),
+      ],
+      prices,
+      fx,
+      dates,
+    )
+    expect(gaps[0]).toBeCloseTo(10 * (62 - 60), 12)
+    expect(gaps[1]).toBeCloseTo(-5 * (71 - 70) + 2 * (210 * 19 - 205 * 18.5), 9)
   })
 })
 

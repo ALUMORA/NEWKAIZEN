@@ -10,8 +10,4 @@
 .wl-name span { color: var(--muted); font-size: var(--text-xs); }
 .wl-spark { display: inline-flex; align-items: center; gap: var(--space-2); }
 .wl-note { color: var(--muted); font-size: var(--text-sm); margin: 0; }
-/* Los .sr-only (position: absolute) de las columnas que se salen a la derecha escapaban del
-   overflow de .kz-table-scroll, que no es bloque contenedor, y estiraban el documento a 557 px en
-   390. Pedido a C1 que lo ponga en la primitiva (docs/requests/F5.md); mientras, aquí. */
-.wl-page .kz-table-scroll { position: relative; }
 .wl-trend-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }

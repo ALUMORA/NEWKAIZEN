@@ -7,12 +7,13 @@ import { useQuery } from '@tanstack/react-query'
 import {
   Button, Card, ConfirmDialog, DataStatus, DataTable, EmptyState, ErrorState, Input, NumberInput, PageHeader, Stat, useToast,
 } from '../../../components/ui/index.js'
-import { cashBalances, derivePositions, wholeShareRebalance } from '../../../lib/finance/index.js'
+import { derivePositions, wholeShareRebalance } from '../../../lib/finance/index.js'
 import { fmtMoney, fmtNumber, fmtPct } from '../../../lib/format.js'
 import { fxQuery, quotesQuery } from '../../../lib/api/queries.js'
 import { isReadOnly, newId, normalizeSymbol, update, useStore } from '../../../lib/storage.js'
 import { PATHS } from '../../../app/paths.js'
 import { todayMx } from '../tx-labels.js'
+import { planTransactions, rebalanceCash } from '../lib/rebalance-view.js'
 import '../portfolio.css'
 
 /** @param {any} s */
@@ -37,7 +38,8 @@ export default function Rebalance() {
   const transactions = useMemo(() => portfolio?.transactions ?? [], [portfolio])
   const targets = useMemo(() => /** @type {Record<string, number>} */ (portfolio?.targets ?? {}), [portfolio])
   const positions = useMemo(() => derivePositions(transactions), [transactions])
-  const cash = useMemo(() => cashBalances(transactions), [transactions])
+  const today = todayMx()
+  const cash = useMemo(() => rebalanceCash(transactions, today), [transactions, today])
   const symbols = useMemo(
     () => [...new Set([...positions.map((p) => p.symbol), ...Object.keys(targets)])].sort(),
     [positions, targets],
@@ -49,6 +51,8 @@ export default function Rebalance() {
     positions.some((p) => p.currency === 'USD') || (cash.USD ?? 0) !== 0 || (quotes.data?.quotes ?? []).some((/** @type {any} */ q) => q.currency === 'USD')
   const fx = useQuery({ ...fxQuery(), enabled: needsFx })
   const usdRate = fx.data?.rate ?? null
+  // Sin el tipo de cambio, lo que está en dólares no se puede valuar: el plan espera a tenerlo.
+  const fxReady = !needsFx || usdRate != null
 
   /** Precio en pesos por símbolo, y la cotización original. */
   const priced = useMemo(() => {
@@ -71,8 +75,8 @@ export default function Rebalance() {
     [priced],
   )
   const plan = useMemo(
-    () => (targetsOk && quotes.data ? wholeShareRebalance({ holdings, prices, targets, cash: cashMxn, allowSell: true }) : null),
-    [targetsOk, quotes.data, holdings, prices, targets, cashMxn],
+    () => (targetsOk && quotes.data && fxReady ? wholeShareRebalance({ holdings, prices, targets, cash: cashMxn, allowSell: true }) : null),
+    [targetsOk, quotes.data, fxReady, holdings, prices, targets, cashMxn],
   )
   const totalValue = Object.entries(holdings).reduce((a, [s, q]) => a + (prices[s] ?? 0) * q, 0) + cashMxn
 
@@ -116,20 +120,15 @@ export default function Rebalance() {
     toast.show({ title: 'Emisora agregada a tus metas', description: `${symbol} con meta de ${fmtPct((draft.pct ?? 0) / 100)}`, tone: 'positive' })
   }
 
+  const planned = plan
+    ? planTransactions({ trades: plan.trades, positions, quotes: priced, usdRate, date: today, makeId: () => newId('tx') })
+    : null
+
   function register() {
     setConfirming(false)
-    if (!plan) return
-    const date = todayMx()
-    const txs = plan.trades.map((t) => {
-      const q = priced[t.symbol]
-      const usd = q?.currency === 'USD'
-      return {
-        id: newId('tx'), type: t.side === 'venta' ? 'sell' : 'buy', date, symbol: t.symbol, quantity: t.quantity,
-        price: usd ? q.price : t.price, currency: usd ? 'USD' : 'MXN', fxRate: usd ? usdRate : null,
-        fees: 0, amount: null, ratio: null, note: 'Rebalanceo',
-      }
-    })
-    const ids = new Set(txs.map((t) => t.id))
+    if (!planned || planned.blocked.length > 0 || planned.transactions.length === 0) return
+    const txs = planned.transactions
+    const ids = new Set(txs.map((/** @type {any} */ t) => t.id))
     editPortfolio(portfolioId, (p) => ({ ...p, transactions: [...p.transactions, ...txs] }))
     toast.show({
       title: 'Movimientos registrados',
@@ -238,6 +237,14 @@ export default function Rebalance() {
         )}
       </Card>
 
+      {needsFx && fx.isError && (
+        <ErrorState
+          message="No pudimos traer el tipo de cambio: sin él no se puede valuar en pesos lo que está en dólares, así que el plan espera."
+          onRetry={() => fx.refetch()}
+          retrying={fx.isFetching}
+        />
+      )}
+
       {fx.data?.meta && (
         <div className="kz-row">
           <span>Tipo de cambio para valuar en pesos: {fmtNumber(usdRate, { decimals: 4 })}</span>
@@ -245,12 +252,20 @@ export default function Rebalance() {
         </div>
       )}
 
+      {!plan && targetsOk && quotes.data && fxReady && (
+        <p className="kz-portfolio-note">
+          {missing.some((m) => holdings[m] != null)
+            ? `No se puede calcular el plan: falta el precio de ${missing.filter((m) => holdings[m] != null).join(', ')}, que tienes en tu portafolio.`
+            : 'No se puede calcular el plan: tu portafolio no tiene valor positivo con los precios de hoy.'}
+        </p>
+      )}
+
       {plan && (
         <Card
           title="Plan en títulos enteros"
           padding="none"
           actions={
-            <Button onClick={() => setConfirming(true)} disabled={readOnly || plan.trades.length === 0}>
+            <Button onClick={() => setConfirming(true)} disabled={readOnly || plan.trades.length === 0 || (planned?.blocked.length ?? 0) > 0}>
               Registrar en el libro
             </Button>
           }
@@ -268,6 +283,9 @@ export default function Rebalance() {
             rowKey="symbol"
             empty={{ title: 'Ya estás en tus metas', text: 'Con títulos enteros no hace falta ningún movimiento.' }}
           />
+          {(planned?.blocked.length ?? 0) > 0 && (
+            <p className="kz-portfolio-note">{`Falta el tipo de cambio para registrar ${planned?.blocked.join(', ')} en dólares, así que el plan no se puede registrar todavía.`}</p>
+          )}
           {plan.notes.map((note) => (
             <p key={note} className="kz-portfolio-note">{note}</p>
           ))}

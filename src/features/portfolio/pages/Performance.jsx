@@ -135,7 +135,7 @@ export default function Performance() {
             ) : (
               <div className="kz-metric-grid">
                 <Stat loading={loading} label="Valor al último cierre" value={ok ? fmtMoney(ok.endValue) : undefined} sublabel="Posiciones más efectivo, en pesos" />
-                <Stat loading={loading} label="Ganancia en el periodo" value={ok ? <Delta value={ok.gain} kind="money" currency="MXN" /> : undefined} sublabel="Valor final, menos el inicial y lo que aportaste" />
+                <Stat loading={loading} label="Ganancia en el periodo" value={ok ? <Delta value={ok.gain} kind="money" currency="MXN" /> : undefined} sublabel={ok?.fromZero ? 'Valor final, menos lo que aportaste' : 'Valor final, menos el inicial y lo que aportaste'} />
                 <Stat
                   loading={loading}
                   label="TWR del periodo"

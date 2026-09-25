@@ -91,7 +91,8 @@ export function parseLocaleNumber(text, { decimalComma = false } = {}) {
   const commas = (s.match(/,/g) ?? []).length
   const dots = (s.match(/\./g) ?? []).length
   const unsigned = s.replace(/^[-+]/, '')
-  const grouped = (/** @type {string} */ mark) => new RegExp(`^\\d{1,3}(\\${mark}\\d{3})+$`).test(unsigned)
+  // Un grupo de miles no empieza en 0: "0,375" es decimal, no trescientos setenta y cinco.
+  const grouped = (/** @type {string} */ mark) => new RegExp(`^[1-9]\\d{0,2}(\\${mark}\\d{3})+$`).test(unsigned)
   if (commas && dots) {
     const decimal = s.lastIndexOf(',') > s.lastIndexOf('.') ? ',' : '.'
     const group = decimal === ',' ? '.' : ','
