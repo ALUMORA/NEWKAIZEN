@@ -354,6 +354,8 @@ test.describe('herramientas: backtest', () => {
     await page.goto('/herramientas/backtest?symbols=WALMEX.MX,NOPE.MX')
     await backtestReady(page)
     await expect(page.getByRole('radio', { name: 'Mi portafolio hoy' })).toBeDisabled()
+    // sin portafolio, el control deshabilitado dice por qué y adónde ir
+    await expect(page.getByRole('main').getByRole('link', { name: 'Mi portafolio', exact: true })).toHaveAttribute('href', '/portafolio')
     await expect(page.getByText(/quedaron fuera: NOPE\.MX\. Los demás pesos se reescalaron/)).toBeVisible()
     await expect(page.getByRole('table', { name: 'Pesos al inicio' }).getByRole('row')).toHaveCount(2)
   })

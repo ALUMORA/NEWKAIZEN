@@ -1,5 +1,7 @@
 // Qué se prueba en el backtest: de dónde salen los pesos, la estrategia, el referente y el periodo.
+import { Link } from 'react-router'
 import { Button, NumberInput, SegmentedControl, Select } from '../../../components/ui/index.js'
+import { PATHS } from '../../../app/paths.js'
 import { BENCHMARKS, RANGES, REBALANCE } from '../backtester.js'
 import { SymbolPicker } from './SymbolPicker.jsx'
 
@@ -31,6 +33,11 @@ export function BacktestForm({ state, set, hasPortfolio, portfolioSymbols, onSym
           <p className="kz-tool__hint">Cada emisora pesa lo que vale hoy en tu portafolio activo. Esos pesos se aplican desde el inicio del periodo.</p>
         ) : (
           <>
+            {!hasPortfolio && (
+              <p className="kz-tool__hint">
+                Para probar con los pesos de tu portafolio, primero registra tus posiciones en <Link to={PATHS.portfolio}>Mi portafolio</Link>.
+              </p>
+            )}
             <SymbolPicker id="bt-symbols" selected={state.symbols} onChange={onSymbols} max={MAX_BT_ASSETS} portfolioSymbols={portfolioSymbols} />
             {state.symbols.length > 0 && (
               <div className="kz-tool__weights">

@@ -1,12 +1,12 @@
 // Inicio de sesión mínimo y funcional: usuario + contraseña contra POST /auth/login
 // (src/lib/auth/session.js). Al entrar vuelve a ?next (solo rutas internas). F5 lo rediseña.
 import { useState } from 'react'
-import { Navigate, useSearchParams } from 'react-router'
+import { Link, Navigate, useSearchParams } from 'react-router'
 import { Eye, EyeOff, LineChart, Lock, Wallet } from 'lucide-react'
 import { ApiError } from '../../../lib/api/http.js'
 import { useCapabilities } from '../../../lib/api/capabilities.js'
 import { isExpired, login, peekEndReason, useSession } from '../../../lib/auth/session.js'
-import { safeNext } from '../../../app/paths.js'
+import { PATHS, safeNext } from '../../../app/paths.js'
 import { Button, Mark } from '../../../ui.jsx'
 
 const END_REASON_TEXT = {
@@ -158,6 +158,10 @@ export default function LoginPage() {
               {submitting ? 'Entrando…' : 'Entrar'}
             </Button>
           </form>
+          <p className="auth-links">
+            ¿Aún no tienes usuario? Sin entrar puedes leer <Link to={PATHS.learn}>Aprender</Link>, el{' '}
+            <Link to={PATHS.legalPrivacy}>aviso de privacidad</Link> y los <Link to={PATHS.legalTerms}>términos de uso</Link>.
+          </p>
         </div>
       </section>
       <aside aria-label="Qué encuentras en Kaizen" className="auth-aside">
