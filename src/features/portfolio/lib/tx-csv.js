@@ -66,7 +66,9 @@ const NUMERIC = new Set(['quantity', 'price', 'amount', 'fees', 'fxRate', 'ratio
 export function parseCell(text) {
   let s = String(text ?? '').trim().replace(/−/g, '-').replace(/[$\s]|MXN|USD/gi, '')
   if (s === '') return null
-  if (s.includes(',') && s.includes('.')) s = s.replace(/,/g, '')
+  // Con los dos separadores manda el último: "1,234.56" es de México y "1.234,56" de Excel en
+  // otra región. Antes el segundo se leía como 1.23456 sin avisar.
+  if (s.includes(',') && s.includes('.')) s = s.lastIndexOf(',') > s.lastIndexOf('.') ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '')
   else if (/^-?[1-9]\d{0,2}(,\d{3})+$/.test(s)) s = s.replace(/,/g, '')
   else if (s.includes(',')) s = s.replace(',', '.')
   const n = Number(s)
