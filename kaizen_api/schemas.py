@@ -938,9 +938,30 @@ class FibraRow(ContractModel):
     )
 
 
+class FibrasRate(ContractModel):
+    """La tasa de referencia del diferencial, con su procedencia (``cetes28`` es solo el número)."""
+
+    value: Fraction = Field(description="El mismo número que cetes28")
+    asOf: IsoDate | None = Field(description="Fecha del dato de la tasa; meta.asOf es la de los precios")
+    source: Literal["banxico", "fred"] | None = Field(
+        description="banxico = CETES del SIE; fred = serie interbancaria de la OCDE en FRED (respaldo); null si el servidor no lo dijo"
+    )
+    fallback: bool = Field(description="true si no son CETES de Banxico: la tasa es sustituta y hay que decirlo")
+    tenorDays: int | None = Field(
+        ge=1, description="Plazo en días de la serie que de verdad se usó (91 con el respaldo de FRED), no el pedido"
+    )
+
+
 class FibrasResponse(ContractModel):
     rows: list[FibraRow]
     cetes28: Fraction | None
+    rate: FibrasRate | None = Field(
+        default=None,
+        description=(
+            "cetes28 con su fecha, fuente, si es sustituta y su plazo. null si no hay tasa (el diferencial va en"
+            " s/d) o si el API es anterior a la fase 3"
+        ),
+    )
     meta: Meta
 
 

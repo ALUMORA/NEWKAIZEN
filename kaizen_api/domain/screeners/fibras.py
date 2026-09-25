@@ -323,13 +323,14 @@ NO_RATE = {
     "stale": False,
     "note": "Todavía no hay tasa de CETES 28 en este servidor, así que el diferencial va en s/d.",
     "notes": [],
+    "tenorDays": None,
 }
 
 
 def cetes28() -> dict:
     """Tasa de referencia de corto plazo como fracción, con fecha, fuente y si es sustituta.
 
-    Devuelve ``{"rate", "asOf", "source", "fallback", "stale", "note", "notes"}``. ``rate`` en
+    Devuelve ``{"rate", "asOf", "source", "fallback", "stale", "note", "notes", "tenorDays"}``. ``rate`` en
     ``None`` significa que la costura de B2b no dio tasa: el diferencial sale en s/d. ``notes`` son
     las de B2b, tal cual; ``note`` es la de este screener. Si la fuente no es Banxico la tasa se
     publica marcada como sustituta: no son CETES de 28 días y se dice.
@@ -362,6 +363,8 @@ def cetes28() -> dict:
         return {
             "rate": rate, "asOf": as_of, "source": source, "fallback": fallback,
             "stale": stale, "note": note, "notes": upstream,
+            # Plazo que de verdad tiene la serie servida (91 con el respaldo de FRED), no el pedido.
+            "tenorDays": int(tenor) if tenor else None,
         }
     return dict(NO_RATE)
 
@@ -911,6 +914,14 @@ def build(extra: list[str] | None = None) -> dict:
     return {
         "rows": rows,
         "cetes28": rate,
+        # La misma tasa con su procedencia, para que la UI no la lea del texto de meta.notes.
+        "rate": None if rate is None else {
+            "value": rate,
+            "asOf": cetes["asOf"],
+            "source": cetes["source"],
+            "fallback": bool(cetes["fallback"]),
+            "tenorDays": cetes.get("tenorDays"),
+        },
         "notes": notes,
         "asOf": as_of,
         "rateSource": cetes["source"],

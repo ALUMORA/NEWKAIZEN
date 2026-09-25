@@ -261,6 +261,11 @@ están en `docs/OWNERSHIP.md`).
     `null` queda nombrada en alguna nota; lo que ningún motivo explica sale como "Yahoo no publica
     el dato con que se calcula". Vacía si no falta nada. `meta.notes` conserva los mismos avisos con
     la clave de la FIBRA al frente.
+  - `rate` (opcional, aditivo de la fase 3, pedido F3c-3): `{ value, asOf, source, fallback,
+    tenorDays }`, la misma tasa de `cetes28` con la fecha de SU dato (`meta.asOf` es la de los
+    precios), `source` `banxico` o `fred`, `fallback: true` si no son CETES de Banxico y
+    `tenorDays` con el plazo de la serie que de verdad se usó (91 con el respaldo de FRED, aunque el
+    campo se llame `cetes28`). `null` cuando `cetes28` es `null`. `cetes28` se conserva.
 
 ## Recetas y referencias para el cliente
 
@@ -1182,6 +1187,7 @@ Solo EBIT reportado (nunca estimado); earningsYield y returnOnCapital como fracc
 | --- | --- | --- | --- |
 | `rows` | FibraRow[] | sí |  |
 | `cetes28` | fraction \| null | sí |  |
+| `rate` | FibrasRate \| null | no | cetes28 con su fecha, fuente, si es sustituta y su plazo. null si no hay tasa (el diferencial va en s/d) o si el API es anterior a la fase 3 |
 | `meta` | Meta | sí |  |
 
 #### FibraRow
@@ -1206,6 +1212,18 @@ Solo EBIT reportado (nunca estimado); earningsYield y returnOnCapital como fracc
 | `signal` | "descuento" \| "en_linea" \| "prima" \| "sin_datos" | sí |  |
 | `type` | "propiedades" \| "hipotecaria" \| "energia" \| "otro" | sí |  |
 | `notes` | string[] | no | Motivo de cada cifra en s/d de este renglón, en español y sin el símbolo; vacía si no falta nada. meta.notes conserva los mismos avisos por FIBRA con su clave |
+
+#### FibrasRate
+
+La tasa de referencia del diferencial, con su procedencia (``cetes28`` es solo el número).
+
+| Campo | Tipo | Requerido | Notas |
+| --- | --- | --- | --- |
+| `value` | number | sí | El mismo número que cetes28 |
+| `asOf` | date \| null | sí | Fecha del dato de la tasa; meta.asOf es la de los precios |
+| `source` | "banxico" \| "fred" \| null | sí | banxico = CETES del SIE; fred = serie interbancaria de la OCDE en FRED (respaldo); null si el servidor no lo dijo |
+| `fallback` | boolean | sí | true si no son CETES de Banxico: la tasa es sustituta y hay que decirlo |
+| `tenorDays` | integer \| null | sí | Plazo en días de la serie que de verdad se usó (91 con el respaldo de FRED), no el pedido; mín 1 |
 
 #### InsidersResponse
 
