@@ -134,7 +134,7 @@ Cada corrección tiene prueba que falló antes (comprobado con `git stash` sobre
 
 - `npm run check` (lint, typecheck, Vitest, build, bundle): verde; Vitest 2025 de 2025 (antes 2009), JS inicial 133.65 kB
   gzip, 74 % del presupuesto.
-- `.venv/bin/python -m pytest -q`: verde, 2 pruebas nuevas de `market_calendar` y 5 casos nuevos de `dcf` incluidos.
+- `.venv/bin/python -m pytest -q`: verde, con 1 prueba nueva de `market_calendar` y 5 casos nuevos de `dcf`.
 - `.venv/bin/python -m ruff check .`: All checks passed.
 - e2e con `E2E_PORT=5303`, projects desktop (1440x900) y mobile (390x844), axe WCAG 2.1 AA y sin scroll horizontal dentro de
   los specs: `markets.spec.js` 38 de 38, `research.spec.js` 30 de 30, `research-search.spec.js` 44 de 44 (incluye
