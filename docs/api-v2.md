@@ -43,7 +43,9 @@ responden `501 NOT_IMPLEMENTED` hasta que su stream (B2a, B2b, B3a, B3b o B3c) l
 
 - Con `AUTH_REQUIRED=true` todas las rutas exigen `Authorization: Bearer <token>` salvo
   `GET /health`, `POST /auth/login` y los `OPTIONS` de CORS. Con `AUTH_REQUIRED=false` (desarrollo)
-  las rutas quedan abiertas; `GET /auth/me` siempre exige token.
+  las rutas quedan abiertas; `GET /auth/me` siempre exige token. Sin la variable, el default es
+  `true` en producción (`KAIZEN_ENV=production`) y `false` fuera de ella; apagarla en producción se
+  puede, pero el arranque lo avisa.
 - `SECRET_KEY` es obligatoria, de 32 caracteres o más y distinta de la llave de desarrollo (que
   está publicada en el repo) en producción y siempre que `AUTH_REQUIRED=true`, en cualquier
   entorno. Si no, el servidor no arranca. La llave de desarrollo solo se usa sin `AUTH_REQUIRED`.
