@@ -46,7 +46,7 @@ export default function IsrCard({ isr }) {
           <Stat
             label="Retención informativa por dividendos"
             value={fmtMoney(isr.dividendsMxn * DIVIDEND_WITHHOLDING_RATE)}
-            sublabel={`${fmtPct(DIVIDEND_WITHHOLDING_RATE, { decimals: 0 })} de ${fmtMoney(isr.dividendsMxn)} en dividendos en pesos`}
+            sublabel={`${fmtPct(DIVIDEND_WITHHOLDING_RATE, { decimals: 0 })} de ${fmtMoney(isr.dividendsMxn)} en dividendos en pesos, tomados como bruto; si capturaste lo que te depositaron, la retención ya viene descontada`}
             info={{ termKey: 'retencion-por-dividendos', term: 'Retención por dividendos' }}
           />
         )}
