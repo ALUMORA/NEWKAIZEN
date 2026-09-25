@@ -117,7 +117,7 @@ test.describe('investigar: ficha de la emisora', () => {
     await expect(page.getByText(warning)).toBeVisible()
     await expect(page.getByText(/Respaldo/).first()).toBeVisible()
     const valuation = page.getByRole('region', { name: 'Valuación' })
-    await expect(valuation.getByText('Valor por acción con estos supuestos (USD)')).toBeVisible()
+    await expect(valuation.getByText('$12.34 USD')).toBeVisible()
     await expect(valuation.getByText(/El DCF va en USD/)).toBeVisible()
     await expect(valuation.getByRole('table', { name: /valor por acción en USD/ })).toBeVisible()
   })

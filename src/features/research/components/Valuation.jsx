@@ -85,7 +85,7 @@ function Dcf({ dcf, currency, quoteCurrency }) {
         </div>
       ) : null}
       <div className="kz-metric-grid">
-        <Stat label={`Valor por acción con estos supuestos (${currency ?? 's/d'})`} value={fmtMoney(dcf.perShare, currency)} info={{ termKey: 'dcf', term: 'DCF' }} />
+        <Stat label="Valor por acción con estos supuestos" value={fmtMoney(dcf.perShare, currency)} info={{ termKey: 'dcf', term: 'DCF' }} />
         <Stat label="WACC" value={fmtPct(inputs.wacc, { decimals: 1 })} info={{ termKey: 'wacc', term: 'WACC' }} />
         <Stat label="Peso del valor terminal" value={fmtPct(dcf.tvShare, { decimals: 0 })} info={{ termKey: 'crecimiento-terminal', term: 'Crecimiento terminal' }} />
         <Stat label="Valor de la empresa" value={fmtMoney(dcf.enterpriseValue, currency, { compact: true })} info={{ termKey: 'valor-empresa', term: 'Valor de la empresa' }} />
@@ -104,7 +104,7 @@ function Bank({ bank, currency }) {
         <>
           <div className="kz-metric-grid">
             <Stat label="P/VL justificado" value={fmtMultiple(bank.justifiedPB, { decimals: 2 })} info={{ termKey: 'p-vl', term: 'P/VL' }} />
-            <Stat label={`Precio implícito (${currency ?? 's/d'})`} value={fmtMoney(bank.impliedPrice, currency)} />
+            <Stat label="Precio implícito" value={fmtMoney(bank.impliedPrice, currency)} />
             <Stat label="ROE" value={fmtPct(bank.roe, { decimals: 1 })} info={{ termKey: 'roe', term: 'ROE' }} />
             <Stat label="Costo de capital propio" value={fmtPct(bank.costOfEquity, { decimals: 1 })} />
             <Stat label="Crecimiento" value={fmtPct(bank.growth, { decimals: 1 })} />
@@ -187,7 +187,7 @@ export function Valuation({ symbol }) {
                   {field('terminalGrowth', 'Crecimiento terminal')}
                   {field('years', 'Años de proyección', { decimals: 0 })}
                 </div>
-                <div className="kz-row" data-gap="2">
+                <div className="kz-research-form__actions">
                   <Button type="submit" variant="secondary">Recalcular</Button>
                   {custom ? (
                     <Button type="button" variant="ghost" onClick={reset}>
