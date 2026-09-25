@@ -2,7 +2,6 @@
 // tasa libre de riesgo, la caja de pesos y la covarianza. Ninguno se queda escondido en el código.
 import { Button, NumberInput, SegmentedControl } from '../../../components/ui/index.js'
 import { fmtDate, fmtPct } from '../../../lib/format.js'
-import { ERP_SOURCE } from '../optimizer.js'
 import { rfLabel } from '../riskfree.js'
 
 const MU_ITEMS = [
@@ -24,9 +23,19 @@ const MU_HINT = {
 /**
  * @param {{ value: import('../assumptions.js').Assumptions, errors: Record<string, string>,
  *   onChange: (patch: Partial<import('../assumptions.js').Assumptions>) => void,
- *   apiRf: { yield: number, effective: number, date: string | null } | null, rfLoading: boolean }} props
+ *   apiRf: { yield: number, effective: number, date: string | null } | null, rfLoading: boolean,
+ *   apiErp?: ReturnType<typeof import('../optimizer.js').marketPremium> }} props
  */
-export function AssumptionsForm({ value, errors, onChange, apiRf, rfLoading }) {
+export function AssumptionsForm({ value, errors, onChange, apiRf, rfLoading, apiErp = null }) {
+  // La prima sale de /v2/assumptions con su fuente y fecha; la de respaldo se declara como tal.
+  const erpShown = value.erpTouched ? value.erpPct : apiErp ? Math.round(apiErp.erp * 10000) / 100 : null
+  const erpHint = value.erpTouched
+    ? `Prima escrita por ti.${apiErp ? ` La de ${apiErp.fallback ? 'respaldo' : 'Damodaran'} (${fmtPct(apiErp.erp)}) se recupera con el botón.` : ''} Solo la usa el CAPM.`
+    : apiErp
+      ? apiErp.fallback
+        ? `Respaldo guardado en la app (${apiErp.source}) porque el servidor no la envió. Solo la usa el CAPM.`
+        : `${apiErp.source}${apiErp.asOf ? `, actualizada el ${fmtDate(apiErp.asOf)}` : ''}${apiErp.stale ? '; ya debería haber una más nueva' : ''}. Es la misma de la valuación. Solo la usa el CAPM.`
+      : 'Trayendo la prima de mercado. Solo la usa el CAPM.'
   const rfShown = value.rfTouched ? value.rfPct : apiRf ? Math.round(apiRf.effective * 10000) / 100 : null
   const rfHint = value.rfTouched
     ? `Tasa escrita por ti.${apiRf ? ` La del API (${rfLabel(apiRf)}) se recupera con el botón.` : ''}`
@@ -49,12 +58,17 @@ export function AssumptionsForm({ value, errors, onChange, apiRf, rfLoading }) {
           id="opt-erp"
           label="Prima de riesgo de mercado"
           suffix="%"
-          hint={`${ERP_SOURCE}. Solo la usa el CAPM.`}
+          hint={erpHint}
           error={errors.erpPct}
-          value={value.erpPct}
-          onChange={(v) => onChange({ erpPct: v })}
+          value={erpShown}
+          onChange={(v) => onChange({ erpPct: v, erpTouched: true })}
           disabled={value.muMethod !== 'capm'}
         />
+        {value.erpTouched && apiErp && value.muMethod === 'capm' && (
+          <Button variant="ghost" size="sm" onClick={() => onChange({ erpPct: null, erpTouched: false })}>
+            {apiErp.fallback ? 'Volver a la prima de respaldo' : 'Volver a la prima de Damodaran'} ({fmtPct(apiErp.erp)})
+          </Button>
+        )}
         <NumberInput id="opt-rf" label="Tasa libre de riesgo anual" suffix="%" hint={rfHint} error={errors.rfPct} value={rfShown} onChange={(v) => onChange({ rfPct: v, rfTouched: true })} />
         {value.rfTouched && apiRf && (
           <Button variant="ghost" size="sm" onClick={() => onChange({ rfPct: null, rfTouched: false })}>

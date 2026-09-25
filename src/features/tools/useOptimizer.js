@@ -3,10 +3,11 @@
 // que cambiar la prima no vuelva a correr el walk forward.
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { panelQuery, riskFreeQuery } from '../../lib/api/queries.js'
-import { riskFreePct, validateAssumptions } from './assumptions.js'
+import { assumptionsQuery, panelQuery, riskFreeQuery } from '../../lib/api/queries.js'
+import { useCapabilities } from '../../lib/api/capabilities.js'
+import { marketPremiumPct, riskFreePct, validateAssumptions } from './assumptions.js'
 import { marketWeights } from './backtester.js'
-import { MIN_PERIODS, OPT_BENCHMARK, OPT_PANEL_PARAMS, assetBetas, estimateCovariance, expectedReturns, latestRiskFree, preparePanel, solvePortfolios } from './optimizer.js'
+import { MIN_PERIODS, OPT_BENCHMARK, OPT_PANEL_PARAMS, assetBetas, marketPremium, estimateCovariance, expectedReturns, latestRiskFree, preparePanel, solvePortfolios } from './optimizer.js'
 import { runValidation } from './validation.js'
 
 /** Fecha ISO corrida n días. @param {string} iso @param {number} days */
@@ -27,12 +28,26 @@ export function useOptimizer(symbols, a, positions) {
   const start = panel.data?.dates?.[0] ? shiftDays(panel.data.dates[0], -60) : null
   const rf = useQuery({ ...riskFreeQuery({ start }), enabled: Boolean(start) })
 
+  // Prima de mercado de /v2/assumptions (la misma de la valuación). Sin la capacidad o si la ruta
+  // falla, la de respaldo del cliente, declarada en el formulario.
+  const caps = useCapabilities()
+  const settled = caps.status !== 'probing' && caps.status !== 'waking'
+  const available = caps.status === 'ready' && caps.capabilities.has('assumptions')
+  const erpQuery = useQuery({ ...assumptionsQuery(), enabled: available, retry: false })
+  const apiErp = useMemo(
+    () => (settled ? marketPremium(erpQuery.data, { available, failed: erpQuery.isError }) : null),
+    [settled, erpQuery.data, erpQuery.isError, available],
+  )
+  const apiErpPct = apiErp ? Math.round(apiErp.erp * 10000) / 100 : undefined
+  const erpPct = marketPremiumPct(a, apiErpPct)
+
   const apiRf = useMemo(() => latestRiskFree(rf.data), [rf.data])
   const apiRfPct = apiRf ? Math.round(apiRf.effective * 10000) / 100 : null
   const prep = useMemo(() => preparePanel(panel.data, symbols), [panel.data, symbols])
   const n = prep ? prep.assets.length : symbols.length
-  const errors = useMemo(() => validateAssumptions(a, n, apiRfPct), [a, n, apiRfPct])
-  const valid = Object.keys(errors).length === 0
+  const errors = useMemo(() => validateAssumptions(a, n, apiRfPct, apiErpPct), [a, n, apiRfPct, apiErpPct])
+  // Mientras llega la prima no hay error que mostrar, pero el CAPM todavía no se puede calcular.
+  const valid = Object.keys(errors).length === 0 && (a.muMethod !== 'capm' || erpPct != null)
   const usable = Boolean(prep && prep.assets.length >= 2 && prep.periods >= MIN_PERIODS)
   const rfPct = riskFreePct(a, apiRfPct)
   const rfAnnual = rfPct === null ? null : rfPct / 100
@@ -42,8 +57,8 @@ export function useOptimizer(symbols, a, positions) {
   const cov = useMemo(() => (usable ? estimateCovariance(prep.matrix, a.covMethod) : null), [usable, prep, a.covMethod])
   const betas = useMemo(() => (usable ? assetBetas(prep, rf.data) : null), [usable, prep, rf.data])
   const exp = useMemo(
-    () => (cov ? expectedReturns(a.muMethod, { matrix: prep.matrix, covPerPeriod: cov.perPeriod, betas, rfAnnual, erp: a.erpPct === null ? null : a.erpPct / 100 }) : null),
-    [cov, prep, betas, rfAnnual, a.muMethod, a.erpPct],
+    () => (cov ? expectedReturns(a.muMethod, { matrix: prep.matrix, covPerPeriod: cov.perPeriod, betas, rfAnnual, erp: erpPct == null ? null : erpPct / 100 }) : null),
+    [cov, prep, betas, rfAnnual, a.muMethod, erpPct],
   )
   const current = useMemo(() => {
     if (!usable || positions.length === 0) return null
@@ -62,5 +77,5 @@ export function useOptimizer(symbols, a, positions) {
   )
   const vols = useMemo(() => (cov ? cov.annual.map((row, i) => Math.sqrt(Math.max(0, row[i]))) : []), [cov])
 
-  return { panel, rf, apiRf, errors, valid, prep, usable, cov, betas, exp, solve, validation, vols, rfAnnual }
+  return { panel, rf, apiRf, apiErp, errors, valid, prep, usable, cov, betas, exp, solve, validation, vols, rfAnnual }
 }
