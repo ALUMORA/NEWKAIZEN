@@ -194,6 +194,12 @@ def is_public_link(url: str) -> bool:
     return str(url or "").strip().lower().startswith(("http://", "https://"))
 
 
+def lower_scheme(url: str) -> str:
+    """``HTTPS://x`` → ``https://x``: el contrato valida la liga con ``^https?://``."""
+    scheme, sep, rest = url.partition("://")
+    return f"{scheme.lower()}{sep}{rest}" if sep else url
+
+
 def _mentions(text: str, needle: str) -> bool:
     """¿El titular menciona la emisora como palabra completa? (``WALMEX`` sí, ``WAL`` dentro de otra no)."""
     if not needle:
@@ -268,6 +274,7 @@ def build_items(raw: list[dict], lang: str = "all", limit: int = 30) -> list[dic
         url = str(entry.get("url") or "").strip()
         if not title or not is_public_link(url):
             continue
+        url = lower_scheme(url)
         key = normalize_title(title)
         if not key or key in seen:
             continue

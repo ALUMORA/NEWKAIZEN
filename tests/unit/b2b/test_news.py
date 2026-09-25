@@ -245,3 +245,10 @@ def test_la_ruta_solo_publica_titular_y_liga(client):
         items = NewsResponse.model_validate(client.get(url).json()).items
         assert items, url
         assert all(item.summary is None for item in items), url
+
+
+def test_build_items_normaliza_el_esquema_en_mayusculas():
+    """Un feed con ``HTTPS://`` pasaba el filtro (que no distingue mayúsculas) pero no el patrón
+    ``^https?://`` del contrato, y la validación tumbaba todo /v2/news con un 500."""
+    items = N.build_items([{"title": "Nota en mayúsculas", "url": "HTTPS://Example.com/Nota?a=B"}])
+    assert [i["url"] for i in items] == ["https://Example.com/Nota?a=B"]
