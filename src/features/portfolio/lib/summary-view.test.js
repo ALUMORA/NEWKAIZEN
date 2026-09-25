@@ -49,4 +49,14 @@ describe('summarize', () => {
     expect(res.unrealizedExcluded).toBe(0)
     expect(res.mismatched).toEqual(['W'])
   })
+
+  it('con dos compras en dólares a precios y tipos de cambio distintos, el costo en pesos es lo pagado', () => {
+    const txs = [
+      tx({ type: 'buy', date: '2026-01-02', symbol: 'AAPL', quantity: 10, price: 100, currency: 'USD', fxRate: 17 }),
+      tx({ type: 'buy', date: '2026-02-02', symbol: 'AAPL', quantity: 10, price: 200, currency: 'USD', fxRate: 20 }),
+    ]
+    const res = summarize({ transactions: txs, quotes: [quote('AAPL', 150, 0, 'USD')], usdmxn: 20, today: '2026-09-22' })
+    // Hoy 20 × 150 × 20 = 60,000 contra 57,000 pagados. Con avgFx por cantidad salía 4,500.
+    expect(res.rows[0]).toMatchObject({ costMxn: 57000, pnlMxn: 3000 })
+  })
 })

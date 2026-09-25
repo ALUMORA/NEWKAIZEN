@@ -6,6 +6,7 @@ import { isrOnGains, twr, valueSeries, xirr } from '../../../lib/finance/index.j
 import { annualizeReturn, twrReturns, yearsBetween } from '../../../lib/finance/performance-ledger.js'
 import { derivePositionsDetailed, externalFlows, orderTransactions, positionPnl, realizedSales } from '../../../lib/finance/ledger.js'
 import { signChanges } from '../../../lib/finance/xirr.js'
+import { costWeightedFx } from './cost-fx.js'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 /** @param {unknown} v @returns {v is number} */
@@ -320,11 +321,12 @@ export function computePerformance({ transactions, prices, fx, dates, benchmark 
  */
 export function pnlByPosition(transactions, prices, fx, date) {
   const fxNow = lastKnown(fx, date)
+  const buyFx = costWeightedFx(transactions)
   const rows = derivePositionsDetailed(transactions).map((p) => {
     const usd = p.currency === 'USD'
     const price1 = lastKnown(prices[p.symbol], date)
     const fx1 = usd ? fxNow : 1
-    const fx0 = usd ? p.avgFx : 1
+    const fx0 = usd ? (buyFx.get(p.symbol) ?? null) : 1
     const split = positionPnl({ quantity: p.quantity, price0: p.avgCost, price1, fx0, fx1 })
     return {
       symbol: p.symbol,

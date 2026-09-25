@@ -2,6 +2,7 @@
 // (/v2/quotes) y convertidas a pesos con el tipo de cambio del día (/v2/fx). El resultado no
 // realizado en pesos sale de positionPnl, igual que en Rendimiento. Módulo puro.
 import { derivePositionsDetailed, ledgerSnapshots } from '../../../lib/finance/ledger.js'
+import { costWeightedFx } from './cost-fx.js'
 
 /** @param {unknown} v @returns {v is number} */
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
@@ -20,7 +21,9 @@ export function summarize({ transactions, quotes, usdmxn, today }) {
   const rate = isNum(usdmxn) && usdmxn > 0 ? usdmxn : null
   const toMxn = (/** @type {string} */ ccy) => (ccy === 'USD' ? rate : 1)
 
+  const buyFx = costWeightedFx(transactions)
   const rows = derivePositionsDetailed(transactions).map((p) => {
+    const fx0 = buyFx.get(p.symbol) ?? null
     const q = bySymbol.get(p.symbol)
     const price = isNum(q?.price) ? q.price : null
     const ccy = q?.currency === 'USD' || q?.currency === 'MXN' ? q.currency : p.currency
@@ -34,7 +37,7 @@ export function summarize({ transactions, quotes, usdmxn, today }) {
     // En pesos sí se puede aunque las monedas no coincidan: valor de hoy en pesos contra costo en
     // pesos. Es el caso de una emisora del SIC comprada en pesos que hoy cotiza en dólares, que es
     // como la mayoría compra acciones de Estados Unidos desde México; antes salía s/d.
-    const costMxn = isNum(p.costBasis) ? (p.currency === 'USD' ? (isNum(p.avgFx) ? p.costBasis * p.avgFx : null) : p.costBasis) : null
+    const costMxn = isNum(p.costBasis) ? (p.currency === 'USD' ? (isNum(fx0) ? p.costBasis * fx0 : null) : p.costBasis) : null
     const pnlMxn = value !== null && costMxn !== null ? value - costMxn : null
     const change = isNum(q?.change) ? q.change : null
     return {
