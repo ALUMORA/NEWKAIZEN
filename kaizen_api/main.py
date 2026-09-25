@@ -24,7 +24,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 
 from kaizen_api import __version__
-from kaizen_api.errors import error_body, install_exception_handlers
+from kaizen_api.errors import error_body, install_exception_handlers, log_safe
 from kaizen_api.routers import (
     auth,
     events,
@@ -99,7 +99,9 @@ class RequestLogMiddleware:
             await self.app(scope, receive, _send)
         finally:
             ms = (time.perf_counter() - started) * 1000
-            logger.info("%s %s %s %.0fms rid=%s", scope.get("method"), scope.get("path"), status, ms, rid)
+            logger.info(
+                "%s %s %s %.0fms rid=%s", log_safe(scope.get("method")), log_safe(scope.get("path")), status, ms, rid
+            )
 
 
 class CatchAllMiddleware:
@@ -130,8 +132,8 @@ class CatchAllMiddleware:
             rid = (scope.get("state") or {}).get("request_id")
             logger.error(
                 "error interno en %s %s rid=%s\n%s",
-                scope.get("method"),
-                scope.get("path"),
+                log_safe(scope.get("method")),
+                log_safe(scope.get("path")),
                 rid,
                 "".join(traceback.format_exception(exc)),
             )
@@ -191,8 +193,8 @@ class ConcurrencyLimitMiddleware:
             logger.warning(
                 "saturado: %s requests en vuelo, se rechaza %s %s",
                 self.in_flight,
-                scope.get("method"),
-                scope.get("path"),
+                log_safe(scope.get("method")),
+                log_safe(scope.get("path")),
             )
             body = json.dumps(error_body("RATE_LIMITED", self.MESSAGE), ensure_ascii=False).encode("utf-8")
             await send(
