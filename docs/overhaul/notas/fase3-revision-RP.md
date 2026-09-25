@@ -100,7 +100,14 @@ de finanzas, restaurando el archivo de HEAD).
   dólares" decía "emisoras que cotizan en USD" pero cuenta la moneda del libro (lo del SIC en pesos
   no entra). PnlCard: "Solo mueve lo que cotiza en dólares" tenía el mismo problema. IsrCard: la
   retención por dividendos se calcula como si el monto capturado fuera bruto; ahora lo dice.
-- Movimientos (`4432dc3`): `parseCell('1.234,56')` daba 1.23456 en silencio.
+- Movimientos (`4432dc3`, luego `parseLocaleNumber`): `parseCell('1.234,56')` de
+  `src/features/portfolio/lib/tx-csv.js:69` daba 1.23456 en silencio (también lo reportó otro
+  agente). Por pedido del orquestador mezclé `analizavende` en `ws/RP` (`4c13708`) y `parseCell`
+  ahora delega en `parseLocaleNumber` de `src/lib/csv.js`, el mismo de la bienvenida. Al cambiar
+  salió un defecto del helper compartido: `parseLocaleNumber('0,375')` daba 375 porque aceptaba un
+  grupo de miles que empieza en 0; corregido en `src/lib/csv.js` con su caso en `csv.test.js`. No
+  se fuerza la coma decimal en archivos con punto y coma: la prueba existente de F1 trae uno con
+  "1,000" de miles.
 - PF `search-combobox.js:25` y `palette-model.js:75` (`ad8fbff`): `BRK.B` y `BRK-B` daban el mismo
   id de opción (ids repetidos, `aria-activedescendant` ambiguo, aviso de key de React). Ahora el
   id es inyectivo; `WALMEX.MX` sigue siendo `sym-WALMEX_MX`.
@@ -133,11 +140,13 @@ de finanzas, restaurando el archivo de HEAD).
 
 ## Compuertas corridas (números reales)
 - `npm run check` (lint, typecheck, Vitest, build, bundle) en verde antes de los commits de
-  código: 77 archivos, 2020 pruebas; bundle inicial 135.07 kB gzip de 180 (75 %). En la primera
+  código: 77 archivos y 2020 pruebas antes de mezclar `analizavende`; 80 archivos y 2059 pruebas
+  después, con el último commit. Bundle inicial 135.07 kB gzip de 180 (75 %). En la primera
   corrida falló solo `montecarlo.test.js` por tiempo (carga de la máquina 26.7); aislado pasa 77/77.
 - `E2E_PORT=5301 npx playwright test e2e/portfolio.spec.js`: 50 pasan, 2 se saltan (capturas sin
   `F1_CAPTURE_DIR`), desktop 1440x900 y mobile 390x844, axe WCAG 2.1 AA en claro y oscuro. Antes
   de los cambios: 48 pasan y 2 se saltan.
-- `e2e/watchlist.spec.js`, `shell.spec.js`, `research-search.spec.js`, `dev-ui.spec.js` con el mismo
-  puerto: 87 pasan, 23 se saltan (los de baseline, sin servidor de referencia).
+- `shell.spec.js`, `research-search.spec.js`, `dev-ui.spec.js` con el mismo puerto: 87 pasan, 23 se
+  saltan (los de baseline). Después de la mezcla, `portfolio`, `learn` (cubre /watchlist sin el
+  parche, con scroll horizontal) y `shell`: 153 pasan, 9 se saltan.
 - Capturas revisadas a mano de rendimiento y resumen en desktop y mobile (`F1_CAPTURE_DIR`).
