@@ -1,12 +1,82 @@
 {
  "set": "2026-09-22-recorrido",
  "entries": {
+  "yf.download:[WALMEX.MX,FEMSAUBD.MX,KOFUBL.MX,BIMBOA.MX,CHDRAUIB.MX,AC.MX,GRUMAB.MX,KIMBERA.MX,GFNORTEO.MX,Q.MX,BBAJIOO.MX,GENTERA.MX,GMEXICOB.MX,CEMEXCPO.MX,ORBIA.MX,GAPB.MX,ASURB.MX,OMAB.MX,PINFRA.MX,AMXB.MX,TLEVISACPO.MX,ALSEA.MX,LIVEPOLC-1.MX]?period=2y": {
+   "file": "yf.download-WALMEX.MX-FEMSAUBD.MX-KOFUBL.MX-BIMBOA.MX-CHDRAU-aeee1cbcf56e6c45.json",
+   "provider": "yfinance.download",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-25T22:43:20+00:00"
+  },
+  "yf:DANHOS13.MX:dividends": {
+   "file": "yf-DANHOS13.MX-dividends-ecdaaee67d8bfc49.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-25T22:43:25+00:00"
+  },
   "yf:FEMSAUBD.MX:history?period=1y": {
    "file": "yf-FEMSAUBD.MX-history-ce98aeb2efef8183.json",
    "provider": "yfinance",
    "kind": "value",
    "soft_failure": false,
    "recorded_at": "2026-09-25T22:33:34+00:00"
+  },
+  "yf:FHIPO14.MX:dividends": {
+   "file": "yf-FHIPO14.MX-dividends-480db8c105b2c481.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-25T22:43:27+00:00"
+  },
+  "yf:FIBRAMQ12.MX:dividends": {
+   "file": "yf-FIBRAMQ12.MX-dividends-0c9a960d98ba3bf1.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-25T22:43:23+00:00"
+  },
+  "yf:FIBRAPL14.MX:dividends": {
+   "file": "yf-FIBRAPL14.MX-dividends-90a7fecaef01ef40.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-25T22:43:21+00:00"
+  },
+  "yf:FINN13.MX:dividends": {
+   "file": "yf-FINN13.MX-dividends-2346b5cd2768aed4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-25T22:43:22+00:00"
+  },
+  "yf:FMTY14.MX:dividends": {
+   "file": "yf-FMTY14.MX-dividends-03d8729744c57219.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-25T22:43:26+00:00"
+  },
+  "yf:FNOVA17.MX:dividends": {
+   "file": "yf-FNOVA17.MX-dividends-b45267b249db9949.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-25T22:43:24+00:00"
+  },
+  "yf:FSHOP13.MX:dividends": {
+   "file": "yf-FSHOP13.MX-dividends-39412954fee46af4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-25T22:43:29+00:00"
+  },
+  "yf:STORAGE18.MX:dividends": {
+   "file": "yf-STORAGE18.MX-dividends-8addfe8d6e98e6b7.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-25T22:43:28+00:00"
   },
   "yf:^VIX:history?period=5y": {
    "file": "yf-idx-VIX-history-d061b2064962a93a.json",
@@ -34,13 +104,14 @@
   "2026-09-22-recorrido"
  ],
  "summary": {
-  "keys_total": 3,
+  "keys_total": 13,
   "keys_by_provider": {
-   "yf": 3
+   "yf": 12,
+   "yf.download": 1
   },
   "exceptions_by_provider": {},
   "empty_by_provider": {},
   "symbols_with_failed_or_empty_calls": {}
  },
- "updated_at": "2026-09-25T22:33:34+00:00"
+ "updated_at": "2026-09-25T22:43:29+00:00"
 }
