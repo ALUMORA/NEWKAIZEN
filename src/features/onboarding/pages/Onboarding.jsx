@@ -5,10 +5,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Badge, Button, Card, PageHeader, useToast } from '../../../components/ui/index.js'
-import { parseCSV, rowsToObjects } from '../../../lib/csv.js'
+import { detectDelimiter, parseCSV, rowsToObjects } from '../../../lib/csv.js'
 import { newId, update, validateTransaction } from '../../../lib/storage.js'
 import { PATHS } from '../../../app/paths.js'
-import { SAMPLE_NAME, SAMPLE_NOTE, SAMPLE_TRANSACTIONS, rowsToRawTransactions } from '../sample.js'
+import { SAMPLE_NAME, SAMPLE_NOTE, SAMPLE_TRANSACTIONS, csvColumns, rowsToRawTransactions } from '../sample.js'
 import '../onboarding.css'
 
 function createPortfolio({ name, notes = '', transactions = [] }) {
@@ -25,7 +25,7 @@ function createPortfolio({ name, notes = '', transactions = [] }) {
 export default function Onboarding() {
   const navigate = useNavigate()
   const toast = useToast()
-  const [csv, setCsv] = useState(/** @type {null | { name: string, ok: any[], bad: { row: number, reason: string }[] }} */ (null))
+  const [csv, setCsv] = useState(/** @type {null | { name: string, ok: any[], bad: { row: number, reason: string }[], unknown: string[] }} */ (null))
 
   const finish = (message) => {
     toast.show({ title: message, tone: 'positive' })
@@ -36,7 +36,11 @@ export default function Onboarding() {
     const file = event.target.files?.[0]
     if (!file) return
     const text = await file.text()
-    const raw = rowsToRawTransactions(rowsToObjects(parseCSV(text)))
+    const delimiter = detectDelimiter(text)
+    const rows = parseCSV(text, { delimiter })
+    // Separado por punto y coma es el CSV de Excel en español: ahí la coma es el decimal.
+    const raw = rowsToRawTransactions(rowsToObjects(rows), { decimalComma: delimiter === ';' })
+    const { unknown } = csvColumns(rows[0] ?? [])
     const ok = []
     const bad = []
     raw.forEach((r, i) => {
@@ -44,7 +48,7 @@ export default function Onboarding() {
       if (res.tx) ok.push(res.tx)
       else bad.push({ row: i + 2, reason: res.reason })
     })
-    setCsv({ name: file.name, ok, bad })
+    setCsv({ name: file.name, ok, bad, unknown })
   }
 
   return (
@@ -69,7 +73,7 @@ export default function Onboarding() {
         </Card>
         <Card title="Importar un CSV" titleAs="h2">
           <div className="ob-option">
-            <p>Sube tus movimientos con columnas tipo, fecha, símbolo, cantidad, precio y moneda. El tipo puede ser compra, venta, dividendo, depósito o retiro.</p>
+            <p>Sube tus movimientos con columnas tipo, fecha, símbolo, cantidad, precio y moneda. El tipo puede ser compra, venta, dividendo, depósito o retiro. Los montos pueden llevar punto o coma decimal.</p>
             <div className="ob-file">
               <input id="ob-csv" className="sr-only" type="file" accept=".csv,text/csv" onChange={onFile} />
               <label htmlFor="ob-csv" className="button button-secondary button-md ob-file-button">Elegir archivo CSV</label>
@@ -81,6 +85,11 @@ export default function Onboarding() {
                   {csv.name}: {csv.ok.length} {csv.ok.length === 1 ? 'movimiento válido' : 'movimientos válidos'}
                   {csv.bad.length > 0 && `, ${csv.bad.length} con problemas`}.
                 </p>
+                {csv.unknown.length > 0 && (
+                  <p className="ob-summary" role="note">
+                    {csv.unknown.length === 1 ? 'Esta columna no la reconocimos y no se importa' : 'Estas columnas no las reconocimos y no se importan'}: {csv.unknown.join(', ')}.
+                  </p>
+                )}
                 {csv.bad.length > 0 && (
                   <ul className="ob-errors">
                     {csv.bad.slice(0, 5).map((b) => (

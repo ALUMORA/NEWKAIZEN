@@ -2,6 +2,7 @@
 // sobre el panel semanal en pesos, contra un referente en la misma moneda y las mismas fechas.
 // Todo sale de src/lib/finance; lo que dice docs/metodologia/backtest.md es lo que se calcula aquí.
 import { annualTurnover, buyAndHold, constantMix, drawdowns, rfSeriesForDates, simpleReturns, summary, withBenchmark } from '../../lib/finance/index.js'
+import { rfIsFallback, rfTenorDays } from './riskfree.js'
 
 export const BT_PERIODS_PER_YEAR = 52
 export const IPC_SYMBOL = 'NAFTRAC.MX'
@@ -104,7 +105,7 @@ function drawdownInfo(values, dates) {
  * @param {{ dates: string[], prices: Record<string, number[]> } | null | undefined} panel
  * @param {{ weights: Record<string, number>, strategy: 'buyAndHold' | 'constantMix',
  *   rebalance: 'weekly' | 'monthly' | 'quarterly' | 'annual', benchmark: 'ipc' | 'spx' | 'blend',
- *   blendIpc: number, rfSeries?: { dates: string[], values: number[] } | null }} options
+ *   blendIpc: number, rfSeries?: { dates: string[], values: number[], tenorDays?: number, fallback?: boolean, meta?: any } | null }} options
  */
 export function runBacktest(panel, { weights, strategy, rebalance, benchmark, blendIpc, rfSeries = null }) {
   if (!panel || !Array.isArray(panel.dates) || panel.dates.length < 3) return null
@@ -122,7 +123,7 @@ export function runBacktest(panel, { weights, strategy, rebalance, benchmark, bl
   if (!port || !bench) return { missing, error: 'No pudimos correr el backtest con estos precios.' }
 
   const k = BT_PERIODS_PER_YEAR
-  const rfPer = rfSeries ? rfSeriesForDates(rfSeries, panel.dates, '1wk') : null
+  const rfPer = rfSeries ? rfSeriesForDates(rfSeries, panel.dates, '1wk', { tenorDays: rfTenorDays(rfSeries) }) : null
   const rfComplete = Array.isArray(rfPer) && rfPer.every((v) => v !== null)
   const rf = rfComplete ? /** @type {number[]} */ (rfPer) : 0
   const dates = panel.dates
@@ -131,6 +132,7 @@ export function runBacktest(panel, { weights, strategy, rebalance, benchmark, bl
     error: null,
     weights: normalized,
     rfComplete,
+    rfFallback: rfIsFallback(rfSeries),
     start: dates[0],
     end: dates[dates.length - 1],
     periods: port.returns.length,

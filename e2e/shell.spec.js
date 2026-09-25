@@ -12,6 +12,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { test, expect } from './support/guards.js'
 import { HEALTH_V2, setupApp } from './support/app.js'
 import { RESEARCH_ROUTES } from './support/research-data.js'
+import { expectNoHorizontalScroll } from './support/layout.js'
 
 const WCAG_AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const THEMES = /** @type {const} */ (['light', 'dark'])
@@ -105,7 +106,7 @@ const V2_ROUTES = {
  * @param {{ theme?: 'light' | 'dark' }} [options]
  */
 async function openShell(page, baseURL, { theme } = {}) {
-  const api = await setupApp(page, { baseURL, session: true, legacyApi: true, health: HEALTH, routes: V2_ROUTES })
+  const api = await setupApp(page, { baseURL, session: true, health: HEALTH, routes: V2_ROUTES })
   if (theme) await page.addInitScript((t) => window.localStorage.setItem('kaizen_theme', t), theme)
   return api
 }
@@ -148,20 +149,6 @@ async function expectNoAxeViolations(page, context, { exclude = [] } = {}) {
   expect(results.violations, `${context}:\n${detail}`).toEqual([])
 }
 
-/**
- * Sin scroll a lo ancho, medido contra el ancho EMULADO y no contra window.innerWidth: en un
- * teléfono (viewport con width=device-width) Chrome agranda el viewport de diseño hasta donde
- * llegue el contenido, así que innerWidth crece junto con scrollWidth y la comparación entre los
- * dos sale verde aunque la página se salga. Así se escondió el aviso tapado de docs/requests/F5.md.
- * @param {import('@playwright/test').Page} page
- */
-async function noHorizontalScroll(page) {
-  const width = /** @type {{ width: number }} */ (page.viewportSize()).width
-  const { scrollWidth, innerWidth } = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }))
-  expect(innerWidth, 'el viewport de diseño no se ensancha').toBe(width)
-  expect(scrollWidth, 'la página no se desplaza a lo ancho').toBeLessThanOrEqual(width)
-}
-
 const isMobile = (testInfo) => testInfo.project.name === 'mobile'
 
 // ─── Pruebas ─────────────────────────────────────────────────────────────────
@@ -191,7 +178,7 @@ test.describe('shell: estructura', () => {
     await expect(footer.getByRole('link', { name: 'Términos de uso' })).toHaveAttribute('href', '/legal/terminos')
     await expect(footer.getByRole('link', { name: 'Aviso de privacidad' })).toHaveAttribute('href', '/legal/privacidad')
     await expect(footer.getByRole('link', { name: 'Aviso legal' })).toHaveAttribute('href', '/legal/aviso')
-    await noHorizontalScroll(page)
+    await expectNoHorizontalScroll(page)
   })
 
   test('tira de mercado: cinco cifras del API v2, USD/MXN en neutral y DataStatus', async ({ page, baseURL }, testInfo) => {
@@ -216,7 +203,7 @@ test.describe('shell: estructura', () => {
       const { sw, cw } = await scroller.evaluate((el) => ({ sw: el.scrollWidth, cw: el.clientWidth }))
       expect(sw).toBeGreaterThan(cw)
     }
-    await noHorizontalScroll(page)
+    await expectNoHorizontalScroll(page)
     api.assertAllMatched()
   })
 })
@@ -260,7 +247,7 @@ test.describe('shell: navegación', () => {
     await expect(page).toHaveTitle('Riesgo · Kaizen')
     await expect(page.getByRole('heading', { level: 1, name: 'Riesgo' })).toBeFocused()
     await appSettled(page)
-    await noHorizontalScroll(page)
+    await expectNoHorizontalScroll(page)
   })
 
   test('móvil: barra inferior, "Más" con Watchlist, Aprender, Tema y Cerrar sesión', async ({ page, baseURL }, testInfo) => {
@@ -295,7 +282,7 @@ test.describe('shell: navegación', () => {
     await appSettled(page)
     await expect(page.locator('.bottom-nav-mobile, .app-topbar')).toHaveCount(0)
     await expect(page.getByRole('heading', { level: 1, name: 'Mercados' })).toBeFocused()
-    await noHorizontalScroll(page)
+    await expectNoHorizontalScroll(page)
   })
 
   test('cerrar sesión desde el shell vuelve a /login', async ({ page, baseURL }, testInfo) => {
@@ -399,7 +386,7 @@ test.describe('shell: avisos', () => {
     const undo = region.getByRole('button', { name: 'Deshacer' })
     await expect(undo).toBeVisible()
     await settleAnimations(page)
-    await noHorizontalScroll(page)
+    await expectNoHorizontalScroll(page)
 
     const width = /** @type {{ width: number }} */ (page.viewportSize()).width
     const box = /** @type {{ x: number, y: number, width: number, height: number }} */ (await page.locator('.kz-toaster').boundingBox())

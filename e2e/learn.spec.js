@@ -94,8 +94,8 @@ async function noHorizontalScroll(page) {
   expect(frame, 'el marco del shell no se desplaza a lo ancho').toBeLessThanOrEqual(0)
 }
 
-async function open(page, baseURL, path, { theme = 'light', session = false, routes = {}, legacyApi = false } = {}) {
-  await setupApp(page, { baseURL, session, legacyApi, routes: { ...SHELL_ROUTES, ...routes }, health: session ? HEALTH : 'v2' })
+async function open(page, baseURL, path, { theme = 'light', session = false, routes = {} } = {}) {
+  await setupApp(page, { baseURL, session, routes: { ...SHELL_ROUTES, ...routes }, health: session ? HEALTH : 'v2' })
   await page.addInitScript((t) => window.localStorage.setItem('kaizen_theme', t), theme)
   await page.goto(path)
 }
@@ -163,6 +163,14 @@ test.describe('F5: páginas públicas', () => {
     await expect(links.first()).toHaveCSS('text-decoration-line', 'underline')
   })
 
+  test('sin sesión las públicas ofrecen Entrar; con sesión, Ir a la app', async ({ page, baseURL }) => {
+    await open(page, baseURL, '/aprender')
+    await expect(page.getByRole('link', { name: 'Entrar', exact: true })).toHaveAttribute('href', '/login')
+    await open(page, baseURL, '/legal/terminos', { session: true })
+    const toApp = page.getByRole('link', { name: 'Ir a la app', exact: true })
+    await expect(toApp).toHaveAttribute('href', '/mercados')
+  })
+
   test('un término que no existe muestra un estado vacío amable', async ({ page, baseURL }) => {
     await open(page, baseURL, '/aprender/no-existe-este-termino')
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Concepto no encontrado')
@@ -187,17 +195,15 @@ test.describe('F5: lista de seguimiento', () => {
       await expect(table.getByRole('row')).toHaveCount(3)
       await expect(table).toContainText('+1.08%')
       await expect(table).toContainText('−1.04%')
+      await expect(page.getByText(/^Un mes: cambio entre el primer y el último cierre diario ajustado, del 5 ago 2026 al 25 ago 2026/)).toBeVisible()
       await noHorizontalScroll(page)
       await expectNoAxeViolations(page, `/watchlist con datos ${theme}`)
       if (CAPTURE_DIR && theme === 'light') await page.screenshot({ path: `${CAPTURE_DIR}/watchlist-${testInfo.project.name}.png` })
 
       await table.getByRole('button', { name: 'Quitar WALMEX.MX' }).click()
       await expect(table.getByRole('row')).toHaveCount(2)
-      // En móvil el marco del shell tapa el aviso para el puntero (pendiente de C3, ver
-      // docs/requests/F5.md); se usa el teclado, que es igual de válido para Deshacer.
       const undo = page.getByRole('button', { name: 'Deshacer' })
-      await undo.focus()
-      await page.keyboard.press('Enter')
+      await undo.click()
       await expect(table.getByRole('row')).toHaveCount(3)
       await expect(table.getByRole('row').nth(1)).toContainText('WALMEX.MX')
     })
@@ -222,7 +228,7 @@ test.describe('F5: bienvenida', () => {
   // la página de destino, no solo la URL: /portafolio todavía es el legado y ahí aparecía un
   // portafolio fijo del código (MSFT, AAPL, AMZN) en lugar del que se acababa de crear.
   test('importar un CSV valida filas y lleva a los movimientos importados', async ({ page, baseURL }) => {
-    await open(page, baseURL, '/bienvenida', { session: true, legacyApi: true })
+    await open(page, baseURL, '/bienvenida', { session: true })
     const csv = 'tipo,fecha,símbolo,cantidad,precio,moneda\ncompra,2026-03-02,WALMEX.MX,10,60.5,MXN\ncompra,2026-03-02,,5,10,MXN\n'
     await page.getByLabel('Elegir archivo CSV').setInputFiles({ name: 'movimientos.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) })
     await expect(page.getByRole('status').filter({ hasText: 'movimientos.csv' })).toContainText('1 movimiento válido, 1 con problemas')
@@ -238,8 +244,20 @@ test.describe('F5: bienvenida', () => {
     expect(store.portfolios.at(-1).transactions).toHaveLength(1)
   })
 
-  test('el ejemplo se ve marcado EJEMPLO con sus emisoras', async ({ page, baseURL }) => {
+  test('un CSV de Excel en español con coma decimal se importa bien y avisa las columnas que no reconoce', async ({ page, baseURL }) => {
     await open(page, baseURL, '/bienvenida', { session: true, legacyApi: true })
+    const csv = 'tipo;fecha;símbolo;cantidad;precio;moneda;casa de bolsa\ncompra;2026-03-02;WALMEX.MX;10;1.234,56;MXN;GBM\ncompra;2026-03-03;WALMEX.MX;2;60,5;MXN;GBM\n'
+    await page.getByLabel('Elegir archivo CSV').setInputFiles({ name: 'excel.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) })
+    await expect(page.getByRole('status').filter({ hasText: 'excel.csv' })).toContainText('2 movimientos válidos')
+    await expect(page.getByText('Esta columna no la reconocimos y no se importa: casa de bolsa.')).toBeVisible()
+    await page.getByRole('button', { name: 'Crear portafolio con 2 movimientos', exact: true }).click()
+    await expect(page).toHaveURL(/\/portafolio\/movimientos$/)
+    const store = await readStore(page)
+    expect(store.portfolios.at(-1).transactions.map((t) => t.price)).toEqual([1234.56, 60.5])
+  })
+
+  test('el ejemplo se ve marcado EJEMPLO con sus emisoras', async ({ page, baseURL }) => {
+    await open(page, baseURL, '/bienvenida', { session: true })
     await page.getByRole('button', { name: 'Usar el ejemplo' }).click()
     await expect(page).toHaveURL(/\/portafolio\/movimientos$/)
     await expect(page.locator('main').getByText('Portafolio de EJEMPLO', { exact: true })).toBeVisible()
@@ -253,7 +271,7 @@ test.describe('F5: bienvenida', () => {
   })
 
   test('empezar vacío lleva a un portafolio sin movimientos', async ({ page, baseURL }) => {
-    await open(page, baseURL, '/bienvenida', { session: true, legacyApi: true })
+    await open(page, baseURL, '/bienvenida', { session: true })
     await page.getByRole('button', { name: 'Empezar vacío' }).click()
     await expect(page).toHaveURL(/\/portafolio\/movimientos$/)
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Movimientos')

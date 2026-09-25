@@ -1,25 +1,19 @@
-// Mock del API para specs de Playwright. Dos modos:
+// Mock del API para specs de Playwright, con rutas a mano. El build de e2e apunta VITE_API_URL a
+// http://api.test (.env.e2e), un host que no existe: todo request al API tiene que pasar por aquí.
 //
-// 1) Rutas a mano (app nueva). El build de e2e apunta VITE_API_URL a http://api.test (.env.e2e),
-//    un host que no existe: todo request al API tiene que pasar por aquí.
+//   const api = await mockApi(page, {
+//     'GET /health': { json: { status: 'ok' } },
+//     'GET /quotes/:symbol': ({ params }) => ({ json: { symbol: params.symbol, price: 1 } }),
+//     'POST /auth/login': { status: 401, json: { error: 'credenciales' } },
+//   })
+//   api.on('GET /news', { json: { news: [] } })   // se pueden agregar después
+//   ...
+//   api.assertAllMatched()
 //
-//      const api = await mockApi(page, {
-//        'GET /health': { json: { status: 'ok' } },
-//        'GET /quotes/:symbol': ({ params }) => ({ json: { symbol: params.symbol, price: 1 } }),
-//        'POST /auth/login': { status: 401, json: { error: 'credenciales' } },
-//      })
-//      api.on('GET /news', { json: { news: [] } })   // se pueden agregar después
-//      ...
-//      api.assertAllMatched()
-//
-//    La llave es "MÉTODO /ruta". La ruta admite :parametros y * (un segmento) y se compara
-//    contra el pathname sin query; si la llave trae "?", la query tiene que coincidir exacta.
-//    Un request al API sin ruta que lo atienda NO pasa en silencio: se responde 501 con el
-//    detalle, lo que dispara las guardas (status >= 400), y assertAllMatched() lo lista.
-//
-// 2) Replay de un HAR grabado (baseline del legado): replayHar(page, archivo, { url }).
-//    Lo que no esté en el HAR se aborta (notFound: 'abort') y las guardas lo marcan como
-//    requestfailed.
+// La llave es "MÉTODO /ruta". La ruta admite :parametros y * (un segmento) y se compara
+// contra el pathname sin query; si la llave trae "?", la query tiene que coincidir exacta.
+// Un request al API sin ruta que lo atienda NO pasa en silencio: se responde 501 con el
+// detalle, lo que dispara las guardas (status >= 400), y assertAllMatched() lo lista.
 //
 // Con blockExternalRequests(page, origenesPermitidos) cualquier request fuera de esos orígenes
 // se aborta y queda registrado en las guardas: ninguna prueba depende de la red real.
@@ -148,18 +142,8 @@ export async function mockApi(page, routes = {}, { baseUrl = API_BASE } = {}) {
 }
 
 /**
- * Sirve desde un HAR grabado todo lo que coincida con `url`. Lo que no esté grabado se aborta.
- * @param {import('@playwright/test').Page | import('@playwright/test').BrowserContext} page
- * @param {string} harPath
- * @param {{ url: string | RegExp }} options
- */
-export async function replayHar(page, harPath, { url }) {
-  await page.routeFromHAR(harPath, { url, notFound: 'abort', update: false })
-}
-
-/**
  * Aborta cualquier request cuyo origen no esté en `allowedOrigins` (el servidor de la app, el
- * API mockeado...). Registrarlo ANTES de mockApi/replayHar: en Playwright la última ruta
+ * API mockeado...). Registrarlo ANTES de mockApi: en Playwright la última ruta
  * registrada se evalúa primero, así que los mocks siguen ganando para sus URLs.
  * @param {import('@playwright/test').Page | import('@playwright/test').BrowserContext} page
  * @param {(string | RegExp)[]} allowedOrigins

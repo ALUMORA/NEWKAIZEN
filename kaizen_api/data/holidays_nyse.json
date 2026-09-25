@@ -4,11 +4,27 @@
   "label": "Bolsa de Nueva York",
   "timezone": "America/New_York",
   "source": "curated",
-  "updatedAt": "2026-09-22",
+  "updatedAt": "2026-09-25",
   "tradingDays": [1, 2, 3, 4, 5],
   "regularHours": { "open": "09:30", "close": "16:00" },
-  "years": [2026, 2027],
+  "years": [2025, 2026, 2027],
+  "fuentes": {
+    "2025": "NYSE Group, comunicado del 8 de noviembre de 2024 con el calendario 2025 a 2027 (https://ir.theice.com/press/news-details/2024/NYSE-Group-Announces-2025-2026-and-2027-Holiday-and-Early-Closings-Calendar/default.aspx), más el cierre extraordinario del 9 de enero de 2025 por el Día Nacional de Duelo por Jimmy Carter (https://ir.theice.com/press/news-details/2024/The-New-York-Stock-Exchange-Will-Close-Markets-on-January-9-to-Honor-the-Passing-of-Former-President-Jimmy-Carter-on-National-Day-of-Mourning/default.aspx). Cotejado el 2026-09-25.",
+    "2026": "https://www.nyse.com/markets/hours-calendars, cotejado el 2026-09-25.",
+    "2027": "https://www.nyse.com/markets/hours-calendars, cotejado el 2026-09-25."
+  },
   "holidays": {
+    "2025-01-01": "Año Nuevo",
+    "2025-01-09": "Duelo nacional por el expresidente Jimmy Carter",
+    "2025-01-20": "Día de Martin Luther King Jr.",
+    "2025-02-17": "Día de los Presidentes",
+    "2025-04-18": "Viernes Santo",
+    "2025-05-26": "Día de los Caídos",
+    "2025-06-19": "Juneteenth",
+    "2025-07-04": "Día de la Independencia",
+    "2025-09-01": "Día del Trabajo",
+    "2025-11-27": "Día de Acción de Gracias",
+    "2025-12-25": "Navidad",
     "2026-01-01": "Año Nuevo",
     "2026-01-19": "Día de Martin Luther King Jr.",
     "2026-02-16": "Día de los Presidentes",
@@ -31,11 +47,15 @@
     "2027-12-24": "Navidad (se observa el viernes 24)"
   },
   "earlyCloses": {
+    "2025-07-03": { "close": "13:00", "label": "Víspera del Día de la Independencia" },
+    "2025-11-28": { "close": "13:00", "label": "Viernes después de Acción de Gracias" },
+    "2025-12-24": { "close": "13:00", "label": "Nochebuena" },
     "2026-11-27": { "close": "13:00", "label": "Viernes después de Acción de Gracias" },
     "2026-12-24": { "close": "13:00", "label": "Nochebuena" },
     "2027-11-26": { "close": "13:00", "label": "Viernes después de Acción de Gracias" }
   },
   "notes": [
+    "El 9 de enero de 2025 no es un feriado de la Regla 7.2: la NYSE cerró por el Día Nacional de Duelo que decretó el gobierno federal por la muerte de Jimmy Carter.",
     "En 2027 la Navidad cae sábado y se observa el viernes 24, así que no hay jornada recortada de Nochebuena.",
     "America/New_York sí aplica horario de verano, por eso las horas se resuelven con la zona y no con un desfase fijo."
   ]

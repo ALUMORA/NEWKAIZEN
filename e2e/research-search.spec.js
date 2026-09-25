@@ -9,6 +9,7 @@ import { test as plainTest } from '@playwright/test'
 import { test, expect, attachGuards } from './support/guards.js'
 import { HEALTH_V2, expectedHttpError, setupApp } from './support/app.js'
 import { RESEARCH_ROUTES, meta } from './support/research-data.js'
+import { expectNoHorizontalScroll } from './support/layout.js'
 
 // ─── Datos simulados ─────────────────────────────────────────────────────────
 
@@ -146,8 +147,7 @@ async function expectNoAxeViolations(page, context) {
 }
 
 async function noHorizontalScroll(page) {
-  const { scrollWidth, innerWidth } = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }))
-  expect(scrollWidth, 'la página no se desplaza a lo ancho').toBeLessThanOrEqual(innerWidth)
+  await expectNoHorizontalScroll(page)
 }
 
 const searchBox = (page) => page.getByRole('searchbox', { name: 'Nombre o clave de la emisora' })

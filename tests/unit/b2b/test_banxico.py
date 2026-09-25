@@ -57,10 +57,10 @@ SIE_METADATOS = {
             },
             {
                 "idSerie": "SF43936",
-                "titulo": "Valores gubernamentales, resultados de la subasta semanal, Cetes a 28 días, "
-                "Tasa de rendimiento",
-                "unidad": "Por ciento anual",
-                "periodicidad": "Semanal",
+                "titulo": "Valores gubernamentales                        Resultados de la subasta semanal "
+                "Tasa de rendimiento                            Cetes a 28 días",
+                "unidad": "Porcentajes",
+                "periodicidad": "Diaria",
                 "fechaInicio": "16/01/1986",
                 "fechaFin": "17/09/2026",
             },
@@ -241,8 +241,8 @@ def test_cuerpo_sin_series_devuelve_vacio_sin_reventar(con_token):
 def test_fetch_metadata(con_token):
     responses.add(responses.GET, f"{banxico.SIE_BASE_URL}/series/SF43718,SF43936", json=SIE_METADATOS, status=200)
     meta = banxico.fetch_metadata(["SF43718", "SF43936"])
-    assert meta["SF43936"]["periodicidad"] == "Semanal"
-    assert meta["SF43936"]["unidad"] == "Por ciento anual"
+    assert meta["SF43936"]["periodicidad"] == "Diaria"
+    assert meta["SF43936"]["unidad"] == "Porcentajes"
     assert meta["SF43718"]["fechaFin"] == "2026-09-18"
 
 
@@ -291,11 +291,11 @@ def test_verified_ids_vacio(con_token):
 # ─── el catálogo ─────────────────────────────────────────────────────────────
 
 
-def test_catalogo_solo_tiene_dos_series_verificadas():
-    """Solo el FIX y la tasa objetivo están confirmadas a mano; el resto espera un token real."""
+def test_catalogo_marca_verificadas_las_doce_que_confirmo_el_sie():
+    """El 25 de septiembre de 2026 la prueba en vivo confirmó las doce; el FIX y la objetivo siguen ahí."""
     verificadas = sorted(sid for sid, item in banxico.catalog().items() if item["verified"])
-    assert verificadas == ["SF43718", "SF61745"]
-    assert set(banxico.VERIFIED_IDS) == set(verificadas)
+    assert verificadas == sorted(banxico.catalog())
+    assert set(banxico.VERIFIED_IDS) <= set(verificadas)
 
 
 def test_catalogo_esta_completo_y_bien_formado():
@@ -348,7 +348,7 @@ def test_el_catalogo_documenta_como_verificarlo():
 
 def test_el_catalogo_es_json_valido_en_disco():
     datos = json.loads(banxico.CATALOG_PATH.read_text(encoding="utf-8"))
-    assert datos["verificadas"] == ["SF43718", "SF61745"]
+    assert datos["verificadas"] == sorted(item["id"] for item in datos["series"] if item["verified"])
     assert len(datos["series"]) == len(MxRateId.__args__)
 
 
@@ -388,8 +388,8 @@ def test_verified_ids_rechaza_la_serie_equivocada_aunque_el_titulo_se_parezca(co
 @responses.activate
 def test_verified_ids_acepta_la_serie_correcta_con_su_periodicidad_y_unidad(con_token):
     responses.add(responses.GET, f"{banxico.SIE_BASE_URL}/series/SF43936",
-                  json=_meta_sie("SF43936", "Valores gubernamentales, subasta semanal, Cetes a 28 días, "
-                                 "Tasa de rendimiento", "Porcentaje", "Semanal"), status=200)
+                  json=_meta_sie("SF43936", "Valores gubernamentales Resultados de la subasta semanal "
+                                 "Tasa de rendimiento Cetes a 28 días", "Porcentajes", "Diaria"), status=200)
     assert banxico.verified_ids(["SF43936"]) == {"SF43936": True}
 
 
@@ -399,11 +399,12 @@ def test_mismatches_dice_por_que_no_cuadra_una_serie():
         {"titulo": "Cetes a 28 dias, Tasa de descuento", "unidad": "Pesos", "periodicidad": "Mensual"}, item
     )
     texto = " ".join(razones)
-    assert "periodicidad" in texto and "Mensual" in texto and "Semanal" in texto
+    assert "periodicidad" in texto and "Mensual" in texto and "Diaria" in texto
     assert "unidad" in texto and "Pesos" in texto
     assert "descuento" in texto
     assert banxico.mismatches(None, item) == ["el SIE no devolvió esta serie"]
-    buena = {"titulo": "Cetes a 28 días, Tasa de rendimiento", "unidad": "Por ciento anual", "periodicidad": "Semanal"}
+    buena = {"titulo": "Resultados de la subasta semanal Tasa de rendimiento Cetes a 28 días",
+             "unidad": "Porcentajes", "periodicidad": "Diaria"}
     assert banxico.mismatches(buena, item) == []
 
 
@@ -419,7 +420,8 @@ def test_mismatches_acepta_la_unidad_que_reporta_el_sie_solo_en_esas_series():
         info = {"titulo": titulo, "unidad": unidad, "periodicidad": "Diaria"}
         assert banxico.mismatches(info, cat[sid]) == [], sid
     # El candado no se relaja para las demás: otra serie en por ciento o en pesos sigue rechazando esas unidades.
-    cetes = {"titulo": "Cetes a 28 días, Tasa de rendimiento", "unidad": "Sin Unidad", "periodicidad": "Semanal"}
+    cetes = {"titulo": "Resultados de la subasta semanal Tasa de rendimiento Cetes a 28 días",
+             "unidad": "Sin Unidad", "periodicidad": "Diaria"}
     assert any("unidad" in r for r in banxico.mismatches(cetes, cat["SF43936"]))
     fix = {"titulo": "Tipo de cambio FIX", "unidad": "Unidades de Inversión", "periodicidad": "Diaria"}
     assert any("unidad" in r for r in banxico.mismatches(fix, cat["SF43718"]))

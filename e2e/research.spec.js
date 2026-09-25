@@ -15,6 +15,7 @@ const CAPTURE_DIR = process.env.F3_CAPTURE_DIR ?? ''
 const HEALTH = { ...HEALTH_V2, capabilities: [...HEALTH_V2.capabilities, 'markets.overview'] }
 
 import { INSTRUMENT, RESEARCH_ROUTES, VALUATION, meta } from './support/research-data.js'
+import { expectNoHorizontalScroll } from './support/layout.js'
 
 const V2_ROUTES = RESEARCH_ROUTES
 
@@ -44,8 +45,7 @@ async function expectNoAxeViolations(page, context) {
 }
 
 async function noHorizontalScroll(page) {
-  const { scrollWidth, innerWidth } = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }))
-  expect(scrollWidth, 'la página no se desplaza a lo ancho').toBeLessThanOrEqual(innerWidth)
+  await expectNoHorizontalScroll(page)
 }
 
 /** La ficha terminó de cargar sus bloques. */

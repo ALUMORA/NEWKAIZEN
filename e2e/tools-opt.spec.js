@@ -9,6 +9,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { test as plainTest } from '@playwright/test'
 import { test, expect, attachGuards } from './support/guards.js'
 import { HEALTH_V2, expectedHttpError, setupApp } from './support/app.js'
+import { expectNoHorizontalScroll } from './support/layout.js'
 
 const WCAG_AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const THEMES = /** @type {const} */ (['light', 'dark'])
@@ -170,8 +171,7 @@ async function expectNoAxeViolations(page, context) {
 }
 
 async function noHorizontalScroll(page) {
-  const { scrollWidth, innerWidth } = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }))
-  expect(scrollWidth, 'la página no se desplaza a lo ancho').toBeLessThanOrEqual(innerWidth)
+  await expectNoHorizontalScroll(page)
 }
 
 /** El optimizador terminó de calcular. */
@@ -196,7 +196,34 @@ const PAGES = [
   { path: '/herramientas/backtest', ready: backtestReady, name: 'backtest' },
 ]
 
+test('backtest: si el API tira el S&P 500 y el referente es el IPC, no se reporta como emisora descartada', async ({ page, baseURL }) => {
+  const noSpy = ({ url }) => {
+    const full = panel(String(url.searchParams.get('symbols') ?? '').split(',').filter((x) => x !== 'SPY'), url.searchParams.get('range') ?? '5y')
+    return { json: { ...full, dropped: [...full.dropped, { symbol: 'SPY', reason: 'sin_historia' }] } }
+  }
+  await open(page, /** @type {string} */ (baseURL), { routes: { 'GET /v2/panel': noSpy } })
+  await page.goto('/herramientas/backtest')
+  await backtestReady(page)
+  await expect(page.getByText(/quedaron fuera/)).toHaveCount(0)
+})
+
 test.describe('herramientas: optimizador', () => {
+  test('historia corta: dice cuántas semanas hay, por qué, y no culpa al IPC de las betas', async ({ page, baseURL }) => {
+    // Una emisora recién listada recorta el INNER JOIN del panel; además el API tira el IPC.
+    const short = ({ url }) => {
+      const full = panel(String(url.searchParams.get('symbols') ?? '').split(','), '5y')
+      const keep = 30
+      const prices = Object.fromEntries(Object.entries(full.prices).filter(([s]) => s !== 'NAFTRAC.MX').map(([s, v]) => [s, v.slice(-keep)]))
+      return { json: { ...full, dates: full.dates.slice(-keep), prices, dropped: [{ symbol: 'NAFTRAC.MX', reason: 'sin_historia' }] } }
+    }
+    await open(page, /** @type {string} */ (baseURL), { routes: { 'GET /v2/panel': short } })
+    await page.goto('/herramientas/optimizador?symbols=WALMEX.MX,AMXB.MX')
+    const empty = page.getByRole('heading', { name: 'No alcanzan los datos para optimizar' })
+    await expect(empty).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText(/52 semanas de precios en común y hay 29\. Solo cuentan las fechas que todas tienen/)).toBeVisible()
+    await expect(page.getByText(/Quedaron fuera/)).toHaveCount(0)
+  })
+
   test('arranca con las emisoras del portafolio: tres carteras, frontera, walk forward e insumos', async ({ page, baseURL }) => {
     await open(page, /** @type {string} */ (baseURL))
     await page.goto('/herramientas/optimizador')

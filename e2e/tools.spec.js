@@ -7,6 +7,7 @@
 import AxeBuilder from '@axe-core/playwright'
 import { test, expect } from './support/guards.js'
 import { HEALTH_V2, setupApp } from './support/app.js'
+import { expectNoHorizontalScroll } from './support/layout.js'
 
 const WCAG_AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const THEMES = /** @type {const} */ (['light', 'dark'])
@@ -52,7 +53,7 @@ const V2_ROUTES = {
  * @param {{ theme?: 'light' | 'dark' }} [options]
  */
 async function openSimulator(page, baseURL, { theme } = {}) {
-  await setupApp(page, { baseURL, session: true, legacyApi: true, health: HEALTH, routes: V2_ROUTES })
+  await setupApp(page, { baseURL, session: true, health: HEALTH, routes: V2_ROUTES })
   if (theme) await page.addInitScript((t) => window.localStorage.setItem('kaizen_theme', t), theme)
   await page.goto(ROUTE)
   await expect(page.getByRole('heading', { level: 1, name: 'Simulador de metas y retiro' })).toBeVisible()
@@ -81,8 +82,7 @@ async function expectNoAxeViolations(page, context) {
 }
 
 async function noHorizontalScroll(page) {
-  const { scrollWidth, innerWidth } = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }))
-  expect(scrollWidth, 'la página no se desplaza a lo ancho').toBeLessThanOrEqual(innerWidth)
+  await expectNoHorizontalScroll(page)
 }
 
 test.describe('herramientas: simulador', () => {
@@ -91,7 +91,8 @@ test.describe('herramientas: simulador', () => {
     await expect(page.locator('h1')).toHaveCount(1)
     await expect(page.getByText('Probabilidad de llegar a la meta')).toBeVisible()
     await expect(page.getByRole('region', { name: 'Escenario de retiro' })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Lee la metodología en Aprender' })).toHaveAttribute('href', '/aprender')
+    await expect(page.getByText(/crecen un poco cada mes, al ritmo anual que elegiste/)).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Lee la metodología del simulador' })).toHaveAttribute('href', '/aprender/metodologia/simulador')
     await noHorizontalScroll(page)
   })
 

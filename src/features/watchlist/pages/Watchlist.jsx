@@ -2,10 +2,11 @@
 // día y la tendencia de un mes. Agregar con el buscador y quitar con Deshacer.
 import { useDeferredValue, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Card, DataTable, Delta, EmptyState, ErrorState, Input, Money, PageHeader, Skeleton, useToast } from '../../../components/ui/index.js'
+import { Button, Card, DataStatus, DataTable, Delta, EmptyState, ErrorState, Input, Money, PageHeader, Skeleton, useToast } from '../../../components/ui/index.js'
 import { Sparkline } from '../../../components/charts/Sparkline.jsx'
 import { historyQuery, quotesQuery, searchQuery } from '../../../lib/api/queries.js'
 import { LEGACY_WATCHLIST_NAME, update, useStore } from '../../../lib/storage.js'
+import { trendSummary } from '../trend.js'
 import '../watchlist.css'
 
 const EMPTY = []
@@ -20,17 +21,30 @@ function setSymbols(listId, fn) {
   })
 }
 
+const TREND_PARAMS = { range: '1mo' }
+
 function Trend({ symbol }) {
-  const { data, isPending, isError } = useQuery(historyQuery(symbol, { range: '1mo' }))
+  const { data, isPending, isError } = useQuery(historyQuery(symbol, TREND_PARAMS))
   if (isPending) return <Skeleton width={80} height={24} />
-  if (isError || !data?.close?.length) return <span className="kz-missing">s/d</span>
-  const first = data.close[0]
-  const last = data.close[data.close.length - 1]
-  const change = first ? last / first - 1 : null
+  const t = isError ? null : trendSummary(data)
+  if (!t) return <span className="kz-missing">s/d</span>
   return (
-    <Sparkline values={data.close} label={`Tendencia de un mes de ${symbol}`}>
-      {change != null ? <Delta value={change} /> : <span className="kz-missing">s/d</span>}
+    <Sparkline values={data.close} label={`Tendencia de ${t.label}`}>
+      {t.change != null ? <Delta value={t.change} /> : <span className="kz-missing">s/d</span>}
     </Sparkline>
+  )
+}
+
+/** Pie de la tabla: periodo, tipo de precio y fuente de la tendencia (comparte caché con las filas). */
+function TrendMeta({ symbol }) {
+  const { data } = useQuery(historyQuery(symbol, TREND_PARAMS))
+  const t = trendSummary(data)
+  if (!t) return null
+  return (
+    <div className="wl-trend-meta">
+      <p className="wl-note">{t.note}</p>
+      {data?.meta && <DataStatus {...data.meta} />}
+    </div>
   )
 }
 
@@ -140,6 +154,7 @@ export default function Watchlist() {
           />
         )}
       </Card>
+      {symbols.length > 0 && <TrendMeta symbol={symbols[0]} />}
       {missing.length > 0 && <p className="wl-note">Sin precio por ahora: {missing.join(', ')}.</p>}
     </div>
   )

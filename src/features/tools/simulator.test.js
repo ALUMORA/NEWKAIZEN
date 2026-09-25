@@ -68,4 +68,17 @@ describe('simulador: armado de datos', () => {
     const e = validateInputs({ ...DEFAULT_INPUTS, years: 0, initial: null, volatilityPct: -1 })
     expect(Object.keys(e).sort()).toEqual(['initial', 'volatilityPct', 'years'])
   })
+
+  it('el retiro acepta lo que dice su mensaje: de 0.1 % a 30 %', () => {
+    expect(validateInputs({ ...DEFAULT_INPUTS, withdrawalRatePct: 0.05 }).withdrawalRatePct).toBe('Usa un valor entre 0.1 % y 30 %.')
+    expect(validateInputs({ ...DEFAULT_INPUTS, withdrawalRatePct: 0.1 })).toEqual({})
+  })
+
+  it('la aportación crece mes con mes al ritmo anual, no de golpe cada año', () => {
+    const sim = runSimulation({ ...DEFAULT_INPUTS, initial: 0, contribution: 1000, contributionGrowthPct: 12, years: 1, inflationPct: 0, returnPct: 0, volatilityPct: 0 }, { paths: 3 })
+    // Con crecimiento de una vez al año, el primer año serían 12 aportaciones de 1,000 exactas.
+    const expected = Array.from({ length: 12 }, (_, t) => 1000 * 1.12 ** (t / 12)).reduce((a, b) => a + b, 0)
+    expect(sim.contributedTotal).toBeCloseTo(expected, 6)
+    expect(sim.contributedTotal).toBeGreaterThan(12000)
+  })
 })

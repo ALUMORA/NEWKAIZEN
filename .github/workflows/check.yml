@@ -1,5 +1,4 @@
-# Compuertas de CI. E2E todavía no corre aquí: los baselines visuales son por plataforma
-# (-darwin) y se corren en local con npm run e2e:baseline.
+# Compuertas de CI: web, api y e2e (Playwright con el API mockeado, sin capturas visuales).
 name: check
 
 on:
@@ -32,6 +31,26 @@ jobs:
       - run: npm run test
       - run: npm run build
       - run: npm run bundle
+
+  e2e:
+    name: e2e (Playwright, desktop y mobile)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
 
   api:
     name: api (ruff, pytest)

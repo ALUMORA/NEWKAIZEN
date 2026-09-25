@@ -41,7 +41,7 @@ export function validateInputs(inputs) {
   need('returnPct', (v) => v > -100 && v <= 50, 'Usa un valor entre −99 % y 50 %.')
   need('volatilityPct', (v) => v >= 0 && v <= 100, 'Usa un valor entre 0 % y 100 %.')
   need('goal', (v) => v > 0, 'La meta tiene que ser mayor que cero.')
-  need('withdrawalRatePct', (v) => v > 0 && v <= 30, 'Usa un valor entre 0.1 % y 30 %.')
+  need('withdrawalRatePct', (v) => v >= 0.1 && v <= 30, 'Usa un valor entre 0.1 % y 30 %.')
   need('retirementYears', (v) => v >= 1 && v <= 60 && Number.isInteger(v), 'Usa un número entero de 1 a 60 años.')
   return errors
 }

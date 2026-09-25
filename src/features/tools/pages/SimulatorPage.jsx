@@ -5,10 +5,12 @@ import { Suspense, lazy, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { Card, EmptyState, ErrorState, NumberInput, PageHeader, SegmentedControl, Skeleton, Stat } from '../../../components/ui/index.js'
 import { MISSING, fmtMoney, fmtNumber, fmtPct } from '../../../lib/format.js'
-import { PATHS } from '../../../app/paths.js'
 import { DEFAULT_INPUTS, DEFAULT_PATHS, fanPoints, retirementFromSim, summarize, validateInputs } from '../simulator.js'
 import { useSimulation } from '../useSimulation.js'
 import '../tools.css'
+
+// Guía de docs/metodologia/simulador.md, servida por F5 en /aprender/metodologia/:guia.
+const METHODOLOGY = '/aprender/metodologia/simulador'
 
 const FanChart = lazy(() => import('../../../components/charts/FanChart.jsx').then((m) => ({ default: m.FanChart })))
 
@@ -17,7 +19,7 @@ const MONEY_FIELDS = [
   { key: 'contribution', label: 'Aportación mensual', hint: 'Se suma al inicio de cada mes.' },
 ]
 const PLAN_FIELDS = [
-  { key: 'contributionGrowthPct', label: 'Crecimiento anual de la aportación', suffix: '%', hint: 'Cuánto subes tu aportación cada año. Igual a la inflación la mantiene en pesos de hoy.' },
+  { key: 'contributionGrowthPct', label: 'Crecimiento anual de la aportación', suffix: '%', hint: 'Ritmo anual al que sube tu aportación; se aplica mes con mes. Igual a la inflación la mantiene en pesos de hoy.' },
   { key: 'years', label: 'Horizonte', suffix: 'años', decimals: 0, hint: 'Cuántos años vas a ahorrar.' },
   { key: 'inflationPct', label: 'Inflación anual', suffix: '%', hint: 'Sirve para pasar los montos a pesos de hoy.' },
 ]
@@ -193,13 +195,13 @@ export default function SimulatorPage() {
           <Card title="Qué supone esta simulación">
             <ul className="kz-sim__notes">
               <li>Cada mes el rendimiento se sortea de una distribución lognormal con el rendimiento y la volatilidad que escribiste. El saldo nunca baja de cero.</li>
-              <li>Las aportaciones entran al inicio de cada mes y crecen una vez al año con el porcentaje que elegiste.</li>
+              <li>Las aportaciones entran al inicio de cada mes y crecen un poco cada mes, al ritmo anual que elegiste: con 4 % al año, la de dentro de doce meses es 4 % mayor.</li>
               <li>Los pesos de hoy descuentan la inflación: te dicen qué podrías comprar con ese dinero a precios de ahora.</li>
               <li>No incluye impuestos, comisiones ni cambios en tus ingresos. El pasado y los supuestos no garantizan resultados.</li>
               <li>Es una herramienta para explorar escenarios, no una recomendación de inversión.</li>
             </ul>
             <p className="kz-sim__more">
-              <Link to={PATHS.learn}>Lee la metodología en Aprender</Link>
+              <Link to={METHODOLOGY}>Lee la metodología del simulador</Link>
             </p>
           </Card>
         </div>
