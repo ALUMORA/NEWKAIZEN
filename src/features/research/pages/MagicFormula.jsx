@@ -230,7 +230,7 @@ export default function MagicFormula() {
     <div className="kz-container kz-col kz-research-page" data-gap="6">
       <PageHeader
         eyebrow="Screener"
-        title="Fórmula Mágica"
+        title="Fórmula mágica"
         description="Ordena emisoras por rendimiento de utilidades y rendimiento sobre capital, como propone Joel Greenblatt. Es una lista ordenada por dos criterios públicos, no una recomendación de inversión."
         breadcrumbs={[{ label: 'Investigar', to: PATHS.research }, { label: 'Fórmula mágica' }]}
         actions={

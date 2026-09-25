@@ -1,8 +1,10 @@
-// Raíz de todas las rutas: título del documento según handle.title, aviso del servidor,
+// Raíz de todas las rutas: título del documento según handle.title (o el que pida la página con
+// usePageTitle de pageTitle.js), aviso del servidor,
 // Suspense para las páginas diferidas y scroll arriba al navegar.
 import { Suspense, useEffect } from 'react'
-import { Outlet, ScrollRestoration, useMatches } from 'react-router'
+import { Outlet, ScrollRestoration, useLocation, useMatches } from 'react-router'
 import CapabilitiesBanner from './CapabilitiesBanner.jsx'
+import { usePageTitleOverride } from './pageTitle.js'
 
 export const APP_TITLE = 'Kaizen · Mercados, portafolio e investigación'
 
@@ -17,7 +19,9 @@ function RouteLoading() {
 function useDocumentTitle() {
   const matches = useMatches()
   const title = [...matches].reverse().find((m) => /** @type {any} */ (m.handle)?.title)?.handle
-  const text = /** @type {{ title?: string } | undefined} */ (title)?.title
+  const { pathname } = useLocation()
+  const override = usePageTitleOverride(pathname)
+  const text = override ?? /** @type {{ title?: string } | undefined} */ (title)?.title
   useEffect(() => {
     document.title = text ? `${text} · Kaizen` : APP_TITLE
   }, [text])

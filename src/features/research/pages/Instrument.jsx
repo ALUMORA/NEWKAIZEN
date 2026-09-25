@@ -7,6 +7,7 @@ import { dividendsQuery, historyQuery, instrumentQuery, momentumQuery, newsQuery
 import { fmtDate, fmtDateTime, fmtMoney, fmtMultiple, fmtNumber, fmtPct } from '../../../lib/format.js'
 import { Card, DataTable, Delta, PageHeader, SegmentedControl, Skeleton, Stat } from '../../../components/ui/index.js'
 import { PATHS } from '../../../app/paths.js'
+import { usePageTitle } from '../../../app/pageTitle.js'
 import { QueryBlock } from '../components/QueryBlock.jsx'
 import { TimeSeries } from '../components/charts.js'
 import { Valuation } from '../components/Valuation.jsx'
@@ -260,6 +261,7 @@ export default function Instrument() {
   const symbol = String(params.symbol ?? '').toUpperCase()
   const info = useQuery(instrumentQuery(symbol))
   const name = info.data?.name
+  usePageTitle(symbol ? `Ficha de ${symbol}` : null)
   return (
     <div className="kz-container kz-col kz-research-page" data-gap="6">
       <PageHeader

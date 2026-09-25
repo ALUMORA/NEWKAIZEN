@@ -34,12 +34,12 @@ export const routes = [
   {
     path: route(PATHS.screener),
     element: <Pages.Screener />,
-    handle: { title: 'Screener', description: 'Emisoras ordenadas por factores relativos a su sector, con cobertura y pruebas cumple o no cumple.' },
+    handle: { title: 'Screener de factores', description: 'Emisoras ordenadas por factores relativos a su sector, con cobertura y pruebas cumple o no cumple.' },
   },
   {
     path: route(PATHS.screenerMagic),
     element: <Screeners.MagicFormula />,
-    handle: { title: 'Fórmula Mágica', description: 'Ranking de Greenblatt por rendimiento de utilidades y rendimiento sobre capital, con sus exclusiones y empates.' },
+    handle: { title: 'Fórmula mágica', description: 'Ranking de Greenblatt por rendimiento de utilidades y rendimiento sobre capital, con sus exclusiones y empates.' },
   },
   {
     path: route(PATHS.screenerFibras),

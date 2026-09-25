@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router'
 import { Card, Disclaimer, EmptyState, PageHeader } from '../../../components/ui/index.js'
 import { getTerm, relatedTerms } from '../../../content/glossary.js'
 import { PATHS, pathLearnTerm } from '../../../app/paths.js'
+import { usePageTitle } from '../../../app/pageTitle.js'
 import { PublicPage } from '../PublicPage.jsx'
 import '../learn.css'
 
@@ -10,6 +11,7 @@ export default function LearnTerm() {
   const { termino = '' } = useParams()
   const term = getTerm(termino)
   const crumbs = [{ label: 'Aprender', to: PATHS.learn }]
+  usePageTitle(term ? term.titulo : 'Concepto no encontrado')
 
   if (!term) {
     return (

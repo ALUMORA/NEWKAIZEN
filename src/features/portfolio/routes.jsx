@@ -20,21 +20,21 @@ export const routes = [
   {
     path: route(PATHS.portfolioTransactions),
     element: <Pages.Transactions />,
-    handle: { title: 'Movimientos', description: 'Compras, ventas, dividendos, depósitos y retiros de tu portafolio, con importación y exportación en CSV.' },
+    handle: { title: 'Movimientos del portafolio', description: 'Compras, ventas, dividendos, depósitos y retiros de tu portafolio, con importación y exportación en CSV.' },
   },
   {
     path: route(PATHS.portfolioPerformance),
     element: <Pages.Performance />,
-    handle: { title: 'Rendimiento', description: 'Rendimiento de tu portafolio en pesos contra su referencia, ponderado por tiempo y por dinero.' },
+    handle: { title: 'Rendimiento del portafolio', description: 'Rendimiento de tu portafolio en pesos contra su referencia, ponderado por tiempo y por dinero.' },
   },
   {
     path: route(PATHS.portfolioRisk),
     element: <Pages.Risk />,
-    handle: { title: 'Riesgo', description: 'Volatilidad, caídas máximas, concentración y exposición al tipo de cambio de tu portafolio.' },
+    handle: { title: 'Riesgo del portafolio', description: 'Volatilidad, caídas máximas, concentración y exposición al tipo de cambio de tu portafolio.' },
   },
   {
     path: route(PATHS.portfolioRebalance),
     element: <Pages.Rebalance />,
-    handle: { title: 'Rebalanceo', description: 'Qué tan lejos está tu portafolio de los pesos objetivo que definiste.' },
+    handle: { title: 'Rebalanceo del portafolio', description: 'Qué tan lejos está tu portafolio de los pesos objetivo que definiste.' },
   },
 ]

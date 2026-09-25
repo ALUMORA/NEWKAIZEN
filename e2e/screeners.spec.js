@@ -198,7 +198,7 @@ function tableOf(page, caption) {
 }
 
 async function magicReady(page) {
-  await expect(page.getByRole('heading', { level: 1, name: 'Fórmula Mágica' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Fórmula mágica' })).toBeVisible()
   await expect(tableOf(page, 'Ranking de la fórmula mágica').row('PINFRA.MX')).toBeVisible()
   await expect(page.getByRole('heading', { level: 3, name: /Emisoras que quedaron fuera/ })).toBeVisible()
 }
@@ -230,7 +230,7 @@ test.describe('screener: fórmula mágica', () => {
     })
     await page.goto('/screener/formula-magica')
     await magicReady(page)
-    await expect(page).toHaveTitle('Fórmula Mágica · Kaizen')
+    await expect(page).toHaveTitle('Fórmula mágica · Kaizen')
     await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
     expect(universes).toEqual(['mx'])
     await expect(page.getByRole('radio', { name: 'México (BMV)' })).toBeChecked()
@@ -318,7 +318,7 @@ plainTest('screener: fórmula mágica caída muestra el error con reintento', as
   const down = { status: 503, json: { error: { code: 'UPSTREAM_UNAVAILABLE', message: 'El proveedor de datos no responde. Intenta en unos minutos.' } } }
   await open(page, /** @type {string} */ (baseURL), { routes: { 'GET /v2/screeners/magic': down } })
   await page.goto('/screener/formula-magica')
-  await expect(page.getByRole('heading', { level: 1, name: 'Fórmula Mágica' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Fórmula mágica' })).toBeVisible()
   const universe = page.getByRole('region', { name: 'Universo' })
   await expect(universe.getByRole('alert')).toContainText('El proveedor de datos no responde', { timeout: 10_000 })
   await expect(universe.getByRole('button', { name: 'Reintentar' })).toBeVisible()
@@ -448,8 +448,8 @@ test('desde la barra lateral: título de la pestaña y foco en el h1 de cada scr
   const nav = page.getByRole('navigation', { name: 'Principal' })
   await nav.getByRole('link', { name: 'Fórmula mágica' }).click()
   await expect(page).toHaveURL(/\/screener\/formula-magica$/)
-  await expect(page).toHaveTitle('Fórmula Mágica · Kaizen')
-  await expect(page.getByRole('heading', { level: 1, name: 'Fórmula Mágica' })).toBeFocused()
+  await expect(page).toHaveTitle('Fórmula mágica · Kaizen')
+  await expect(page.getByRole('heading', { level: 1, name: 'Fórmula mágica' })).toBeFocused()
   await magicReady(page)
   await nav.getByRole('link', { name: 'FIBRAs' }).click()
   await expect(page).toHaveTitle('FIBRAs · Kaizen')

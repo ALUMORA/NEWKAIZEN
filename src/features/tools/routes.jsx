@@ -30,6 +30,6 @@ export const routes = [
   {
     path: route(PATHS.toolsSimulator),
     element: <Pages.Simulator />,
-    handle: { title: 'Simulador', description: 'Escenarios de Monte Carlo para metas y retiro, con supuestos visibles.' },
+    handle: { title: 'Simulador y metas', description: 'Escenarios de Monte Carlo para metas y retiro, con supuestos visibles.' },
   },
 ]

@@ -12,7 +12,7 @@ describe('nav', () => {
       ['Buscar emisora', 'Comparar', 'Screener de factores', 'Fórmula mágica', 'FIBRAs'],
       ['Optimizador', 'Backtest', 'Simulador y metas'],
     ])
-    expect(NAV_EXTRA.map((i) => i.label)).toEqual(['Watchlist', 'Aprender'])
+    expect(NAV_EXTRA.map((i) => i.label)).toEqual(['Lista de seguimiento', 'Aprender'])
   })
 
   it('toda ruta sale de PATHS y ninguna se repite', () => {
