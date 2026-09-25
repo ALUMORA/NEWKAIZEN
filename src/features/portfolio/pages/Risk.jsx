@@ -11,12 +11,15 @@ import { panelQuery } from '../../../lib/api/queries.js'
 import { useStore } from '../../../lib/storage.js'
 import { PATHS } from '../../../app/paths.js'
 import '../portfolio.css'
+import { lastYears } from '../lib/panel-window.js'
 
 const Heatmap = lazy(() => import('../../../components/charts/Heatmap.jsx').then((m) => ({ default: m.Heatmap })))
 
 const IPC = '^MXX'
 const SPX = '^GSPC'
-const PANEL_PARAMS = { range: '3y', interval: '1wk', ccy: 'MXN' }
+// Tres años de cierres semanales: el contrato no tiene 3y, así que se pide 5y y se recorta.
+const PANEL_PARAMS = { range: '5y', interval: '1wk', ccy: 'MXN' }
+const WINDOW_YEARS = 3
 
 /** @param {any} s */
 const selectActive = (s) => s.portfolios.find((/** @type {any} */ p) => p.id === s.activePortfolioId) ?? null
@@ -68,7 +71,7 @@ export default function Risk() {
   const positions = useMemo(() => derivePositions(transactions), [transactions])
   const symbols = useMemo(() => [...positions.map((p) => p.symbol), IPC, SPX], [positions])
   const panel = useQuery({ ...panelQuery(symbols, PANEL_PARAMS), enabled: positions.length > 0 })
-  const risk = useMemo(() => computeRisk(positions, panel.data), [positions, panel.data])
+  const risk = useMemo(() => computeRisk(positions, lastYears(panel.data, WINDOW_YEARS)), [positions, panel.data])
 
   const header = (
     <PageHeader

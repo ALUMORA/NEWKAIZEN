@@ -126,6 +126,17 @@ export async function search(q, { limit = 10, signal } = {}) {
   return v2Get('/v2/search', { q: String(q ?? '').trim(), limit }, { signal })
 }
 
+// Periodos e intervalos del contrato (Range e Interval en types.js; kaizen_api/schemas.py). Uno
+// fuera de la lista el API lo contesta con 422; aquí se rechaza antes, con el dato en el mensaje,
+// para que una pantalla que pida "3y" falle en las pruebas y no en producción.
+const RANGES = new Set(['1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'max'])
+const INTERVALS = new Set(['1d', '1wk', '1mo'])
+
+function assertPeriod(range, interval) {
+  const bad = !RANGES.has(range) ? `periodo "${range}"` : !INTERVALS.has(interval) ? `intervalo "${interval}"` : null
+  if (bad) throw new ApiError({ status: 400, code: 'VALIDATION_ERROR', message: `La app pidió un ${bad} que el servidor no acepta.` })
+}
+
 /**
  * @param {string} symbol
  * @param {{ range?: Range, interval?: Interval, ccy?: CurrencyMode }} [params]
@@ -134,6 +145,7 @@ export async function search(q, { limit = 10, signal } = {}) {
  */
 export async function getHistory(symbol, { range = '1y', interval = '1d', ccy = 'native' } = {}, { signal } = {}) {
   const s = normalizeSymbol(symbol)
+  assertPeriod(range, interval)
   if ((await serverStatus(signal)) === 'legacy') {
     if (ALLOW_LEGACY) return legacyHistory(s, { range, ccy }, { signal })
     throw legacyUnsupported()
@@ -152,6 +164,7 @@ export async function getHistory(symbol, { range = '1y', interval = '1d', ccy = 
  * @returns {Promise<import('./types.js').PanelResponse>}
  */
 export async function getPanel(symbols, { range = '5y', interval = '1wk', ccy = 'MXN', adjust } = {}, { signal } = {}) {
+  assertPeriod(range, interval)
   return v2Get('/v2/panel', { symbols: normalizeSymbols(symbols), range, interval, ccy, adjust: adjust === 'splits' ? adjust : undefined }, { signal })
 }
 

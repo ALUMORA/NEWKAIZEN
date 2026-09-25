@@ -26,6 +26,13 @@ describe('símbolos', () => {
 })
 
 describe('endpoints v2', () => {
+  it('rechaza sin salir a la red un periodo o intervalo fuera del contrato (el API contesta 422)', async () => {
+    const f = installFetch([])
+    await expect(getPanel(['walmex.mx'], { range: /** @type {any} */ ('3y'), interval: '1wk', ccy: 'MXN' })).rejects.toMatchObject({ status: 400, code: 'VALIDATION_ERROR' })
+    await expect(getHistory('walmex.mx', { range: '1y', interval: /** @type {any} */ ('1h') })).rejects.toMatchObject({ status: 400 })
+    expect(f.calls).toHaveLength(0)
+  })
+
   it('arma rutas y query del contrato', async () => {
     const f = installFetch([json(200, { quotes: [] }), json(200, {}), json(200, {}), json(200, {})])
     await getQuotes(['walmex.mx', 'AAPL'])
