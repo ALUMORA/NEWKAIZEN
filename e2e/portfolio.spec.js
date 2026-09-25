@@ -170,9 +170,13 @@ async function expectNoAxeViolations(page, context) {
   expect(results.violations, `${context}:\n${detail}`).toEqual([])
 }
 
+// Contra el ancho del viewport y no contra window.innerWidth: en el proyecto mobile (isMobile)
+// innerWidth crece junto con el contenido desbordado y la aserción pasaba sin comparar nada
+// (docs/requests/F5.md, punto 6).
 async function noHorizontalScroll(page) {
-  const { scrollWidth, innerWidth } = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }))
-  expect(scrollWidth, 'la página no se desplaza a lo ancho').toBeLessThanOrEqual(innerWidth)
+  const width = page.viewportSize()?.width ?? 0
+  const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth)
+  expect(scrollWidth, 'la página no se desplaza a lo ancho').toBeLessThanOrEqual(width)
 }
 
 const txTable = (page) => page.getByRole('table', { name: 'Movimientos del portafolio' })
@@ -190,6 +194,11 @@ test.describe('portafolio: movimientos', () => {
       const walmex = posTable(page).getByRole('row', { name: /WALMEX\.MX/ })
       await expect(walmex).toContainText('200')
       await expect(walmex).toContainText('65.00')
+      // El marco de la tabla es bloque contenedor: sin eso, los .sr-only de las columnas que se
+      // salen a la derecha escapan de su overflow y ensanchan el documento (docs/requests/F5.md, 5).
+      for (const position of await page.locator('.kz-table-scroll').evaluateAll((els) => els.map((el) => getComputedStyle(el).position))) {
+        expect(position).toBe('relative')
+      }
       await noHorizontalScroll(page)
       await expectNoAxeViolations(page, `movimientos ${theme}`)
     })
@@ -341,6 +350,17 @@ test.describe('portafolio: rebalanceo', () => {
     await expect(form.getByText('Sin cotización para ZZZZ.MX')).toBeVisible()
     await noHorizontalScroll(page)
     await expectNoAxeViolations(page, 'rebalanceo con emisora nueva')
+  })
+
+  test('un libro de solo compras no pide reducir todo para cubrir efectivo negativo', async ({ page, baseURL }) => {
+    const onlyBuys = STATE.portfolios[0].transactions.filter((t) => t.type === 'buy')
+    await open(page, baseURL, { state: { ...REBALANCE_STATE, portfolios: [{ ...REBALANCE_STATE.portfolios[0], transactions: onlyBuys }] } })
+    await page.goto('/portafolio/rebalanceo')
+    // 200 WALMEX a 65 y nada de efectivo: 60/40 es reducir 80 WALMEX y aumentar 94 NAFTRAC. Antes el
+    // saldo crudo de −13,000 dejaba el valor en cero y el plan ni aparecía.
+    await expect(planTable(page).getByRole('row', { name: /WALMEX\.MX/ })).toContainText('Reducir')
+    await expect(planTable(page).getByRole('row', { name: /WALMEX\.MX/ })).toContainText('80')
+    await expect(planTable(page).getByRole('row', { name: /NAFTRAC\.MX/ })).toContainText('94')
   })
 
   test('metas que no suman 100% no calculan plan', async ({ page, baseURL }) => {
