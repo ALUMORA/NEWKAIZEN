@@ -2,7 +2,7 @@ import { installFetch, json } from '../../test/fetchMock.js'
 import { resetSessionForTests } from '../auth/session.js'
 import { resetCapabilitiesForTests } from './capabilities.js'
 import { API_BASE } from './config.js'
-import { MAX_SYMBOLS, getHistory, getInstrument, getQuotes, getValuation, normalizeSymbol, normalizeSymbols } from './endpoints.js'
+import { MAX_SYMBOLS, getAssumptions, getHistory, getInpc, getInstrument, getPanel, getQuotes, getValuation, normalizeSymbol, normalizeSymbols } from './endpoints.js'
 import { legacyFx, legacyHistory, legacyQuotes, legacyRiskFree } from './legacy.js'
 
 beforeEach(() => {
@@ -37,6 +37,20 @@ describe('endpoints v2', () => {
       `${API_BASE}/v2/history/NAFTRAC.MX?range=5y&interval=1wk&ccy=MXN`,
       `${API_BASE}/v2/instrument/%5EMXX`,
       `${API_BASE}/v2/valuation/AAPL?erp=0.055&years=5`,
+    ])
+  })
+
+  it('fase 3: panel con adjust=splits solo si se pide, INPC y supuestos', async () => {
+    const f = installFetch([json(200, {}), json(200, {}), json(200, {}), json(200, {})])
+    await getPanel(['walmex.mx'], { range: '1y', interval: '1d', ccy: 'MXN' })
+    await getPanel(['walmex.mx'], { range: '1y', interval: '1d', ccy: 'MXN', adjust: 'splits' })
+    await getInpc({ start: '2026-01-01' })
+    await getAssumptions()
+    expect(f.calls.map((c) => c.url)).toEqual([
+      `${API_BASE}/v2/panel?symbols=WALMEX.MX&range=1y&interval=1d&ccy=MXN`,
+      `${API_BASE}/v2/panel?symbols=WALMEX.MX&range=1y&interval=1d&ccy=MXN&adjust=splits`,
+      `${API_BASE}/v2/rates/mx/inpc?start=2026-01-01`,
+      `${API_BASE}/v2/assumptions`,
     ])
   })
 

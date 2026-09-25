@@ -143,14 +143,16 @@ export async function getHistory(symbol, { range = '1y', interval = '1d', ccy = 
 
 /**
  * Precios alineados por fecha (INNER JOIN, sin forward fill). Los rendimientos se calculan en
- * el cliente (src/lib/finance).
+ * el cliente (src/lib/finance). `adjust: 'splits'` pide cierres sin ajustar por dividendos (solo
+ * por splits); solo se manda si se pide, porque un API sin la capacidad `panel.splits` lo ignora y
+ * contesta sin `adjustment`, que es lo mismo que `'total'`.
  * @param {string[]} symbols
- * @param {{ range?: Range, interval?: Interval, ccy?: CurrencyMode }} [params]
+ * @param {{ range?: Range, interval?: Interval, ccy?: CurrencyMode, adjust?: 'splits' }} [params]
  * @param {CallOptions} [options]
  * @returns {Promise<import('./types.js').PanelResponse>}
  */
-export async function getPanel(symbols, { range = '5y', interval = '1wk', ccy = 'MXN' } = {}, { signal } = {}) {
-  return v2Get('/v2/panel', { symbols: normalizeSymbols(symbols), range, interval, ccy }, { signal })
+export async function getPanel(symbols, { range = '5y', interval = '1wk', ccy = 'MXN', adjust } = {}, { signal } = {}) {
+  return v2Get('/v2/panel', { symbols: normalizeSymbols(symbols), range, interval, ccy, adjust: adjust === 'splits' ? adjust : undefined }, { signal })
 }
 
 /**
@@ -194,6 +196,16 @@ export async function getRiskFree({ start, end, tenorDays = 28 } = {}, { signal 
     throw legacyUnsupported()
   }
   return apiFetch('/v2/rates/rf', { query: { start, end, tenorDays }, signal })
+}
+
+/**
+ * Nivel mensual del INPC general (capacidad `rates.inpc`). 503 NOT_CONFIGURED sin token de Banxico.
+ * @param {{ start?: string, end?: string }} [params] AAAA-MM-DD
+ * @param {CallOptions} [options]
+ * @returns {Promise<import('./types.js').InpcResponse>}
+ */
+export async function getInpc({ start, end } = {}, { signal } = {}) {
+  return v2Get('/v2/rates/mx/inpc', { start, end }, { signal })
 }
 
 /** @param {CallOptions} [options] @returns {Promise<import('./types.js').MacroUsResponse>} */
@@ -263,6 +275,15 @@ export async function getDividends(symbol, { signal } = {}) {
 export async function getValuation(symbol, params = {}, { signal } = {}) {
   const { erp, crp, terminalGrowth, years, growth } = params
   return v2Get(`/v2/valuation/${seg(normalizeSymbol(symbol))}`, { erp, crp, terminalGrowth, years, growth }, { signal })
+}
+
+/**
+ * Prima de mercado por omisión y prima país, con su fuente (capacidad `assumptions`).
+ * @param {CallOptions} [options]
+ * @returns {Promise<import('./types.js').AssumptionsResponse>}
+ */
+export async function getAssumptions({ signal } = {}) {
+  return v2Get('/v2/assumptions', undefined, { signal })
 }
 
 /** @param {string} symbol @param {CallOptions} [options] @returns {Promise<import('./types.js').MomentumResponse>} */
