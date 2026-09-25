@@ -178,3 +178,16 @@ export function solvePortfolios({ mu, cov, rf, l, u, current = null }) {
     throw err
   }
 }
+
+/**
+ * Emisoras de la persona que no entraron: las que el API tiró y las que el panel no trajo. El IPC
+ * se pide aparte para las betas; si falla, lo dice el CAPM, no esta lista.
+ * @param {{ dropped?: { symbol: string }[] } | null | undefined} panel
+ * @param {{ missing?: string[] } | null | undefined} prep
+ * @param {string[]} chosen
+ */
+export function droppedSymbols(panel, prep, chosen) {
+  const wanted = new Set(chosen)
+  const fromApi = (panel?.dropped ?? []).map((d) => d.symbol).filter((s) => wanted.has(s))
+  return [...new Set([...fromApi, ...(prep?.missing ?? [])])]
+}

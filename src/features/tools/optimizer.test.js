@@ -1,5 +1,5 @@
 import { createRng } from '../../lib/rng.js'
-import { OPT_BENCHMARK, assetBetas, estimateCovariance, expectedReturns, latestRiskFree, preparePanel, solvePortfolios } from './optimizer.js'
+import { OPT_BENCHMARK, assetBetas, droppedSymbols, estimateCovariance, expectedReturns, latestRiskFree, preparePanel, solvePortfolios } from './optimizer.js'
 import { ESTIMATION_WINDOW, runValidation } from './validation.js'
 
 const COV = [
@@ -115,5 +115,14 @@ describe('optimizador: walk forward', () => {
       expect(Number.isFinite(r.oos.ret)).toBe(true)
       expect(r.oos.maxDrawdown).toBeLessThanOrEqual(0)
     }
+  })
+})
+
+describe('emisoras que quedaron fuera (revisión RT)', () => {
+  it('el IPC que se pide solo para las betas no aparece como emisora de la persona', () => {
+    const panel = { dropped: [{ symbol: OPT_BENCHMARK, reason: 'sin datos' }, { symbol: 'ZZZ', reason: 'sin datos' }] }
+    expect(droppedSymbols(panel, { missing: ['C'] }, ['A', 'B', 'C', 'ZZZ'])).toEqual(['ZZZ', 'C'])
+    expect(droppedSymbols(panel, null, [OPT_BENCHMARK, 'A'])).toEqual([OPT_BENCHMARK])
+    expect(droppedSymbols(undefined, undefined, ['A'])).toEqual([])
   })
 })
