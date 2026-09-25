@@ -78,6 +78,15 @@ Caso probado: de 100 a 110, depósito de 50, de 160 a 144, da −1 por ciento.
 Límite: con valuaciones semanales o mensuales, un depósito a media semana no queda bien con
 ninguna de las dos convenciones. Para eso haría falta Dietz modificado, que Kaizen no implementa.
 
+Los cierres históricos vienen ajustados por dividendos y splits. Para no mezclar ese precio con el
+que de verdad pagaste, el TWR toma cada compra y venta al cierre del corte en que cae (la diferencia
+entre tu precio y ese cierre cuenta como flujo, no como rendimiento) y no suma el efectivo de los
+dividendos, que ya van dentro del cierre ajustado como si se hubieran reinvertido. Sin eso, cada
+compra de una emisora que paga dividendos se anotaba como pérdida el mismo día y, con compras
+frecuentes, el TWR caía decenas de puntos. El valor, la ganancia y el XIRR sí son de dinero real:
+llevan el efectivo de los dividendos y, cuando el libro arranca dentro de la ventana, parten de lo que
+aportaste y no del primer cierre ajustado.
+
 **XIRR**, rendimiento del dinero. Es la tasa que hace cero el valor presente de todos los flujos con
 sus fechas reales, incluido el saldo final, sobre base Actual/365. Se resuelve con Newton y, si no
 converge, con bisección. Casos probados: −1000 hoy y +1100 a 365 días da 10 por ciento exacto; el

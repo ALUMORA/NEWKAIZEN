@@ -162,7 +162,58 @@ export function twrIndex(values, flows) {
 }
 
 /**
+ * Índice del primer corte en o después de una fecha; sin fecha (saldo migrado), el primero.
+ * @param {string[]} dates ordenadas
+ * @param {unknown} date
+ */
+function cutIndex(dates, date) {
+  if (!isIso(date)) return 0
+  const i = dates.findIndex((d) => d >= date)
+  return i
+}
+
+/**
+ * Ajuste de flujos para medir el TWR con cierres ajustados. Cada compra o venta se toma al cierre
+ * del corte en que cae: la diferencia entre el precio del movimiento y ese cierre entra como flujo,
+ * no como rendimiento. Sin esto, cada compra de una emisora que paga dividendos se anotaba como
+ * pérdida el mismo día, porque su cierre ajustado queda debajo del precio que de verdad se pagó, y
+ * esa "pérdida" se cargaba contra lo que ya había; con compras frecuentes el TWR caía decenas de
+ * puntos. La comisión sí queda como rendimiento: es un costo real.
+ * @param {any[]} transactions
+ * @param {Record<string, Record<string, number>>} prices en la moneda de cada emisora
+ * @param {Record<string, number>} fx
+ * @param {string[]} dates cortes de la serie, ordenados
+ * @returns {number[]} ajuste por corte, del mismo largo que `dates`
+ */
+export function tradeGapFlows(transactions, prices, fx, dates) {
+  const out = dates.map(() => 0)
+  for (const tx of transactions ?? []) {
+    if (tx?.type !== 'buy' && tx?.type !== 'sell') continue
+    if (!isNum(tx.quantity) || !(tx.quantity > 0) || !isNum(tx.price)) continue
+    const i = cutIndex(dates, tx.date)
+    if (i < 0) continue
+    const cut = dates[i]
+    const close = lastKnown(prices[tx.symbol], cut)
+    if (!isNum(close)) continue
+    const usd = tx.currency === 'USD'
+    const fxCut = usd ? lastKnown(fx, cut) : 1
+    const fxTrade = usd ? (isNum(tx.fxRate) && tx.fxRate > 0 ? tx.fxRate : isIso(tx.date) ? lastKnown(fx, tx.date) : fxCut) : 1
+    if (!isNum(fxCut) || !isNum(fxTrade)) continue
+    const gap = tx.quantity * (close * fxCut - tx.price * fxTrade)
+    out[i] += tx.type === 'buy' ? gap : -gap
+  }
+  return out
+}
+
+/**
  * Desempeño del portafolio en pesos entre el primer corte con valor y el último valuado.
+ *
+ * Los cierres de /v2/panel vienen ajustados por dividendos (rendimiento total). Por eso:
+ * - El TWR se mide sobre el libro SIN los dividendos cobrados, que ya van dentro del precio como si
+ *   se hubieran reinvertido, y con cada compra y venta tomada al cierre (tradeGapFlows).
+ * - El valor, la ganancia y el XIRR son de dinero real: llevan el efectivo de los dividendos y, si
+ *   el libro arranca dentro de la ventana, parten de lo que de verdad aportaste, no del primer
+ *   cierre ajustado.
  * @param {{
  *   transactions: any[],
  *   prices: Record<string, Record<string, number>>,
@@ -187,21 +238,33 @@ export function computePerformance({ transactions, prices, fx, dates, benchmark 
   const windowDates = series.dates.slice(start, end + 1)
   const values = series.values.slice(start, end + 1)
   const flows = series.flows.slice(start, end + 1)
-  const startValue = /** @type {number} */ (values[0])
   const endValue = /** @type {number} */ (values[values.length - 1])
-  const netFlows = flows.slice(1).reduce((a, b) => a + b, 0)
-  const total = twr(values, flows)
-  const years = yearsBetween(windowDates[0], windowDates[windowDates.length - 1]) ?? 0
-  const index = twrIndex(values, flows)
-
-  // XIRR: el valor al inicio del periodo cuenta como aportación ese día, luego cada flujo
-  // externo con su fecha real y, al final, el valor del último cierre.
   const first = windowDates[0]
   const last = windowDates[windowDates.length - 1]
-  const cashflows = [{ date: first, amount: -startValue }]
+
+  // Libro que arranca en ceros dentro de la ventana: todo movimiento con fecha y el corte anterior
+  // en cero. Entonces el punto de partida es lo que de verdad entró, no el primer cierre ajustado.
+  const fromZero = start > 0 && series.values[start - 1] === 0 && (transactions ?? []).every((t) => isIso(t?.date))
+  const startValue = fromZero ? 0 : /** @type {number} */ (values[0])
+  const netFlows = fromZero ? flows.reduce((a, b) => a + b, 0) : flows.slice(1).reduce((a, b) => a + b, 0)
+
+  // TWR: sin dividendos cobrados y con los movimientos al cierre.
+  const priced = (transactions ?? []).filter((t) => t?.type !== 'dividend')
+  const twrSeries = valueSeries(priced, prices, fx, 'MXN', { dates })
+  const gaps = tradeGapFlows(priced, prices, fx, series.dates)
+  const twrValues = twrSeries.values.slice(start, end + 1)
+  const twrFlows = twrSeries.flows.slice(start, end + 1).map((f, i) => f + gaps[start + i])
+  const total = twr(twrValues, twrFlows)
+  const years = yearsBetween(first, last) ?? 0
+  const index = twrIndex(twrValues, twrFlows)
+
+  // XIRR con dinero real: cada flujo externo con su fecha y, al final, el valor del último cierre.
+  // Si el libro no arranca en ceros, el valor del primer corte cuenta como aportación ese día.
+  const cashflows = fromZero ? [] : [{ date: first, amount: -startValue }]
   let unconverted = 0
   for (const flow of externalFlows(transactions)) {
-    if (!isIso(flow.date) || flow.date <= first || flow.date > last) continue
+    if (!isIso(flow.date) || flow.date > last) continue
+    if (!fromZero && flow.date <= first) continue
     const rate = flow.currency === 'USD' ? (isNum(flow.fxRate) && flow.fxRate > 0 ? flow.fxRate : lastKnown(fx, flow.date)) : 1
     if (!isNum(rate)) {
       unconverted += 1
@@ -236,12 +299,13 @@ export function computePerformance({ transactions, prices, fx, dates, benchmark 
     netFlows,
     gain: endValue - startValue - netFlows,
     twr: total,
-    periods: twrReturns(values, flows)?.length ?? 0,
+    periods: twrReturns(twrValues, twrFlows)?.length ?? 0,
     years,
     twrAnnual: years >= 1 ? annualizeReturn(total, years) : null,
     xirr: irr,
     xirrAmbiguous: signChanges(cashflows) > 1,
     unconverted,
+    fromZero,
   }
 }
 
