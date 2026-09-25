@@ -149,7 +149,7 @@ RF_FRED = {
     "asOf": "2026-08-01",
     "stale": False,
     "notes": [
-        "Falta el token de Banxico (BANXICO_TOKEN) para servir CETES del SIE.",
+        "Este servidor todavía no tiene el token de Banxico, así que no hay CETES del SIE.",
         "Respaldo: serie interbancaria de México a 3 meses de la OCDE en FRED, mensual. No son CETES de 28 días.",
     ],
 }

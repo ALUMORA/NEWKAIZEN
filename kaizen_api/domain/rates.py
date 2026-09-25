@@ -223,8 +223,8 @@ def _gate_notes(checked: dict[str, list[str]]) -> list[str]:
     pending = sorted(sid for sid, reasons in checked.items() if not reasons and not banxico.reviewed(sid))
     if pending:
         notes.append(
-            "Estas series del SIE todavía no tienen revisión humana (verified: false en el catálogo) y no se"
-            " publican hasta que alguien corra tests/unit/b2b/test_banxico_live.py con token: "
+            # La nota se lee en pantalla: sin rutas de archivos ni banderas del catálogo.
+            "Estas series del SIE todavía no tienen revisión humana, así que no se publican: "
             + ", ".join(pending)
             + "."
         )
@@ -325,7 +325,7 @@ def get_mx_rates() -> dict:
             notes.append("Estos datos son de respaldo: no se pudo leer ninguna serie del SIE de Banxico.")
         else:
             notes.append(
-                "Falta el token de Banxico (BANXICO_TOKEN), así que no hay tasa objetivo, TIIE, CETES,"
+                "Este servidor todavía no tiene el token de Banxico, así que no hay tasa objetivo, TIIE, CETES,"
                 " inflación, UDI ni FIX. Lo que se muestra viene de FRED y es un respaldo."
             )
     if not items:
@@ -392,13 +392,12 @@ def get_rf_series(start: str | None = None, end: str | None = None, tenor_days: 
                 notes.append(f"El SIE no confirmó la serie {series_id}, así que no se usó: " + "; ".join(reasons) + ".")
             else:
                 notes.append(
-                    f"La serie {series_id} todavía no tiene revisión humana (verified: false en el catálogo),"
-                    " así que no se usó."
+                    f"La serie {series_id} todavía no tiene revisión humana, así que no se usó."
                 )
         except ApiError:
             notes.append("Banxico no respondió, así que no hay CETES del SIE en esta respuesta.")
     elif not banxico.configured():
-        notes.append("Falta el token de Banxico (BANXICO_TOKEN) para servir CETES del SIE.")
+        notes.append("Este servidor todavía no tiene el token de Banxico, así que no hay CETES del SIE.")
     serie = fred.fetch_series(FRED_RF_SERIES, start_date.isoformat(), end_date.isoformat())
     if not serie["values"]:
         raise ApiError(

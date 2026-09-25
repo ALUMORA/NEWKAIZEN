@@ -99,7 +99,9 @@ def test_rates_mx_sin_token_usa_el_respaldo_de_fred_y_lo_dice(client):
     assert bono.changeBp == pytest.approx(14.0), "14 puntos base, no 0.0014"
     assert bono.unit == "fraction"
     assert bono.asOf == "2026-08-01"
-    assert "BANXICO_TOKEN" in " ".join(body.meta.notes)
+    # el aviso dice qué falta en palabras de quien lo lee, sin el nombre de la variable de entorno
+    assert "todavía no tiene el token de Banxico" in " ".join(body.meta.notes)
+    assert "BANXICO_TOKEN" not in " ".join(body.meta.notes)
     assert r.headers["cache-control"] == "private, max-age=3600"
 
 
@@ -285,6 +287,7 @@ def test_con_token_una_serie_sin_revision_humana_no_se_publica(cetes28_sin_revis
     assert [item.id for item in mx.items] == ["target", "fix"]
     aviso = " ".join(mx.meta.notes)
     assert "SF43936" in aviso and "revisión" in aviso
+    assert "tests/" not in aviso and "verified" not in aviso, "la nota no enseña rutas ni banderas internas"
     rf = RfSeriesResponse.model_validate(http.get("/v2/rates/rf?tenorDays=28").json())
     assert rf.source == "fred_ir3tib" and rf.fallback is True
     assert any("SF43936" in nota for nota in rf.meta.notes)

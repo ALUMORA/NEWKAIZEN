@@ -143,7 +143,7 @@ const FIBRAS = {
       'Señal por P/NAV: descuento abajo de 0.90, prima arriba de 1.10 y en línea entre las dos. Es una descripción del precio contra libros, no una recomendación de inversión.',
       'El rendimiento por distribución suma lo que cada FIBRA pagó en los últimos 12 meses y lo divide entre el precio de hoy; no es el rendimiento proyectado que publica Yahoo.',
       'El campo cetes28 y el diferencial usan una tasa sustituta, no CETES de 28 días: la tasa interbancaria de México a 91 días de la OCDE en FRED, promedio mensual, dato del 2026-08-01. Sirve como referencia de corto plazo mientras el servidor no tenga CETES de Banxico.',
-      'Falta el token de Banxico (BANXICO_TOKEN) para servir CETES del SIE.',
+      'Este servidor todavía no tiene el token de Banxico, así que no hay CETES del SIE.',
       'FNOVA17.MX: LTV, deuda entre capitalización, cap rate y flujo van en s/d porque los estados financieros que publica Yahoo no son de esta FIBRA o ya no la describen. Su balance reporta 432.2 millones de CBFIs contra 335.7 millones que Yahoo le cuenta a la FIBRA.',
       'DANHOS13.MX: LTV, deuda entre capitalización y cap rate van en s/d porque la deuda de su balance (11.7 millones) no cuadra con la que Yahoo le reporta (11,579.2 millones).',
       FMTY_NOTE,
@@ -387,7 +387,7 @@ test.describe('screener: FIBRAs', () => {
     const banxico = {
       ...FIBRAS,
       cetes28: 0.0725,
-      meta: { ...FIBRAS.meta, source: 'yahoo,computed,banxico', fallback: false, notes: FIBRAS.meta.notes.filter((n) => !/sustituta|BANXICO_TOKEN/.test(n)) },
+      meta: { ...FIBRAS.meta, source: 'yahoo,computed,banxico', fallback: false, notes: FIBRAS.meta.notes.filter((n) => !/sustituta|token de Banxico/.test(n)) },
     }
     await open(page, /** @type {string} */ (baseURL), { routes: { 'GET /v2/screeners/fibras': { json: banxico } } })
     await page.goto('/screener/fibras')
