@@ -66,6 +66,7 @@ SPEC = [
         "/v2/rates/rf?start=2025-01-01&end=2026-09-22&tenorDays=28",
         ("rf.series",),
     ),
+    ("GET", "/v2/rates/mx/inpc", schemas.InpcResponse, "/v2/rates/mx/inpc?start=2024-01-01", ("rates.inpc",)),
     ("GET", "/v2/macro/us", schemas.UsMacroResponse, "/v2/macro/us", ("macro.us",)),
     ("GET", "/v2/markets/overview", schemas.MarketsOverviewResponse, "/v2/markets/overview", ("markets.overview",)),
     ("GET", "/v2/markets/world", schemas.WorldResponse, "/v2/markets/world", ("markets.world",)),

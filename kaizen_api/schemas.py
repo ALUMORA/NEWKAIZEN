@@ -19,6 +19,7 @@ Convenciones (también en docs/api-v2.md):
 
 from __future__ import annotations
 
+import re
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -102,6 +103,7 @@ KNOWN_CAPABILITIES = (
     "fx.history",
     "rates.mx",
     "rf.series",
+    "rates.inpc",
     "macro.us",
     "markets.overview",
     "markets.world",
@@ -386,6 +388,24 @@ class MxRateItem(ContractModel):
 class MxRatesResponse(ContractModel):
     items: list[MxRateItem]
     meta: Meta
+
+
+class InpcResponse(ContractModel):
+    """Nivel mensual del INPC general (SIE ``SP1``), para actualizar costos fiscales."""
+
+    seriesId: str = Field(description="Id de la serie en el SIE de Banxico (SP1)")
+    base: str | None = Field(description="Periodo base del índice (= 100)")
+    monthly: dict[str, float] = Field(
+        description='{"AAAA-MM": nivel}, en orden cronológico; un mes sin dato publicado no aparece'
+    )
+    meta: Meta
+
+    @model_validator(mode="after")
+    def _months(self) -> InpcResponse:
+        bad = [k for k in self.monthly if not re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", k)]
+        if bad:
+            raise ValueError(f"rates/mx/inpc: llaves que no son AAAA-MM: {bad[:3]}")
+        return self
 
 
 class RfSeriesResponse(ContractModel):
@@ -1039,5 +1059,6 @@ RESPONSE_MODELS: tuple[type[ContractModel], ...] = (
     FibrasResponse,
     InsidersResponse,
     AssumptionsResponse,
+    InpcResponse,
 )
 """Un modelo por endpoint v2 (además de ErrorBody y Meta)."""

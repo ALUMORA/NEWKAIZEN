@@ -271,5 +271,36 @@
       "nota": "Pesos por unidad de inversion."
     }
   ],
-  "despuesDeVerificar": "2026-09-25: las doce series pasaron la prueba en vivo con el token del dueno (titulo, periodicidad y unidad) y la prueba de datos (ultimo valor dentro de su banda). Ids corregidos ese dia: bonoM10 SF43881 a SF44071, inflationYoY SP74625 a SP30578, coreInflationYoY SP74626 a SP74662."
+  "despuesDeVerificar": "2026-09-25: las doce series pasaron la prueba en vivo con el token del dueno (titulo, periodicidad y unidad) y la prueba de datos (ultimo valor dentro de su banda). Ids corregidos ese dia: bonoM10 SF43881 a SF44071, inflationYoY SP74625 a SP30578, coreInflationYoY SP74626 a SP74662.",
+  "indices": [
+    {
+      "id": "SP1",
+      "indexId": "inpc",
+      "label": "INPC, índice general",
+      "unit": "index",
+      "sieUnit": "index",
+      "unidadExacta": [
+        "Sin Unidad"
+      ],
+      "verified": true,
+      "periodicidad": "Mensual",
+      "maxAgeDays": 75,
+      "base": "segunda quincena de julio de 2018 = 100",
+      "tituloContiene": [
+        "por objeto del gasto",
+        "nacional",
+        "i n d i c e g e n e r a l"
+      ],
+      "tituloExcluye": [
+        "subyacente",
+        "variacion",
+        "mensual",
+        "anual"
+      ],
+      "nota": "Nivel del INPC general (Inegi, publicado por Banxico), base segunda quincena de julio de 2018 = 100. Es la serie con que se actualiza el costo fiscal de una acción (factor = INPC del mes anterior a la venta entre INPC del mes de la compra). Verificada en vivo el 2026-09-25 con el token del dueño: título, periodicidad y unidad pasan el candado, y agosto 2026 contra agosto 2025 da 3.26 %, lo mismo que SP30578 (inflación anual) ese mes. Se publica en /v2/rates/mx/inpc, no en /v2/rates/mx."
+    }
+  ],
+  "indicesVerificadas": [
+    "SP1"
+  ]
 }

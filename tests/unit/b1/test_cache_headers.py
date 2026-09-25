@@ -38,6 +38,7 @@ EXPECTED = {
     ("GET", "/v2/fx/history"): "history",
     ("GET", "/v2/rates/mx"): "macro",
     ("GET", "/v2/rates/rf"): "macro",
+    ("GET", "/v2/rates/mx/inpc"): "macro",
     ("GET", "/v2/macro/us"): "macro",
     ("GET", "/v2/markets/overview"): "quotes",
     ("GET", "/v2/markets/world"): "quotes",

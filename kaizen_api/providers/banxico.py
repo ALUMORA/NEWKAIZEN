@@ -72,7 +72,23 @@ def catalog() -> dict[str, dict[str, Any]]:
 def catalog_notes() -> dict[str, Any]:
     """El resto del archivo del catálogo (cómo verificar, fecha de revisión)."""
     raw = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
-    return {k: v for k, v in raw.items() if k != "series"}
+    return {k: v for k, v in raw.items() if k not in ("series", "indices")}
+
+
+@lru_cache(maxsize=1)
+def index_catalog() -> dict[str, dict[str, Any]]:
+    """Índices del SIE que se publican como serie propia, no en ``/v2/rates/mx`` (hoy el INPC, SP1).
+
+    Viven en la llave ``indices`` del mismo archivo y pasan por el mismo candado (título,
+    periodicidad, unidad y ``verified``), pero no entran en :func:`catalog`, que es la lista de
+    renglones de ``/v2/rates/mx``.
+    """
+    raw = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
+    return {item["id"]: item for item in raw.get("indices") or []}
+
+
+def _entry(series_id: str) -> dict[str, Any]:
+    return catalog().get(series_id) or index_catalog().get(series_id) or {}
 
 
 def series_for(rate_id: str) -> str | None:
@@ -87,6 +103,7 @@ def series_for(rate_id: str) -> str | None:
 def _forget_catalog() -> None:
     catalog.cache_clear()
     catalog_notes.cache_clear()
+    index_catalog.cache_clear()
 
 
 # ─── formatos del SIE ────────────────────────────────────────────────────────
@@ -327,13 +344,12 @@ def classify(cat: dict[str, dict], meta: dict[str, dict]) -> dict[str, list]:
 
 def reviewed(series_id: str) -> bool:
     """¿Una persona ya confirmó este id con la prueba en vivo (``verified: true`` en el catálogo)?"""
-    return bool((catalog().get(series_id) or {}).get("verified"))
+    return bool(_entry(series_id).get("verified"))
 
 
 def _verify_now(series_ids: tuple[str, ...]) -> dict[str, list[str]]:
     meta = fetch_metadata(list(series_ids))
-    cat = catalog()
-    return {sid: mismatches(meta.get(sid), cat.get(sid) or {}) for sid in series_ids}
+    return {sid: mismatches(meta.get(sid), _entry(sid)) for sid in series_ids}
 
 
 def verification(series_ids: list[str] | tuple[str, ...]) -> dict[str, list[str]]:

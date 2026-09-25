@@ -12,14 +12,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 
-from kaizen_api.domain.rates import get_mx_rates, get_rf_series
+from kaizen_api.domain.rates import get_inpc, get_mx_rates, get_rf_series
 from kaizen_api.errors import invalid_param
 from kaizen_api.provenance import meta
 from kaizen_api.routers import ERROR_RESPONSES, IsoDateQuery, cache_control, check_date_range
-from kaizen_api.schemas import MxRatesResponse, RfSeriesResponse
+from kaizen_api.schemas import InpcResponse, MxRatesResponse, RfSeriesResponse
 
 router = APIRouter(prefix="/v2", tags=["tasas y macro"], responses=ERROR_RESPONSES)
-CAPABILITIES: list[str] = ["rates.mx", "rf.series"]
+CAPABILITIES: list[str] = ["rates.mx", "rf.series", "rates.inpc"]
 
 TENORS = (28, 91, 182, 364)
 
@@ -75,4 +75,21 @@ def rates_rf(
             fallback=data["fallback"],
             notes=data["notes"],
         ),
+    )
+
+
+@router.get(
+    "/rates/mx/inpc",
+    response_model=InpcResponse,
+    dependencies=[cache_control("macro")],
+    summary="Serie mensual del INPC general (SIE SP1), {AAAA-MM: nivel}",
+)
+def rates_mx_inpc(start: IsoDateQuery = None, end: IsoDateQuery = None) -> InpcResponse:
+    check_date_range(start, end)
+    data = get_inpc(start, end)
+    return InpcResponse(
+        seriesId=data["seriesId"],
+        base=data["base"],
+        monthly=data["monthly"],
+        meta=meta("banxico", as_of=data["asOf"], stale=data["stale"], notes=data["notes"]),
     )

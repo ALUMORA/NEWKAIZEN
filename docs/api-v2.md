@@ -92,7 +92,7 @@ repite lo que mandó el cliente.
 | quotes | 30 | `/v2/quotes`, `/v2/fx`, `/v2/markets/overview`, `/v2/markets/world`, `/v2/instrument/{symbol}` |
 | history | 3600 | `/v2/history/{symbol}`, `/v2/panel`, `/v2/fx/history`, `/v2/momentum/{symbol}` |
 | fundamentals | 21600 | `/v2/search`, `/v2/events`, `/v2/instrument/{symbol}/statements`, `/v2/instrument/{symbol}/dividends`, `/v2/valuation/{symbol}`, `/v2/insiders/{symbol}`, `/v2/assumptions` |
-| macro | 3600 | `/v2/rates/mx`, `/v2/rates/rf`, `/v2/macro/us` |
+| macro | 3600 | `/v2/rates/mx`, `/v2/rates/mx/inpc`, `/v2/rates/rf`, `/v2/macro/us` |
 | news | 600 | `/v2/news` |
 | screeners | 43200 | `/v2/screeners/factors`, `/v2/screeners/magic`, `/v2/screeners/fibras` |
 
@@ -191,6 +191,17 @@ están en `docs/OWNERSHIP.md`).
   tolere un API desplegado antes de este cambio (ahí, sin `verified`, la serie no se da por
   verificada, y sin `stale` se usa `meta.stale`). Por eso `stale` es `boolean | null` con `null` por
   omisión: la ausencia es "sin dato", nunca "fresca".
+- `GET /v2/rates/mx/inpc?start=&end=` → `InpcResponse` (ruta nueva de la fase 3, pedido F1-3;
+  capacidad `rates.inpc`). Nivel mensual del INPC general, serie `SP1` del SIE (base segunda
+  quincena de julio de 2018 = 100), en `monthly` como `{"AAAA-MM": nivel}` en orden cronológico.
+  `start` por omisión es `2000-01-01` y `end` hoy; el mes se toma del dato que el SIE fecha el día 1.
+  `meta.asOf` es el día 1 del último mes publicado y `meta.stale` se prende si tiene más de 75 días.
+  Va en ruta propia y no como campo de `/v2/rates/mx` porque son cientos de meses que solo pide el
+  cálculo del ISR, y `/v2/rates/mx` lo lee cada pantalla de tasas. Sin respaldo: sin token de
+  Banxico responde `503 NOT_CONFIGURED`, y si el SIE no confirma la serie con el candado del
+  catálogo (título, periodicidad, unidad y `verified`, en la llave `indices` de
+  `kaizen_api/data/banxico_series.json`), `503 UPSTREAM_UNAVAILABLE`. Para actualizar un costo por
+  inflación: factor = INPC del mes anterior a la venta entre INPC del mes de la compra.
 - `GET /v2/rates/rf?start=&end=&tenorDays=28` (`tenorDays`: 28, 91, 182 o 364) →
   `RfSeriesResponse`. Rendimientos anualizados simples act/360 como fracción. El cliente convierte a
   tasa por periodo: `rf_d = (1 + y * 28 / 360)^(d / 28) - 1`. Fuente `banxico`, o `fred_ir3tib`
@@ -1274,6 +1285,17 @@ Supuestos de mercado del API (Damodaran), para que el cliente no copie constante
 | `sourceUrl` | string /^https?:/// | sí | Página de donde se descargó el archivo |
 | `vintage` | string /^\d{4}-\d{2}$/ | sí | Vintage del archivo, AAAA-MM |
 | `asOf` | date | sí | Fecha de actualización de los datos según el autor |
+| `meta` | Meta | sí |  |
+
+#### InpcResponse
+
+Nivel mensual del INPC general (SIE ``SP1``), para actualizar costos fiscales.
+
+| Campo | Tipo | Requerido | Notas |
+| --- | --- | --- | --- |
+| `seriesId` | string | sí | Id de la serie en el SIE de Banxico (SP1) |
+| `base` | string \| null | sí | Periodo base del índice (= 100) |
+| `monthly` | {string: number} | sí | {"AAAA-MM": nivel}, en orden cronológico; un mes sin dato publicado no aparece |
 | `meta` | Meta | sí |  |
 
 <!-- END REFERENCIA GENERADA -->

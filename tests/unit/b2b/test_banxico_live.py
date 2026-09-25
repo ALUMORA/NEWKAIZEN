@@ -107,3 +107,12 @@ def test_rates_mx_en_vivo_publica_todo_el_catalogo(token):
     assert set(publicados) == set(rates_domain.RATE_ORDER), cuerpo["notes"]
     assert all(item["source"] == "banxico" and item["verified"] for item in publicados.values())
     assert cuerpo["fallback"] is False
+
+
+def test_los_indices_del_catalogo_pasan_el_candado_en_vivo(token):
+    """El INPC (``SP1``) de ``/v2/rates/mx/inpc`` pasa por el mismo candado que las tasas."""
+    indices = banxico.index_catalog()
+    resultado = banxico.classify(indices, banxico.fetch_metadata(list(indices)))
+    assert resultado["distintos"] == [] and resultado["desconocidos"] == [], resultado
+    data = rates_domain.get_inpc("2025-08-01", "2026-09-25")
+    assert data["seriesId"] == "SP1" and 100 < data["monthly"]["2025-08"] < 200
