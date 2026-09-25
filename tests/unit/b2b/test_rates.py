@@ -28,7 +28,8 @@ SIE_DATOS_RE = re.compile(r"https://www\.banxico\.org\.mx/SieAPIRest/service/v1/
 TITULOS = {
     "SF43718": "Tipo de cambio FIX, pesos por dólar",
     "SF61745": "Tasa objetivo de política monetaria",
-    "SF43936": "Cetes a 28 días, tasa de rendimiento",
+    # El título real del SIE (25 sep 2026): la subasta semanal, con "subasta" en el título.
+    "SF43936": "Valores gubernamentales Resultados de la subasta semanal Tasa de rendimiento Cetes a 28 días",
 }
 """Solo tres series se dan por buenas en la simulación: las demás no las confirma el SIE."""
 
@@ -60,6 +61,12 @@ def _datos() -> dict:
 def cetes28_revisada(clean_state, monkeypatch):
     """Simula que el dueño ya corrió la prueba en vivo y dejó ``verified: true`` en CETES 28."""
     monkeypatch.setitem(banxico.catalog()["SF43936"], "verified", True)
+
+
+@pytest.fixture
+def cetes28_sin_revision(clean_state, monkeypatch):
+    """Simula una serie del catálogo que todavía nadie confirmó con la prueba en vivo."""
+    monkeypatch.setitem(banxico.catalog()["SF43936"], "verified", False)
 
 
 @pytest.fixture
@@ -264,11 +271,11 @@ def test_las_dos_rutas_comparten_una_sola_consulta_de_metadatos(cetes28_revisada
 # ─── con token: el flag de revisión humana y el candado completo ─────────────
 
 
-def test_con_token_una_serie_sin_revision_humana_no_se_publica(cliente_con_token):
+def test_con_token_una_serie_sin_revision_humana_no_se_publica(cetes28_sin_revision, cliente_con_token):
     """El spec pide verificar cada id del SIE en una prueba antes de usarlo.
 
-    CETES 28 viene ``verified: false`` en el catálogo. Aunque el SIE la confirme en caliente, no se
-    publica como dato en vivo hasta que alguien corra la prueba con token y cambie el flag.
+    Con CETES 28 en ``verified: false``, aunque el SIE la confirme en caliente, no se publica como
+    dato en vivo hasta que alguien corra la prueba con token y cambie el flag.
     """
     http, _mock = cliente_con_token
     mx = MxRatesResponse.model_validate(http.get("/v2/rates/mx").json())
