@@ -19,11 +19,15 @@ export const SEARCH_DEBOUNCE_MS = 200
 
 /**
  * Id de opción para una emisora: "WALMEX.MX" → "sym-WALMEX_MX". Es el mismo que usa la paleta,
- * así que una emisora conserva su id aunque cambie de grupo.
+ * así que una emisora conserva su id aunque cambie de grupo. Es inyectivo: el punto va como "_" y
+ * cualquier otro signo como "_x" más su código en hexadecimal en minúsculas, que ninguna clave en
+ * mayúsculas produce. Antes todo signo iba a "_", y BRK.B y BRK-B daban el mismo id (ids repetidos
+ * en el DOM y aria-activedescendant ambiguo).
  * @param {string} symbol
  */
 export function symbolOptionId(symbol) {
-  return `sym-${String(symbol ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '_')}`
+  const key = String(symbol ?? '').toUpperCase()
+  return `sym-${key.replace(/[^A-Z0-9]/g, (c) => (c === '.' ? '_' : `_x${c.charCodeAt(0).toString(16)}`))}`
 }
 
 /**
@@ -80,13 +84,16 @@ export function moveActive(index, key, total) {
 /**
  * Texto de estado (región aria-live): qué pasa con la búsqueda, sin esconder un error ni que el
  * servidor no la ofrece.
- * @param {{ q: string, searching: boolean, error: boolean, available: boolean, total: number }} input
+ * Mientras el servidor arranca (`connecting`), la búsqueda todavía no se lanza pero va a lanzarse:
+ * se dice eso y no que no está disponible.
+ * @param {{ q: string, searching: boolean, error: boolean, available: boolean, total: number, connecting?: boolean }} input
  * @returns {string}
  */
-export function comboboxStatus({ q, searching, error, available, total }) {
+export function comboboxStatus({ q, searching, error, available, total, connecting = false }) {
   const text = String(q ?? '').trim()
   if (searching) return 'Buscando emisoras…'
   if (text && error && total === 0) return 'No se pudo buscar ahora. Intenta de nuevo en un momento.'
+  if (text && !available && connecting && total === 0) return 'Conectando con el servidor…'
   if (text && !available && total === 0) return 'La búsqueda de emisoras no está disponible por ahora.'
   if (total === 0) return 'Sin resultados'
   return `${total} ${total === 1 ? 'resultado' : 'resultados'}`

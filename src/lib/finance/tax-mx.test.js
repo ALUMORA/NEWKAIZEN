@@ -281,6 +281,8 @@ describe('la pérdida arrastrada caduca a los diez ejercicios', () => {
 
 describe('interestWithholding: retención provisional de ISR sobre intereses', () => {
   it('la tasa de 2026 es 0.90 % y trae su fuente', () => {
+    // LIF 2026, art. 24 (el 21 era el de la LIF 2025).
+    expect(INTEREST_WITHHOLDING_SOURCE).toContain('art. 24')
     expect(INTEREST_WITHHOLDING_RATE).toBe(0.009)
     expect(INTEREST_WITHHOLDING_SOURCE).toContain('Ley de Ingresos de la Federación 2026')
     expect(INTEREST_WITHHOLDING_SOURCE).toContain('0.90 %')
@@ -318,5 +320,13 @@ describe('interestWithholding: retención provisional de ISR sobre intereses', (
     expect(interestWithholding(100000, -28)).toBeNull()
     // un texto no es capital, aunque parezca número
     expect(interestWithholding('100000', 28)).toBeNull()
+  })
+})
+
+describe('tasas en fracción', () => {
+  it('una tasa en porcentaje no multiplica el resultado por 100: se usa la de ley', () => {
+    expect(interestWithholding(100000, 28, { rate: 90 })).toBeCloseTo((100000 * 0.009 * 28) / 365, 9)
+    expect(isrOnGains({ sales: [{ proceeds: 120, cost: 100 }], rate: 10 })?.tax).toBeCloseTo(2, 12)
+    expect(dividendWithholding(1000, { rate: 10 })?.withholding).toBeCloseTo(100, 12)
   })
 })
