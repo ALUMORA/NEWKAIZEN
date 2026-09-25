@@ -65,7 +65,7 @@ def factors(
 ) -> FactorsResponse:
     if universe == "custom":
         if not symbols:
-            raise invalid_param("query.symbols", "missing", "Con universe=custom indica los símbolos.")
+            raise invalid_param("query.symbols", "missing", "Para una lista propia indica las claves de las emisoras.")
         chosen = custom_universe(parse_symbols(symbols, limit=MAX_CUSTOM_UNIVERSE))
     elif symbols:
         raise invalid_param("query.symbols", "extra_forbidden", "symbols solo aplica con universe=custom.")
@@ -80,7 +80,7 @@ def factors(
                 raise ApiError(
                     404,
                     "NOT_FOUND",
-                    "No encontramos datos de " + ", ".join(unknown) + ". Revisa los símbolos.",
+                    "No encontramos datos de " + ", ".join(unknown) + ". Revisa las claves.",
                 )
         raise _upstream_down("las emisoras del universo")
     return {

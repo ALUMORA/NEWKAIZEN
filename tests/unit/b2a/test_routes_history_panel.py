@@ -68,11 +68,11 @@ def test_panel_deja_fuera_lo_que_falla_y_dice_por_que(client, monkeypatch) -> No
     def _fake(symbol, *args, **kwargs):
         if symbol == "A":
             return buena
-        raise ApiError(404, "NOT_FOUND", f"No encontramos histórico de {symbol}. Revisa el símbolo.")
+        raise ApiError(404, "NOT_FOUND", f"No encontramos histórico de {symbol}. Revisa la clave.")
 
     monkeypatch.setattr(history_domain, "get_series", _fake)
     body = client.get("/v2/panel?symbols=A,ZZZNOTREAL&range=1y&interval=1d&ccy=MXN").json()
-    assert body["dropped"] == [{"symbol": "ZZZNOTREAL", "reason": "No encontramos histórico de ZZZNOTREAL. Revisa el símbolo."}]
+    assert body["dropped"] == [{"symbol": "ZZZNOTREAL", "reason": "No encontramos histórico de ZZZNOTREAL. Revisa la clave."}]
     assert list(body["prices"]) == ["A"]
     assert body["dates"] == [D1, D2]
 

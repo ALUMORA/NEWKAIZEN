@@ -329,7 +329,7 @@ def get_insiders_v2(symbol: str) -> dict:
                 "10b5-1 y por eso ese campo va vacío."
             )
         else:
-            notes.append("No hay operaciones de consejeros publicadas para este símbolo.")
+            notes.append("No hay operaciones de consejeros publicadas para esta emisora.")
     items.sort(key=lambda row: (row["date"] or "", row["insider"]), reverse=True)
     # El resumen se cuenta ANTES de recortar la tabla: la nota promete lo de los expedientes leídos.
     summary = {

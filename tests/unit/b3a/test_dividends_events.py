@@ -73,7 +73,7 @@ def test_without_history_nothing_is_invented(replay_b3a, monkeypatch):
     assert data["history"] == []
     assert data["ttm"] is None
     assert data["yield"] is None
-    assert data["notes"] == ["Yahoo no publica historia de dividendos para este símbolo."]
+    assert data["notes"] == ["Yahoo no publica historia de dividendos para esta emisora."]
 
 
 def test_a_company_that_stopped_paying_shows_zero_not_null(replay_b3a, monkeypatch):

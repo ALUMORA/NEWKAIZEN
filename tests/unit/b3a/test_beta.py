@@ -185,7 +185,7 @@ def test_while_the_history_seam_is_missing_the_beta_is_none_not_wrong(monkeypatc
     monkeypatch.setattr(history, "get_series", _sin_costura)
     notes: list[str] = []
     assert mod.compute_beta("WALMEX.MX", "MXN", notes) is None
-    assert notes == ["La serie de precios v2 todavía no está disponible, así que la beta no se calculó."]
+    assert notes == ["La serie de precios todavía no está disponible, así que la beta no se calculó."]
 
 
 def test_yahoo_beta_is_only_a_fallback_for_dollars_and_says_what_it_is():

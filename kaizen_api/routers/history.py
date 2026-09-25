@@ -110,7 +110,7 @@ def panel(
         raise ApiError(
             404,
             "NOT_FOUND",
-            "Ningún símbolo de la lista tiene histórico para alinear.",
+            "Ninguna emisora de la lista tiene histórico para alinear.",
             details={"dropped": dropped},
         )
 
@@ -119,7 +119,7 @@ def panel(
         raise ApiError(
             400,
             "BAD_REQUEST",
-            "Los símbolos cotizan en monedas distintas (" + ", ".join(sorted(mixed)) + "). "
+            "Las emisoras cotizan en monedas distintas (" + ", ".join(sorted(mixed)) + "). "
             "Pide ccy=MXN o ccy=USD para poder compararlos.",
         )
     currency = mixed.pop()

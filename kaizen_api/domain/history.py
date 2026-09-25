@@ -201,7 +201,7 @@ def get_series(symbol: str, range: str = "1y", interval: str = "1d", ccy: str = 
 
     dates, closes = prices.fetch_series(sym, range, interval)
     if not dates:
-        raise ApiError(404, "NOT_FOUND", f"No encontramos histórico de {sym}. Revisa el símbolo.")
+        raise ApiError(404, "NOT_FOUND", f"No encontramos histórico de {sym}. Revisa la clave.")
 
     currency, inferred = native_currency(sym)
     notes: list[str] = []
@@ -222,7 +222,7 @@ def get_series(symbol: str, range: str = "1y", interval: str = "1d", ccy: str = 
     if interval == "1d":
         dates, closes, notes = _only_trading_sessions(sym, dates, closes, notes)
         if not dates:
-            raise ApiError(404, "NOT_FOUND", f"No encontramos histórico de {sym}. Revisa el símbolo.")
+            raise ApiError(404, "NOT_FOUND", f"No encontramos histórico de {sym}. Revisa la clave.")
 
     target = currency if ccy == "native" else ccy
     if target == currency:

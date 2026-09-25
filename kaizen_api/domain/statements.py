@@ -445,7 +445,7 @@ def get_statements(symbol: str, freq: str = "annual", financial_currency: str | 
         note = (
             "No se pudo consultar a la SEC y Yahoo no trae estados de este símbolo. Intenta más tarde."
             if sec_down
-            else "No hay estados financieros publicados para este símbolo."
+            else "No hay estados financieros publicados para esta emisora."
         )
         payload = {
             "currency": iso,

@@ -28,7 +28,7 @@ logger = logging.getLogger("kaizen_api")
 
 MESSAGES: dict[str, str] = {
     "VALIDATION_ERROR": "Algún dato de la solicitud no es válido.",
-    "INVALID_SYMBOL": "El símbolo no es válido. Usa letras, números y . - ^ = $ (hasta 20).",
+    "INVALID_SYMBOL": "La clave no es válida. Usa letras, números y . - ^ = $ (hasta 20).",
     "BAD_REQUEST": "La solicitud no es válida.",
     "UNAUTHORIZED": "Necesitas iniciar sesión para ver esto.",
     "FORBIDDEN": "No tienes permiso para ver esto.",

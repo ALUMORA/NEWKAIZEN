@@ -430,7 +430,7 @@ plainTest('portafolio: rendimiento con el panel caído avisa y deja el ISR', asy
       status: 404,
       headers: { 'access-control-allow-origin': request.headers().origin ?? '*', vary: 'Origin' },
       contentType: 'application/json',
-      body: JSON.stringify({ error: { code: 'NOT_FOUND', message: 'Ningún símbolo de la lista tiene histórico para alinear.' } }),
+      body: JSON.stringify({ error: { code: 'NOT_FOUND', message: 'Ninguna emisora de la lista tiene histórico para alinear.' } }),
     }),
   )
   await page.goto('/portafolio/rendimiento')
