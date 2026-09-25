@@ -277,6 +277,54 @@ def country_risk(country: str | None, currency: str | None = None, symbol: str =
     )
 
 
+COUNTRY_IDS = {"MX": "Mexico", "US": "United States"}
+"""Clave ISO de cada país del archivo de Damodaran que publica ``GET /v2/assumptions``."""
+
+ASSUMPTIONS_STALE_DAYS = 400
+"""Damodaran actualiza cada enero; pasados 400 días del ``dataUpdated`` ya salió un vintage nuevo."""
+
+
+def assumptions(today: _dt.date | None = None) -> dict:
+    """``GET /v2/assumptions``: prima de mercado y riesgo país del archivo, sin salir a la red.
+
+    ``erp`` es la que usa ``/v2/valuation`` cuando no se pasa ``?erp=`` (``CountryRisk.mature_erp``),
+    así que el optimizador y la valuación no pueden separarse cuando cambie el vintage.
+    """
+    data = dataset()
+    countries = data["countries"]
+    mature = float(data["matureMarketErp"])
+    as_of = dataset_as_of()
+    if today is None:
+        from kaizen_api.provenance import utc_now
+
+        today = utc_now().date()
+    day = today
+    stale = (day - _dt.date.fromisoformat(as_of)).days > ASSUMPTIONS_STALE_DAYS
+    vintage = str(data.get("vintage") or as_of[:7])
+    year, month = vintage.split("-")
+    months = ("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre",
+              "octubre", "noviembre", "diciembre")
+    notes = [
+        "erp y matureMarketErp son la prima de mercado maduro de Damodaran: la prima implícita de "
+        "Estados Unidos menos su prima país. Es la que usa la valuación cuando no se indica otra.",
+        "crp es la prima de riesgo país de cada país. La valuación la suma a la prima de mercado con "
+        "lambda 1; quien use una tasa libre de riesgo local que ya trae el riesgo soberano no la suma.",
+    ]
+    if stale:
+        notes.append(f"El archivo es de {as_of}: ya debería haber un vintage más nuevo de Damodaran.")
+    return {
+        "erp": mature,
+        "matureMarketErp": mature,
+        "crp": {cid: float(countries[name]["crp"]) for cid, name in COUNTRY_IDS.items() if name in countries},
+        "source": f"Aswath Damodaran, NYU Stern, vintage {months[int(month) - 1]} {year}",
+        "sourceUrl": str(data["homepage"]),
+        "vintage": vintage,
+        "asOf": as_of,
+        "stale": stale,
+        "notes": notes,
+    }
+
+
 @dataclass(frozen=True)
 class RiskFree:
     """Tasa libre de riesgo de una moneda, con su procedencia."""

@@ -91,7 +91,7 @@ repite lo que mandó el cliente.
 | --- | --- | --- |
 | quotes | 30 | `/v2/quotes`, `/v2/fx`, `/v2/markets/overview`, `/v2/markets/world`, `/v2/instrument/{symbol}` |
 | history | 3600 | `/v2/history/{symbol}`, `/v2/panel`, `/v2/fx/history`, `/v2/momentum/{symbol}` |
-| fundamentals | 21600 | `/v2/search`, `/v2/events`, `/v2/instrument/{symbol}/statements`, `/v2/instrument/{symbol}/dividends`, `/v2/valuation/{symbol}`, `/v2/insiders/{symbol}` |
+| fundamentals | 21600 | `/v2/search`, `/v2/events`, `/v2/instrument/{symbol}/statements`, `/v2/instrument/{symbol}/dividends`, `/v2/valuation/{symbol}`, `/v2/insiders/{symbol}`, `/v2/assumptions` |
 | macro | 3600 | `/v2/rates/mx`, `/v2/rates/rf`, `/v2/macro/us` |
 | news | 600 | `/v2/news` |
 | screeners | 43200 | `/v2/screeners/factors`, `/v2/screeners/magic`, `/v2/screeners/fibras` |
@@ -240,6 +240,15 @@ están en `docs/OWNERSHIP.md`).
   `current` en `multiples.methods`, en "Referencias del sector", más abajo.
 - `GET /v2/momentum/{symbol}` → `MomentumResponse`. `r12m1` es el rendimiento de 12 meses sin el
   último mes; `relative12m1` contra `benchmark`.
+- `GET /v2/assumptions` → `AssumptionsResponse` (ruta nueva de la fase 3, pedido F4; capacidad
+  `assumptions`; exige sesión como las demás rutas v2). Supuestos de mercado del archivo de
+  Damodaran (`kaizen_api/data/damodaran_2026.json`), sin salir a la red: `erp` es la prima de
+  riesgo de mercado que usa `/v2/valuation` cuando no se pasa `?erp=` (hoy la de mercado maduro,
+  4.23 % en el vintage de enero de 2026), `matureMarketErp` la misma cifra con su nombre, `crp` la
+  prima de riesgo país por país (`MX`, `US`), `source` y `sourceUrl` quién la publica y dónde,
+  `vintage` (`AAAA-MM`) y `asOf` la fecha de actualización del autor. `meta.stale` se prende si el
+  archivo tiene más de 400 días (ya habría un vintage nuevo). Si cambia el vintage, el optimizador y
+  la valuación leen la misma cifra.
 
 ### Screeners (B3c: `routers/screeners.py`)
 
@@ -1251,5 +1260,20 @@ La tasa de referencia del diferencial, con su procedencia (``cetes28`` es solo e
 | --- | --- | --- | --- |
 | `openMarketBuys` | integer | sí | mín 0 |
 | `openMarketSells` | integer | sí | mín 0 |
+
+#### AssumptionsResponse
+
+Supuestos de mercado del API (Damodaran), para que el cliente no copie constantes.
+
+| Campo | Tipo | Requerido | Notas |
+| --- | --- | --- | --- |
+| `erp` | number | sí | Prima de riesgo de mercado por omisión del CAPM del API: la misma que usa /v2/valuation sin ?erp=. Hoy es la de mercado maduro |
+| `matureMarketErp` | number | sí | Prima de mercado maduro de Damodaran: la implícita de EE. UU. menos su prima país |
+| `crp` | {"MX" \| "US": fraction} | sí | Prima de riesgo país por país del archivo (MX, US). /v2/valuation la suma a erp con lambda 1 |
+| `source` | string | sí | Quién publica los datos y de qué vintage, en texto para la UI |
+| `sourceUrl` | string /^https?:/// | sí | Página de donde se descargó el archivo |
+| `vintage` | string /^\d{4}-\d{2}$/ | sí | Vintage del archivo, AAAA-MM |
+| `asOf` | date | sí | Fecha de actualización de los datos según el autor |
+| `meta` | Meta | sí |  |
 
 <!-- END REFERENCIA GENERADA -->

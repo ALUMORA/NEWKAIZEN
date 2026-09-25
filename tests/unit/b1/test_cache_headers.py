@@ -48,6 +48,7 @@ EXPECTED = {
     ("GET", "/v2/instrument/{symbol}/statements"): "fundamentals",
     ("GET", "/v2/instrument/{symbol}/dividends"): "fundamentals",
     ("GET", "/v2/insiders/{symbol}"): "fundamentals",
+    ("GET", "/v2/assumptions"): "fundamentals",
     ("GET", "/v2/valuation/{symbol}"): "fundamentals",
     ("GET", "/v2/momentum/{symbol}"): "history",
     ("GET", "/v2/screeners/factors"): "screeners",

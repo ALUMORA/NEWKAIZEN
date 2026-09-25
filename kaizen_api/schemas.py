@@ -117,6 +117,7 @@ KNOWN_CAPABILITIES = (
     "screeners.magic",
     "screeners.fibras",
     "insiders",
+    "assumptions",
 )
 """Valores posibles de ``/health.capabilities``. Solo se anuncia lo que ya funciona."""
 
@@ -807,6 +808,31 @@ class ValuationResponse(ContractModel):
     meta: Meta
 
 
+CountryId = Literal["MX", "US"]
+
+
+class AssumptionsResponse(ContractModel):
+    """Supuestos de mercado del API (Damodaran), para que el cliente no copie constantes."""
+
+    erp: Fraction = Field(
+        description=(
+            "Prima de riesgo de mercado por omisión del CAPM del API: la misma que usa /v2/valuation sin"
+            " ?erp=. Hoy es la de mercado maduro"
+        )
+    )
+    matureMarketErp: Fraction = Field(
+        description="Prima de mercado maduro de Damodaran: la implícita de EE. UU. menos su prima país"
+    )
+    crp: dict[CountryId, Fraction] = Field(
+        description="Prima de riesgo país por país del archivo (MX, US). /v2/valuation la suma a erp con lambda 1"
+    )
+    source: str = Field(description="Quién publica los datos y de qué vintage, en texto para la UI")
+    sourceUrl: str = Field(pattern=r"^https?://", description="Página de donde se descargó el archivo")
+    vintage: str = Field(pattern=r"^\d{4}-\d{2}$", description="Vintage del archivo, AAAA-MM")
+    asOf: IsoDate = Field(description="Fecha de actualización de los datos según el autor")
+    meta: Meta
+
+
 class MomentumResponse(ContractModel):
     """Rendimientos como fracción; r12m1 = 12 meses excluyendo el último."""
 
@@ -1012,5 +1038,6 @@ RESPONSE_MODELS: tuple[type[ContractModel], ...] = (
     MagicResponse,
     FibrasResponse,
     InsidersResponse,
+    AssumptionsResponse,
 )
 """Un modelo por endpoint v2 (además de ErrorBody y Meta)."""

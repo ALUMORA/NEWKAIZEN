@@ -261,7 +261,8 @@ def test_el_router_no_deja_ninguna_ruta_marcada_como_stub():
 
     assert not is_stub(valuation.valuation)
     assert not is_stub(valuation.momentum)
-    assert valuation.CAPABILITIES == ["valuation.multiples", "valuation.dcf", "momentum"]
+    assert not is_stub(valuation.assumptions)
+    assert valuation.CAPABILITIES == ["valuation.multiples", "valuation.dcf", "momentum", "assumptions"]
 
 
 def test_la_nota_del_dcf_dice_de_donde_salio_el_crecimiento(client):

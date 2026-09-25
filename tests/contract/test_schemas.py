@@ -110,6 +110,7 @@ SPEC = [
         ("screeners.fibras",),
     ),
     ("GET", "/v2/insiders/{symbol}", schemas.InsidersResponse, "/v2/insiders/AAPL", ("insiders",)),
+    ("GET", "/v2/assumptions", schemas.AssumptionsResponse, "/v2/assumptions", ("assumptions",)),
 ]
 STUBS = [row for row in SPEC if row[3]]
 
