@@ -50,7 +50,10 @@ export function latestAsOf(items) {
 /**
  * Estado de una bolsa para su insignia: abierta con "Retraso ~15 min", cerrada con
  * "Cierre vie 18 sep". `detail` es el texto del API tal cual (cuándo abre o cierra).
- * @param {{ open: boolean, label: string } | null | undefined} status
+ * La fecha del cierre es `status.lastClose` (fase 3: AAAA-MM-DD en la zona de la bolsa, sale del
+ * calendario y llega aunque el grupo venga vacío); si el API es anterior y no la trae, se usa
+ * `lastAsOf`, el dato más nuevo del grupo.
+ * @param {{ open: boolean, label: string, lastClose?: string | null } | null | undefined} status
  * @param {{ lastAsOf?: string | null, delayMinutes?: number | null, tz?: string }} [ctx]
  */
 export function exchangeTiming(status, { lastAsOf = null, delayMinutes = null, tz } = {}) {
@@ -59,7 +62,8 @@ export function exchangeTiming(status, { lastAsOf = null, delayMinutes = null, t
     const timing = typeof delayMinutes === 'number' && delayMinutes > 0 ? `Retraso ~${fmtInt(delayMinutes)} min` : 'Retraso s/d'
     return { known: true, open: true, state: 'Abierta', timing, detail: status.label ?? '' }
   }
-  const day = lastAsOf ? fmtSessionDay(lastAsOf, tz) : MISSING
+  const closed = status.lastClose || lastAsOf
+  const day = closed ? fmtSessionDay(closed, tz) : MISSING
   return { known: true, open: false, state: 'Cerrada', timing: day === MISSING ? 'Cierre s/d' : `Cierre ${day}`, detail: status.label ?? '' }
 }
 

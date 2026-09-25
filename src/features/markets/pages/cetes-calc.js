@@ -14,6 +14,25 @@ export function tenorOf(item) {
 }
 
 /**
+ * Renglones de CETES de /v2/rates/mx, del plazo más corto al más largo. Desde la fase 3 cada
+ * renglón trae `tenorDays` (28, 91, 182 o 364 en los CETES, null en lo demás) y con eso basta. Un
+ * API anterior no trae el campo: entonces se reconoce por el texto ("cetes" en id o etiqueta) y el
+ * plazo sale de tenorOf.
+ * @param {any[] | undefined} items
+ */
+export function cetesRows(items) {
+  return (items ?? [])
+    .flatMap((it) => {
+      if (it?.unit !== 'fraction') return []
+      if (it.tenorDays !== undefined) return it.tenorDays != null ? [it] : []
+      if (!/cetes/i.test(`${it.id} ${it.label}`)) return []
+      const tenorDays = tenorOf(it)
+      return tenorDays != null ? [{ ...it, tenorDays }] : []
+    })
+    .sort((a, b) => a.tenorDays - b.tenorDays)
+}
+
+/**
  * @param {{ amount: number | null, tenorDays: number, annualYield: number | null, retentionRate: number | null }} input
  *   annualYield y retentionRate como fracción
  */

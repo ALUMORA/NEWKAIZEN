@@ -6,7 +6,7 @@ import { ratesMxQuery } from '../../../lib/api/queries.js'
 import { cetesEffectiveAnnual } from '../../../lib/finance/index.js'
 import { fmtMoney, fmtPct } from '../../../lib/format.js'
 import { ApiNotes } from './ApiNotes.jsx'
-import { ISR_RETENTION_2026, cetesResult, tenorOf } from './cetes-calc.js'
+import { ISR_RETENTION_2026, cetesResult, cetesRows } from './cetes-calc.js'
 import { itemStatus } from './shared.js'
 import '../markets.css'
 
@@ -14,15 +14,7 @@ const DEFAULT_TENORS = [28, 91, 182, 364]
 
 function useCetesRows() {
   const q = useQuery(ratesMxQuery())
-  const rows = useMemo(
-    () =>
-      (q.data?.items ?? [])
-        .filter((it) => /cetes/i.test(`${it.id} ${it.label}`) && it.unit === 'fraction')
-        .map((it) => ({ ...it, tenorDays: it.tenorDays ?? tenorOf(it) }))
-        .filter((it) => it.tenorDays != null)
-        .sort((a, b) => a.tenorDays - b.tenorDays),
-    [q.data],
-  )
+  const rows = useMemo(() => cetesRows(q.data?.items), [q.data])
   return { q, rows }
 }
 
