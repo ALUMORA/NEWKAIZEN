@@ -74,7 +74,7 @@ repite lo que mandó el cliente.
 | --- | --- | --- |
 | `VALIDATION_ERROR` | 422 | Parámetro o cuerpo inválido (rango, fecha inexistente, lista vacía o de más de 50). `details.fields` lista `{field, type}`. |
 | `INVALID_SYMBOL` | 400 | Un símbolo no cumple el patrón. `details.fields` como en `VALIDATION_ERROR`. |
-| `BAD_REQUEST` | 400 | Otra solicitud mal formada. |
+| `BAD_REQUEST` | 400 o 413 | Otra solicitud mal formada. 413 si el cuerpo pasa de 16 KB (`MAX_BODY_BYTES`), lo declare o no `Content-Length`. |
 | `UNAUTHORIZED` | 401 | Falta el token, expiró o es inválido; credenciales incorrectas en el login. |
 | `FORBIDDEN` | 403 | Reservado. |
 | `NOT_FOUND` | 404 | Ruta inexistente o símbolo sin datos. |
