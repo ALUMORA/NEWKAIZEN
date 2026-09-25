@@ -156,7 +156,7 @@ def status(exchange: str, now: _dt.datetime | None = None) -> ExchangeStatus:
     missing = sorted({moment.year, horizon} - years)
     if missing:
         notes.append(
-            f"El calendario de {calendar['label']} cubre {min(years)} y {max(years)}; "
+            f"El calendario de {calendar['label']} cubre de {min(years)} a {max(years)}; "
             f"para {', '.join(str(y) for y in missing)} se asume el horario normal sin días inhábiles."
         )
 

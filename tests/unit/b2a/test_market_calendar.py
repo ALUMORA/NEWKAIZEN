@@ -36,7 +36,7 @@ def easter(year: int) -> _dt.date:
 def test_el_archivo_de_cada_bolsa_es_coherente(exchange: str) -> None:
     calendar = cal.load_calendar(exchange)
     years = set(calendar["years"])
-    assert years == {2026, 2027}
+    assert years == {2025, 2026, 2027}
     assert calendar["tradingDays"] == [1, 2, 3, 4, 5]
     for iso in calendar["holidays"]:
         day = _dt.date.fromisoformat(iso)
@@ -55,7 +55,8 @@ def test_la_nyse_nunca_pone_un_feriado_en_fin_de_semana() -> None:
 
 @pytest.mark.parametrize(
     "exchange,year,offset",
-    [("nyse", 2026, 2), ("nyse", 2027, 2), ("bmv", 2026, 2), ("bmv", 2027, 2), ("bmv", 2026, 3), ("bmv", 2027, 3)],
+    [("nyse", 2025, 2), ("nyse", 2026, 2), ("nyse", 2027, 2), ("bmv", 2025, 2), ("bmv", 2026, 2), ("bmv", 2027, 2),
+     ("bmv", 2025, 3), ("bmv", 2026, 3), ("bmv", 2027, 3)],
 )
 def test_viernes_y_jueves_santo_caen_donde_dice_la_pascua(exchange: str, year: int, offset: int) -> None:
     """La NYSE cierra el Viernes Santo y la BMV además el Jueves Santo: se derivan de la Pascua."""
@@ -108,6 +109,59 @@ def test_el_horario_de_verano_mueve_la_apertura_de_nueva_york_en_utc() -> None:
     verano = cal.status("nyse", _dt.datetime(2026, 9, 22, 8, 0, tzinfo=NY))
     assert invierno.next_open == "2027-01-04T14:30:00Z"
     assert verano.next_open == "2026-09-22T13:30:00Z"
+
+
+# ─── 2025, desde la fuente oficial ───────────────────────────────────────────
+
+
+@pytest.mark.parametrize("exchange", cal.EXCHANGES)
+def test_cada_anio_del_archivo_cita_su_fuente(exchange: str) -> None:
+    calendar = cal.load_calendar(exchange)
+    fuentes = calendar["fuentes"]
+    for year in calendar["years"]:
+        assert str(year) in fuentes, f"{exchange} {year} no dice de dónde salió"
+        assert "https://" in fuentes[str(year)]
+
+
+def test_la_nyse_cerro_el_9_de_enero_de_2025_por_el_duelo_nacional_por_carter() -> None:
+    state = cal.status("nyse", _dt.datetime(2025, 1, 9, 11, 0, tzinfo=NY))
+    assert state.open is False
+    assert state.label.startswith("Cerrado por Duelo nacional")
+    assert state.next_open == "2025-01-10T14:30:00Z"
+    assert state.notes == []
+    # Y la frescura no espera la barra del 9: la última jornada cerrada antes del 10 es la del 8.
+    assert cal.last_completed_session("nyse", _dt.datetime(2025, 1, 10, 8, 0, tzinfo=NY)) == _dt.date(2025, 1, 8)
+
+
+def test_la_nyse_cerro_el_4_de_julio_de_2025_y_recorto_el_3() -> None:
+    assert cal.status("nyse", _dt.datetime(2025, 7, 4, 11, 0, tzinfo=NY)).open is False
+    tres = cal.status("nyse", _dt.datetime(2025, 7, 3, 12, 0, tzinfo=NY))
+    assert tres.open is True
+    assert tres.next_close == "2025-07-03T17:00:00Z", "13:00 de Nueva York en horario de verano"
+    assert cal.status("nyse", _dt.datetime(2025, 12, 24, 13, 30, tzinfo=NY)).open is False
+
+
+@pytest.mark.parametrize(
+    "iso,nombre",
+    [("2025-02-03", "Constitución"), ("2025-03-17", "Juárez"), ("2025-04-17", "Jueves Santo"),
+     ("2025-11-17", "Revolución"), ("2025-12-12", "Guadalupe")],
+)
+def test_la_bmv_cerro_los_dias_inhabiles_de_2025(iso: str, nombre: str) -> None:
+    day = _dt.date.fromisoformat(iso)
+    state = cal.status("bmv", _dt.datetime(day.year, day.month, day.day, 10, 0, tzinfo=CDMX))
+    assert state.open is False
+    assert nombre in state.label, state.label
+
+
+def test_la_bmv_abrio_el_lunes_3_de_noviembre_de_2025() -> None:
+    """El 2 de noviembre de 2025 cayó domingo: el DOF lo lista, pero no mueve el lunes."""
+    state = cal.status("bmv", _dt.datetime(2025, 11, 3, 10, 0, tzinfo=CDMX))
+    assert state.open is True
+
+
+def test_el_aviso_de_cobertura_nombra_el_rango_completo() -> None:
+    state = cal.status("nyse", _dt.datetime(2029, 3, 6, 10, 0, tzinfo=NY))
+    assert any("de 2025 a 2027" in note for note in state.notes), state.notes
 
 
 def test_fuera_de_los_anios_del_archivo_se_avisa_en_vez_de_adivinar() -> None:

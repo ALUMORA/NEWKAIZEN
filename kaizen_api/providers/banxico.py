@@ -3,11 +3,12 @@
 Sin ``BANXICO_TOKEN`` toda consulta levanta ``ApiError`` 503 ``NOT_CONFIGURED`` y quien llama decide
 su respaldo (``domain/rates.py`` cae a FRED y lo marca como ``fallback``). Nunca se inventa un valor.
 
-**Series verificadas.** Solo ``SF43718`` (FIX) y ``SF61745`` (tasa objetivo) vienen marcadas como
-verificadas en ``kaizen_api/data/banxico_series.json``. Las demás quedan en ``verified: false`` hasta
-que una prueba con un token real las confirme contra el endpoint de metadatos del SIE, y mientras
-estén en ``false`` no se publican, aunque haya token. Eso es lo que pide el spec: cada id distinto
-de esos dos se verifica en una prueba antes de usarse.
+**Series verificadas.** Una serie solo se publica si viene marcada ``verified: true`` en
+``kaizen_api/data/banxico_series.json``, y esa marca solo se pone cuando la prueba en vivo con un
+token real la confirma contra el endpoint de metadatos del SIE. El 25 de septiembre de 2026 esa
+prueba confirmó las doce series del catálogo (ese día se corrigieron tres ids que apuntaban a otra
+serie: el Bono M 10 años, la inflación anual y la subyacente). Mientras una esté en ``false`` no se
+publica, aunque haya token.
 
 Además, con token, :func:`verified_ids` vuelve a preguntar los metadatos al SIE (24 h de caché) y
 pasa cada serie por :func:`mismatches`: el título tiene que traer las palabras de
@@ -16,11 +17,11 @@ la unidad tiene que cuadrar con ``sieUnit`` (por ciento o pesos) o ser, exacta, 
 ``unidadExacta`` de esa serie en el catálogo. Una serie que no pase no se
 publica, aunque esté marcada ``verified: true``.
 
-Cómo confirmarlas de una vez, cuando el dueño saque su token (es gratis en
-https://www.banxico.org.mx/SieAPIRest/service/v1/token)::
+Cómo volver a confirmarlas (el token es gratis en
+https://www.banxico.org.mx/SieAPIRest/service/v1/token; en la Mac del dueño vive en ``.env.local``)::
 
-    export BANXICO_TOKEN=... KAIZEN_LIVE=1
-    .venv/bin/python -m pytest -q -p no:cacheprovider -o addopts="" \\
+    set -a; source .env.local; set +a
+    KAIZEN_LIVE=1 .venv/bin/python -m pytest -q -p no:cacheprovider -o addopts="" \\
         tests/unit/b2b/test_banxico_live.py -s
 
 Esa prueba pide los metadatos de cada id del catálogo, los pasa por :func:`classify` (el mismo
@@ -47,7 +48,8 @@ SIE_BASE_URL = "https://www.banxico.org.mx/SieAPIRest/service/v1"
 SERIES_FIX = "SF43718"
 SERIES_TARGET = "SF61745"
 VERIFIED_IDS = (SERIES_FIX, SERIES_TARGET)
-"""Las dos únicas series confirmadas a mano contra el SIE. El resto se confirma con token."""
+"""Las dos series ancla que la prueba en vivo revisa también por dato (FIX en pesos, objetivo en por
+ciento). No es la lista de publicables: esa la da ``verified`` en el catálogo, ver :func:`reviewed`."""
 
 TIMEOUT = 10
 CATALOG_PATH = Path(__file__).resolve().parents[1] / "data" / "banxico_series.json"
@@ -124,8 +126,12 @@ def parse_date(raw: Any) -> str | None:
 
 
 def _fold(text: str) -> str:
-    """Minúsculas sin acentos, para comparar títulos del SIE sin pelearse con la ortografía."""
-    norm = unicodedata.normalize("NFD", str(text or "").lower())
+    """Minúsculas sin acentos y con los espacios colapsados, para comparar títulos del SIE.
+
+    El SIE rellena sus títulos con tiras de espacios ("Tasa de rendimiento  Bono tasa fija 10
+    años"), así que sin colapsarlos una frase como "bono tasa fija 10 anos" no se encontraría.
+    """
+    norm = unicodedata.normalize("NFD", " ".join(str(text or "").lower().split()))
     return "".join(ch for ch in norm if unicodedata.category(ch) != "Mn")
 
 
@@ -278,7 +284,7 @@ def mismatches(info: dict | None, item: dict) -> list[str]:
     titulo = str(info.get("titulo") or "")
     expected = item.get("tituloContiene") or []
     if not title_matches(titulo, expected):
-        reasons.append(f'el título "{titulo[:90]}" no trae todas estas palabras: {", ".join(expected)}')
+        reasons.append(f'el título "{" ".join(titulo.split())[:90]}" no trae todas estas palabras: {", ".join(expected)}')
     folded = _fold(titulo)
     banned = [word for word in item.get("tituloExcluye") or [] if _fold(word) in folded]
     if banned:
@@ -290,7 +296,7 @@ def mismatches(info: dict | None, item: dict) -> list[str]:
     unidad = str(info.get("unidad") or "")
     words = UNIT_WORDS.get(str(item.get("sieUnit") or ""), ())
     # ``unidadExacta``: la etiqueta literal que el SIE reporta para ESA serie aunque no diga por ciento
-    # ni pesos ("Sin Unidad" en SF61745 y SF43783, "Unidades de Inversión" en SP68257). Es por serie
+    # ni pesos ("Sin Unidad" en SF61745, SF43783, SP30578 y SP74662, "Unidades de Inversión" en SP68257). Es por serie
     # y compara la unidad completa, así que no relaja el candado de las demás.
     exactas = {_fold(str(u)).strip() for u in item.get("unidadExacta") or []}
     if not any(word in _fold(unidad) for word in words) and _fold(unidad).strip() not in exactas:

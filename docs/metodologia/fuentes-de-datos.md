@@ -32,7 +32,7 @@ fuente alterna.
 | Sector de cada emisora | Yahoo Finance, la misma consulta del precio; el sector se traduce al español y la industria queda como la publica Yahoo | Ninguno: sin sector sale s/d, nunca adivinado | Cambia rara vez |
 | Tipo de cambio USD/MXN | Banxico FIX, serie SF43718 | Yahoo `MXN=X`, marcado | Un día hábil, por definición del FIX |
 | Tasa objetivo | Banxico, serie SF61745 | Ninguno | Día del anuncio |
-| CETES, TIIE, UDI, INPC | Banxico SIE e Inegi | FRED para la tasa libre de riesgo | Un día hábil; el INPC es quincenal |
+| CETES, TIIE, UDI, INPC | Banxico SIE e Inegi | FRED para la tasa libre de riesgo | Un día hábil; la inflación anual del INPC es mensual (SIE `SP30578`, subyacente `SP74662`) |
 | Tasa libre de riesgo | Banxico, CETES 28 | FRED `IR3TIB01MXM156N`, marcado | Un día hábil |
 | Tasas y macro de Estados Unidos | FRED | Ninguno | Un día hábil |
 | VIX | Cboe vía el proveedor de mercado | Ninguno | 15 minutos o cierre |

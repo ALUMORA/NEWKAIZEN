@@ -1,10 +1,20 @@
 {
-  "revisado": "2026-09-22",
+  "revisado": "2026-09-25",
   "fuente": "SIE de Banxico, https://www.banxico.org.mx/SieAPIRest/service/v1",
   "porQue": "Un id equivocado del SIE devuelve una serie real con el nombre equivocado, y eso no se nota mirando el número. Por eso cada id trae las palabras que su título tiene que contener (tituloContiene), las que no puede traer (tituloExcluye), su periodicidad y su unidad, y solo se publica el que una persona ya confirmó (verified) y el SIE vuelve a confirmar en caliente.",
   "verificadas": [
+    "SF331451",
     "SF43718",
-    "SF61745"
+    "SF43783",
+    "SF43936",
+    "SF43939",
+    "SF43942",
+    "SF43945",
+    "SF44071",
+    "SF61745",
+    "SP30578",
+    "SP68257",
+    "SP74662"
   ],
   "comoVerificar": {
     "token": "Sacar el token gratis en https://www.banxico.org.mx/SieAPIRest/service/v1/token",
@@ -57,7 +67,7 @@
       "unidadExacta": [
         "Sin Unidad"
       ],
-      "verified": false,
+      "verified": true,
       "periodicidad": "Diaria",
       "maxAgeDays": 5,
       "tituloContiene": [
@@ -73,7 +83,7 @@
       "label": "TIIE de Fondeo a un día",
       "unit": "fraction",
       "sieUnit": "percent",
-      "verified": false,
+      "verified": true,
       "periodicidad": "Diaria",
       "maxAgeDays": 5,
       "tituloContiene": [
@@ -91,19 +101,21 @@
       "label": "CETES 28 días",
       "unit": "fraction",
       "sieUnit": "percent",
-      "verified": false,
-      "periodicidad": "Semanal",
+      "verified": true,
+      "periodicidad": "Diaria",
       "maxAgeDays": 14,
       "tituloContiene": [
-        "cetes",
-        "28",
-        "rendimiento"
+        "subasta",
+        "tasa de rendimiento",
+        "cetes a 28 dias"
       ],
       "tituloExcluye": [
         "descuento",
-        "promedio mensual"
+        "promedio mensual",
+        "fecha subasta",
+        "secundario"
       ],
-      "nota": "Rendimiento en el mercado primario de la subasta semanal. Es la tasa libre de riesgo de /v2/rates/rf."
+      "nota": "Rendimiento de la subasta primaria semanal (Valores gubernamentales, Resultados de la subasta semanal). El SIE la publica con periodicidad Diaria aunque solo trae dato el dia de cada subasta. Es la tasa libre de riesgo de /v2/rates/rf."
     },
     {
       "id": "SF43939",
@@ -111,19 +123,21 @@
       "label": "CETES 91 días",
       "unit": "fraction",
       "sieUnit": "percent",
-      "verified": false,
-      "periodicidad": "Semanal",
+      "verified": true,
+      "periodicidad": "Diaria",
       "maxAgeDays": 14,
       "tituloContiene": [
-        "cetes",
-        "91",
-        "rendimiento"
+        "subasta",
+        "tasa de rendimiento",
+        "cetes a 91 dias"
       ],
       "tituloExcluye": [
         "descuento",
-        "promedio mensual"
+        "promedio mensual",
+        "fecha subasta",
+        "secundario"
       ],
-      "nota": "Rendimiento en el mercado primario de la subasta semanal."
+      "nota": "Rendimiento de la subasta primaria semanal (Valores gubernamentales, Resultados de la subasta semanal). El SIE la publica con periodicidad Diaria aunque solo trae dato el dia de cada subasta."
     },
     {
       "id": "SF43942",
@@ -131,19 +145,21 @@
       "label": "CETES 182 días",
       "unit": "fraction",
       "sieUnit": "percent",
-      "verified": false,
-      "periodicidad": "Semanal",
+      "verified": true,
+      "periodicidad": "Diaria",
       "maxAgeDays": 21,
       "tituloContiene": [
-        "cetes",
-        "182",
-        "rendimiento"
+        "subasta",
+        "tasa de rendimiento",
+        "cetes a 182 dias"
       ],
       "tituloExcluye": [
         "descuento",
-        "promedio mensual"
+        "promedio mensual",
+        "fecha subasta",
+        "secundario"
       ],
-      "nota": "Rendimiento en el mercado primario de la subasta semanal."
+      "nota": "Rendimiento de la subasta primaria semanal (Valores gubernamentales, Resultados de la subasta semanal). El SIE la publica con periodicidad Diaria aunque solo trae dato el dia de cada subasta."
     },
     {
       "id": "SF43945",
@@ -151,70 +167,90 @@
       "label": "CETES 364 días",
       "unit": "fraction",
       "sieUnit": "percent",
-      "verified": false,
-      "periodicidad": "Semanal",
+      "verified": true,
+      "periodicidad": "Diaria",
       "maxAgeDays": 35,
       "tituloContiene": [
-        "cetes",
-        "364",
-        "rendimiento"
+        "subasta",
+        "tasa de rendimiento",
+        "cetes a 364 dias"
       ],
       "tituloExcluye": [
         "descuento",
-        "promedio mensual"
+        "promedio mensual",
+        "fecha subasta",
+        "secundario"
       ],
-      "nota": "Rendimiento en el mercado primario; la subasta de 364 dias no es todas las semanas."
+      "nota": "Rendimiento de la subasta primaria semanal (Valores gubernamentales, Resultados de la subasta semanal). El SIE la publica con periodicidad Diaria aunque solo trae dato el dia de cada subasta. La de 364 dias es cada dos semanas."
     },
     {
-      "id": "SF43881",
+      "id": "SF44071",
       "rateId": "bonoM10",
       "label": "Bono M a 10 años",
       "unit": "fraction",
       "sieUnit": "percent",
-      "verified": false,
+      "verified": true,
       "periodicidad": "Diaria",
-      "maxAgeDays": 7,
+      "maxAgeDays": 60,
       "tituloContiene": [
-        "bonos",
-        "10",
-        "rendimiento"
+        "subasta",
+        "tasa de rendimiento",
+        "bono tasa fija 10 anos"
       ],
       "tituloExcluye": [
-        "precio",
-        "sobretasa"
+        "udibono",
+        "monto",
+        "plazo",
+        "sobretasa",
+        "precio"
       ],
-      "nota": "Rendimiento del bono de desarrollo del Gobierno Federal a tasa fija, 10 anos."
+      "nota": "Tasa de rendimiento de la subasta primaria del Bono M (tasa fija) a 10 anos. Se subasta cada 5 a 8 semanas: entre septiembre de 2024 y septiembre de 2026 el hueco mas largo fue de 56 dias, de ahi maxAgeDays 60."
     },
     {
-      "id": "SP74625",
+      "id": "SP30578",
       "rateId": "inflationYoY",
       "label": "Inflación anual (INPC)",
       "unit": "fraction",
       "sieUnit": "percent",
-      "verified": false,
-      "periodicidad": "Quincenal",
-      "maxAgeDays": 45,
-      "tituloContiene": [
-        "inflacion",
-        "anual"
+      "unidadExacta": [
+        "Sin Unidad"
       ],
-      "tituloExcluye": [],
-      "nota": "Variacion anual del INPC."
+      "verified": true,
+      "periodicidad": "Mensual",
+      "maxAgeDays": 75,
+      "tituloContiene": [
+        "indice nacional de precios al consumidor",
+        "variacion anual"
+      ],
+      "tituloExcluye": [
+        "subyacente",
+        "mensual",
+        "acumulada"
+      ],
+      "nota": "Variacion anual del INPC general, en por ciento. El dato del mes se fecha el dia 1 y el Inegi lo publica hacia el dia 9 del mes siguiente, asi que el ultimo dato puede tener hasta unos 70 dias: de ahi maxAgeDays 75."
     },
     {
-      "id": "SP74626",
+      "id": "SP74662",
       "rateId": "coreInflationYoY",
       "label": "Inflación subyacente anual",
       "unit": "fraction",
       "sieUnit": "percent",
-      "verified": false,
-      "periodicidad": "Quincenal",
-      "maxAgeDays": 45,
-      "tituloContiene": [
-        "subyacente"
+      "unidadExacta": [
+        "Sin Unidad"
       ],
-      "tituloExcluye": [],
-      "nota": "Variacion anual del INPC subyacente."
+      "verified": true,
+      "periodicidad": "Mensual",
+      "maxAgeDays": 75,
+      "tituloContiene": [
+        "inflacion subyacente",
+        "anual"
+      ],
+      "tituloExcluye": [
+        "no subyacente",
+        "mensual",
+        "acumulada"
+      ],
+      "nota": "Variacion anual del INPC subyacente (nueva definicion), en por ciento. Misma cadencia que la general."
     },
     {
       "id": "SP68257",
@@ -225,7 +261,7 @@
       "unidadExacta": [
         "Unidades de Inversión"
       ],
-      "verified": false,
+      "verified": true,
       "periodicidad": "Diaria",
       "maxAgeDays": 5,
       "tituloContiene": [
@@ -234,5 +270,6 @@
       "tituloExcluye": [],
       "nota": "Pesos por unidad de inversion."
     }
-  ]
+  ],
+  "despuesDeVerificar": "2026-09-25: las doce series pasaron la prueba en vivo con el token del dueno (titulo, periodicidad y unidad) y la prueba de datos (ultimo valor dentro de su banda). Ids corregidos ese dia: bonoM10 SF43881 a SF44071, inflationYoY SP74625 a SP30578, coreInflationYoY SP74626 a SP74662."
 }

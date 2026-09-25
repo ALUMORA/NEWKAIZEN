@@ -163,8 +163,11 @@ están en `docs/OWNERSHIP.md`).
 
 - `GET /v2/rates/mx` → `MxRatesResponse`. Ids: `target` (objetivo, SF61745), `tiie28`,
   `tiieFondeo`, `cetes28`, `cetes91`, `cetes182`, `cetes364`, `bonoM10` (si existe), `inflationYoY`,
-  `coreInflationYoY`, `udi`, `fix`. Cualquier serie del SIE distinta de SF43718 y SF61745 se verifica
-  contra el endpoint de metadatos del SIE en una prueba antes de usarse. Desde la fase 3 (pedidos 2
+  `coreInflationYoY`, `udi`, `fix`. Cada serie del SIE se verifica contra el endpoint de metadatos
+  del SIE en una prueba antes de usarse; el 25 de septiembre de 2026 la prueba en vivo confirmó las
+  doce: objetivo `SF61745`, TIIE 28 `SF43783`, TIIE de fondeo `SF331451`, CETES de la subasta
+  semanal `SF43936`, `SF43939`, `SF43942` y `SF43945`, Bono M 10 años de la subasta `SF44071`,
+  inflación anual del INPC `SP30578`, subyacente anual `SP74662`, UDI `SP68257` y FIX `SF43718`. Desde la fase 3 (pedidos 2
   y 3 de F2) cada renglón dice tres cosas por serie:
   - `verified`: `true` solo si la serie viene del SIE, tiene revisión humana en el catálogo
     (`verified: true` en `kaizen_api/data/banxico_series.json`) y el SIE la confirmó en las
@@ -176,8 +179,9 @@ están en `docs/OWNERSHIP.md`).
     pasa por el SIE. La UI lo marca como no verificado.
   - `stale`: el último dato de ESA serie es más viejo de lo que se tolera para su periodicidad
     (`maxAgeDays` del catálogo: 5 días naturales para objetivo, TIIE, FIX y UDI; 14 a 35 para los
-    CETES; 7 para el Bono M del SIE; 45 para la inflación quincenal; y 70 para el Bono M mensual de
-    FRED, en `FRED_MX_FALLBACK` de `domain/rates.py`). `meta.stale` es exactamente que alguna serie
+    CETES; 60 para el Bono M del SIE, que se subasta cada 5 a 8 semanas; 75 para la inflación, que
+    es mensual y se fecha el día 1; y 70 para el Bono M mensual de FRED, en `FRED_MX_FALLBACK` de
+    `domain/rates.py`). `meta.stale` es exactamente que alguna serie
     tenga `stale: true`.
   - `tenorDays`: plazo en días de los CETES (`cetes28` 28, `cetes91` 91, `cetes182` 182,
     `cetes364` 364), el mismo que acepta `/v2/rates/rf`; `null` en todas las demás series, incluida

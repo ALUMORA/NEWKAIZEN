@@ -1,0 +1,208 @@
+{
+  "capturado": "2026-09-25",
+  "fuente": "GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/<ids> (solo metadatos; el token va en la cabecera Bmx-Token y no se guarda aquí)",
+  "bmx": {
+    "series": [
+      {
+        "idSerie": "SP30578",
+        "titulo": "Índice Nacional de Precios al consumidor variación anual",
+        "fechaInicio": "01/01/1970",
+        "fechaFin": "01/08/2026",
+        "periodicidad": "Mensual",
+        "cifra": "Porcentajes",
+        "unidad": "Sin Unidad",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF44071",
+        "titulo": "Valores Gubernamentales    Resultados de la subasta semanal Tasa de rendimiento  Bono tasa fija 10 años",
+        "fechaInicio": "26/07/2001",
+        "fechaFin": "24/09/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF43783",
+        "titulo": "TIIE a 28 días Tasa de interés en por ciento anual",
+        "fechaInicio": "23/03/1995",
+        "fechaFin": "28/09/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Porcentajes",
+        "unidad": "Sin Unidad",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF43945",
+        "titulo": "Valores gubernamentales                        Resultados de la subasta semanal Tasa de rendimiento                            Cetes a 364 días",
+        "fechaInicio": "15/11/1990",
+        "fechaFin": "17/09/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF43939",
+        "titulo": "Valores gubernamentales                        Resultados de la subasta semanal Tasa de rendimiento                            Cetes a 91 días",
+        "fechaInicio": "19/01/1978",
+        "fechaFin": "24/09/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SP74625",
+        "titulo": "Subíndices subyacente y complementarios Precios al consumidor (INPC) Subyacente",
+        "fechaInicio": "01/01/1969",
+        "fechaFin": "01/08/2026",
+        "periodicidad": "Mensual",
+        "cifra": "Indices",
+        "unidad": "Sin Unidad",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF43942",
+        "titulo": "Valores gubernamentales                        Resultados de la subasta semanal Tasa de rendimiento                            Cetes a 182 días",
+        "fechaInicio": "13/09/1984",
+        "fechaFin": "24/09/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SP74626",
+        "titulo": "Subíndices subyacente y complementarios Precios al consumidor (INPC) Subyacente Mercancías",
+        "fechaInicio": "01/01/1969",
+        "fechaFin": "01/08/2026",
+        "periodicidad": "Mensual",
+        "cifra": "Indices",
+        "unidad": "Sin Unidad",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF44072",
+        "titulo": "Valores Gubernamentales    Resultados de la subasta semanal Monto asigando       Bono tasa fija 10 años",
+        "fechaInicio": "26/07/2001",
+        "fechaFin": "24/09/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Sin tipo de Cifra",
+        "unidad": "Millones de Pesos",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF43936",
+        "titulo": "Valores gubernamentales                        Resultados de la subasta semanal Tasa de rendimiento                            Cetes a 28 días",
+        "fechaInicio": "02/09/1982",
+        "fechaFin": "24/09/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SP74662",
+        "titulo": "Inflación Subyacente (nueva definición) Anual",
+        "fechaInicio": "01/01/1983",
+        "fechaFin": "01/08/2026",
+        "periodicidad": "Mensual",
+        "cifra": "Porcentajes",
+        "unidad": "Sin Unidad",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF43881",
+        "titulo": "Bonos de protección al ahorro            Resultados de la subasta semanal A 1092 días (3 años)            Monto asignado en millones de pesos",
+        "fechaInicio": "02/03/2000",
+        "fechaFin": "04/12/2025",
+        "periodicidad": "Diaria",
+        "cifra": "Sin tipo de Cifra",
+        "unidad": "Millones de Pesos",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF282",
+        "titulo": "Cetes 28 días Tasa de rendimiento promedio mensual, en por ciento anual",
+        "fechaInicio": "01/01/1978",
+        "fechaFin": "01/08/2026",
+        "periodicidad": "Mensual",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SP30577",
+        "titulo": "Índice Nacional de Precios al consumidor Variación mensual",
+        "fechaInicio": "01/01/1969",
+        "fechaFin": "01/08/2026",
+        "periodicidad": "Mensual",
+        "cifra": "Porcentajes",
+        "unidad": "Sin Unidad",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF60633",
+        "titulo": "Valores gubernamentales, Resultados de la subasta semanal Cetes a 28 días - Tasa de rendimiento - Fecha subasta",
+        "fechaInicio": "19/09/2006",
+        "fechaFin": "22/09/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Sin tipo de Cifra",
+        "unidad": "Sin Unidad",
+        "versionada": false
+      },
+      {
+        "idSerie": "SP74665",
+        "titulo": "Inflación No subyacente (nueva definición) Anual",
+        "fechaInicio": "01/01/1983",
+        "fechaFin": "01/08/2026",
+        "periodicidad": "Mensual",
+        "cifra": "Porcentajes",
+        "unidad": "Sin Unidad",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF43718",
+        "titulo": "Tipo de cambio                                          Pesos por dólar E.U.A. Tipo de cambio para solventar obligaciones denominadas en moneda extranjera Fecha de determinación (FIX)",
+        "fechaInicio": "12/11/1991",
+        "fechaFin": "25/09/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Tipo de Cambio",
+        "unidad": "Pesos por Dólar",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF61745",
+        "titulo": "Tasa objetivo",
+        "fechaInicio": "21/01/2008",
+        "fechaFin": "26/09/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Porcentajes",
+        "unidad": "Sin Unidad",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF331451",
+        "titulo": "TIIE de Fondeo a Un Día Hábil Bancario, Mediana ponderada por volumen",
+        "fechaInicio": "02/01/2006",
+        "fechaFin": "24/09/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Tasas Promedio",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SP68257",
+        "titulo": "Valor de UDIS",
+        "fechaInicio": "04/04/1995",
+        "fechaFin": "10/10/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Tipo de Cambio",
+        "unidad": "Unidades de Inversión",
+        "versionada": false
+      }
+    ]
+  }
+}
