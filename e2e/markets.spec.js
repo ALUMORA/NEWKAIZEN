@@ -255,6 +255,30 @@ test('/mercados/mexico: la serie de CETES de respaldo (FRED) se marca y el FIX s
   await expect(page.getByText(/Este dato viene de una fuente de respaldo \(fred_ir3tib\)/)).toBeVisible()
 })
 
+test('/mercados/mexico: el FIX sale una sola vez, el Bono M de FRED dice sin verificar y el respaldo del rf no se llama CETES', async ({ page, baseURL }) => {
+  const withFix = {
+    ...RATES,
+    items: [
+      ...RATES.items,
+      { ...rate('bonoM10', 'Bono M 10 años (serie mensual de la OCDE en FRED)', 0.0861, 'fraction', 'IRLTLT01MXM156N', 0.087, -9, '2026-08-01'), source: 'fred', verified: false },
+      rate('fix', 'Tipo de cambio FIX', 18.4321, 'mxn', 'SF43718', 18.41, null),
+    ],
+  }
+  const routes = {
+    ...V2_ROUTES,
+    'GET /v2/rates/mx': { json: withFix },
+    'GET /v2/rates/rf': { json: { ...RF, tenorDays: 91, source: 'fred_ir3tib', fallback: true, meta: meta({ asOf: '2026-09-18', source: 'fred_ir3tib', delayMinutes: null, fallback: true }) } },
+  }
+  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, legacyApi: true, health: HEALTH, routes })
+  await page.goto('/mercados/mexico')
+  await expect(page.getByText('Serie SF43718')).toBeVisible()
+  await expect(page.getByText('Dólar FIX', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('Serie IRLTLT01MXM156N, sin verificar contra Banxico')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'México' }).getByRole('button', { name: /^Respaldo: fred/ })).toHaveCount(1)
+  await expect(page.getByRole('heading', { name: /interbancaria a 3 meses/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'CETES 28 días en el tiempo' })).toHaveCount(0)
+})
+
 test('/mercados: bolsas abiertas con retraso, resumen factual, USD/MXN neutral y ligas', async ({ page, baseURL }) => {
   await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, legacyApi: true, health: HEALTH, routes: V2_ROUTES })
   await page.goto('/mercados')
