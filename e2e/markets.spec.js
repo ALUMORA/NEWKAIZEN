@@ -211,6 +211,11 @@ test('/mercados/mexico: respaldo y serie sin verificar se notan, cambios en pb',
   await expect(page.getByText('no está verificada')).toBeVisible()
   await expect(page.getByText(/Este dato viene de una fuente de respaldo/).first()).toBeVisible()
   await expect(page.getByText('18.4321').first()).toBeVisible()
+  // "contra el dato anterior" se parte en líneas y no se encima sobre la cifra de al lado
+  const overflow = await page.locator('.kz-stat').evaluateAll((stats) =>
+    stats.flatMap((st) => [...st.querySelectorAll('.kz-delta')].filter((d) => d.getBoundingClientRect().right > st.getBoundingClientRect().right + 1).map(() => st.textContent)),
+  )
+  expect(overflow).toEqual([])
 })
 
 test('/mercados/cetes: tasa prellenada, 11 % a 28 días da efectiva de 11.75 % y retención sobre el capital', async ({ page, baseURL }) => {
