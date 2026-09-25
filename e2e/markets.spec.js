@@ -279,6 +279,18 @@ test('/mercados/mexico: el FIX sale una sola vez, el Bono M de FRED dice sin ver
   await expect(page.getByRole('heading', { name: 'CETES 28 días en el tiempo' })).toHaveCount(0)
 })
 
+test('/mercados: quien entra sin portafolio ve los primeros pasos y puede descartarlos', async ({ page, baseURL }) => {
+  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: HEALTH, routes: V2_ROUTES })
+  await page.goto('/mercados')
+  const first = page.getByRole('region', { name: 'Primeros pasos' })
+  await expect(first.getByRole('link', { name: 'Ir a la bienvenida' })).toHaveAttribute('href', '/bienvenida')
+  await first.getByRole('button', { name: 'Ahora no' }).click()
+  await expect(first).toHaveCount(0)
+  await page.reload()
+  await expect(page.getByRole('heading', { level: 1, name: 'Mercados' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Primeros pasos' })).toHaveCount(0)
+})
+
 test('/mercados: bolsas abiertas con retraso, resumen factual, USD/MXN neutral y ligas', async ({ page, baseURL }) => {
   await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: HEALTH, routes: V2_ROUTES })
   await page.goto('/mercados')
