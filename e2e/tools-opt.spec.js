@@ -196,6 +196,17 @@ const PAGES = [
   { path: '/herramientas/backtest', ready: backtestReady, name: 'backtest' },
 ]
 
+test('backtest: si el API tira el S&P 500 y el referente es el IPC, no se reporta como emisora descartada', async ({ page, baseURL }) => {
+  const noSpy = ({ url }) => {
+    const full = panel(String(url.searchParams.get('symbols') ?? '').split(',').filter((x) => x !== 'SPY'), url.searchParams.get('range') ?? '5y')
+    return { json: { ...full, dropped: [...full.dropped, { symbol: 'SPY', reason: 'sin_historia' }] } }
+  }
+  await open(page, /** @type {string} */ (baseURL), { routes: { 'GET /v2/panel': noSpy } })
+  await page.goto('/herramientas/backtest')
+  await backtestReady(page)
+  await expect(page.getByText(/quedaron fuera/)).toHaveCount(0)
+})
+
 test.describe('herramientas: optimizador', () => {
   test('historia corta: dice cuántas semanas hay, por qué, y no culpa al IPC de las betas', async ({ page, baseURL }) => {
     // Una emisora recién listada recorta el INNER JOIN del panel; además el API tira el IPC.

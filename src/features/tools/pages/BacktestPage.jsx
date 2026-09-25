@@ -9,6 +9,7 @@ import { derivePositions } from '../../../lib/finance/index.js'
 import { fmtDate } from '../../../lib/format.js'
 import { useStore } from '../../../lib/storage.js'
 import { benchmarkLabel, benchmarkShort } from '../backtester.js'
+import { droppedSymbols } from '../optimizer.js'
 import { BacktestForm } from '../components/BacktestForm.jsx'
 import { BacktestResults } from '../components/BacktestResults.jsx'
 import { equalPercents, parseSymbols } from '../selection.js'
@@ -59,7 +60,8 @@ export default function BacktestPage() {
   const benchLabel = benchmarkLabel(form.benchmark, (form.blendIpcPct ?? 50) / 100)
   const meta = bt.panel.data?.meta
   const r = bt.result
-  const dropped = [...new Set([...(bt.panel.data?.dropped ?? []).map((/** @type {any} */ d) => d.symbol), ...(r?.missing ?? [])])]
+  // Los referentes se piden siempre; si el API tira uno que no se usa, no es una emisora de la persona.
+  const dropped = droppedSymbols(bt.panel.data, r, mode === 'portfolio' ? portfolioSymbols : symbols)
 
   let results
   if (!bt.enabled) {
