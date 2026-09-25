@@ -319,7 +319,7 @@ test.describe('shell: paleta de comandos', () => {
 
     await page.keyboard.press('Control+k')
     await expect(dialog.getByRole('group', { name: 'Ir a' })).toBeVisible()
-    await expect(dialog.getByRole('group', { name: 'Acciones' })).toBeVisible()
+    await expect(dialog.getByRole('group', { name: 'Opciones' })).toBeVisible()
     await input.fill('riesgo')
     const first = dialog.getByRole('option').first()
     await expect(first).toHaveText(/Riesgo/)

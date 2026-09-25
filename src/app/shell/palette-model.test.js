@@ -25,7 +25,7 @@ describe('palette-model', () => {
 
   it('sin texto: recientes, todas las rutas y las acciones', () => {
     const groups = buildGroups({ q: '', recents: [{ symbol: 'AMXB.MX', name: 'América Móvil' }], routes, dark: false })
-    expect(groups.map((g) => g.label)).toEqual(['Emisoras', 'Ir a', 'Acciones'])
+    expect(groups.map((g) => g.label)).toEqual(['Emisoras', 'Ir a', 'Opciones'])
     expect(groups[0].options[0]).toMatchObject({ label: 'AMXB.MX', to: '/investigar/AMXB.MX', detail: 'América Móvil · Reciente' })
     expect(groups[1].options).toHaveLength(routes.length)
     expect(groups[2].options.map((o) => o.label)).toEqual(['Cambiar a tema oscuro', 'Cerrar sesión'])

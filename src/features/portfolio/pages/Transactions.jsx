@@ -158,7 +158,8 @@ export default function Transactions() {
     { key: 'fxRate', header: 'Tipo de cambio', numeric: true, format: (/** @type {any} */ v) => fmtNumber(v, { decimals: 4 }) },
     {
       key: 'actions',
-      header: 'Acciones',
+      // No "Acciones": en el libro de movimientos se confunde con los títulos de la emisora.
+      header: 'Opciones',
       align: /** @type {const} */ ('right'),
       format: (/** @type {any} */ _v, /** @type {any} */ row) => (
         <Button size="sm" variant="ghost" disabled={readOnly} aria-label={`Borrar ${describeTx(row)}`} onClick={() => setPending(row)}>
