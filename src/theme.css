@@ -220,6 +220,8 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance
 .auth-content > h1 { font-size: clamp(2rem, 4vw, 2.9rem); }
 .auth-content > p { color: var(--muted); font-size: 0.8rem; margin-top: 12px; }
 .auth-form { display: grid; gap: 18px; margin-top: 30px; }
+.auth-content > .auth-links { color: var(--muted); font-size: var(--text-sm); line-height: 1.6; margin-top: 24px; }
+.auth-links a { color: var(--accent-strong); text-decoration: underline; text-underline-offset: 2px; }
 .auth-aside { background: var(--bg-deep); color: #fff; display: flex; flex-direction: column; justify-content: flex-end; min-height: 100vh; overflow: hidden; padding: clamp(55px, 7vw, 110px); position: relative; }
 .auth-aside blockquote { color: #edf3ef; font-size: clamp(1.7rem, 3.4vw, 3.1rem); font-weight: 600; letter-spacing: -0.045em; line-height: 1.2; max-width: 14ch; position: relative; }
 .auth-aside-orbit { border: 1px solid rgba(121,223,155,.18); border-radius: 50%; height: 520px; position: absolute; right: -250px; top: -230px; width: 520px; }

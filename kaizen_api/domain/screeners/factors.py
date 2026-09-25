@@ -322,7 +322,7 @@ def _build_rows(
                 "scores": None,
                 "coverage": 0.0,
                 "excluded": True,
-                "reason": "El proveedor no respondió por esta emisora.",
+                "reason": "El proveedor no respondió para esta emisora.",
                 "checks": checks_of(dict.fromkeys(METRIC_IDS)),
                 "metrics": dict.fromkeys(METRIC_IDS),
             })
@@ -332,7 +332,7 @@ def _build_rows(
         excluded = coverage < MIN_COVERAGE
         reason = None
         if not data.ok:
-            reason = "El proveedor no respondió por esta emisora."
+            reason = "El proveedor no respondió para esta emisora."
         elif excluded:
             reason = (
                 f"Cobertura de {round(coverage * 100)} %: hacen falta al menos "
@@ -446,7 +446,7 @@ def build(universe: Universe) -> dict:
     if excluded:
         notes.append(f"{len(excluded)} de {len(rows)} emisoras quedaron fuera por falta de datos.")
     if pending:
-        notes.append("El proveedor no respondió por: " + ", ".join(sorted(pending)) + ".")
+        notes.append("Sin respuesta del proveedor para: " + ", ".join(sorted(pending)) + ".")
     if not closes and not daily:
         notes.append("No se pudo bajar el histórico de precios: momento y volatilidad van en s/d.")
     elif not closes:

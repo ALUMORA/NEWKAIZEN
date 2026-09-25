@@ -11,6 +11,7 @@ import BottomNav from './BottomNav.jsx'
 import CommandPalette from './CommandPalette.jsx'
 import Footer from './Footer.jsx'
 import QueryFallback from './QueryFallback.jsx'
+import SectionNav from './SectionNav.jsx'
 import Sidebar from './Sidebar.jsx'
 import TopBar from './TopBar.jsx'
 import { ShellContext } from './shell-context.js'
@@ -50,6 +51,7 @@ function Shell() {
         <div className="kz-shell__frame">
           <TopBar onOpenPalette={openPalette} />
           <main className="kz-shell__main" id="contenido" ref={mainRef} tabIndex={-1}>
+            <SectionNav />
             <Outlet />
           </main>
           <Footer />

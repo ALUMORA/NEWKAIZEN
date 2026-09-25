@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { EmptyState, ErrorState, PageHeader, Skeleton } from '../../../components/ui/index.js'
 import { PATHS } from '../../../app/paths.js'
+import { usePageTitle } from '../../../app/pageTitle.js'
 import { GUIDES, GUIDE_NAMES, titleOf } from '../guides.js'
 import { Markdown } from '../markdown.jsx'
 import { PublicPage } from '../PublicPage.jsx'
@@ -28,6 +29,8 @@ export default function LearnGuide() {
   const crumbs = [{ label: 'Aprender', to: PATHS.learn }]
   const name = GUIDE_NAMES[guia] ?? 'Metodología'
   const current = state?.key === `${guia}:${attempt}` ? state : null
+  const heading = current?.text ? titleOf(current.text) || name : name
+  usePageTitle(load ? `Metodología: ${name}` : 'Guía no encontrada')
 
   if (!load) {
     return (
@@ -40,7 +43,7 @@ export default function LearnGuide() {
 
   return (
     <PublicPage className="learn-page">
-      <PageHeader eyebrow="Metodología" title={current?.text ? titleOf(current.text) || name : name} breadcrumbs={[...crumbs, { label: name }]} />
+      <PageHeader eyebrow="Metodología" title={heading} breadcrumbs={[...crumbs, { label: name }]} />
       {!current && (
         <div aria-busy="true">
           <span className="sr-only" role="status">Cargando la guía</span>

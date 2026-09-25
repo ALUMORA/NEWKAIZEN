@@ -8,6 +8,6 @@ export const routes = [
   {
     path: route(PATHS.watchlist),
     element: <Pages.Watchlist />,
-    handle: { title: 'Watchlist', description: 'Tus listas de emisoras para seguir su precio y sus noticias.' },
+    handle: { title: 'Lista de seguimiento', description: 'Tus listas de emisoras para seguir su precio y sus noticias.' },
   },
 ]

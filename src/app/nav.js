@@ -82,7 +82,7 @@ export const NAV_SECTIONS = Object.freeze([
 
 /** Entradas sueltas al final de la barra lateral. @type {readonly NavItem[]} */
 export const NAV_EXTRA = Object.freeze([
-  { id: 'watchlist', label: 'Watchlist', to: PATHS.watchlist, icon: Eye, keywords: ['seguimiento', 'lista'] },
+  { id: 'watchlist', label: 'Lista de seguimiento', to: PATHS.watchlist, icon: Eye, keywords: ['watchlist', 'favoritas', 'lista'] },
   { id: 'aprender', label: 'Aprender', to: PATHS.learn, icon: BookOpen, keywords: ['glosario', 'guías'] },
 ])
 

@@ -67,7 +67,7 @@ export default function BacktestPage() {
   if (!bt.enabled) {
     results = (
       <ResultCard>
-        <EmptyState headingAs="h3" title="Elige qué probar" text="Agrega al menos una emisora con su peso, o usa los pesos de tu cartera de hoy." />
+        <EmptyState headingAs="h3" title="Elige qué probar" text="Agrega al menos una emisora con su peso, o usa los pesos de tu portafolio de hoy." />
       </ResultCard>
     )
   } else if (bt.panel.isPending) {
@@ -111,7 +111,7 @@ export default function BacktestPage() {
             Sin historia en todo el periodo, quedaron fuera: {dropped.join(', ')}. Los demás pesos se reescalaron para sumar 100 %.
           </p>
         )}
-        <BacktestResults result={r} benchLabel={benchLabel} benchShort={benchmarkShort(form.benchmark)} mineLabel={mode === 'portfolio' ? 'Tu cartera' : 'Tu mezcla'} status={meta} rf={{ meta: bt.rf.data?.meta, isError: bt.rf.isError, refetch: bt.rf.refetch }} />
+        <BacktestResults result={r} benchLabel={benchLabel} benchShort={benchmarkShort(form.benchmark)} mineLabel={mode === 'portfolio' ? 'Tu portafolio' : 'Tu mezcla'} status={meta} rf={{ meta: bt.rf.data?.meta, isError: bt.rf.isError, refetch: bt.rf.refetch }} />
       </>
     )
   }
@@ -143,7 +143,7 @@ export default function BacktestPage() {
             <h2 id="bt-caveats" className="kz-tool__subtitle">Antes de ver los números</h2>
             {mode === 'portfolio' && (
               <p className="kz-tool__notice" role="note">
-                <strong>Pesos de hoy sobre historia anterior.</strong> Esta prueba reparte tu cartera como está hoy
+                <strong>Pesos de hoy sobre historia anterior.</strong> Esta prueba reparte tu portafolio como está hoy
                 {r && !r.error ? ` desde el ${fmtDate(r.start)}` : ' desde el inicio del periodo'}. Nadie tenía esos pesos entonces, y las
                 emisoras que hoy tienes las elegiste después: el resultado puede verse mejor de lo que habría sido.
               </p>

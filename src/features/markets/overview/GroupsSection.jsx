@@ -63,7 +63,7 @@ export function GroupsSection() {
   const groups = q.data ? dedupeMarkets({ overview: q.data }).groups : []
   return (
     <section className="kz-col" aria-labelledby="markets-groups-title">
-      <SectionHeading id="markets-groups-title" title="Panorama" description="Último precio y cambio contra el cierre anterior, en porcentaje y en unidades. Cada símbolo aparece una sola vez." />
+      <SectionHeading id="markets-groups-title" title="Panorama" description="Último precio y cambio contra el cierre anterior, en porcentaje y en unidades. Cada instrumento aparece una sola vez." />
       {loading ? (
         <div className="markets-groups" aria-busy="true">
           <span className="sr-only">Cargando</span>

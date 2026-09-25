@@ -205,6 +205,17 @@ def _last_change(point: dict) -> dict | None:
     return {"price": price, "change": change, "changePct": change_pct, "asOf": dates[-1] if dates else None}
 
 
+MISSING_NAMED_MAX = 5
+"""Hasta cuántos faltantes se nombran uno por uno en el aviso; con más, solo se cuentan."""
+
+
+def _join_es(names: list[str]) -> str:
+    """``["a"]`` da ``"a"``; ``["a", "b", "c"]`` da ``"a, b y c"``."""
+    if len(names) <= 1:
+        return "".join(names)
+    return ", ".join(names[:-1]) + " y " + names[-1]
+
+
 def overview_data() -> tuple[list[dict], str | None, list[str]]:
     """``(grupos, fecha del dato más nuevo, avisos)`` de ``/v2/markets/overview``.
 
@@ -222,7 +233,7 @@ def overview_data() -> tuple[list[dict], str | None, list[str]]:
         for symbol, item_label, currency in members:
             point = _last_change(quotes.get(symbol) or {})
             if point is None:
-                missing.append(symbol)
+                missing.append(f"{item_label} ({symbol})")
                 items.append({
                     "symbol": symbol, "label": item_label, "price": None, "change": None,
                     "changePct": None, "currency": currency, "asOf": None,
@@ -238,7 +249,12 @@ def overview_data() -> tuple[list[dict], str | None, list[str]]:
         groups.append({"id": group_id, "label": label, "items": items})
     notes: list[str] = []
     if missing:
-        notes.append("Sin dato de " + ", ".join(missing) + " en esta corrida; se muestran sin valor.")
+        # Nombre legible primero y la clave de Yahoo entre paréntesis: "^HSI" solo no dice nada.
+        notes.append(
+            "Sin dato en esta actualización de "
+            + (_join_es(missing) if len(missing) <= MISSING_NAMED_MAX else f"{len(missing)} instrumentos")
+            + ("; sale como s/d." if len(missing) == 1 else "; salen como s/d.")
+        )
     return groups, as_of, notes
 
 
@@ -272,7 +288,7 @@ def world_data() -> tuple[list[dict], str | None, list[str]]:
     for symbol, country in _WORLDMAP_SYMS.items():
         point = _last_change(quotes.get(symbol) or {})
         if point is None:
-            missing.append(symbol)
+            missing.append(f"{WORLD_COUNTRIES.get(country, country)} ({symbol})")
             continue
         if point["asOf"] and (as_of is None or point["asOf"] > as_of):
             as_of = point["asOf"]
@@ -286,5 +302,9 @@ def world_data() -> tuple[list[dict], str | None, list[str]]:
         })
     notes: list[str] = []
     if missing:
-        notes.append("Sin dato de " + ", ".join(missing) + " en esta corrida; esos países no salen en la lista.")
+        notes.append(
+            "Sin dato en esta actualización de "
+            + (_join_es(missing) if len(missing) <= MISSING_NAMED_MAX else f"{len(missing)} países")
+            + ("; ese país no sale en la lista." if len(missing) == 1 else "; esos países no salen en la lista.")
+        )
     return items, as_of, notes

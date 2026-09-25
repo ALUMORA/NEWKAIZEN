@@ -9,6 +9,7 @@ import { GroupsSection } from '../overview/GroupsSection.jsx'
 import { VixCard } from '../overview/VixCard.jsx'
 import { UsRatesCard } from '../overview/UsRatesCard.jsx'
 import { WorldCard } from '../overview/WorldCard.jsx'
+import { FirstSteps } from '../overview/FirstSteps.jsx'
 import '../markets.css'
 
 const MORE = [
@@ -45,6 +46,7 @@ export default function OverviewPage() {
         title="Mercados"
         description="Cómo van hoy México, Estados Unidos y el mundo. Cada cifra trae su fuente, su fecha y su retraso; si algo falta, lo decimos."
       />
+      <FirstSteps />
       <div className="markets-top">
         <SummaryCard />
         <ExchangesCard />

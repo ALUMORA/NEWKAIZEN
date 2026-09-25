@@ -143,7 +143,7 @@ function Table({ rows, notes, against, status, loading = false }) {
     <Card
       title="FIBRAs ordenadas por P/NAV"
       info={{ termKey: 'fibra', term: 'FIBRA' }}
-      description="De menor a mayor precio contra valor en libros; las que no tienen NAV van al final. La señal describe el precio contra libros (descuento abajo de 0.90, prima arriba de 1.10) y no es una recomendación."
+      description="De menor a mayor precio contra valor en libros; las que no tienen NAV van al final. La etiqueta describe el precio contra libros (descuento abajo de 0.90, prima arriba de 1.10) y no es una recomendación."
       status={status}
       padding="none"
     >

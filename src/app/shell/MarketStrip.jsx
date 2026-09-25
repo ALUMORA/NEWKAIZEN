@@ -12,8 +12,11 @@ import { marketsOverviewQuery, ratesMxQuery } from '../../lib/api/queries.js'
 import { MISSING, fmtNumber } from '../../lib/format.js'
 import { mergeMeta, stripItems } from './strip-model.js'
 
-/** @param {{ item: import('./strip-model.js').StripItem }} props */
-function StripCell({ item }) {
+/**
+ * Sin valor tampoco hay cambio: un solo "s/d" y no "VIX s/d s/d".
+ * @param {{ item: import('./strip-model.js').StripItem }} props
+ */
+export function StripCell({ item }) {
   const value = item.value === null ? MISSING : `${fmtNumber(item.value, { decimals: item.decimals })}${item.suffix ?? ''}`
   return (
     <li className="kz-strip__item" title={item.title}>
@@ -21,7 +24,9 @@ function StripCell({ item }) {
       <span className="kz-strip__value num" data-missing={item.value === null || undefined}>
         {value}
       </span>
-      <Delta className="kz-strip__delta" direction={item.direction} hint={item.hint} kind={item.changeKind} value={item.change} />
+      {item.value === null && item.change == null ? null : (
+        <Delta className="kz-strip__delta" direction={item.direction} hint={item.hint} kind={item.changeKind} value={item.change} />
+      )}
     </li>
   )
 }

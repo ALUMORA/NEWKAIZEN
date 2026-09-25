@@ -478,7 +478,7 @@ export function validateTransaction(tx, existing = []) {
   }
 
   const needsSymbol = type === 'buy' || type === 'sell' || type === 'split' || type === 'dividend'
-  if (needsSymbol && !tx.symbol) errors.push('Falta el símbolo.')
+  if (needsSymbol && !tx.symbol) errors.push('Falta la clave de la emisora.')
 
   if (type === 'buy' || type === 'sell') {
     if (!(isNum(tx.quantity) && /** @type {number} */ (tx.quantity) > 0)) {
@@ -517,7 +517,7 @@ export function validateTransaction(tx, existing = []) {
       // movimiento, así que equivocarse es un clic, y el saldo queda irrecuperable si pasa.
       if (held && (tx.currency === 'MXN' || tx.currency === 'USD') && tx.currency !== held.currency) {
         errors.push(
-          `Ya tienes ${symbol} en ${held.currency}, así que este movimiento también va en ${held.currency}. Si es de otra bolsa, captúralo con el símbolo de esa bolsa.`,
+          `Ya tienes ${symbol} en ${held.currency}, así que este movimiento también va en ${held.currency}. Si es de otra bolsa, captúralo con la clave de esa bolsa.`,
         )
       }
     }

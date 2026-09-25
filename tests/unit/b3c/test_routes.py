@@ -108,7 +108,7 @@ def test_factors_custom_sin_symbols_es_422(client):
     r = client.get("/v2/screeners/factors?universe=custom")
     assert r.status_code == 422
     assert r.json()["error"]["code"] == "VALIDATION_ERROR"
-    assert "símbolos" in r.json()["error"]["message"]
+    assert "claves" in r.json()["error"]["message"]
 
 
 def test_factors_con_symbols_y_universo_curado_es_422(client):

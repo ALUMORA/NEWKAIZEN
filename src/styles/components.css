@@ -522,7 +522,10 @@
 .kz-delta[data-dir="neutral"] { color: var(--neutral-dir); }
 .kz-delta.kz-missing { color: var(--muted); font-weight: var(--weight-regular); }
 .kz-delta__arrow { font-size: 0.78em; line-height: 1; }
-.kz-delta__hint { color: var(--muted); font-weight: var(--weight-regular); }
+/* La cifra no se parte, la explicación sí: en una rejilla de Stat angosta "contra el dato anterior"
+   se encimaba sobre la columna de al lado. */
+.kz-delta { flex-wrap: wrap; max-width: 100%; }
+.kz-delta__hint { color: var(--muted); font-weight: var(--weight-regular); white-space: normal; }
 
 /* ═══ InfoTip y popovers ════════════════════════════════════════════════════ */
 

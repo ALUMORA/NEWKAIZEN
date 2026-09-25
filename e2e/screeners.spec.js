@@ -143,7 +143,7 @@ const FIBRAS = {
       'Señal por P/NAV: descuento abajo de 0.90, prima arriba de 1.10 y en línea entre las dos. Es una descripción del precio contra libros, no una recomendación de inversión.',
       'El rendimiento por distribución suma lo que cada FIBRA pagó en los últimos 12 meses y lo divide entre el precio de hoy; no es el rendimiento proyectado que publica Yahoo.',
       'El campo cetes28 y el diferencial usan una tasa sustituta, no CETES de 28 días: la tasa interbancaria de México a 91 días de la OCDE en FRED, promedio mensual, dato del 2026-08-01. Sirve como referencia de corto plazo mientras el servidor no tenga CETES de Banxico.',
-      'Falta el token de Banxico (BANXICO_TOKEN) para servir CETES del SIE.',
+      'Este servidor todavía no tiene el token de Banxico, así que no hay CETES del SIE.',
       'FNOVA17.MX: LTV, deuda entre capitalización, cap rate y flujo van en s/d porque los estados financieros que publica Yahoo no son de esta FIBRA o ya no la describen. Su balance reporta 432.2 millones de CBFIs contra 335.7 millones que Yahoo le cuenta a la FIBRA.',
       'DANHOS13.MX: LTV, deuda entre capitalización y cap rate van en s/d porque la deuda de su balance (11.7 millones) no cuadra con la que Yahoo le reporta (11,579.2 millones).',
       FMTY_NOTE,
@@ -198,7 +198,7 @@ function tableOf(page, caption) {
 }
 
 async function magicReady(page) {
-  await expect(page.getByRole('heading', { level: 1, name: 'Fórmula Mágica' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Fórmula mágica' })).toBeVisible()
   await expect(tableOf(page, 'Ranking de la fórmula mágica').row('PINFRA.MX')).toBeVisible()
   await expect(page.getByRole('heading', { level: 3, name: /Emisoras que quedaron fuera/ })).toBeVisible()
 }
@@ -230,7 +230,7 @@ test.describe('screener: fórmula mágica', () => {
     })
     await page.goto('/screener/formula-magica')
     await magicReady(page)
-    await expect(page).toHaveTitle('Fórmula Mágica · Kaizen')
+    await expect(page).toHaveTitle('Fórmula mágica · Kaizen')
     await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
     expect(universes).toEqual(['mx'])
     await expect(page.getByRole('radio', { name: 'México (BMV)' })).toBeChecked()
@@ -330,7 +330,7 @@ plainTest('screener: fórmula mágica caída muestra el error con reintento', as
   const down = { status: 503, json: { error: { code: 'UPSTREAM_UNAVAILABLE', message: 'El proveedor de datos no responde. Intenta en unos minutos.' } } }
   await open(page, /** @type {string} */ (baseURL), { routes: { 'GET /v2/screeners/magic': down } })
   await page.goto('/screener/formula-magica')
-  await expect(page.getByRole('heading', { level: 1, name: 'Fórmula Mágica' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Fórmula mágica' })).toBeVisible()
   const universe = page.getByRole('region', { name: 'Universo' })
   await expect(universe.getByRole('alert')).toContainText('El proveedor de datos no responde', { timeout: 10_000 })
   await expect(universe.getByRole('button', { name: 'Reintentar' })).toBeVisible()
@@ -399,7 +399,7 @@ test.describe('screener: FIBRAs', () => {
     const banxico = {
       ...FIBRAS,
       cetes28: 0.0725,
-      meta: { ...FIBRAS.meta, source: 'yahoo,computed,banxico', fallback: false, notes: FIBRAS.meta.notes.filter((n) => !/sustituta|BANXICO_TOKEN/.test(n)) },
+      meta: { ...FIBRAS.meta, source: 'yahoo,computed,banxico', fallback: false, notes: FIBRAS.meta.notes.filter((n) => !/sustituta|token de Banxico/.test(n)) },
     }
     await open(page, /** @type {string} */ (baseURL), { routes: { 'GET /v2/screeners/fibras': { json: banxico } } })
     await page.goto('/screener/fibras')
@@ -487,8 +487,8 @@ test('desde la barra lateral: título de la pestaña y foco en el h1 de cada scr
   const nav = page.getByRole('navigation', { name: 'Principal' })
   await nav.getByRole('link', { name: 'Fórmula mágica' }).click()
   await expect(page).toHaveURL(/\/screener\/formula-magica$/)
-  await expect(page).toHaveTitle('Fórmula Mágica · Kaizen')
-  await expect(page.getByRole('heading', { level: 1, name: 'Fórmula Mágica' })).toBeFocused()
+  await expect(page).toHaveTitle('Fórmula mágica · Kaizen')
+  await expect(page.getByRole('heading', { level: 1, name: 'Fórmula mágica' })).toBeFocused()
   await magicReady(page)
   await nav.getByRole('link', { name: 'FIBRAs' }).click()
   await expect(page).toHaveTitle('FIBRAs · Kaizen')

@@ -108,7 +108,8 @@ export function buildGroups({ q, results = [], recents = [], routes, dark }) {
   return [
     { id: 'emisoras', label: 'Emisoras', options: symbols },
     { id: 'ir-a', label: 'Ir a', options: go },
-    { id: 'acciones', label: 'Acciones', options: actions },
+    // "Acciones" en una app de bolsa se lee como títulos de una emisora: el grupo se llama Opciones.
+    { id: 'acciones', label: 'Opciones', options: actions },
   ].filter((g) => g.options.length > 0)
 }
 

@@ -92,7 +92,7 @@ describe('ventas, efectivo y objetivos', () => {
       targets: { A: 0.5, ZZZ: 0.5 },
       cash: 1000,
     })
-    expect(plan.skipped).toEqual([{ symbol: 'ZZZ', reason: 'No hay precio para ese símbolo.' }])
+    expect(plan.skipped).toEqual([{ symbol: 'ZZZ', reason: 'No hay precio para esa clave.' }])
     expect(plan.after.holdings).toEqual({ A: 10 })
     expect(plan.targets.A).toBeCloseTo(1, 12)
   })

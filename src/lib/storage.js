@@ -217,7 +217,7 @@ export function validateTransaction(raw) {
   const currency = raw.currency ?? 'MXN'
   if (!CURRENCIES.includes(currency)) return { reason: `moneda no soportada (${String(currency)})` }
   const symbol = raw.symbol == null || raw.symbol === '' ? null : normalizeSymbol(raw.symbol)
-  if (raw.symbol != null && raw.symbol !== '' && symbol === null) return { reason: 'símbolo inválido' }
+  if (raw.symbol != null && raw.symbol !== '' && symbol === null) return { reason: 'clave inválida' }
 
   const quantity = numOrNull(raw.quantity)
   const price = numOrNull(raw.price)
@@ -232,14 +232,14 @@ export function validateTransaction(raw) {
   if (fxRate !== null && fxRate <= 0) return { reason: 'tipo de cambio inválido' }
 
   if (type === 'buy' || type === 'sell') {
-    if (!symbol) return { reason: 'falta el símbolo' }
+    if (!symbol) return { reason: 'falta la clave' }
     if (quantity === null || quantity <= 0) return { reason: 'la cantidad debe ser mayor que cero' }
     if (price !== null && price < 0) return { reason: 'precio negativo' }
   } else if (type === 'split') {
-    if (!symbol) return { reason: 'falta el símbolo' }
+    if (!symbol) return { reason: 'falta la clave' }
     if (ratio === null || ratio <= 0) return { reason: 'la proporción del split debe ser mayor que cero' }
   } else if (type === 'dividend') {
-    if (!symbol) return { reason: 'falta el símbolo' }
+    if (!symbol) return { reason: 'falta la clave' }
     if (amount === null || amount < 0) return { reason: 'monto inválido' }
   } else if (amount === null || amount <= 0) {
     return { reason: 'el monto debe ser mayor que cero' }

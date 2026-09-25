@@ -108,9 +108,9 @@ def parse_symbols(raw: str, *, limit: int = MAX_SYMBOLS, param: str = "symbols")
     if bad:
         raise ApiError(400, "INVALID_SYMBOL", details=field_error(f"query.{param}", "string_pattern_mismatch"))
     if not items:
-        raise invalid_param(f"query.{param}", "missing", "Indica al menos un símbolo.")
+        raise invalid_param(f"query.{param}", "missing", "Indica al menos una clave.")
     if len(items) > limit:
-        raise invalid_param(f"query.{param}", "too_long", f"Puedes pedir hasta {limit} símbolos a la vez.")
+        raise invalid_param(f"query.{param}", "too_long", f"Puedes pedir hasta {limit} claves a la vez.")
     return items
 
 

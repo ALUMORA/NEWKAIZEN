@@ -24,6 +24,10 @@ describe('router', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'))
     expect(router.state.location.search).toBe('?next=%2Fportafolio%2Friesgo')
     expect(await screen.findByRole('heading', { level: 1, name: 'Entra a Kaizen' })).toBeInTheDocument()
+    // quien todavía no tiene usuario tiene salida a las páginas públicas
+    expect(screen.getByRole('link', { name: 'Aprender' })).toHaveAttribute('href', '/aprender')
+    expect(screen.getByRole('link', { name: 'aviso de privacidad' })).toHaveAttribute('href', '/legal/privacidad')
+    expect(screen.getByRole('link', { name: 'términos de uso' })).toHaveAttribute('href', '/legal/terminos')
   })
 
   it('las rutas públicas no piden sesión', async () => {

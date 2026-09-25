@@ -14,13 +14,13 @@ describe('símbolos', () => {
   it('normaliza y valida', () => {
     expect(normalizeSymbol(' walmex.mx ')).toBe('WALMEX.MX')
     expect(normalizeSymbol('^MXX')).toBe('^MXX')
-    expect(() => normalizeSymbol('AAPL; DROP')).toThrow(/no es un símbolo válido/)
+    expect(() => normalizeSymbol('AAPL; DROP')).toThrow(/no es una clave válida/)
     expect(() => normalizeSymbol('')).toThrow()
   })
 
   it('lista sin repetidos, no vacía y con tope', () => {
     expect(normalizeSymbols(['aapl', 'AAPL', 'msft'])).toEqual(['AAPL', 'MSFT'])
-    expect(() => normalizeSymbols([])).toThrow('Falta al menos un símbolo.')
+    expect(() => normalizeSymbols([])).toThrow('Falta al menos una clave.')
     expect(() => normalizeSymbols(Array.from({ length: MAX_SYMBOLS + 1 }, (_, i) => `S${i}`))).toThrow(/hasta 50/)
   })
 })

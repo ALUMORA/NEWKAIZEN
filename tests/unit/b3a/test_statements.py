@@ -95,7 +95,7 @@ def test_an_etf_has_no_statements_and_says_so(replay_b3a):
     payload = mod.get_statements("SPY", "annual")
     assert payload["periods"] == []
     assert payload["rows"] == []
-    assert payload["notes"] == ["No hay estados financieros publicados para este símbolo."]
+    assert payload["notes"] == ["No hay estados financieros publicados para esta emisora."]
 
 
 def test_yahoo_statements_scale_minor_units(monkeypatch):
@@ -228,7 +228,7 @@ def test_when_the_sec_does_not_answer_and_yahoo_has_nothing_it_does_not_blame_th
     payload = mod.get_statements("AAPL", "annual")
     assert payload["periods"] == [] and payload["rows"] == []
     assert payload["fallback"] is True
-    assert "No hay estados financieros publicados para este símbolo." not in payload["notes"]
+    assert "No hay estados financieros publicados para esta emisora." not in payload["notes"]
     assert any("No se pudo consultar a la SEC" in note for note in payload["notes"])
 
 
@@ -236,7 +236,7 @@ def test_a_404_from_the_sec_is_an_answer_not_a_failure(replay_b3a):
     """SPY sí tiene CIK, pero la SEC contesta 404 a sus hechos XBRL: eso sí es "no hay estados"."""
     payload = mod.get_statements("SPY", "annual")
     assert payload["fallback"] is False
-    assert payload["notes"] == ["No hay estados financieros publicados para este símbolo."]
+    assert payload["notes"] == ["No hay estados financieros publicados para esta emisora."]
 
 
 def test_the_statements_route_passes_the_fallback_to_meta(client, monkeypatch):

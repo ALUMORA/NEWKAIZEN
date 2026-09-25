@@ -57,7 +57,7 @@ const OVERVIEW = {
     bmv: { open: true, label: 'Abierta. Cierra hoy a las 15:00 h de la Ciudad de México.', nextOpen: '2026-09-23T14:30:00Z', nextClose: '2026-09-22T21:00:00Z' },
     nyse: { open: true, label: 'Abierta. Cierra hoy a las 16:00 h de Nueva York.', nextOpen: '2026-09-23T13:30:00Z', nextClose: '2026-09-22T20:00:00Z' },
   },
-  meta: meta({ notes: ['Sin dato de ^HSI en esta corrida; se muestran sin valor.'] }),
+  meta: meta({ notes: ['Sin dato en esta actualización de Hang Seng (^HSI); sale como s/d.'] }),
 }
 
 const rate = (id, label, value, unit, seriesId, previous, changeBp, asOf = '2026-09-18') => ({ id, label, value, unit, asOf, seriesId, source: 'banxico', previous, changeBp })
@@ -211,6 +211,11 @@ test('/mercados/mexico: respaldo y serie sin verificar se notan, cambios en pb',
   await expect(page.getByText('no está verificada')).toBeVisible()
   await expect(page.getByText(/Este dato viene de una fuente de respaldo/).first()).toBeVisible()
   await expect(page.getByText('18.4321').first()).toBeVisible()
+  // "contra el dato anterior" se parte en líneas y no se encima sobre la cifra de al lado
+  const overflow = await page.locator('.kz-stat').evaluateAll((stats) =>
+    stats.flatMap((st) => [...st.querySelectorAll('.kz-delta')].filter((d) => d.getBoundingClientRect().right > st.getBoundingClientRect().right + 1).map(() => st.textContent)),
+  )
+  expect(overflow).toEqual([])
 })
 
 test('/mercados/cetes: tasa prellenada, 11 % a 28 días da efectiva de 11.75 % y retención sobre el capital', async ({ page, baseURL }) => {
@@ -279,6 +284,18 @@ test('/mercados/mexico: el FIX sale una sola vez, el Bono M de FRED dice sin ver
   await expect(page.getByRole('heading', { name: 'CETES 28 días en el tiempo' })).toHaveCount(0)
 })
 
+test('/mercados: quien entra sin portafolio ve los primeros pasos y puede descartarlos', async ({ page, baseURL }) => {
+  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: HEALTH, routes: V2_ROUTES })
+  await page.goto('/mercados')
+  const first = page.getByRole('region', { name: 'Primeros pasos' })
+  await expect(first.getByRole('link', { name: 'Ir a la bienvenida' })).toHaveAttribute('href', '/bienvenida')
+  await first.getByRole('button', { name: 'Ahora no' }).click()
+  await expect(first).toHaveCount(0)
+  await page.reload()
+  await expect(page.getByRole('heading', { level: 1, name: 'Mercados' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Primeros pasos' })).toHaveCount(0)
+})
+
 test('/mercados: bolsas abiertas con retraso, resumen factual, USD/MXN neutral y ligas', async ({ page, baseURL }) => {
   await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: HEALTH, routes: V2_ROUTES })
   await page.goto('/mercados')
@@ -296,7 +313,7 @@ test('/mercados: bolsas abiertas con retraso, resumen factual, USD/MXN neutral y
   await expect(summary.getByText('El dólar sube 0.27% frente al peso, a 18.4321 pesos por dólar: peso más débil.')).toBeVisible()
   await expect(summary.getByText('Mayor alza: Bitcoin, +2.10%. Mayor baja: Petróleo WTI, −1.79%.')).toBeVisible()
   await expect(summary.getByText('Sin dato en esta actualización: Hang Seng.')).toBeVisible()
-  await expect(summary.getByText('Sin dato de ^HSI en esta corrida; se muestran sin valor.')).toBeVisible()
+  await expect(summary.getByText('Sin dato en esta actualización de Hang Seng (^HSI); sale como s/d.')).toBeVisible()
   // Ni ánimo ni "miedo y codicia" en ningún lado.
   await expect(page.getByText(/sentimiento|codicia|cauteloso|optimista|pesimista/i)).toHaveCount(0)
 

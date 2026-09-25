@@ -33,7 +33,7 @@ describe('rateSource y describeRate', () => {
 describe('splitRateNotes', () => {
   it('separa las notas de la tasa sustituta del resto', () => {
     const substitute = 'El campo cetes28 y el diferencial usan una tasa sustituta, no CETES de 28 días.'
-    const token = 'Falta el token de Banxico (BANXICO_TOKEN) para servir CETES del SIE.'
+    const token = 'Este servidor todavía no tiene el token de Banxico, así que no hay CETES del SIE.'
     const fallback = 'Respaldo: serie interbancaria de México a 3 meses de la OCDE en FRED, mensual.'
     const nav = 'El NAV por CBFI es el valor en libros que reporta la FIBRA, no un avalúo independiente.'
     expect(splitRateNotes([nav, substitute, token, fallback])).toEqual({ rate: [substitute, token, fallback], rest: [nav] })
@@ -80,7 +80,7 @@ describe('rateDate', () => {
 describe('splitRateNotes con las notas que escribe hoy el backend', () => {
   // kaizen_api/domain/rates.py (get_rf_series) y kaizen_api/domain/screeners/fibras.py (NO_RATE).
   const RATE_NOTES = [
-    'La serie SF43936 todavía no tiene revisión humana (verified: false en el catálogo), así que no se usó.',
+    'La serie SF43936 todavía no tiene revisión humana, así que no se usó.',
     'Banxico no respondió (UPSTREAM_UNAVAILABLE).',
     'Banxico no tiene datos de CETES en ese rango de fechas.',
     'El SIE no confirmó la serie SF43936, así que no se usó: el título no trae "28".',

@@ -7,11 +7,13 @@ import { dividendsQuery, historyQuery, instrumentQuery, momentumQuery, newsQuery
 import { fmtDate, fmtDateTime, fmtMoney, fmtMultiple, fmtNumber, fmtPct } from '../../../lib/format.js'
 import { Card, DataTable, Delta, PageHeader, SegmentedControl, Skeleton, Stat } from '../../../components/ui/index.js'
 import { PATHS } from '../../../app/paths.js'
+import { usePageTitle } from '../../../app/pageTitle.js'
 import { QueryBlock } from '../components/QueryBlock.jsx'
 import { TimeSeries } from '../components/charts.js'
 import { Valuation } from '../components/Valuation.jsx'
 import { SectionNotes } from '../components/SectionNotes.jsx'
 import { safeUrl } from '../symbols.js'
+import { countryEs, looksEnglish, sectorEs } from '../yahoo-labels.js'
 import '../research.css'
 
 const RANGES = [
@@ -55,7 +57,7 @@ function Overview({ query }) {
               />
             </div>
             <p className="kz-research-muted">
-              {[data?.exchange, data?.sector, data?.industry, data?.country].filter(Boolean).join(' · ')}
+              {[data?.exchange, sectorEs(data?.sector), data?.industry, countryEs(data?.country)].filter(Boolean).join(' · ')}
               {data?.coverage ? ` · ${data.coverage.available} de ${data.coverage.total} datos disponibles` : ''}
             </p>
             {data?.fxUsed ? (
@@ -64,7 +66,16 @@ function Overview({ query }) {
                 <span className="num">{fmtNumber(data.fxUsed.rate, { decimals: 4 })}</span> del {fmtDate(data.fxUsed.asOf)}.
               </p>
             ) : null}
-            {data?.description ? <p className="kz-research-about">{data.description}</p> : null}
+            {data?.description ? (
+              looksEnglish(data.description) ? (
+                <>
+                  <p className="kz-research-muted">Descripción de Yahoo Finance, que solo la publica en inglés:</p>
+                  <p className="kz-research-about" lang="en">{data.description}</p>
+                </>
+              ) : (
+                <p className="kz-research-about">{data.description}</p>
+              )
+            ) : null}
             <SectionNotes notes={data?.meta?.notes} label="Avisos del resumen" />
           </div>
         )}
@@ -260,6 +271,7 @@ export default function Instrument() {
   const symbol = String(params.symbol ?? '').toUpperCase()
   const info = useQuery(instrumentQuery(symbol))
   const name = info.data?.name
+  usePageTitle(symbol ? `Ficha de ${symbol}` : null)
   return (
     <div className="kz-container kz-col kz-research-page" data-gap="6">
       <PageHeader

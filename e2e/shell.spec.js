@@ -218,12 +218,12 @@ test.describe('shell: navegación', () => {
 
     await nav.getByRole('link', { name: 'Rebalanceo' }).click()
     await expect(page).toHaveURL(/\/portafolio\/rebalanceo$/)
-    await expect(page).toHaveTitle('Rebalanceo · Kaizen')
+    await expect(page).toHaveTitle('Rebalanceo del portafolio · Kaizen')
     await expect(page.getByRole('heading', { level: 1, name: 'Rebalanceo' })).toBeFocused()
     await expect(nav.getByRole('link', { name: 'Rebalanceo' })).toHaveAttribute('aria-current', 'page')
 
-    await nav.getByRole('link', { name: 'Watchlist' }).click()
-    await expect(page).toHaveTitle('Watchlist · Kaizen')
+    await nav.getByRole('link', { name: 'Lista de seguimiento' }).click()
+    await expect(page).toHaveTitle('Lista de seguimiento · Kaizen')
     await expect(page.getByRole('heading', { level: 1, name: 'Lista de seguimiento' })).toBeFocused()
 
     await page.getByRole('button', { name: 'Plegar barra lateral' }).click()
@@ -244,13 +244,31 @@ test.describe('shell: navegación', () => {
 
     await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: 'Riesgo' }).click()
     await expect(page).toHaveURL(/\/portafolio\/riesgo$/)
-    await expect(page).toHaveTitle('Riesgo · Kaizen')
+    await expect(page).toHaveTitle('Riesgo del portafolio · Kaizen')
     await expect(page.getByRole('heading', { level: 1, name: 'Riesgo' })).toBeFocused()
     await appSettled(page)
     await expectNoHorizontalScroll(page)
   })
 
-  test('móvil: barra inferior, "Más" con Watchlist, Aprender, Tema y Cerrar sesión', async ({ page, baseURL }, testInfo) => {
+  test('móvil: cada sección lista sus páginas hermanas y la activa queda a la vista', async ({ page, baseURL }, testInfo) => {
+    const sub = page.getByRole('navigation', { name: 'Páginas de Mi portafolio' })
+    await openShell(page, /** @type {string} */ (baseURL))
+    await page.goto('/portafolio/rebalanceo')
+    if (!isMobile(testInfo)) {
+      // En escritorio la barra lateral ya las lista: la tira no se pinta.
+      await expect(sub).toBeHidden()
+      return
+    }
+    await expect(sub.getByRole('link')).toHaveText(['Resumen', 'Movimientos', 'Rendimiento', 'Riesgo', 'Rebalanceo'])
+    const active = sub.getByRole('link', { name: 'Rebalanceo' })
+    await expect(active).toHaveAttribute('aria-current', 'page')
+    await expect(active).toBeInViewport({ ratio: 1 })
+    await sub.getByRole('link', { name: 'Riesgo' }).click()
+    await expect(page).toHaveURL(/\/portafolio\/riesgo$/)
+    await expectNoHorizontalScroll(page)
+  })
+
+  test('móvil: barra inferior, "Más" con Lista de seguimiento, Aprender, Tema y Cerrar sesión', async ({ page, baseURL }, testInfo) => {
     test.skip(!isMobile(testInfo), 'La barra inferior solo existe debajo de 768 px.')
     await openShell(page, /** @type {string} */ (baseURL))
     await page.goto('/portafolio/riesgo')
@@ -262,12 +280,12 @@ test.describe('shell: navegación', () => {
     await bottom.getByRole('button', { name: 'Más' }).click()
     const sheet = page.getByRole('dialog', { name: 'Más' })
     await expect(sheet).toBeVisible()
-    await expect(sheet.getByRole('link', { name: 'Watchlist' })).toBeVisible()
+    await expect(sheet.getByRole('link', { name: 'Lista de seguimiento' })).toBeVisible()
     await expect(sheet.getByRole('link', { name: 'Aprender' })).toHaveAttribute('href', '/aprender')
     await expect(sheet.getByRole('button', { name: 'Cerrar sesión' })).toBeVisible()
     await sheet.getByRole('radio', { name: 'Oscuro' }).check()
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-    await sheet.getByRole('link', { name: 'Watchlist' }).click()
+    await sheet.getByRole('link', { name: 'Lista de seguimiento' }).click()
     await expect(sheet).toBeHidden()
     await expect(page).toHaveURL(/\/watchlist$/)
     await expect(page.getByRole('heading', { level: 1, name: 'Lista de seguimiento' })).toBeFocused()
@@ -319,7 +337,7 @@ test.describe('shell: paleta de comandos', () => {
 
     await page.keyboard.press('Control+k')
     await expect(dialog.getByRole('group', { name: 'Ir a' })).toBeVisible()
-    await expect(dialog.getByRole('group', { name: 'Acciones' })).toBeVisible()
+    await expect(dialog.getByRole('group', { name: 'Opciones' })).toBeVisible()
     await input.fill('riesgo')
     const first = dialog.getByRole('option').first()
     await expect(first).toHaveText(/Riesgo/)

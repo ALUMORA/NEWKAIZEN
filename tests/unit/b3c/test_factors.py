@@ -173,7 +173,7 @@ def test_una_emisora_sin_datos_queda_fuera_con_motivo(monkeypatch):
     board = _board(monkeypatch, universo, datos)
     por_symbol = {r["symbol"]: r for r in board["rows"]}
     assert por_symbol["BBB"]["excluded"] is True
-    assert por_symbol["BBB"]["reason"] == "El proveedor no respondió por esta emisora."
+    assert por_symbol["BBB"]["reason"] == "El proveedor no respondió para esta emisora."
     assert por_symbol["BBB"]["scores"] is None
     assert por_symbol["AAA"]["excluded"] is False
 

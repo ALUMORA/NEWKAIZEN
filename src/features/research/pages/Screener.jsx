@@ -63,7 +63,7 @@ function CustomForm({ initial, onApply }) {
       </form>
       {usable.length ? (
         <div className="kz-row" data-gap="2">
-          <span className="kz-research-muted">Usar una watchlist:</span>
+          <span className="kz-research-muted">Usar una lista de seguimiento:</span>
           {usable.map((l) => (
             <Button
               key={l.id}
@@ -216,7 +216,7 @@ export default function Screener() {
           </QueryBlock>
         </Card>
       ) : (
-        <EmptyState headingAs="h2" title="Arma tu lista" text={`Escribe de ${CUSTOM_MIN} a ${CUSTOM_MAX} claves arriba, o usa una de tus watchlists.`} />
+        <EmptyState headingAs="h2" title="Arma tu lista" text={`Escribe de ${CUSTOM_MIN} a ${CUSTOM_MAX} claves arriba, o usa una de tus listas de seguimiento.`} />
       )}
       {ready && shownExcluded.length ? (
         <Card title="Fuera del tablero" description="Sin datos suficientes para compararlas. Se muestran con su motivo en vez de esconderlas." padding="none">

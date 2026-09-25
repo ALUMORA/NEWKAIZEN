@@ -188,6 +188,8 @@ test.describe('portafolio: movimientos', () => {
       await expect(page.getByRole('heading', { level: 1, name: 'Movimientos' })).toBeVisible()
       await expect(page.locator('h1')).toHaveCount(1)
       await expect(txTable(page).getByRole('row')).toHaveCount(4)
+      // la columna del botón Borrar no se llama "Acciones", que en bolsa son títulos
+      await expect(txTable(page).getByRole('columnheader', { name: 'Opciones' })).toBeVisible()
       // Dos compras de 100 a 60 y a 70 se integran en 200 títulos a 65.
       const walmex = posTable(page).getByRole('row', { name: /WALMEX\.MX/ })
       await expect(walmex).toContainText('200')
@@ -497,7 +499,7 @@ plainTest('portafolio: rendimiento con el panel caído avisa y deja el ISR', asy
       status: 404,
       headers: { 'access-control-allow-origin': request.headers().origin ?? '*', vary: 'Origin' },
       contentType: 'application/json',
-      body: JSON.stringify({ error: { code: 'NOT_FOUND', message: 'Ningún símbolo de la lista tiene histórico para alinear.' } }),
+      body: JSON.stringify({ error: { code: 'NOT_FOUND', message: 'Ninguna emisora de la lista tiene histórico para alinear.' } }),
     }),
   )
   await page.goto('/portafolio/rendimiento')
@@ -514,6 +516,8 @@ test.describe('portafolio: resumen', () => {
       await page.goto('/portafolio')
       await expect(page.getByRole('heading', { level: 1, name: 'Mi portafolio' })).toBeVisible()
       await expect(page.locator('h1')).toHaveCount(1)
+      // el nombre por omisión no se repite como etiqueta arriba del h1
+      await expect(page.locator('main .kz-eyebrow').filter({ hasText: /^Mi portafolio$/i })).toHaveCount(0)
       const summary = page.getByRole('region', { name: 'Resumen' })
       // 150 WALMEX a 65, 5 AAPL a 240 dólares con 18.4321 y 10,300 de efectivo.
       await expect(summary).toContainText('$42,168.52 MXN')

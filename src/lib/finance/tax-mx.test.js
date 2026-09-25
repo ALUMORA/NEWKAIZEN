@@ -197,7 +197,15 @@ describe('casos de borde', () => {
   it('las ventas sin fecha van a un grupo aparte', () => {
     const out = isrOnGains({ sales: [{ proceeds: 200, cost: 100, saleDate: null }] })
     expect(out.years[0].year).toBe('sin fecha')
-    expect(out.notes.join(' ')).toContain('no traen fecha')
+    // una sola venta va en singular, no "1 ventas no traen fecha"
+    expect(out.notes.join(' ')).toContain('1 venta no trae fecha, así que quedó en un grupo aparte')
+    const dos = isrOnGains({ sales: [{ proceeds: 200, cost: 100, saleDate: null }, { proceeds: 300, cost: 100, saleDate: null }] })
+    expect(dos.notes.join(' ')).toContain('2 ventas no traen fecha')
+  })
+
+  it('una sola venta descartada va en singular', () => {
+    const out = isrOnGains({ sales: [{ proceeds: Number.NaN, cost: 100, saleDate: '2026-01-01' }] })
+    expect(out.notes.join(' ')).toContain('Se descartó 1 venta con datos incompletos.')
   })
 
   it('una venta en cero no rompe nada', () => {
@@ -267,7 +275,8 @@ describe('la pérdida arrastrada caduca a los diez ejercicios', () => {
     // la pérdida de 2012 ya pasó los 10 ejercicios, así que no puede amortizar nada en 2026
     expect(y2026.lossUsed).toBeCloseTo(0, 9)
     expect(y2026.taxableGain).toBeCloseTo(500, 9)
-    expect(out.notes.join(' ')).toContain('Caducaron')
+    // el monto caducado va como dinero formateado, no "700.00" suelto
+    expect(out.notes.join(' ')).toContain('Caducaron $700.00 MXN de pérdidas')
   })
 
   it('dentro de los diez ejercicios sí resta', () => {

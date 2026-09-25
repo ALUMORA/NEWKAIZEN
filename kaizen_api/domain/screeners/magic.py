@@ -445,7 +445,7 @@ def _sector_of(symbol: str, universe: Universe, data: SymbolData) -> str | None:
 def _row_or_reason(symbol: str, universe: Universe, data: SymbolData, floor: float) -> tuple[dict | None, str | None]:
     """Devuelve ``(renglón, None)`` o ``(None, motivo de exclusión)``. Nunca inventa un EBIT."""
     if not data.ok:
-        return None, "El proveedor no respondió por esta emisora."
+        return None, "El proveedor no respondió para esta emisora."
 
     sector = _sector_of(symbol, universe, data)
     if sector in MAGIC_EXCLUDED_SECTORS:

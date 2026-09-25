@@ -82,6 +82,21 @@ test.describe('investigar: ficha de la emisora', () => {
     await noHorizontalScroll(page)
   })
 
+  test('lo que Yahoo manda en inglés: sector y país en español, la descripción avisa su idioma y el título de la pestaña es de la emisora', async ({ page, baseURL }) => {
+    const english = 'Wal-Mart de México owns and operates self-service stores in Mexico. The company operates through two segments.'
+    await open(page, /** @type {string} */ (baseURL), {
+      routes: { 'GET /v2/instrument/:symbol': { json: { ...INSTRUMENT, sector: 'Consumer Defensive', country: 'Mexico', description: english } } },
+    })
+    await page.goto('/investigar/WALMEX.MX')
+    await instrumentReady(page)
+    await expect(page).toHaveTitle('Ficha de WALMEX.MX · Kaizen')
+    const resumen = page.getByRole('region', { name: 'Resumen' })
+    await expect(resumen.getByText(/Consumo básico/)).toBeVisible()
+    await expect(resumen.getByText(/· México/)).toBeVisible()
+    await expect(resumen.getByText('Descripción de Yahoo Finance, que solo la publica en inglés:')).toBeVisible()
+    await expect(resumen.getByText(english)).toHaveAttribute('lang', 'en')
+  })
+
   test('DCF que no aplica: muestra la razón y el resto de la ficha', async ({ page, baseURL }) => {
     await open(page, /** @type {string} */ (baseURL), {
       routes: { 'GET /v2/valuation/:symbol': { json: { ...VALUATION, dcf: { ...VALUATION.dcf, applicable: false, reason: 'El flujo libre es negativo: el DCF no aplica.' } } } },

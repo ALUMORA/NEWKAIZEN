@@ -197,7 +197,7 @@ rate implícito, el LTV y el precio contra valor en libros, y está en [fibras.m
 - Koller, Goedhart y Wessels, Valuation (McKinsey).
 - Hamada (1972), The Effect of the Firm Capital Structure on the Systematic Risk of Common Stocks.
 - Modigliani y Miller (1958, 1963) para el WACC y el escudo fiscal.
-- Los supuestos por sector viven en `kaizen_api/data/damodaran_2026.json`, con su fecha.
+- Los supuestos por sector salen de las tablas de Damodaran de enero de 2026 y se guardan con su fecha.
 
 ## Términos relacionados en el glosario
 

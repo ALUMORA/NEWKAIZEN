@@ -43,7 +43,7 @@ describe('transactionsToCSV y parseTransactionsCSV', () => {
     expect(ok).toHaveLength(1)
     expect(ok[0]).toMatchObject({ type: 'buy', date: '2026-09-02', symbol: 'WALMEX.MX', quantity: 1000, price: 60.5, currency: 'MXN' })
     expect(bad).toEqual([
-      { row: 3, reason: 'falta el símbolo' },
+      { row: 3, reason: 'falta la clave' },
       { row: 4, reason: 'tipo desconocido (regalo)' },
     ])
   })

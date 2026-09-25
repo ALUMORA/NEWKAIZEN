@@ -425,7 +425,7 @@ def compute_beta(symbol: str, price_currency: str | None, notes: list[str]) -> d
         own = _history.get_series(symbol, BETA_RANGE, BETA_INTERVAL, "native")
         market = _history.get_series(benchmark, BETA_RANGE, BETA_INTERVAL, "native")
     except NotImplementedError:
-        notes.append("La serie de precios v2 todavía no está disponible, así que la beta no se calculó.")
+        notes.append("La serie de precios todavía no está disponible, así que la beta no se calculó.")
         return None
     except ApiError as exc:
         notes.append(f"No se pudo calcular la beta: {exc.message}")
@@ -567,14 +567,14 @@ def get_instrument(symbol: str) -> dict:
     # Un ``info`` casi vacío es Yahoo diciendo que no conoce el símbolo. Se corta aquí para no
     # salir a pedirle a fast_info lo mismo tres veces por un ticker que no existe.
     if len(info) <= 5:
-        raise ApiError(404, "NOT_FOUND", f"No encontramos datos de {symbol}. Revisa el símbolo.")
+        raise ApiError(404, "NOT_FOUND", f"No encontramos datos de {symbol}. Revisa la clave.")
     price_ccy_raw = info.get("currency") or _yahoo.get_fast_value(symbol, "currency")
     price_currency, px_divisor = normalize_currency(price_ccy_raw)
     price = scale_minor(info.get("currentPrice") or info.get("regularMarketPrice"), px_divisor)
     if price is None:
         price = scale_minor(_yahoo.get_fast_value(symbol, "last_price"), px_divisor)
     if price is None or not price_currency:
-        raise ApiError(404, "NOT_FOUND", f"No encontramos datos de {symbol}. Revisa el símbolo.")
+        raise ApiError(404, "NOT_FOUND", f"No encontramos datos de {symbol}. Revisa la clave.")
 
     notes: list[str] = []
     financial_currency, fin_divisor = normalize_currency(info.get("financialCurrency"))
@@ -737,7 +737,7 @@ def get_dividends(symbol: str) -> dict:
     symbol = symbol.upper()
     info = _yahoo.get_info(symbol)
     if len(info) <= 5:
-        raise ApiError(404, "NOT_FOUND", f"No encontramos datos de {symbol}. Revisa el símbolo.")
+        raise ApiError(404, "NOT_FOUND", f"No encontramos datos de {symbol}. Revisa la clave.")
     price_currency, divisor = normalize_currency(info.get("currency") or _yahoo.get_fast_value(symbol, "currency"))
     price = scale_minor(info.get("currentPrice") or info.get("regularMarketPrice"), divisor)
     series = _yahoo.get_dividends(symbol)
@@ -762,7 +762,7 @@ def get_dividends(symbol: str) -> dict:
         if not recent:
             notes.append("No hubo pagos en los últimos 12 meses.")
     else:
-        notes.append("Yahoo no publica historia de dividendos para este símbolo.")
+        notes.append("Yahoo no publica historia de dividendos para esta emisora.")
     computed_yield = _round(_ratio(ttm, price)) if ttm else (0.0 if ttm == 0.0 else None)
     # El rendimiento de /instrument es el que PUBLICA Yahoo y este es el que sale de los pagos que
     # de veras ocurrieron en 12 meses. Los dos son defendibles y no dan lo mismo (WALMEX: 4.45 %

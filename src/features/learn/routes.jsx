@@ -17,13 +17,13 @@ export const routes = [
   {
     path: route(PATHS.learnTerm),
     element: <Pages.LearnTerm />,
-    handle: { title: 'Aprender', public: true, description: 'Explicación de este concepto con ejemplos en pesos.' },
+    handle: { title: 'Concepto del glosario', public: true, description: 'Explicación de este concepto con ejemplos en pesos.' },
   },
   {
     // Guías de docs/metodologia. Ruta propia de F5 (no está en PATHS, que es de C3); es más
     // específica que /aprender/:termino, así que el router la prefiere.
     path: route('/aprender/metodologia/:guia'),
     element: <Pages.LearnGuide />,
-    handle: { title: 'Metodología', public: true, description: 'Cómo calcula Kaizen cada número, con qué datos y con qué supuestos.' },
+    handle: { title: 'Guía de metodología', public: true, description: 'Cómo calcula Kaizen cada número, con qué datos y con qué supuestos.' },
   },
 ]

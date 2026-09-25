@@ -73,7 +73,7 @@ export default function TransactionDialog({ open, onClose, onSave }) {
     const res = validateTransaction(raw)
     if (!res.tx) {
       const reason = res.reason ?? 'revisa los datos'
-      if (reason.includes('símbolo')) setErrors({ symbol: 'Esa clave no es válida. Usa letras, números y punto, como WALMEX.MX.' })
+      if (reason.includes('clave')) setErrors({ symbol: 'Esa clave no es válida. Usa letras, números y punto, como WALMEX.MX.' })
       else setErrors({ form: `No se pudo guardar: ${reason}.` })
       return
     }
