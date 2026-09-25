@@ -174,7 +174,7 @@ def test_market_status_entrega_las_dos_bolsas_con_la_forma_del_contrato() -> Non
     payload, notes = cal.market_status(_dt.datetime(2026, 9, 22, 14, 51, 31, tzinfo=_dt.UTC))
     assert set(payload) == {"bmv", "nyse"}
     for state in payload.values():
-        assert set(state) == {"open", "label", "nextOpen", "nextClose"}
+        assert set(state) == {"open", "label", "nextOpen", "nextClose", "lastClose"}
         assert isinstance(state["open"], bool)
         assert "—" not in state["label"] and "–" not in state["label"]
     assert notes == []

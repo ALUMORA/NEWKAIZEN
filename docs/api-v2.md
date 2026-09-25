@@ -93,8 +93,8 @@ repite lo que mandó el cliente.
 | --- | --- | --- |
 | quotes | 30 | `/v2/quotes`, `/v2/fx`, `/v2/markets/overview`, `/v2/markets/world`, `/v2/instrument/{symbol}` |
 | history | 3600 | `/v2/history/{symbol}`, `/v2/panel`, `/v2/fx/history`, `/v2/momentum/{symbol}` |
-| fundamentals | 21600 | `/v2/search`, `/v2/events`, `/v2/instrument/{symbol}/statements`, `/v2/instrument/{symbol}/dividends`, `/v2/valuation/{symbol}`, `/v2/insiders/{symbol}` |
-| macro | 3600 | `/v2/rates/mx`, `/v2/rates/rf`, `/v2/macro/us` |
+| fundamentals | 21600 | `/v2/search`, `/v2/events`, `/v2/instrument/{symbol}/statements`, `/v2/instrument/{symbol}/dividends`, `/v2/valuation/{symbol}`, `/v2/insiders/{symbol}`, `/v2/assumptions` |
+| macro | 3600 | `/v2/rates/mx`, `/v2/rates/mx/inpc`, `/v2/rates/rf`, `/v2/macro/us` |
 | news | 600 | `/v2/news` |
 | screeners | 43200 | `/v2/screeners/factors`, `/v2/screeners/magic`, `/v2/screeners/fibras` |
 
@@ -156,6 +156,15 @@ están en `docs/OWNERSHIP.md`).
   Mismos cierres ajustados que `/v2/history`: un cierre anterior a un dividendo no sirve como precio
   de compra. Los rendimientos se calculan en el cliente. Para separar efecto precio y efecto tipo de
   cambio, ver "Panel en moneda nativa y en MXN" en las recetas para el cliente, más abajo.
+  - `adjust` (opcional, aditivo de la fase 3, pedido F1-4; capacidad `panel.splits`): `total` por
+    omisión (lo de siempre) o `splits`, cierres ajustados SOLO por splits, para quien suma el
+    efectivo de los dividendos por su cuenta (el TWR del libro). El servidor deshace el ajuste por
+    dividendos con la columna `Dividends` de la misma descarga de Yahoo, sin otra llamada: recorre la
+    serie hacia atrás y en cada fecha ex recupera el cierre previo como `C = A / F + D` (el método de
+    Yahoo es multiplicar lo anterior por `1 - D / C`). En barras diarias es exacto; en `1wk` y `1mo`
+    el cierre previo es el de la barra anterior y `meta.notes` avisa que es aproximado. La respuesta
+    trae `adjustment` con el ajuste aplicado (`total` o `splits`; ausente en un API anterior, que es
+    `total`). `/v2/history` sigue siendo siempre `adjusted: true`.
 - `GET /v2/fx?pair=USDMXN` → `FxResponse`. FIX de Banxico (`banxico_fix`) si hay token, si no Yahoo
   marcado en `meta`.
 - `GET /v2/fx/history?pair=USDMXN&start=&end=` → `FxHistoryResponse`. Banxico FIX SF43718 con token,
@@ -193,6 +202,17 @@ están en `docs/OWNERSHIP.md`).
   tolere un API desplegado antes de este cambio (ahí, sin `verified`, la serie no se da por
   verificada, y sin `stale` se usa `meta.stale`). Por eso `stale` es `boolean | null` con `null` por
   omisión: la ausencia es "sin dato", nunca "fresca".
+- `GET /v2/rates/mx/inpc?start=&end=` → `InpcResponse` (ruta nueva de la fase 3, pedido F1-3;
+  capacidad `rates.inpc`). Nivel mensual del INPC general, serie `SP1` del SIE (base segunda
+  quincena de julio de 2018 = 100), en `monthly` como `{"AAAA-MM": nivel}` en orden cronológico.
+  `start` por omisión es `2000-01-01` y `end` hoy; el mes se toma del dato que el SIE fecha el día 1.
+  `meta.asOf` es el día 1 del último mes publicado y `meta.stale` se prende si tiene más de 75 días.
+  Va en ruta propia y no como campo de `/v2/rates/mx` porque son cientos de meses que solo pide el
+  cálculo del ISR, y `/v2/rates/mx` lo lee cada pantalla de tasas. Sin respaldo: sin token de
+  Banxico responde `503 NOT_CONFIGURED`, y si el SIE no confirma la serie con el candado del
+  catálogo (título, periodicidad, unidad y `verified`, en la llave `indices` de
+  `kaizen_api/data/banxico_series.json`), `503 UPSTREAM_UNAVAILABLE`. Para actualizar un costo por
+  inflación: factor = INPC del mes anterior a la venta entre INPC del mes de la compra.
 - `GET /v2/rates/rf?start=&end=&tenorDays=28` (`tenorDays`: 28, 91, 182 o 364) →
   `RfSeriesResponse`. Rendimientos anualizados simples act/360 como fracción. El cliente convierte a
   tasa por periodo: `rf_d = (1 + y * 28 / 360)^(d / 28) - 1`. Fuente `banxico`, o `fred_ir3tib`
@@ -205,6 +225,10 @@ están en `docs/OWNERSHIP.md`).
 - `GET /v2/markets/overview` → `MarketsOverviewResponse`. Grupos `mx`, `us`, `global`, `fx`,
   `commodities`, `crypto`, más `marketStatus` de BMV y NYSE (calendario de B2a en
   `domain/market_calendar.py`).
+  - `lastClose` (opcional, aditivo de la fase 3, pedido F2-7a): fecha `AAAA-MM-DD`, en la zona de
+    cada bolsa, de la última jornada que ya cerró según el calendario. Con la bolsa abierta es la
+    jornada anterior a hoy; en fin de semana o feriado, la última hábil. No depende de que el grupo
+    traiga datos. `null` solo si no hubo jornada en los 30 días previos; ausente en un API anterior.
 - `GET /v2/markets/world` → `WorldResponse`. Variación por país con ETF de iShares en USD;
   `country` es ISO 3166-1 numérico de 3 dígitos (484 = México).
 
@@ -238,6 +262,15 @@ están en `docs/OWNERSHIP.md`).
   `current` en `multiples.methods`, en "Referencias del sector", más abajo.
 - `GET /v2/momentum/{symbol}` → `MomentumResponse`. `r12m1` es el rendimiento de 12 meses sin el
   último mes; `relative12m1` contra `benchmark`.
+- `GET /v2/assumptions` → `AssumptionsResponse` (ruta nueva de la fase 3, pedido F4; capacidad
+  `assumptions`; exige sesión como las demás rutas v2). Supuestos de mercado del archivo de
+  Damodaran (`kaizen_api/data/damodaran_2026.json`), sin salir a la red: `erp` es la prima de
+  riesgo de mercado que usa `/v2/valuation` cuando no se pasa `?erp=` (hoy la de mercado maduro,
+  4.23 % en el vintage de enero de 2026), `matureMarketErp` la misma cifra con su nombre, `crp` la
+  prima de riesgo país por país (`MX`, `US`), `source` y `sourceUrl` quién la publica y dónde,
+  `vintage` (`AAAA-MM`) y `asOf` la fecha de actualización del autor. `meta.stale` se prende si el
+  archivo tiene más de 400 días (ya habría un vintage nuevo). Si cambia el vintage, el optimizador y
+  la valuación leen la misma cifra.
 
 ### Screeners (B3c: `routers/screeners.py`)
 
@@ -245,9 +278,25 @@ están en `docs/OWNERSHIP.md`).
   `symbols=A,B`, hasta 50, y sin `custom` no se acepta `symbols`) → `FactorsResponse`.
 - `GET /v2/screeners/magic?universe=us` (`us` o `mx`) → `MagicResponse`. Solo EBIT reportado, nunca
   estimado; `partial: true` si no respondieron todas las emisoras.
+  - `ebitSource` por renglón (opcional, aditivo de la fase 3, pedido F3c-2): `operating_income`
+    si el EBIT es la utilidad de operación reportada, `ebit_row` si se usó el renglón "EBIT" de
+    Yahoo como respaldo (puede traer partidas no operativas). La nota de `meta.notes` que lista las
+    emisoras de respaldo se conserva igual. Ausente o `null` en un API anterior.
 - `GET /v2/screeners/fibras?extra=A,B` (hasta 20 extra) → `FibrasResponse`. `signal` es
   `descuento`, `en_linea`, `prima` o `sin_datos` (descripción del precio contra el NAV, no una
   recomendación). `ltv` es deuda entre activos totales.
+  - `notes` por renglón (opcional, aditivo de la fase 3, pedido F3c-2): una oración por motivo,
+    sin el símbolo, que nombra las cifras de ESE renglón que van en `null` y por qué (estados
+    ajenos o viejos, deuda que no cuadra, otra moneda de reporte, historia de pagos ilegible o sin
+    pagos, sin tasa de referencia, sin precio, sin NAV, o el proveedor no respondió). Toda cifra en
+    `null` queda nombrada en alguna nota; lo que ningún motivo explica sale como "Yahoo no publica
+    el dato con que se calcula". Vacía si no falta nada. `meta.notes` conserva los mismos avisos con
+    la clave de la FIBRA al frente.
+  - `rate` (opcional, aditivo de la fase 3, pedido F3c-3): `{ value, asOf, source, fallback,
+    tenorDays }`, la misma tasa de `cetes28` con la fecha de SU dato (`meta.asOf` es la de los
+    precios), `source` `banxico` o `fred`, `fallback: true` si no son CETES de Banxico y
+    `tenorDays` con el plazo de la serie que de verdad se usó (91 con el respaldo de FRED, aunque el
+    campo se llame `cetes28`). `null` cuando `cetes28` es `null`. `cetes28` se conserva.
 
 ## Recetas y referencias para el cliente
 
@@ -577,6 +626,7 @@ Precios alineados por fecha (INNER JOIN, sin rellenar precios).
 | --- | --- | --- | --- |
 | `currency` | currency | sí |  |
 | `interval` | "1d" \| "1wk" \| "1mo" | sí |  |
+| `adjustment` | "total" \| "splits" | no | total = cierres ajustados por splits y dividendos (rendimiento total, lo de siempre); splits = solo por splits, pedido con ?adjust=splits. Ausente en un API anterior a la fase 3: total |
 | `dates` | date[] | sí |  |
 | `prices` | {string: number[]} | sí |  |
 | `dropped` | DroppedSymbol[] | sí |  |
@@ -712,6 +762,7 @@ Rendimientos anualizados simples act/360 como fracción. El cliente convierte po
 | `label` | string | sí |  |
 | `nextOpen` | instant \| null | sí |  |
 | `nextClose` | instant \| null | sí |  |
+| `lastClose` | date \| null | no | Fecha, en la zona de la bolsa, de la última jornada que ya cerró (con la bolsa abierta es la anterior a hoy). Sale del calendario; null si no hay jornada en los últimos 30 días o el API es anterior a la fase 3 |
 
 #### WorldResponse
 
@@ -1153,6 +1204,7 @@ Solo EBIT reportado (nunca estimado); earningsYield y returnOnCapital como fracc
 | `rank` | integer | sí | mín 1 |
 | `currency` | currency | sí |  |
 | `fiscalPeriodEnd` | date \| null | sí |  |
+| `ebitSource` | "operating_income" \| "ebit_row" \| null | no | De dónde salió el EBIT: operating_income es la utilidad de operación reportada (lo normal); ebit_row es el renglón EBIT de Yahoo, de respaldo, que puede traer partidas no operativas. null o ausente es un API anterior a la fase 3 |
 
 #### ExcludedSymbol
 
@@ -1167,6 +1219,7 @@ Solo EBIT reportado (nunca estimado); earningsYield y returnOnCapital como fracc
 | --- | --- | --- | --- |
 | `rows` | FibraRow[] | sí |  |
 | `cetes28` | fraction \| null | sí |  |
+| `rate` | FibrasRate \| null | no | cetes28 con su fecha, fuente, si es sustituta y su plazo. null si no hay tasa (el diferencial va en s/d) o si el API es anterior a la fase 3 |
 | `meta` | Meta | sí |  |
 
 #### FibraRow
@@ -1190,6 +1243,19 @@ Solo EBIT reportado (nunca estimado); earningsYield y returnOnCapital como fracc
 | `spreadVsCetes` | fraction \| null | sí |  |
 | `signal` | "descuento" \| "en_linea" \| "prima" \| "sin_datos" | sí |  |
 | `type` | "propiedades" \| "hipotecaria" \| "energia" \| "otro" | sí |  |
+| `notes` | string[] | no | Motivo de cada cifra en s/d de este renglón, en español y sin el símbolo; vacía si no falta nada. meta.notes conserva los mismos avisos por FIBRA con su clave |
+
+#### FibrasRate
+
+La tasa de referencia del diferencial, con su procedencia (``cetes28`` es solo el número).
+
+| Campo | Tipo | Requerido | Notas |
+| --- | --- | --- | --- |
+| `value` | number | sí | El mismo número que cetes28 |
+| `asOf` | date \| null | sí | Fecha del dato de la tasa; meta.asOf es la de los precios |
+| `source` | "banxico" \| "fred" \| null | sí | banxico = CETES del SIE; fred = serie interbancaria de la OCDE en FRED (respaldo); null si el servidor no lo dijo |
+| `fallback` | boolean | sí | true si no son CETES de Banxico: la tasa es sustituta y hay que decirlo |
+| `tenorDays` | integer \| null | sí | Plazo en días de la serie que de verdad se usó (91 con el respaldo de FRED), no el pedido; mín 1 |
 
 #### InsidersResponse
 
@@ -1217,5 +1283,31 @@ Solo EBIT reportado (nunca estimado); earningsYield y returnOnCapital como fracc
 | --- | --- | --- | --- |
 | `openMarketBuys` | integer | sí | mín 0 |
 | `openMarketSells` | integer | sí | mín 0 |
+
+#### AssumptionsResponse
+
+Supuestos de mercado del API (Damodaran), para que el cliente no copie constantes.
+
+| Campo | Tipo | Requerido | Notas |
+| --- | --- | --- | --- |
+| `erp` | number | sí | Prima de riesgo de mercado por omisión del CAPM del API: la misma que usa /v2/valuation sin ?erp=. Hoy es la de mercado maduro |
+| `matureMarketErp` | number | sí | Prima de mercado maduro de Damodaran: la implícita de EE. UU. menos su prima país |
+| `crp` | {"MX" \| "US": fraction} | sí | Prima de riesgo país por país del archivo (MX, US). /v2/valuation la suma a erp con lambda 1 |
+| `source` | string | sí | Quién publica los datos y de qué vintage, en texto para la UI |
+| `sourceUrl` | string /^https?:/// | sí | Página de donde se descargó el archivo |
+| `vintage` | string /^\d{4}-\d{2}$/ | sí | Vintage del archivo, AAAA-MM |
+| `asOf` | date | sí | Fecha de actualización de los datos según el autor |
+| `meta` | Meta | sí |  |
+
+#### InpcResponse
+
+Nivel mensual del INPC general (SIE ``SP1``), para actualizar costos fiscales.
+
+| Campo | Tipo | Requerido | Notas |
+| --- | --- | --- | --- |
+| `seriesId` | string | sí | Id de la serie en el SIE de Banxico (SP1) |
+| `base` | string \| null | sí | Periodo base del índice (= 100) |
+| `monthly` | {string: number} | sí | {"AAAA-MM": nivel}, en orden cronológico; un mes sin dato publicado no aparece |
+| `meta` | Meta | sí |  |
 
 <!-- END REFERENCIA GENERADA -->

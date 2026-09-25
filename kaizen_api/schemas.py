@@ -19,6 +19,7 @@ Convenciones (también en docs/api-v2.md):
 
 from __future__ import annotations
 
+import re
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -102,6 +103,8 @@ KNOWN_CAPABILITIES = (
     "fx.history",
     "rates.mx",
     "rf.series",
+    "rates.inpc",
+    "panel.splits",
     "macro.us",
     "markets.overview",
     "markets.world",
@@ -117,6 +120,7 @@ KNOWN_CAPABILITIES = (
     "screeners.magic",
     "screeners.fibras",
     "insiders",
+    "assumptions",
 )
 """Valores posibles de ``/health.capabilities``. Solo se anuncia lo que ya funciona."""
 
@@ -301,6 +305,13 @@ class PanelResponse(ContractModel):
 
     currency: Currency
     interval: Interval
+    adjustment: Literal["total", "splits"] = Field(
+        default="total",
+        description=(
+            "total = cierres ajustados por splits y dividendos (rendimiento total, lo de siempre); splits ="
+            " solo por splits, pedido con ?adjust=splits. Ausente en un API anterior a la fase 3: total"
+        ),
+    )
     dates: list[IsoDate]
     prices: dict[str, list[float]]
     dropped: list[DroppedSymbol]
@@ -387,6 +398,24 @@ class MxRatesResponse(ContractModel):
     meta: Meta
 
 
+class InpcResponse(ContractModel):
+    """Nivel mensual del INPC general (SIE ``SP1``), para actualizar costos fiscales."""
+
+    seriesId: str = Field(description="Id de la serie en el SIE de Banxico (SP1)")
+    base: str | None = Field(description="Periodo base del índice (= 100)")
+    monthly: dict[str, float] = Field(
+        description='{"AAAA-MM": nivel}, en orden cronológico; un mes sin dato publicado no aparece'
+    )
+    meta: Meta
+
+    @model_validator(mode="after")
+    def _months(self) -> InpcResponse:
+        bad = [k for k in self.monthly if not re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", k)]
+        if bad:
+            raise ValueError(f"rates/mx/inpc: llaves que no son AAAA-MM: {bad[:3]}")
+        return self
+
+
 class RfSeriesResponse(ContractModel):
     """Rendimientos anualizados simples act/360 como fracción. El cliente convierte por periodo."""
 
@@ -448,6 +477,14 @@ class ExchangeStatus(ContractModel):
     label: str
     nextOpen: Instant | None
     nextClose: Instant | None
+    lastClose: IsoDate | None = Field(
+        default=None,
+        description=(
+            "Fecha, en la zona de la bolsa, de la última jornada que ya cerró (con la bolsa abierta es la"
+            " anterior a hoy). Sale del calendario; null si no hay jornada en los últimos 30 días o el API"
+            " es anterior a la fase 3"
+        ),
+    )
 
 
 class MarketStatus(ContractModel):
@@ -799,6 +836,31 @@ class ValuationResponse(ContractModel):
     meta: Meta
 
 
+CountryId = Literal["MX", "US"]
+
+
+class AssumptionsResponse(ContractModel):
+    """Supuestos de mercado del API (Damodaran), para que el cliente no copie constantes."""
+
+    erp: Fraction = Field(
+        description=(
+            "Prima de riesgo de mercado por omisión del CAPM del API: la misma que usa /v2/valuation sin"
+            " ?erp=. Hoy es la de mercado maduro"
+        )
+    )
+    matureMarketErp: Fraction = Field(
+        description="Prima de mercado maduro de Damodaran: la implícita de EE. UU. menos su prima país"
+    )
+    crp: dict[CountryId, Fraction] = Field(
+        description="Prima de riesgo país por país del archivo (MX, US). /v2/valuation la suma a erp con lambda 1"
+    )
+    source: str = Field(description="Quién publica los datos y de qué vintage, en texto para la UI")
+    sourceUrl: str = Field(pattern=r"^https?://", description="Página de donde se descargó el archivo")
+    vintage: str = Field(pattern=r"^\d{4}-\d{2}$", description="Vintage del archivo, AAAA-MM")
+    asOf: IsoDate = Field(description="Fecha de actualización de los datos según el autor")
+    meta: Meta
+
+
 class MomentumResponse(ContractModel):
     """Rendimientos como fracción; r12m1 = 12 meses excluyendo el último."""
 
@@ -880,6 +942,14 @@ class MagicRow(ContractModel):
     rank: int = Field(ge=1)
     currency: Currency
     fiscalPeriodEnd: IsoDate | None
+    ebitSource: Literal["operating_income", "ebit_row"] | None = Field(
+        default=None,
+        description=(
+            "De dónde salió el EBIT: operating_income es la utilidad de operación reportada (lo normal);"
+            " ebit_row es el renglón EBIT de Yahoo, de respaldo, que puede traer partidas no operativas."
+            " null o ausente es un API anterior a la fase 3"
+        ),
+    )
 
 
 class ExcludedSymbol(ContractModel):
@@ -913,11 +983,39 @@ class FibraRow(ContractModel):
     spreadVsCetes: Fraction | None
     signal: Literal["descuento", "en_linea", "prima", "sin_datos"]
     type: Literal["propiedades", "hipotecaria", "energia", "otro"]
+    notes: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Motivo de cada cifra en s/d de este renglón, en español y sin el símbolo; vacía si no falta"
+            " nada. meta.notes conserva los mismos avisos por FIBRA con su clave"
+        ),
+    )
+
+
+class FibrasRate(ContractModel):
+    """La tasa de referencia del diferencial, con su procedencia (``cetes28`` es solo el número)."""
+
+    value: Fraction = Field(description="El mismo número que cetes28")
+    asOf: IsoDate | None = Field(description="Fecha del dato de la tasa; meta.asOf es la de los precios")
+    source: Literal["banxico", "fred"] | None = Field(
+        description="banxico = CETES del SIE; fred = serie interbancaria de la OCDE en FRED (respaldo); null si el servidor no lo dijo"
+    )
+    fallback: bool = Field(description="true si no son CETES de Banxico: la tasa es sustituta y hay que decirlo")
+    tenorDays: int | None = Field(
+        ge=1, description="Plazo en días de la serie que de verdad se usó (91 con el respaldo de FRED), no el pedido"
+    )
 
 
 class FibrasResponse(ContractModel):
     rows: list[FibraRow]
     cetes28: Fraction | None
+    rate: FibrasRate | None = Field(
+        default=None,
+        description=(
+            "cetes28 con su fecha, fuente, si es sustituta y su plazo. null si no hay tasa (el diferencial va en"
+            " s/d) o si el API es anterior a la fase 3"
+        ),
+    )
     meta: Meta
 
 
@@ -968,5 +1066,7 @@ RESPONSE_MODELS: tuple[type[ContractModel], ...] = (
     MagicResponse,
     FibrasResponse,
     InsidersResponse,
+    AssumptionsResponse,
+    InpcResponse,
 )
 """Un modelo por endpoint v2 (además de ErrorBody y Meta)."""

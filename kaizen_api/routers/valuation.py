@@ -21,14 +21,15 @@ from fastapi import APIRouter, Query
 
 from kaizen_api.cache import _cached
 from kaizen_api.domain.screeners.momentum import NoHistory, get_momentum_v2
+from kaizen_api.domain.valuation.params import assumptions as damodaran_assumptions
 from kaizen_api.domain.valuation.service import get_valuation
 from kaizen_api.errors import ApiError
 from kaizen_api.provenance import meta
 from kaizen_api.routers import CACHE_SECONDS, ERROR_RESPONSES, SymbolPath, cache_control
-from kaizen_api.schemas import MomentumResponse, ValuationResponse
+from kaizen_api.schemas import AssumptionsResponse, MomentumResponse, ValuationResponse
 
 router = APIRouter(prefix="/v2", tags=["investigación"], responses=ERROR_RESPONSES)
-CAPABILITIES: list[str] = ["valuation.multiples", "valuation.dcf", "momentum"]
+CAPABILITIES: list[str] = ["valuation.multiples", "valuation.dcf", "momentum", "assumptions"]
 
 
 @router.get(
@@ -96,4 +97,18 @@ def momentum(symbol: SymbolPath) -> MomentumResponse:
         fallback=False,
         notes=payload.get("_notes") or [],
     )
+    return body
+
+
+@router.get(
+    "/assumptions",
+    response_model=AssumptionsResponse,
+    dependencies=[cache_control("fundamentals")],
+    summary="Prima de riesgo de mercado y riesgo país por omisión (Damodaran), con fuente y fecha",
+)
+def assumptions() -> AssumptionsResponse:
+    # Sale de un archivo del repo: no toca la red y no necesita caché propia.
+    data = damodaran_assumptions()
+    body = {k: v for k, v in data.items() if k not in ("stale", "notes")}
+    body["meta"] = meta("damodaran", as_of=data["asOf"], stale=data["stale"], notes=data["notes"])
     return body

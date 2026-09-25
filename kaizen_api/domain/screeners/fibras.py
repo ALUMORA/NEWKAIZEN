@@ -323,13 +323,14 @@ NO_RATE = {
     "stale": False,
     "note": "Todavía no hay tasa de CETES 28 en este servidor, así que el diferencial va en s/d.",
     "notes": [],
+    "tenorDays": None,
 }
 
 
 def cetes28() -> dict:
     """Tasa de referencia de corto plazo como fracción, con fecha, fuente y si es sustituta.
 
-    Devuelve ``{"rate", "asOf", "source", "fallback", "stale", "note", "notes"}``. ``rate`` en
+    Devuelve ``{"rate", "asOf", "source", "fallback", "stale", "note", "notes", "tenorDays"}``. ``rate`` en
     ``None`` significa que la costura de B2b no dio tasa: el diferencial sale en s/d. ``notes`` son
     las de B2b, tal cual; ``note`` es la de este screener. Si la fuente no es Banxico la tasa se
     publica marcada como sustituta: no son CETES de 28 días y se dice.
@@ -362,6 +363,8 @@ def cetes28() -> dict:
         return {
             "rate": rate, "asOf": as_of, "source": source, "fallback": fallback,
             "stale": stale, "note": note, "notes": upstream,
+            # Plazo que de verdad tiene la serie servida (91 con el respaldo de FRED), no el pedido.
+            "tenorDays": int(tenor) if tenor else None,
         }
     return dict(NO_RATE)
 
@@ -567,6 +570,55 @@ def _sentence(text: str) -> str:
     return text[0].upper() + text[1:] + ("" if text.endswith(".") else ".")
 
 
+ROW_METRICS = {
+    "price": "precio",
+    "marketCap": "capitalización",
+    "distributionYield": "rendimiento por distribución",
+    "capRate": "cap rate",
+    "navPerCbfi": "NAV por CBFI",
+    "pNav": "P/NAV",
+    "ltv": "LTV",
+    "debtToMarketCap": "deuda entre capitalización",
+    "cashFlowYield": "flujo",
+    "spreadVsCetes": "diferencial contra CETES",
+}
+"""Cifras de ``FibraRow`` que pueden ir en s/d, con su nombre en español para ``notes`` del renglón."""
+
+
+def _labels(fields: list[str]) -> str:
+    names = [ROW_METRICS[f] for f in fields]
+    if len(names) == 1:
+        return names[0]
+    return ", ".join(names[:-1]) + " y " + names[-1]
+
+
+def row_notes(row: dict, reasons: list[tuple[tuple[str, ...], str]]) -> list[str]:
+    """``notes`` de un renglón: el motivo de cada s/d, sin símbolo y sin repetir cifras.
+
+    ``reasons`` va en orden de prioridad: ``(cifras que explica, motivo)``. Cada motivo nombra solo
+    las cifras que de verdad salieron en ``null`` y que ningún motivo anterior ya explicó. Lo que
+    quede sin explicar al final se atribuye a que Yahoo no trae el dato, para que ninguna s/d se
+    quede sin motivo escrito.
+    """
+    missing = [f for f in ROW_METRICS if row.get(f) is None]
+    explained: set[str] = set()
+    notes: list[str] = []
+    for fields, why in reasons:
+        mine = [f for f in missing if f in fields and f not in explained]
+        if not mine:
+            continue
+        explained.update(mine)
+        verb = "va" if len(mine) == 1 else "van"
+        notes.append(_sentence(f"{_labels(mine)} {verb} en s/d porque {why}"))
+    rest = [f for f in missing if f not in explained]
+    if rest:
+        verb = "va" if len(rest) == 1 else "van"
+        notes.append(
+            _sentence(f"{_labels(rest)} {verb} en s/d porque Yahoo no publica el dato con que se calcula")
+        )
+    return notes
+
+
 def distributions(symbols: list[str]) -> tuple[dict[str, dict | None], list[str]]:
     """Pagos de 12 meses por FIBRA con la costura de dividendos de B3a (``get_dividends``).
 
@@ -742,6 +794,51 @@ def build(extra: list[str] | None = None) -> dict:
         _row(sym, fetched.get(sym), universe.member(sym), rate, dividends.get(sym), problems.get(sym))
         for sym in symbols
     ]
+    no_payments = {
+        s for s in answered
+        if s not in failed and (not dividends.get(s) or dividends[s].get("yield") is None)
+    }
+    for row in rows:
+        sym = row["symbol"]
+        data = fetched.get(sym)
+        reasons: list[tuple[tuple[str, ...], str]] = []
+        if data is None or not data.ok:
+            reasons.append((
+                tuple(ROW_METRICS),
+                "el proveedor no respondió por esta FIBRA" if sym in pending or data is None
+                else "Yahoo no devolvió datos de esta FIBRA",
+            ))
+        else:
+            found = problems.get(sym) or {}
+            if found.get("foreign"):
+                reasons.append((
+                    ("ltv", "debtToMarketCap", "capRate", "cashFlowYield", "navPerCbfi", "pNav"),
+                    "los estados financieros que publica Yahoo no son de esta FIBRA o ya no la describen: "
+                    + "; ".join(found["foreign"]),
+                ))
+            elif found.get("debt"):
+                reasons.append((("ltv", "debtToMarketCap", "capRate"), "; ".join(found["debt"])))
+            if not data.same_currency:
+                reasons.append((
+                    ("navPerCbfi", "pNav", "capRate", "debtToMarketCap", "cashFlowYield"),
+                    f"reporta en {data.financial_currency} y cotiza en {data.currency}, y no se mezclan monedas",
+                ))
+            if sym in failed:
+                reasons.append((
+                    ("distributionYield", "spreadVsCetes"), "no se pudo leer su historia de pagos"
+                ))
+            elif sym in no_payments:
+                reasons.append((
+                    ("distributionYield", "spreadVsCetes"), "Yahoo no publica pagos de esta FIBRA en 12 meses"
+                ))
+            if rate is None:
+                reasons.append((("spreadVsCetes",), "el servidor no tiene tasa de referencia de CETES"))
+            reasons.append((("price", "pNav"), "Yahoo no trae su precio ni su último cierre"))
+            reasons.append((
+                ("navPerCbfi", "pNav"),
+                "Yahoo no publica su valor en libros por CBFI ni el capital y los CBFIs para calcularlo",
+            ))
+        row["notes"] = row_notes(row, reasons)
     rows.sort(key=lambda r: (r["pNav"] is None, r["pNav"] or 0.0, r["symbol"]))
 
     notes: list[str] = [
@@ -817,6 +914,14 @@ def build(extra: list[str] | None = None) -> dict:
     return {
         "rows": rows,
         "cetes28": rate,
+        # La misma tasa con su procedencia, para que la UI no la lea del texto de meta.notes.
+        "rate": None if rate is None else {
+            "value": rate,
+            "asOf": cetes["asOf"],
+            "source": cetes["source"],
+            "fallback": bool(cetes["fallback"]),
+            "tenorDays": cetes.get("tenorDays"),
+        },
         "notes": notes,
         "asOf": as_of,
         "rateSource": cetes["source"],

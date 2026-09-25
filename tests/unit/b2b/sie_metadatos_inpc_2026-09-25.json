@@ -1,0 +1,11 @@
+{
+  "capturado": "2026-09-25",
+  "fuente": "GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SP1,SP30577,SP74625 (solo metadatos; el token va en la cabecera y no se guarda aquí)",
+  "bmx": {
+    "series": [
+      {"idSerie": "SP30577", "titulo": "Índice Nacional de Precios al consumidor Variación mensual", "fechaInicio": "01/01/1969", "fechaFin": "01/08/2026", "periodicidad": "Mensual", "cifra": "Porcentajes", "unidad": "Sin Unidad", "versionada": false},
+      {"idSerie": "SP1", "titulo": "IPC Por objeto del gasto                                                         Nacional I n d i c e   G e n e r a l", "fechaInicio": "01/01/1969", "fechaFin": "01/08/2026", "periodicidad": "Mensual", "cifra": "Indices", "unidad": "Sin Unidad", "versionada": false},
+      {"idSerie": "SP74625", "titulo": "Subíndices subyacente y complementarios Precios al consumidor (INPC) Subyacente", "fechaInicio": "01/01/1969", "fechaFin": "01/08/2026", "periodicidad": "Mensual", "cifra": "Indices", "unidad": "Sin Unidad", "versionada": false}
+    ]
+  }
+}

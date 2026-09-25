@@ -416,3 +416,55 @@ def get_rf_series(start: str | None = None, end: str | None = None, tenor_days: 
         "stale": _stale(serie["dates"][-1], 70),
         "notes": notes,
     }
+
+
+# ─── v2: serie mensual del INPC ──────────────────────────────────────────────
+
+INPC_ID = "inpc"
+INPC_START = "2000-01-01"
+"""Primer mes que se sirve si el cliente no pide ``start``: alcanza para el costo de cualquier compra
+que registre la app y deja la respuesta en unos 320 meses."""
+
+
+def get_inpc(start: str | None = None, end: str | None = None) -> dict:
+    """``/v2/rates/mx/inpc``: nivel mensual del INPC general del SIE, ``{"AAAA-MM": valor}``.
+
+    Sin respaldo: el INPC no tiene sustituto honesto en FRED con la misma base, así que sin token es
+    503 ``NOT_CONFIGURED`` y si el SIE no confirma la serie es 503 ``UPSTREAM_UNAVAILABLE``. El dato
+    del mes se fecha el día 1 en el SIE; aquí la llave es solo ``AAAA-MM``.
+    """
+    sid = next((k for k, v in banxico.index_catalog().items() if v.get("indexId") == INPC_ID), None)
+    if sid is None:  # pragma: no cover - solo si alguien borra la entrada del catálogo
+        raise ApiError(503, "NOT_CONFIGURED", "El catálogo del SIE no trae el INPC.")
+    info = banxico.index_catalog()[sid]
+    if not banxico.configured():
+        raise ApiError(503, "NOT_CONFIGURED", "La serie del INPC necesita el token de Banxico en el servidor.")
+    reasons = banxico.verification([sid]).get(sid, [banxico.NOT_RETURNED])
+    if reasons or not banxico.reviewed(sid):
+        why = "; ".join(reasons) if reasons else "no tiene revisión humana en el catálogo"
+        raise ApiError(503, "UPSTREAM_UNAVAILABLE", f"No se publica el INPC ({sid}) porque {why}.")
+    first = start or INPC_START
+    last = end or _today().isoformat()
+    data = banxico.fetch_series([sid], first, last).get(sid) or {}
+    monthly: dict[str, float] = {}
+    for day, value in zip(data.get("dates") or [], data.get("values") or [], strict=True):
+        monthly[day[:7]] = round(float(value), 6)
+    if not monthly:
+        raise ApiError(404, "NOT_FOUND", "El SIE no tiene datos del INPC en ese rango de fechas.")
+    months = sorted(monthly)
+    as_of = f"{months[-1]}-01"
+    notes = [
+        f"Índice general del INPC, base {info.get('base', 'segunda quincena de julio de 2018 = 100')}, un"
+        " valor por mes. El Inegi publica el mes hacia el día 9 del mes siguiente.",
+    ]
+    stale = _stale(as_of, int(info.get("maxAgeDays") or 75))
+    if stale:
+        notes.append(f"El último mes publicado es {months[-1]}: viene atrasado para una serie mensual.")
+    return {
+        "seriesId": sid,
+        "base": info.get("base"),
+        "monthly": {m: monthly[m] for m in months},
+        "asOf": as_of,
+        "stale": stale,
+        "notes": notes,
+    }

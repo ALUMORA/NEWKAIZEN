@@ -66,6 +66,7 @@ SPEC = [
         "/v2/rates/rf?start=2025-01-01&end=2026-09-22&tenorDays=28",
         ("rf.series",),
     ),
+    ("GET", "/v2/rates/mx/inpc", schemas.InpcResponse, "/v2/rates/mx/inpc?start=2024-01-01", ("rates.inpc",)),
     ("GET", "/v2/macro/us", schemas.UsMacroResponse, "/v2/macro/us", ("macro.us",)),
     ("GET", "/v2/markets/overview", schemas.MarketsOverviewResponse, "/v2/markets/overview", ("markets.overview",)),
     ("GET", "/v2/markets/world", schemas.WorldResponse, "/v2/markets/world", ("markets.world",)),
@@ -110,6 +111,7 @@ SPEC = [
         ("screeners.fibras",),
     ),
     ("GET", "/v2/insiders/{symbol}", schemas.InsidersResponse, "/v2/insiders/AAPL", ("insiders",)),
+    ("GET", "/v2/assumptions", schemas.AssumptionsResponse, "/v2/assumptions", ("assumptions",)),
 ]
 STUBS = [row for row in SPEC if row[3]]
 
@@ -117,6 +119,7 @@ EXTRA_CAPABILITIES = {
     "legacy.v1",  # el router del backend viejo, que no está en el spec v2
     "fx.fix",  # refinamiento de /v2/fx: el tipo de cambio salió del FIX de Banxico y no de Yahoo
     "history.dates",  # refinamiento de /v2/history: acepta rango por fechas, no solo range/interval
+    "panel.splits",  # refinamiento de /v2/panel: ?adjust=splits da cierres sin ajustar por dividendos
 }
 """Capacidades de ``KNOWN_CAPABILITIES`` que no son "la" capacidad de ninguna ruta del spec."""
 

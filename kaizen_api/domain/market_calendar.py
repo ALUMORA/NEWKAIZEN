@@ -199,6 +199,10 @@ def market_status(now: _dt.datetime | None = None) -> tuple[dict, list[str]]:
     for exchange in EXCHANGES:
         state = status(exchange, now)
         payload[exchange] = state.as_contract()
+        # ``lastClose``: fecha (en la zona de la bolsa) de la última jornada que ya cerró. Sale del
+        # calendario, no de los datos del grupo, así que no depende de que Yahoo haya contestado.
+        closed = last_completed_session(exchange, now)
+        payload[exchange]["lastClose"] = closed.isoformat() if closed else None
         for note in state.notes:
             if note not in notes:
                 notes.append(note)

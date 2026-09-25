@@ -139,6 +139,7 @@ def fibras(
     return {
         "rows": table["rows"],
         "cetes28": table["cetes28"],
+        "rate": table.get("rate"),
         "meta": meta(
             source,
             as_of=table["asOf"],

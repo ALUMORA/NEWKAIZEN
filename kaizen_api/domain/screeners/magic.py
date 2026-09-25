@@ -543,7 +543,8 @@ def build(universe: Universe) -> dict:
     ebit_fallback = sorted(r["symbol"] for r in rows if r["_ebitRow"] in EBIT_FALLBACK_ROWS)
     quote_dates = sorted({r["_quoteDate"] for r in rows if r["_quoteDate"]})
     for row in rows:
-        row.pop("_ebitRow", None)
+        # De dónde salió el EBIT, por renglón: la UI ya no tiene que leer la lista de meta.notes.
+        row["ebitSource"] = "ebit_row" if row.pop("_ebitRow", None) in EBIT_FALLBACK_ROWS else "operating_income"
         row.pop("_quoteDate", None)
     notes: list[str] = []
     if excluded:
