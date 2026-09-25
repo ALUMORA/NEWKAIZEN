@@ -20,6 +20,7 @@ import {
   sampleCov,
   simpleReturns,
 } from '../../lib/finance/index.js'
+import { rfIsFallback, rfTenorDays } from './riskfree.js'
 
 /** Referente para las betas del CAPM: el IPC como rendimiento total, en pesos. */
 export const OPT_BENCHMARK = 'NAFTRAC.MX'
@@ -61,28 +62,30 @@ export function preparePanel(panel, symbols) {
 }
 
 /**
- * Tasa de CETES 28 más reciente de la serie del API, como efectiva anual.
- * @param {{ dates: string[], values: number[] } | null | undefined} rf
- * @returns {{ yield: number, effective: number, date: string } | null}
+ * Tasa más reciente de la serie del API, como efectiva anual con el plazo que trae la respuesta
+ * (28 días con CETES; 91 con el respaldo de FRED, que además llega con `fallback`).
+ * @param {{ dates: string[], values: number[], tenorDays?: number, fallback?: boolean, meta?: any } | null | undefined} rf
+ * @returns {{ yield: number, effective: number, date: string, tenorDays: number, fallback: boolean } | null}
  */
 export function latestRiskFree(rf) {
   if (!rf || !Array.isArray(rf.values) || rf.values.length === 0) return null
   const i = rf.values.length - 1
   const y = rf.values[i]
-  const effective = cetesEffectiveAnnual(y)
+  const tenorDays = rfTenorDays(rf)
+  const effective = cetesEffectiveAnnual(y, tenorDays)
   if (!Number.isFinite(y) || effective === null) return null
-  return { yield: y, effective, date: rf.dates?.[i] ?? null }
+  return { yield: y, effective, date: rf.dates?.[i] ?? null, tenorDays, fallback: rfIsFallback(rf) }
 }
 
 /**
- * Betas contra el IPC con rendimientos en exceso sobre CETES (solo los periodos con tasa vigente)
+ * Betas contra el IPC con rendimientos en exceso sobre la tasa libre de riesgo (solo los periodos con tasa vigente)
  * y su ajuste de Blume, que es la que usa el CAPM.
  * @param {NonNullable<ReturnType<typeof preparePanel>>} prep
  * @param {{ dates: string[], values: number[] } | null | undefined} rfSeries
  */
 export function assetBetas(prep, rfSeries) {
   if (!prep.bench) return null
-  const rfPer = rfSeries ? rfSeriesForDates(rfSeries, prep.priceDates, '1wk') : null
+  const rfPer = rfSeries ? rfSeriesForDates(rfSeries, prep.priceDates, '1wk', { tenorDays: rfTenorDays(rfSeries) }) : null
   const keep = prep.bench.map((_, t) => (rfPer ? rfPer[t] !== null : true))
   const rfAt = (/** @type {number} */ t) => (rfPer ? /** @type {number} */ (rfPer[t]) : 0)
   const idx = keep.flatMap((ok, t) => (ok ? [t] : []))

@@ -67,7 +67,7 @@ export function BacktestResults({ result, benchLabel, benchShort = benchLabel, m
           />
           <Stat label="Volatilidad anual" value={pct(p?.vol)} info={{ termKey: 'volatilidad', term: 'Volatilidad' }} />
           <Stat label="Caída máxima" value={pct(result.drawdown.portfolio?.maxDrawdown)} sublabel={drawdownText(result.drawdown.portfolio, result.end)} info={{ termKey: 'drawdown-maximo', term: 'Caída máxima' }} />
-          <Stat label="Sharpe" value={num(p?.sharpe)} sublabel={result.rfComplete ? 'Sobre CETES 28 de cada semana.' : 'Contra cero: faltó la serie de CETES.'} info={{ termKey: 'sharpe', term: 'Sharpe' }} />
+          <Stat label="Sharpe" value={num(p?.sharpe)} sublabel={!result.rfComplete ? 'Contra cero: faltó la serie de CETES.' : result.rfFallback ? 'Sobre la tasa interbancaria de respaldo, no CETES.' : 'Sobre CETES 28 de cada semana.'} info={{ termKey: 'sharpe', term: 'Sharpe' }} />
         </div>
         <div className="kz-tool__stats">
           <Stat size="sm" label="Tracking error" value={pct(c?.trackingError)} info={{ termKey: 'tracking-error', term: 'Tracking error' }} />
@@ -80,7 +80,7 @@ export function BacktestResults({ result, benchLabel, benchShort = benchLabel, m
         <div className="kz-tool__rf">
           <p className="kz-tool__hint">
             {result.rfComplete
-              ? 'CAGR y volatilidad son anuales; VaR y CVaR, pérdidas semanales. Sharpe y Sortino miden el exceso sobre CETES 28 alineado a cada semana.'
+              ? `CAGR y volatilidad son anuales; VaR y CVaR, pérdidas semanales. Sharpe y Sortino miden el exceso sobre ${result.rfFallback ? 'la tasa interbancaria a 3 meses de la OCDE en FRED, respaldo mientras no hay CETES de Banxico,' : 'CETES 28'} alineado a cada semana.`
               : 'CAGR y volatilidad son anuales; VaR y CVaR, pérdidas semanales. Sin la serie de CETES completa para estas fechas, Sharpe y Sortino se miden contra cero.'}
           </p>
           {rf.meta && <DataStatus {...rf.meta} />}

@@ -3,6 +3,7 @@
 import { Button, NumberInput, SegmentedControl } from '../../../components/ui/index.js'
 import { fmtDate, fmtPct } from '../../../lib/format.js'
 import { ERP_SOURCE } from '../optimizer.js'
+import { rfLabel } from '../riskfree.js'
 
 const MU_ITEMS = [
   { value: 'capm', label: 'CAPM' },
@@ -28,9 +29,9 @@ const MU_HINT = {
 export function AssumptionsForm({ value, errors, onChange, apiRf, rfLoading }) {
   const rfShown = value.rfTouched ? value.rfPct : apiRf ? Math.round(apiRf.effective * 10000) / 100 : null
   const rfHint = value.rfTouched
-    ? 'Tasa escrita por ti. La de CETES sigue abajo.'
+    ? `Tasa escrita por ti.${apiRf ? ` La del API (${rfLabel(apiRf)}) se recupera con el botón.` : ''}`
     : apiRf
-      ? `CETES 28 al ${fmtPct(apiRf.yield)} simple${apiRf.date ? ` del ${fmtDate(apiRf.date)}` : ''}, pasada a efectiva anual.`
+      ? `${apiRf.fallback ? 'Tasa interbancaria a 3 meses de la OCDE en FRED, respaldo mientras no hay CETES de Banxico:' : `CETES ${apiRf.tenorDays}`} al ${fmtPct(apiRf.yield)} simple${apiRf.date ? ` del ${fmtDate(apiRf.date)}` : ''}, pasada a efectiva anual.`
       : rfLoading
         ? 'Trayendo la tasa de CETES 28.'
         : 'Escribe la tasa libre de riesgo anual.'
@@ -57,7 +58,7 @@ export function AssumptionsForm({ value, errors, onChange, apiRf, rfLoading }) {
         <NumberInput id="opt-rf" label="Tasa libre de riesgo anual" suffix="%" hint={rfHint} error={errors.rfPct} value={rfShown} onChange={(v) => onChange({ rfPct: v, rfTouched: true })} />
         {value.rfTouched && apiRf && (
           <Button variant="ghost" size="sm" onClick={() => onChange({ rfPct: null, rfTouched: false })}>
-            Volver a la tasa de CETES ({fmtPct(apiRf.effective)})
+            {apiRf.fallback ? 'Volver a la tasa de respaldo' : `Volver a la tasa de CETES ${apiRf.tenorDays}`} ({fmtPct(apiRf.effective)})
           </Button>
         )}
       </fieldset>

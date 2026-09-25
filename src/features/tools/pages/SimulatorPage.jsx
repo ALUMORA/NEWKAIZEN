@@ -5,10 +5,12 @@ import { Suspense, lazy, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { Card, EmptyState, ErrorState, NumberInput, PageHeader, SegmentedControl, Skeleton, Stat } from '../../../components/ui/index.js'
 import { MISSING, fmtMoney, fmtNumber, fmtPct } from '../../../lib/format.js'
-import { PATHS } from '../../../app/paths.js'
 import { DEFAULT_INPUTS, DEFAULT_PATHS, fanPoints, retirementFromSim, summarize, validateInputs } from '../simulator.js'
 import { useSimulation } from '../useSimulation.js'
 import '../tools.css'
+
+// Guía de docs/metodologia/simulador.md, servida por F5 en /aprender/metodologia/:guia.
+const METHODOLOGY = '/aprender/metodologia/simulador'
 
 const FanChart = lazy(() => import('../../../components/charts/FanChart.jsx').then((m) => ({ default: m.FanChart })))
 
@@ -199,7 +201,7 @@ export default function SimulatorPage() {
               <li>Es una herramienta para explorar escenarios, no una recomendación de inversión.</li>
             </ul>
             <p className="kz-sim__more">
-              <Link to={PATHS.learn}>Lee la metodología en Aprender</Link>
+              <Link to={METHODOLOGY}>Lee la metodología del simulador</Link>
             </p>
           </Card>
         </div>
