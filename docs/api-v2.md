@@ -154,6 +154,15 @@ están en `docs/OWNERSHIP.md`).
   Mismos cierres ajustados que `/v2/history`: un cierre anterior a un dividendo no sirve como precio
   de compra. Los rendimientos se calculan en el cliente. Para separar efecto precio y efecto tipo de
   cambio, ver "Panel en moneda nativa y en MXN" en las recetas para el cliente, más abajo.
+  - `adjust` (opcional, aditivo de la fase 3, pedido F1-4; capacidad `panel.splits`): `total` por
+    omisión (lo de siempre) o `splits`, cierres ajustados SOLO por splits, para quien suma el
+    efectivo de los dividendos por su cuenta (el TWR del libro). El servidor deshace el ajuste por
+    dividendos con la columna `Dividends` de la misma descarga de Yahoo, sin otra llamada: recorre la
+    serie hacia atrás y en cada fecha ex recupera el cierre previo como `C = A / F + D` (el método de
+    Yahoo es multiplicar lo anterior por `1 - D / C`). En barras diarias es exacto; en `1wk` y `1mo`
+    el cierre previo es el de la barra anterior y `meta.notes` avisa que es aproximado. La respuesta
+    trae `adjustment` con el ajuste aplicado (`total` o `splits`; ausente en un API anterior, que es
+    `total`). `/v2/history` sigue siendo siempre `adjusted: true`.
 - `GET /v2/fx?pair=USDMXN` → `FxResponse`. FIX de Banxico (`banxico_fix`) si hay token, si no Yahoo
   marcado en `meta`.
 - `GET /v2/fx/history?pair=USDMXN&start=&end=` → `FxHistoryResponse`. Banxico FIX SF43718 con token,
@@ -615,6 +624,7 @@ Precios alineados por fecha (INNER JOIN, sin rellenar precios).
 | --- | --- | --- | --- |
 | `currency` | currency | sí |  |
 | `interval` | "1d" \| "1wk" \| "1mo" | sí |  |
+| `adjustment` | "total" \| "splits" | no | total = cierres ajustados por splits y dividendos (rendimiento total, lo de siempre); splits = solo por splits, pedido con ?adjust=splits. Ausente en un API anterior a la fase 3: total |
 | `dates` | date[] | sí |  |
 | `prices` | {string: number[]} | sí |  |
 | `dropped` | DroppedSymbol[] | sí |  |

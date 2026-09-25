@@ -187,8 +187,46 @@ def _only_trading_sessions(
     return kept_dates, kept_closes, notes
 
 
-def get_series(symbol: str, range: str = "1y", interval: str = "1d", ccy: str = "native") -> PriceSeries:
-    """Costura CONGELADA de históricos v2 (ver el docstring del módulo). La implementa B2."""
+ADJUSTMENTS = ("total", "splits")
+"""``total``: cierres ajustados por splits y dividendos (el contrato de siempre). ``splits``: solo por
+splits, para quien suma el efectivo de los dividendos por su cuenta (el TWR del portafolio)."""
+
+
+def undo_dividend_adjustment(
+    dates: list[str], closes: list[float], dividends: dict[str, float]
+) -> tuple[list[float], int]:
+    """Cierres solo ajustados por splits a partir de los ajustados por dividendos, y cuántos pagos se usaron.
+
+    Yahoo ajusta hacia atrás: cada cierre anterior a una fecha ex se multiplica por
+    ``1 - D / C``, con ``C`` el cierre (sin ajustar por dividendos) de la barra previa a la fecha ex.
+    Recorriendo la serie de la más nueva a la más vieja con el factor acumulado ``F``, ese cierre sale
+    exacto de los datos que ya se tienen: ``C = A / F + D``, donde ``A`` es el cierre ajustado de esa
+    barra. Un pago en la primera barra no se puede deshacer (no hay barra previa) y no cambia nada.
+    """
+    out = list(closes)
+    factor = 1.0
+    used = 0
+    for i in range(len(dates) - 1, -1, -1):
+        out[i] = closes[i] / factor
+        paid = dividends.get(dates[i], 0.0)
+        if i == 0 or paid <= 0:
+            continue
+        previous = closes[i - 1] / factor + paid
+        step = 1.0 - paid / previous
+        if 0.0 < step < 1.0:
+            factor *= step
+            used += 1
+    return out, used
+
+
+def get_series(
+    symbol: str, range: str = "1y", interval: str = "1d", ccy: str = "native", adjust: str = "total"
+) -> PriceSeries:
+    """Costura CONGELADA de históricos v2 (ver el docstring del módulo). La implementa B2.
+
+    ``adjust="splits"`` (fase 3, opcional) deshace el ajuste por dividendos con la columna
+    ``Dividends`` de la misma descarga, sin otra llamada al proveedor.
+    """
     sym = str(symbol).upper()
     if range not in RANGES:
         raise invalid_param("query.range", "literal_error", f"El periodo tiene que ser uno de: {', '.join(RANGES)}.")
@@ -199,12 +237,28 @@ def get_series(symbol: str, range: str = "1y", interval: str = "1d", ccy: str = 
     if ccy not in CURRENCIES:
         raise invalid_param("query.ccy", "literal_error", f"La moneda tiene que ser una de: {', '.join(CURRENCIES)}.")
 
+    if adjust not in ADJUSTMENTS:
+        raise invalid_param("query.adjust", "literal_error", "El ajuste tiene que ser total o splits.")
+
     dates, closes = prices.fetch_series(sym, range, interval)
     if not dates:
         raise ApiError(404, "NOT_FOUND", f"No encontramos histórico de {sym}. Revisa el símbolo.")
 
     currency, inferred = native_currency(sym)
     notes: list[str] = []
+    if adjust == "splits":
+        closes, used = undo_dividend_adjustment(dates, closes, prices.fetch_dividends(sym, range, interval))
+        if used:
+            notes.append(
+                f"{sym}: cierres ajustados solo por splits; se deshizo el ajuste de {used} pagos de dividendo"
+                " con los montos que trae la misma descarga de Yahoo."
+            )
+            if interval != "1d":
+                notes.append(
+                    f"{sym}: en barras de {'una semana' if interval == '1wk' else 'un mes'} el cierre previo al"
+                    " pago es el de la barra anterior, no el del día antes de la fecha ex, así que el ajuste"
+                    " deshecho es aproximado."
+                )
     if inferred:
         notes.append(f"Yahoo no reporta la moneda de {sym}; se tomó {currency} por el tipo de símbolo.")
 
@@ -235,6 +289,7 @@ def get_series(symbol: str, range: str = "1y", interval: str = "1d", ccy: str = 
             source="yahoo",
             as_of=dates[-1],
             notes=notes,
+            adjusted=adjust == "total",
         )
 
     fx_domain.check_pair(currency, target)
@@ -275,6 +330,7 @@ def get_series(symbol: str, range: str = "1y", interval: str = "1d", ccy: str = 
         fx_pair=fx_domain.PAIR,
         fx_source=fx.source,
         notes=notes,
+        adjusted=adjust == "total",
     )
 
 

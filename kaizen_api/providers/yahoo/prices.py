@@ -165,6 +165,32 @@ def fetch_series(symbol: str, period: str, interval: str) -> tuple[list[str], li
     return _dates_and_closes(fetch_history(symbol, period, interval))
 
 
+def _dividends_by_date(hist: Any) -> dict[str, float]:
+    """``{fecha ISO: dividendo}`` de la columna ``Dividends`` del mismo DataFrame, solo los positivos.
+
+    yfinance la trae junto a los cierres (``actions=True`` por omisión), ya ajustada por splits
+    igual que ``Close``, así que no hace falta otra llamada al proveedor.
+    """
+    if hist is None or getattr(hist, "empty", True) or "Dividends" not in getattr(hist, "columns", []):
+        return {}
+    column = hist["Dividends"].dropna()
+    index = column.index
+    if getattr(index, "tz", None) is not None:
+        index = index.tz_localize(None)
+    out: dict[str, float] = {}
+    for stamp, value in zip(index.normalize(), column.tolist(), strict=True):
+        amount = float(value)
+        if amount > 0:
+            key = stamp.date().isoformat()
+            out[key] = out.get(key, 0.0) + amount
+    return out
+
+
+def fetch_dividends(symbol: str, period: str, interval: str) -> dict[str, float]:
+    """Dividendos por fecha de la MISMA descarga de ``fetch_series`` (misma llave de caché y de replay)."""
+    return _dividends_by_date(fetch_history(symbol, period, interval))
+
+
 def fetch_info(symbol: str) -> dict:
     """``Ticker.info`` de un símbolo, o ``{}`` si Yahoo no lo tiene.
 

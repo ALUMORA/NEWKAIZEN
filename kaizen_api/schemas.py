@@ -104,6 +104,7 @@ KNOWN_CAPABILITIES = (
     "rates.mx",
     "rf.series",
     "rates.inpc",
+    "panel.splits",
     "macro.us",
     "markets.overview",
     "markets.world",
@@ -304,6 +305,13 @@ class PanelResponse(ContractModel):
 
     currency: Currency
     interval: Interval
+    adjustment: Literal["total", "splits"] = Field(
+        default="total",
+        description=(
+            "total = cierres ajustados por splits y dividendos (rendimiento total, lo de siempre); splits ="
+            " solo por splits, pedido con ?adjust=splits. Ausente en un API anterior a la fase 3: total"
+        ),
+    )
     dates: list[IsoDate]
     prices: dict[str, list[float]]
     dropped: list[DroppedSymbol]

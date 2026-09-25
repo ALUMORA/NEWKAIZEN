@@ -119,6 +119,7 @@ EXTRA_CAPABILITIES = {
     "legacy.v1",  # el router del backend viejo, que no está en el spec v2
     "fx.fix",  # refinamiento de /v2/fx: el tipo de cambio salió del FIX de Banxico y no de Yahoo
     "history.dates",  # refinamiento de /v2/history: acepta rango por fechas, no solo range/interval
+    "panel.splits",  # refinamiento de /v2/panel: ?adjust=splits da cierres sin ajustar por dividendos
 }
 """Capacidades de ``KNOWN_CAPABILITIES`` que no son "la" capacidad de ninguna ruta del spec."""
 

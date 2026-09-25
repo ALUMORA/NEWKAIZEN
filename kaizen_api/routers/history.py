@@ -12,7 +12,7 @@ rendimiento de cero. Lo que no se pudo alinear sale en ``dropped`` con su motivo
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query
 
@@ -26,11 +26,15 @@ from kaizen_api.routers.quotes import FxPairQuery
 from kaizen_api.schemas import CcyParam, FxHistoryResponse, HistoryResponse, Interval, PanelResponse, Range
 
 router = APIRouter(prefix="/v2", tags=["históricos"], responses=ERROR_RESPONSES)
-CAPABILITIES: list[str] = ["history", "panel", "fx.history"]
+CAPABILITIES: list[str] = ["history", "panel", "fx.history", "panel.splits"]
 
 RangeQuery = Annotated[Range, Query(alias="range", description="Periodo hacia atrás")]
 IntervalQuery = Annotated[Interval, Query(description="Frecuencia de las observaciones")]
 CcyQuery = Annotated[CcyParam, Query(description="native = moneda de cotización")]
+AdjustQuery = Annotated[
+    Literal["total", "splits"],
+    Query(description="total = ajustado por splits y dividendos; splits = solo por splits (fase 3)"),
+]
 
 
 def _source_token(series: history_domain.PriceSeries) -> str:
@@ -86,6 +90,7 @@ def panel(
     range_: RangeQuery = "1y",
     interval: IntervalQuery = "1d",
     ccy: CcyQuery = "MXN",
+    adjust: AdjustQuery = "total",
 ) -> PanelResponse:
     series_by_symbol: dict[str, history_domain.PriceSeries] = {}
     dropped: list[dict] = []
@@ -95,7 +100,9 @@ def panel(
 
     for symbol in symbols:
         try:
-            series = history_domain.get_series(symbol, range_, interval, ccy)
+            # Solo se pasa si no es el de siempre: la costura congelada acepta la llamada de cuatro argumentos.
+            extra = {"adjust": adjust} if adjust != "total" else {}
+            series = history_domain.get_series(symbol, range_, interval, ccy, **extra)
         except ApiError as exc:
             dropped.append({"symbol": symbol, "reason": exc.message})
             continue
@@ -163,6 +170,7 @@ def panel(
     return {
         "currency": currency,
         "interval": interval,
+        "adjustment": adjust,
         "dates": dates,
         "prices": prices_by_symbol,
         "dropped": dropped,
