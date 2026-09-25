@@ -54,8 +54,8 @@ const OVERVIEW = {
     { id: 'crypto', label: 'Cripto', items: [item('BTC-USD', 'Bitcoin', 65210.4, 1340.1, 0.021, 'USD')] },
   ],
   marketStatus: {
-    bmv: { open: true, label: 'Abierto. Cierra hoy a las 15:00 h de la Ciudad de México.', nextOpen: '2026-09-23T14:30:00Z', nextClose: '2026-09-22T21:00:00Z' },
-    nyse: { open: true, label: 'Abierto. Cierra hoy a las 16:00 h de Nueva York.', nextOpen: '2026-09-23T13:30:00Z', nextClose: '2026-09-22T20:00:00Z' },
+    bmv: { open: true, label: 'Abierta. Cierra hoy a las 15:00 h de la Ciudad de México.', nextOpen: '2026-09-23T14:30:00Z', nextClose: '2026-09-22T21:00:00Z' },
+    nyse: { open: true, label: 'Abierta. Cierra hoy a las 16:00 h de Nueva York.', nextOpen: '2026-09-23T13:30:00Z', nextClose: '2026-09-22T20:00:00Z' },
   },
   meta: meta({ notes: ['Sin dato de ^HSI en esta corrida; se muestran sin valor.'] }),
 }
@@ -255,6 +255,30 @@ test('/mercados/mexico: la serie de CETES de respaldo (FRED) se marca y el FIX s
   await expect(page.getByText(/Este dato viene de una fuente de respaldo \(fred_ir3tib\)/)).toBeVisible()
 })
 
+test('/mercados/mexico: el FIX sale una sola vez, el Bono M de FRED dice sin verificar y el respaldo del rf no se llama CETES', async ({ page, baseURL }) => {
+  const withFix = {
+    ...RATES,
+    items: [
+      ...RATES.items,
+      { ...rate('bonoM10', 'Bono M 10 años (serie mensual de la OCDE en FRED)', 0.0861, 'fraction', 'IRLTLT01MXM156N', 0.087, -9, '2026-08-01'), source: 'fred', verified: false },
+      rate('fix', 'Tipo de cambio FIX', 18.4321, 'mxn', 'SF43718', 18.41, null),
+    ],
+  }
+  const routes = {
+    ...V2_ROUTES,
+    'GET /v2/rates/mx': { json: withFix },
+    'GET /v2/rates/rf': { json: { ...RF, tenorDays: 91, source: 'fred_ir3tib', fallback: true, meta: meta({ asOf: '2026-09-18', source: 'fred_ir3tib', delayMinutes: null, fallback: true }) } },
+  }
+  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, legacyApi: true, health: HEALTH, routes })
+  await page.goto('/mercados/mexico')
+  await expect(page.getByText('Serie SF43718')).toBeVisible()
+  await expect(page.getByText('Dólar FIX', { exact: true })).toHaveCount(0)
+  await expect(page.getByText('Serie IRLTLT01MXM156N, sin verificar contra Banxico')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'México' }).getByRole('button', { name: /^Respaldo: fred/ })).toHaveCount(1)
+  await expect(page.getByRole('heading', { name: /interbancaria a 3 meses/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'CETES 28 días en el tiempo' })).toHaveCount(0)
+})
+
 test('/mercados: bolsas abiertas con retraso, resumen factual, USD/MXN neutral y ligas', async ({ page, baseURL }) => {
   await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: HEALTH, routes: V2_ROUTES })
   await page.goto('/mercados')
@@ -327,7 +351,7 @@ test('/mercados: bolsas cerradas muestran la fecha de su último cierre', async 
   const overview = {
     ...OVERVIEW,
     groups: OVERVIEW.groups.map(onFriday),
-    marketStatus: { bmv: closed('Cerrado. Abre hoy a las 8:30 h de la Ciudad de México.'), nyse: closed('Cerrado. Abre hoy a las 9:30 h de Nueva York.') },
+    marketStatus: { bmv: closed('Cerrada. Abre hoy a las 8:30 h de la Ciudad de México.'), nyse: closed('Cerrada. Abre hoy a las 9:30 h de Nueva York.') },
   }
   await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: HEALTH, routes: { ...V2_ROUTES, 'GET /v2/markets/overview': { json: overview } } })
   await page.goto('/mercados')
@@ -369,5 +393,29 @@ plainTest('/mercados: una sección caída no tumba las demás', async ({ page, b
   await expect(vix.getByRole('alert')).toContainText('No pudimos traer la historia del VIX', { timeout: 15_000 })
   await expect(vix.getByText('15.21')).toBeVisible()
   await expect(page.getByText('S&P/BMV IPC sube 0.49% y va en 61,234.52 puntos.')).toBeVisible()
+  guards.assertClean()
+})
+
+// Sin la fixture automática: las dos fuentes del nivel del VIX caen a propósito.
+plainTest('/mercados: si el panorama y las tasas de EE. UU. fallan, el VIX lo dice como error y deja reintentar', async ({ page, baseURL }) => {
+  const guards = attachGuards(page, {
+    allow: [
+      ...expectedHttpError(503, 'GET', '/v2/markets/overview', 'la prueba tumba el panorama a propósito'),
+      ...expectedHttpError(503, 'GET', '/v2/macro/us', 'la prueba tumba las tasas de EE. UU. a propósito'),
+    ],
+  })
+  const down = { status: 503, json: { error: { code: 'UPSTREAM_UNAVAILABLE', message: 'El proveedor de datos no responde. Intenta en unos minutos.' } } }
+  await setupApp(page, {
+    baseURL: /** @type {string} */ (baseURL),
+    session: true,
+    legacyApi: true,
+    health: HEALTH,
+    routes: { ...V2_ROUTES, 'GET /v2/markets/overview': down, 'GET /v2/macro/us': down },
+  })
+  await page.goto('/mercados')
+  const vix = page.getByRole('region', { name: 'VIX y su percentil' })
+  await expect(vix.getByRole('alert')).toContainText('No pudimos traer el nivel del VIX', { timeout: 15_000 })
+  await expect(vix.getByRole('button', { name: 'Reintentar' })).toBeVisible()
+  await expect(vix.getByText('Sin valor del VIX por ahora')).toHaveCount(0)
   guards.assertClean()
 })

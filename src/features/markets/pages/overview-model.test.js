@@ -24,7 +24,7 @@ const OVERVIEW = {
     { id: 'commodities', label: 'Materias primas', items: [item('CL=F', 'Petróleo WTI', 62.5, -0.018), item('GC=F', 'Oro', 3650, 0)] },
     { id: 'crypto', label: 'Cripto', items: [item('BTC-USD', 'Bitcoin', 65000, 0.021), item('^GSPC', 'S&P 500 repetido', 1, 0.5)] },
   ],
-  marketStatus: { bmv: { open: true, label: 'Abierto.' }, nyse: { open: false, label: 'Cerrado.' } },
+  marketStatus: { bmv: { open: true, label: 'Abierta.' }, nyse: { open: false, label: 'Cerrada.' } },
   meta: { asOf: '2026-09-18', source: 'yahoo', delayMinutes: 15, stale: false, fallback: false },
 }
 
@@ -55,12 +55,12 @@ describe('fmtSessionDay', () => {
 
 describe('exchangeTiming', () => {
   it('abierta: retraso aproximado', () => {
-    expect(exchangeTiming({ open: true, label: 'Abierto.' }, { delayMinutes: 15 })).toMatchObject({ open: true, state: 'Abierta', timing: 'Retraso ~15 min', detail: 'Abierto.' })
+    expect(exchangeTiming({ open: true, label: 'Abierta.' }, { delayMinutes: 15 })).toMatchObject({ open: true, state: 'Abierta', timing: 'Retraso ~15 min', detail: 'Abierta.' })
     expect(exchangeTiming({ open: true, label: 'x' }, { delayMinutes: null }).timing).toBe('Retraso s/d')
   })
   it('cerrada: fecha del último cierre del grupo', () => {
-    expect(exchangeTiming({ open: false, label: 'Cerrado.' }, { lastAsOf: '2026-09-18' })).toMatchObject({ open: false, state: 'Cerrada', timing: 'Cierre vie 18 sep' })
-    expect(exchangeTiming({ open: false, label: 'Cerrado.' }, { lastAsOf: null }).timing).toBe('Cierre s/d')
+    expect(exchangeTiming({ open: false, label: 'Cerrada.' }, { lastAsOf: '2026-09-18' })).toMatchObject({ open: false, state: 'Cerrada', timing: 'Cierre vie 18 sep' })
+    expect(exchangeTiming({ open: false, label: 'Cerrada.' }, { lastAsOf: null }).timing).toBe('Cierre s/d')
   })
   it('sin estado del API lo dice', () => {
     expect(exchangeTiming(undefined)).toMatchObject({ known: false, state: 'Sin dato' })

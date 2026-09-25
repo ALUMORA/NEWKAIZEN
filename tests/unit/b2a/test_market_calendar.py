@@ -67,7 +67,7 @@ def test_viernes_y_jueves_santo_caen_donde_dice_la_pascua(exchange: str, year: i
 def test_la_bmv_esta_abierta_a_media_jornada() -> None:
     state = cal.status("bmv", _dt.datetime(2026, 9, 22, 9, 0, tzinfo=CDMX))
     assert state.open is True
-    assert state.label == "Abierto. Cierra hoy a las 15:00 h de la Ciudad de México."
+    assert state.label == "Abierta. Cierra hoy a las 15:00 h de la Ciudad de México."
     assert state.next_close == "2026-09-22T21:00:00Z"
     assert state.next_open == "2026-09-23T14:30:00Z"
 
@@ -89,7 +89,7 @@ def test_el_viernes_por_la_tarde_la_siguiente_jornada_es_el_lunes() -> None:
 def test_la_bmv_cierra_en_navidad_y_lo_dice() -> None:
     state = cal.status("bmv", _dt.datetime(2026, 12, 25, 10, 0, tzinfo=CDMX))
     assert state.open is False
-    assert state.label.startswith("Cerrado por Navidad.")
+    assert state.label.startswith("Cerrada por Navidad.")
     assert state.next_open == "2026-12-28T14:30:00Z"
 
 
@@ -97,7 +97,7 @@ def test_la_nyse_cierra_a_la_una_el_viernes_despues_de_accion_de_gracias() -> No
     abierta = cal.status("nyse", _dt.datetime(2026, 11, 27, 12, 30, tzinfo=NY))
     assert abierta.open is True
     assert abierta.next_close == "2026-11-27T18:00:00Z"
-    assert abierta.label == "Abierto. Cierra hoy a las 13:00 h de Nueva York."
+    assert abierta.label == "Abierta. Cierra hoy a las 13:00 h de Nueva York."
     cerrada = cal.status("nyse", _dt.datetime(2026, 11, 27, 13, 30, tzinfo=NY))
     assert cerrada.open is False
     assert cerrada.next_open == "2026-11-30T14:30:00Z"
@@ -179,3 +179,13 @@ def test_market_status_entrega_las_dos_bolsas_con_la_forma_del_contrato() -> Non
         assert "—" not in state["label"] and "–" not in state["label"]
     assert notes == []
     assert payload["bmv"]["open"] is True and payload["nyse"]["open"] is True
+
+
+def test_la_etiqueta_habla_de_la_bolsa_en_femenino() -> None:
+    """F2-7b: la insignia dice "Abierta"/"Cerrada" y la etiqueta debe concordar con ella (la bolsa)."""
+    abierta = cal.status("bmv", _dt.datetime(2026, 9, 22, 9, 0, tzinfo=CDMX))
+    antes = cal.status("bmv", _dt.datetime(2026, 9, 22, 7, 59, tzinfo=CDMX))
+    assert abierta.label.startswith("Abierta.")
+    assert antes.label.startswith("Cerrada.")
+    for state in (abierta, antes):
+        assert not state.label.startswith(("Abierto", "Cerrado"))

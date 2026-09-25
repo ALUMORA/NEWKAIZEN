@@ -25,3 +25,6 @@
 .kz-research-stats > * { min-width: 0; }
 .kz-research-stats > :first-child { grid-column: 1 / -1; }
 @media (min-width: 900px) { .kz-research-stats > :first-child { grid-column: auto; } }
+.kz-research-notes { color: var(--muted); font-size: var(--text-sm); }
+.kz-research-notes ul { margin: 0; padding-inline-start: var(--space-5); display: flex; flex-direction: column; gap: var(--space-1); }
+.kz-research-form__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }

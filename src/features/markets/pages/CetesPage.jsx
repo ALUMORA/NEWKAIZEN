@@ -18,7 +18,7 @@ function useCetesRows() {
     () =>
       (q.data?.items ?? [])
         .filter((it) => /cetes/i.test(`${it.id} ${it.label}`) && it.unit === 'fraction')
-        .map((it) => ({ ...it, tenorDays: tenorOf(it) }))
+        .map((it) => ({ ...it, tenorDays: it.tenorDays ?? tenorOf(it) }))
         .filter((it) => it.tenorDays != null)
         .sort((a, b) => a.tenorDays - b.tenorDays),
     [q.data],

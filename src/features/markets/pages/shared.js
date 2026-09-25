@@ -37,6 +37,47 @@ export function itemStatus(item, meta) {
     source: item?.source ?? meta?.source ?? '',
     delayMinutes: meta?.delayMinutes ?? null,
     stale: Boolean(item?.stale ?? meta?.stale),
-    fallback: Boolean(meta?.fallback),
+    // `verified: false` es una serie que no pasó por el SIE (hoy, el Bono M de FRED): se marca como
+    // respaldo aunque el resto de la respuesta venga de Banxico.
+    fallback: Boolean(meta?.fallback || item?.fallback || item?.verified === false),
+  }
+}
+
+/**
+ * Tarjeta del dólar de /v2/fx en /mercados/mexico. null si /v2/rates/mx ya trae el FIX con valor
+ * (sería la misma serie SF43718 dos veces) o si no hay dato. Solo se llama FIX si viene de Banxico:
+ * el respaldo de Yahoo es el precio de mercado, no el FIX.
+ * @param {any[] | undefined} rateItems @param {any} fx
+ * @returns {{ label: string, sublabel: string, isFix: boolean } | null}
+ */
+export function fxStatSpec(rateItems, fx) {
+  const hasFix = (rateItems ?? []).some((it) => it?.id === 'fix' && typeof it.value === 'number' && Number.isFinite(it.value))
+  if (hasFix || !fx || typeof fx.rate !== 'number' || !Number.isFinite(fx.rate)) return null
+  const isFix = fx.source === 'banxico_fix'
+  return {
+    label: isFix ? 'Dólar FIX' : 'Dólar en el mercado',
+    sublabel: isFix ? 'Pesos por dólar. Si sube, el peso está más débil.' : 'Pesos por dólar, precio de mercado (no es el FIX). Si sube, el peso está más débil.',
+    isFix,
+  }
+}
+
+/**
+ * Título y nombre de la serie de /v2/rates/rf. Con el respaldo de FRED la serie es interbancaria a
+ * 3 meses, no CETES, y el título no puede decir otra cosa.
+ * @param {{ source?: string, fallback?: boolean, tenorDays?: number | null } | undefined} rf
+ */
+export function rfChartText(rf) {
+  if (rf?.source === 'fred_ir3tib' || rf?.fallback) {
+    return {
+      title: 'Tasa interbancaria a 3 meses en el tiempo (respaldo)',
+      series: 'Interbancaria 3 meses',
+      description: 'Respaldo mensual de la OCDE en FRED mientras no hay CETES de Banxico. No son CETES ni tiene la convención de la subasta.',
+    }
+  }
+  const days = rf?.tenorDays ?? 28
+  return {
+    title: `CETES ${days} días en el tiempo`,
+    series: `CETES ${days} días`,
+    description: 'Rendimiento anual simple de la subasta, la tasa libre de riesgo para quien invierte en pesos.',
   }
 }

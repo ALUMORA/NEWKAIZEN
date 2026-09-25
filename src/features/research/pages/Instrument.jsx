@@ -10,6 +10,8 @@ import { PATHS } from '../../../app/paths.js'
 import { QueryBlock } from '../components/QueryBlock.jsx'
 import { TimeSeries } from '../components/charts.js'
 import { Valuation } from '../components/Valuation.jsx'
+import { SectionNotes } from '../components/SectionNotes.jsx'
+import { safeUrl } from '../symbols.js'
 import '../research.css'
 
 const RANGES = [
@@ -63,6 +65,7 @@ function Overview({ query }) {
               </p>
             ) : null}
             {data?.description ? <p className="kz-research-about">{data.description}</p> : null}
+            <SectionNotes notes={data?.meta?.notes} label="Avisos del resumen" />
           </div>
         )}
       </QueryBlock>
@@ -164,12 +167,15 @@ function Momentum({ symbol }) {
     <Card title="Momentum" info={{ termKey: 'momentum-12-1', term: 'Momentum 12-1' }} status={d?.meta}>
       <QueryBlock query={query} lines={3}>
         {() => (
-          <div className="kz-research-stats">
-            <Stat label="12 meses sin el último" value={<Delta value={d.r12m1} />} />
-            <Stat label={`Referencia (${d.benchmark})`} value={<Delta value={d.benchmarkR12m1} />} />
-            <Stat label="Diferencia contra la referencia" value={<Delta value={d.relative12m1} kind="pp" />} />
-            <Stat label="6 meses" value={<Delta value={d.r6m} />} />
-            <Stat label="3 meses" value={<Delta value={d.r3m} />} />
+          <div className="kz-col" data-gap="3">
+            <div className="kz-research-stats">
+              <Stat label="12 meses sin el último" value={<Delta value={d.r12m1} />} />
+              <Stat label={d.benchmark ? `Referencia (${d.benchmark})` : 'Referencia (sin índice en su moneda)'} value={<Delta value={d.benchmarkR12m1} />} />
+              <Stat label="Diferencia contra la referencia" value={<Delta value={d.relative12m1} kind="pp" />} />
+              <Stat label="6 meses" value={<Delta value={d.r6m} />} />
+              <Stat label="3 meses" value={<Delta value={d.r3m} />} />
+            </div>
+            <SectionNotes notes={d.meta?.notes} label="Avisos del momentum" />
           </div>
         )}
       </QueryBlock>
@@ -211,6 +217,7 @@ function Dividends({ symbol }) {
               caption="Dividendos más recientes"
               density="compact"
             />
+            <SectionNotes notes={d.meta?.notes} label="Avisos de los dividendos" />
           </div>
         )}
       </QueryBlock>
@@ -228,10 +235,14 @@ function News({ symbol }) {
           <ul className="kz-research-news">
             {items.map((n) => (
               <li key={n.id}>
-                <a href={n.url} target="_blank" rel="noopener noreferrer">
-                  {n.title}
-                  <span className="sr-only"> (abre en otra pestaña)</span>
-                </a>
+                {safeUrl(n.url) ? (
+                  <a href={safeUrl(n.url)} target="_blank" rel="noopener noreferrer">
+                    {n.title}
+                    <span className="sr-only"> (abre en otra pestaña)</span>
+                  </a>
+                ) : (
+                  <span>{n.title}</span>
+                )}
                 <small>
                   {n.source} · {fmtDateTime(n.publishedAt)}
                 </small>
@@ -263,7 +274,7 @@ export default function Instrument() {
         <Momentum symbol={symbol} />
         <Dividends symbol={symbol} />
       </div>
-      <Valuation symbol={symbol} />
+      <Valuation key={symbol} symbol={symbol} />
       <Statements symbol={symbol} />
       <News symbol={symbol} />
     </div>

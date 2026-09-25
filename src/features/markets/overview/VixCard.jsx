@@ -104,6 +104,13 @@ export function VixCard() {
   const history = useQuery({ ...historyQuery(VIX_SYMBOL, { range: VIX_WINDOW.range, interval: VIX_WINDOW.interval }), enabled: historyFeature.enabled && vix !== null })
   const levelPending =
     !vix && (overviewFeature.waiting || macroFeature.waiting || (overviewFeature.enabled && overview.isPending) || (macroFeature.enabled && macro.isPending))
+  // Las dos fuentes del nivel fallaron (o la que falta ni se anuncia): es un error, no un vacío.
+  const levelFailed =
+    !vix && !levelPending && (overview.isError || macro.isError) && (overview.isError || !overviewFeature.enabled) && (macro.isError || !macroFeature.enabled)
+  const retryLevel = () => {
+    if (overview.isError) overview.refetch()
+    if (macro.isError) macro.refetch()
+  }
   const ctx = vix && history.data ? vixContext(history.data, vix.value) : null
   const status = vix ? { asOf: vix.asOf, source: vix.source, delayMinutes: vix.delayMinutes, stale: vix.stale, fallback: vix.fallback } : undefined
   return (
@@ -119,7 +126,10 @@ export function VixCard() {
           <Skeleton height={96} />
         </div>
       ) : null}
-      {!levelPending && !vix ? <EmptyState size="sm" title="Sin valor del VIX por ahora" text="Ni el panorama ni las tasas de EE. UU. trajeron el VIX en esta actualización." /> : null}
+      {levelFailed ? (
+        <ErrorState size="sm" message="No pudimos traer el nivel del VIX: fallaron el panorama y las tasas de EE. UU." onRetry={retryLevel} retrying={overview.isFetching || macro.isFetching} />
+      ) : null}
+      {!levelPending && !vix && !levelFailed ? <EmptyState size="sm" title="Sin valor del VIX por ahora" text="Ni el panorama ni las tasas de EE. UU. trajeron el VIX en esta actualización." /> : null}
       {vix ? (
         <div className="kz-col">
           <Stat

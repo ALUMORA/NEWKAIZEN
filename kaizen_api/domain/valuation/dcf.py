@@ -39,6 +39,9 @@ from dataclasses import dataclass, field
 MIN_SPREAD = 0.02
 """Mínimo de ``WACC − g`` (2 puntos porcentuales). Debajo de eso Gordon explota."""
 
+GRID_TOLERANCE = 1e-6
+"""Holgura de las guardas en la malla de sensibilidad, que trabaja con tasas redondeadas a 6 decimales."""
+
 MAX_YEARS = 15
 """Años de proyección explícita que acepta la ruta (el contrato permite hasta 30)."""
 
@@ -256,7 +259,10 @@ def sensitivity(
     for w in waccs:
         row: list[float | None] = []
         for g in growths:
-            if w <= 0 or w - g < MIN_SPREAD or (rf is not None and g > rf + 1e-12):
+            # Tolerancia de 1e-6: waccs y growths van redondeados a 6 decimales, y sin ella el caso
+            # base con g ya recortado (WACC − 2 pp, o rf) caía del lado equivocado de la guarda y el
+            # centro de la malla salía vacío mientras el valor principal sí se publicaba.
+            if w <= 0 or w - g < MIN_SPREAD - GRID_TOLERANCE or (rf is not None and g > rf + GRID_TOLERANCE):
                 row.append(None)
                 continue
             result = two_stage_fcff(fcff0, growth, years, g, w, fade=fade)
