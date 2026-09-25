@@ -77,3 +77,43 @@
 .kz-more__link:hover { background: var(--surface-2); }
 .kz-more__link[aria-current="page"] { background: var(--accent-soft); font-weight: var(--weight-semibold); }
 .kz-more__theme { margin-bottom: var(--space-4); }
+
+/* Páginas hermanas de la sección (SectionNav): solo en móvil, arriba del contenido. */
+.kz-section-nav { display: none; }
+
+@media (max-width: 767.98px) {
+  .kz-section-nav {
+    border-bottom: 1px solid var(--border);
+    display: block;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .kz-section-nav__list {
+    display: flex;
+    gap: var(--space-2);
+    list-style: none;
+    margin: 0;
+    padding: var(--space-2) var(--space-4);
+    width: max-content;
+  }
+  .kz-section-nav__link {
+    align-items: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    color: var(--muted);
+    display: inline-flex;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    min-height: 36px;
+    padding: 0 var(--space-3);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .kz-section-nav__link:hover { background: var(--surface-2); }
+  .kz-section-nav__link[aria-current="page"] {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--ink);
+    font-weight: var(--weight-semibold);
+  }
+}
