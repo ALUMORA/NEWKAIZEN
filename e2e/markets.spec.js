@@ -396,3 +396,27 @@ plainTest('/mercados: una sección caída no tumba las demás', async ({ page, b
   await expect(page.getByText('S&P/BMV IPC sube 0.49% y va en 61,234.52 puntos.')).toBeVisible()
   guards.assertClean()
 })
+
+// Sin la fixture automática: las dos fuentes del nivel del VIX caen a propósito.
+plainTest('/mercados: si el panorama y las tasas de EE. UU. fallan, el VIX lo dice como error y deja reintentar', async ({ page, baseURL }) => {
+  const guards = attachGuards(page, {
+    allow: [
+      ...expectedHttpError(503, 'GET', '/v2/markets/overview', 'la prueba tumba el panorama a propósito'),
+      ...expectedHttpError(503, 'GET', '/v2/macro/us', 'la prueba tumba las tasas de EE. UU. a propósito'),
+    ],
+  })
+  const down = { status: 503, json: { error: { code: 'UPSTREAM_UNAVAILABLE', message: 'El proveedor de datos no responde. Intenta en unos minutos.' } } }
+  await setupApp(page, {
+    baseURL: /** @type {string} */ (baseURL),
+    session: true,
+    legacyApi: true,
+    health: HEALTH,
+    routes: { ...V2_ROUTES, 'GET /v2/markets/overview': down, 'GET /v2/macro/us': down },
+  })
+  await page.goto('/mercados')
+  const vix = page.getByRole('region', { name: 'VIX y su percentil' })
+  await expect(vix.getByRole('alert')).toContainText('No pudimos traer el nivel del VIX', { timeout: 15_000 })
+  await expect(vix.getByRole('button', { name: 'Reintentar' })).toBeVisible()
+  await expect(vix.getByText('Sin valor del VIX por ahora')).toHaveCount(0)
+  guards.assertClean()
+})
