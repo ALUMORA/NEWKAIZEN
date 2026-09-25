@@ -40,9 +40,13 @@ describe('summarize', () => {
     expect(res.unrealizedExcluded).toBe(1)
   })
 
-  it('una cotización en otra moneda que la del libro no da resultado y se avisa', () => {
+  it('una emisora comprada en pesos que cotiza en dólares (SIC) da su resultado en pesos y se avisa', () => {
     const res = summarize({ transactions: TXS, quotes: [quote('W', 3.5, 0.1, 'USD'), quote('AAPL', 180, 3, 'USD')], usdmxn: 19, today: '2026-09-22' })
-    expect(res.rows.find((r) => r.symbol === 'W')).toMatchObject({ pnl: null, pnlMxn: null, mismatch: true })
+    // 200 títulos a 3.5 dólares con 19: 13,300 pesos contra 13,000 pagados en pesos.
+    expect(res.rows.find((r) => r.symbol === 'W')).toMatchObject({ value: 13300, pnl: 300, pnlCurrency: 'MXN', pnlMxn: 300, costMxn: 13000, mismatch: true })
+    expect(res.rows.find((r) => r.symbol === 'W')?.pnlPct).toBeCloseTo(300 / 13000, 12)
+    expect(res.unrealized).toBe(300 + 8700)
+    expect(res.unrealizedExcluded).toBe(0)
     expect(res.mismatched).toEqual(['W'])
   })
 })

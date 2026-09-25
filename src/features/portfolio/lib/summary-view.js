@@ -1,7 +1,7 @@
 // Cálculos de /portafolio (resumen): posiciones del libro valuadas con la cotización de hoy
 // (/v2/quotes) y convertidas a pesos con el tipo de cambio del día (/v2/fx). El resultado no
 // realizado en pesos sale de positionPnl, igual que en Rendimiento. Módulo puro.
-import { derivePositionsDetailed, ledgerSnapshots, positionPnl } from '../../../lib/finance/ledger.js'
+import { derivePositionsDetailed, ledgerSnapshots } from '../../../lib/finance/ledger.js'
 
 /** @param {unknown} v @returns {v is number} */
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
@@ -31,9 +31,11 @@ export function summarize({ transactions, quotes, usdmxn, today }) {
     const sameCcy = ccy === p.currency
     const pnl = sameCcy && price !== null && isNum(p.costBasis) ? p.quantity * price - p.costBasis : null
     const pnlPct = sameCcy && price !== null && isNum(p.avgCost) && p.avgCost > 0 ? price / p.avgCost - 1 : null
-    const split = sameCcy
-      ? positionPnl({ quantity: p.quantity, price0: p.avgCost, price1: price, fx0: p.currency === 'USD' ? p.avgFx : 1, fx1: toMxn(p.currency) })
-      : null
+    // En pesos sí se puede aunque las monedas no coincidan: valor de hoy en pesos contra costo en
+    // pesos. Es el caso de una emisora del SIC comprada en pesos que hoy cotiza en dólares, que es
+    // como la mayoría compra acciones de Estados Unidos desde México; antes salía s/d.
+    const costMxn = isNum(p.costBasis) ? (p.currency === 'USD' ? (isNum(p.avgFx) ? p.costBasis * p.avgFx : null) : p.costBasis) : null
+    const pnlMxn = value !== null && costMxn !== null ? value - costMxn : null
     const change = isNum(q?.change) ? q.change : null
     return {
       symbol: p.symbol,
@@ -44,14 +46,16 @@ export function summarize({ transactions, quotes, usdmxn, today }) {
       avgCost: p.avgCost,
       value,
       weight: /** @type {number | null} */ (null),
-      pnl,
-      pnlPct,
-      pnlMxn: split?.total ?? null,
-      costMxn: split && isNum(p.costBasis) ? p.costBasis * (p.currency === 'USD' ? /** @type {number} */ (p.avgFx) : 1) : null,
+      pnl: sameCcy ? pnl : pnlMxn,
+      pnlPct: sameCcy ? pnlPct : pnlMxn !== null && costMxn !== null && costMxn > 0 ? pnlMxn / costMxn : null,
+      pnlCurrency: sameCcy ? ccy : 'MXN',
+      pnlMxn,
+      costMxn,
       changePct: isNum(q?.changePct) ? q.changePct : null,
       changeMxn: change !== null && factor !== null ? p.quantity * change * factor : null,
       quoted: price !== null,
       mismatch: q != null && !sameCcy,
+      lotCurrency: p.currency,
     }
   })
 
