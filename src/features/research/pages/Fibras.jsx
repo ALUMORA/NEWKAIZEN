@@ -18,11 +18,11 @@ import {
   describeRate,
   missingFields,
   parseExtra,
-  rateDate,
+  referenceRate,
   splitRateNotes,
   spreadBars,
 } from '../fibras.js'
-import { generalNotes, notesFor, readableMeta } from '../screenerNotes.js'
+import { generalNotes, readableMeta, rowNotes } from '../screenerNotes.js'
 import '../research.css'
 import '../magic-fibras.css'
 
@@ -39,7 +39,7 @@ function Table({ rows, notes, against, status, loading = false }) {
       header: 'FIBRA',
       minWidth: 170,
       format: (v, row) => {
-        const own = notesFor(v, notes)
+        const own = rowNotes(row, notes)
         return (
           <span className="kz-scr-symbol">
             <span className="kz-scr-symbol__body">
@@ -257,7 +257,7 @@ function ExtraForm({ extra, onApply }) {
 /** @param {{ rows: any[], notes: string[] }} props */
 function Reasons({ rows, notes }) {
   const items = rows
-    .map((row) => ({ row, missing: missingFields(row), own: notesFor(row.symbol, notes) }))
+    .map((row) => ({ row, missing: missingFields(row), own: rowNotes(row, notes) }))
     .filter((x) => x.missing.length || x.own.length)
   return (
     <Card
@@ -348,15 +348,18 @@ export default function Fibras() {
   const data = query.data
   const rows = data?.rows ?? []
   const notes = data?.meta?.notes ?? []
-  const rate = describeRate(data?.meta, data?.cetes28)
+  // La tasa sale de `rate` (fase 3); con un API anterior, de cetes28, meta.source y las notas.
+  const ref = referenceRate(data)
+  const rate = describeRate({ source: ref.source ?? '', fallback: ref.fallback }, ref.value)
   const general = generalNotes(notes, rows.map((r) => r.symbol))
   const split = splitRateNotes(general)
-  const rateAsOf = rateDate(notes)
+  const rateAsOf = ref.asOf
   // La tarjeta de la tasa lleva la fecha y la fuente de la tasa, no las de los precios; el respaldo
   // (fallback) y lo viejo (stale) son los que dijo el servidor.
   const rateStatus = readableMeta(data?.meta, {
     ...(rate.source ? { source: rate.source === 'fred' ? 'FRED' : 'Banxico' } : {}),
     ...(rateAsOf ? { asOf: rateAsOf } : {}),
+    fallback: ref.fallback,
   })
   const status = readableMeta(data?.meta)
 
@@ -383,7 +386,7 @@ export default function Fibras() {
       <div className="kz-research-grid" data-cols="2">
         <Card title="Tasa de referencia" status={rateStatus} description="La tasa contra la que se mide el diferencial de cada FIBRA.">
           <QueryBlock query={query} lines={3}>
-            {() => <RateBody rate={rate} value={data.cetes28} date={rateAsOf} notes={split.rate} />}
+            {() => <RateBody rate={rate} value={ref.value} date={rateAsOf} notes={split.rate} />}
           </QueryBlock>
         </Card>
         <ExtraForm key={extra.join(',')} extra={extra} onApply={applyExtra} />

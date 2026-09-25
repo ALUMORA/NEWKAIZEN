@@ -120,6 +120,25 @@ export function missingFields(row) {
 }
 
 /**
+ * Tasa de referencia de la respuesta. Desde la fase 3 viene en `rate` ({ value, asOf, source,
+ * fallback, tenorDays }, o null si no hay tasa). Un API anterior no trae `rate` y entonces se arma
+ * como antes: el valor de `cetes28`, la fuente de `meta.source`, la fecha de la nota ("la tasa de
+ * referencia, del AAAA-MM-DD") y el respaldo de `meta.fallback`.
+ * @param {{ cetes28?: number | null, rate?: { value: number, asOf: string | null, source: string | null, fallback: boolean, tenorDays: number | null } | null, meta?: any } | null | undefined} data
+ * @returns {{ value: number | null, asOf: string | null, source: 'banxico' | 'fred' | null, fallback: boolean, tenorDays: number | null, fromNotes: boolean }}
+ */
+export function referenceRate(data) {
+  const rate = data?.rate
+  if (rate !== undefined) {
+    const value = rate && Number.isFinite(rate.value) ? rate.value : null
+    const source = rate?.source === 'banxico' || rate?.source === 'fred' ? rate.source : null
+    return { value, asOf: rate?.asOf ?? null, source, fallback: Boolean(rate?.fallback), tenorDays: rate?.tenorDays ?? null, fromNotes: false }
+  }
+  const value = data?.cetes28 != null && Number.isFinite(data.cetes28) ? data.cetes28 : null
+  return { value, asOf: rateDate(data?.meta?.notes), source: rateSource(data?.meta?.source), fallback: Boolean(data?.meta?.fallback), tenorDays: null, fromNotes: true }
+}
+
+/**
  * Fecha de la tasa de referencia según las notas del API ("la tasa de referencia, del 2026-08-01"
  * o "dato del 2026-08-01" en la nota de la tasa sustituta). No es la fecha de los precios.
  * @param {readonly string[] | null | undefined} notes

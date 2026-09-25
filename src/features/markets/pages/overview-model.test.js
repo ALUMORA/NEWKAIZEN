@@ -62,6 +62,13 @@ describe('exchangeTiming', () => {
     expect(exchangeTiming({ open: false, label: 'Cerrada.' }, { lastAsOf: '2026-09-18' })).toMatchObject({ open: false, state: 'Cerrada', timing: 'Cierre vie 18 sep' })
     expect(exchangeTiming({ open: false, label: 'Cerrada.' }, { lastAsOf: null }).timing).toBe('Cierre s/d')
   })
+  it('cerrada: con lastClose del API (fase 3) manda esa fecha, aunque el grupo venga vacío o con otra', () => {
+    // Lunes antes de abrir: el grupo trae un dato del domingo (cripto, futuros), el cierre es el viernes.
+    expect(exchangeTiming({ open: false, label: 'Cerrada.', lastClose: '2026-09-18' }, { lastAsOf: '2026-09-20T23:00:00Z', tz: 'America/New_York' }).timing).toBe('Cierre vie 18 sep')
+    expect(exchangeTiming({ open: false, label: 'Cerrada.', lastClose: '2026-09-15' }, { lastAsOf: null }).timing).toBe('Cierre mar 15 sep')
+    // Un API anterior manda null o no manda el campo: respaldo al dato más nuevo del grupo.
+    expect(exchangeTiming({ open: false, label: 'Cerrada.', lastClose: null }, { lastAsOf: '2026-09-18' }).timing).toBe('Cierre vie 18 sep')
+  })
   it('sin estado del API lo dice', () => {
     expect(exchangeTiming(undefined)).toMatchObject({ known: false, state: 'Sin dato' })
   })

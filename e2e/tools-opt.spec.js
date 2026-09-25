@@ -144,8 +144,8 @@ const EMPTY_STATE = { ...STATE, portfolios: [], activePortfolioId: null }
  * @param {string} baseURL
  * @param {{ theme?: 'light' | 'dark', state?: object | null, routes?: Record<string, any> }} [options]
  */
-async function open(page, baseURL, { theme, state = STATE, routes = {} } = {}) {
-  await setupApp(page, { baseURL, session: true, health: HEALTH, routes: { ...V2_ROUTES, ...routes } })
+async function open(page, baseURL, { theme, state = STATE, routes = {}, health = HEALTH } = {}) {
+  await setupApp(page, { baseURL, session: true, health, routes: { ...V2_ROUTES, ...routes } })
   if (theme) await page.addInitScript((t) => window.localStorage.setItem('kaizen_theme', t), theme)
   if (state) await page.addInitScript((s) => window.localStorage.setItem('kaizen:v2', s), JSON.stringify(state))
 }
@@ -205,6 +205,57 @@ test('backtest: si el API tira el S&P 500 y el referente es el IPC, no se report
   await page.goto('/herramientas/backtest')
   await backtestReady(page)
   await expect(page.getByText(/quedaron fuera/)).toHaveCount(0)
+})
+
+// Fase 3 (docs/requests/F4.md): la prima de mercado sale de GET /v2/assumptions con su fuente y
+// fecha; DEFAULT_ERP solo entra como respaldo declarado.
+const HEALTH_ASSUMPTIONS = { ...HEALTH, capabilities: [...HEALTH.capabilities, 'assumptions'] }
+const ASSUMPTIONS = {
+  erp: 0.0461,
+  matureMarketErp: 0.0461,
+  crp: { MX: 0.0263, US: 0 },
+  source: 'Aswath Damodaran, NYU Stern, vintage enero 2026',
+  sourceUrl: 'https://pages.stern.nyu.edu/~adamodar/New_Home_Page/datacurrent.html',
+  vintage: '2026-01',
+  asOf: '2026-01-05',
+  meta: meta({ asOf: '2026-01-05', source: 'damodaran', delayMinutes: null }),
+}
+const erpInput = (page) => page.getByLabel('Prima de riesgo de mercado', { exact: true })
+
+test.describe('herramientas: optimizador, prima de mercado', () => {
+  test('sale de /v2/assumptions con su fuente y fecha, y se recupera después de escribir otra', async ({ page, baseURL }) => {
+    await open(page, /** @type {string} */ (baseURL), { health: HEALTH_ASSUMPTIONS, routes: { 'GET /v2/assumptions': { json: ASSUMPTIONS } } })
+    await page.goto('/herramientas/optimizador?symbols=WALMEX.MX,AMXB.MX')
+    await optimizerReady(page)
+    await expect(erpInput(page)).toHaveValue('4.61')
+    await expect(erpInput(page)).toHaveAccessibleDescription(/Aswath Damodaran, NYU Stern, vintage enero 2026, actualizada el 5 ene 2026/)
+    await erpInput(page).fill('6')
+    await expect(erpInput(page)).toHaveAccessibleDescription(/Prima escrita por ti\./)
+    await page.getByRole('button', { name: /Volver a la prima de Damodaran/ }).click()
+    await expect(erpInput(page)).toHaveValue('4.61')
+  })
+
+  test('sin la capacidad usa la de respaldo y lo dice', async ({ page, baseURL }) => {
+    await open(page, /** @type {string} */ (baseURL))
+    await page.goto('/herramientas/optimizador?symbols=WALMEX.MX,AMXB.MX')
+    await optimizerReady(page)
+    await expect(erpInput(page)).toHaveValue('4.23')
+    await expect(erpInput(page)).toHaveAccessibleDescription(/Respaldo guardado en la app \(Damodaran, prima de mercado maduro, enero de 2026\)/)
+  })
+})
+
+// Sin la fixture automática: /v2/assumptions contesta 500 a propósito.
+plainTest('herramientas: con /v2/assumptions caída el optimizador sigue con la prima de respaldo', async ({ page, baseURL }) => {
+  const guards = attachGuards(page, { allow: expectedHttpError(500, 'GET', '/v2/assumptions', 'la prueba tumba la ruta de supuestos a propósito') })
+  await open(page, /** @type {string} */ (baseURL), {
+    health: HEALTH_ASSUMPTIONS,
+    routes: { 'GET /v2/assumptions': { status: 500, json: { error: { code: 'INTERNAL', message: 'Falla simulada.' } } } },
+  })
+  await page.goto('/herramientas/optimizador?symbols=WALMEX.MX,AMXB.MX')
+  await optimizerReady(page)
+  await expect(erpInput(page)).toHaveValue('4.23')
+  await expect(erpInput(page)).toHaveAccessibleDescription(/Respaldo guardado en la app/)
+  guards.assertClean()
 })
 
 test.describe('herramientas: optimizador', () => {

@@ -176,7 +176,7 @@ export default function OptimizerPage() {
             {m.rf.isError && (
               <ErrorState size="sm" title="No pudimos traer la tasa de CETES" message="Puedes escribir una tasa para seguir." onRetry={() => m.rf.refetch()} retrying={m.rf.isFetching} />
             )}
-            <AssumptionsForm value={assumptions} errors={m.errors} onChange={(patch) => setAssumptions((prev) => ({ ...prev, ...patch }))} apiRf={m.apiRf} rfLoading={m.rf.isFetching} />
+            <AssumptionsForm value={assumptions} errors={m.errors} onChange={(patch) => setAssumptions((prev) => ({ ...prev, ...patch }))} apiRf={m.apiRf} rfLoading={m.rf.isFetching} apiErp={m.apiErp} />
           </Card>
         </div>
         <div className="kz-tool__results">

@@ -10,7 +10,7 @@ import { Badge, Card, DataTable, PageHeader, SegmentedControl, Stat } from '../.
 import { PATHS, pathInstrument } from '../../../app/paths.js'
 import { QueryBlock } from '../components/QueryBlock.jsx'
 import { EXCLUSION_RULES, UNIVERSES, groupExclusions, parseUniverse, sharedValues, withPositions } from '../magicFormula.js'
-import { ebitFallbackSymbols, readableMeta } from '../screenerNotes.js'
+import { ebitFallbackRows, readableMeta } from '../screenerNotes.js'
 import '../research.css'
 import '../magic-fibras.css'
 
@@ -36,7 +36,7 @@ function Ranking({ rows, notes, status, loading = false }) {
     () => ({ rank: sharedValues(rows, 'rank'), rankEY: sharedValues(rows, 'rankEY'), rankROC: sharedValues(rows, 'rankROC') }),
     [rows],
   )
-  const fallback = useMemo(() => ebitFallbackSymbols(notes), [notes])
+  const fallback = useMemo(() => ebitFallbackRows(rows, notes), [rows, notes])
   const tiedRows = rows.filter((r) => ties.rank.has(r.rank)).length
   const columns = [
     {

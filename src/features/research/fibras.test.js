@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MAX_EXTRA, describeRate, missingFields, parseExtra, rateDate, rateSource, splitRateNotes, spreadBars } from './fibras.js'
+import { MAX_EXTRA, describeRate, missingFields, parseExtra, rateDate, rateSource, referenceRate, splitRateNotes, spreadBars } from './fibras.js'
 
 describe('parseExtra', () => {
   it('normaliza y corta en el máximo que acepta el API', () => {
@@ -90,5 +90,27 @@ describe('splitRateNotes con las notas que escribe hoy el backend', () => {
     const { rate, rest } = splitRateNotes([...RATE_NOTES, 'FUNO11.MX no trae precio en esta corrida.'])
     expect(rate).toEqual(RATE_NOTES)
     expect(rest).toEqual(['FUNO11.MX no trae precio en esta corrida.'])
+  })
+})
+
+describe('referenceRate', () => {
+  it('con `rate` (fase 3) toma valor, fecha, fuente, respaldo y plazo del objeto, no de las notas', () => {
+    const data = {
+      cetes28: 0.0712,
+      rate: { value: 0.0712, asOf: '2026-09-18', source: 'fred', fallback: true, tenorDays: 91 },
+      // meta dice otra cosa a propósito: manda `rate`.
+      meta: { source: 'yahoo,computed,banxico', fallback: false, notes: ['Tasa: la tasa de referencia, del 2026-08-01.'] },
+    }
+    expect(referenceRate(data)).toEqual({ value: 0.0712, asOf: '2026-09-18', source: 'fred', fallback: true, tenorDays: 91, fromNotes: false })
+    expect(describeRate({ source: 'fred', fallback: true }, 0.0712)).toMatchObject({ substitute: true, label: 'Tasa sustituta de corto plazo' })
+  })
+
+  it('con `rate: null` no hay tasa, aunque meta traiga una fecha', () => {
+    expect(referenceRate({ cetes28: null, rate: null, meta: { source: 'banxico', notes: ['la tasa de referencia, del 2026-08-01'] } })).toMatchObject({ value: null, asOf: null, source: null, fromNotes: false })
+  })
+
+  it('un API anterior sin `rate`: respaldo a cetes28, meta.source y la fecha de la nota', () => {
+    const data = { cetes28: 0.0725, meta: { source: 'yahoo,computed,banxico', fallback: false, notes: ['Diferencial contra la tasa de referencia, del 2026-09-18.'] } }
+    expect(referenceRate(data)).toEqual({ value: 0.0725, asOf: '2026-09-18', source: 'banxico', fallback: false, tenorDays: null, fromNotes: true })
   })
 })

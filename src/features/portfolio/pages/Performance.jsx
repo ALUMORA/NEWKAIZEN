@@ -8,11 +8,12 @@ import { Link } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Card, Delta, EmptyState, ErrorState, PageHeader, Skeleton, Stat } from '../../../components/ui/index.js'
 import { fmtDate, fmtMoney, fmtNumber, fmtPct, fmtPp } from '../../../lib/format.js'
-import { fxHistoryQuery, panelQuery } from '../../../lib/api/queries.js'
+import { fxHistoryQuery, inpcQuery, panelQuery } from '../../../lib/api/queries.js'
+import { useCapabilities } from '../../../lib/api/capabilities.js'
 import { DEFAULT_BENCHMARK, useStore } from '../../../lib/storage.js'
 import { PATHS } from '../../../app/paths.js'
 import { minusDays, todayMx } from '../tx-labels.js'
-import { computePerformance, isrView, nativePriceTable, pickWindow, pnlByPosition, splitAdjusted, zipTable } from '../lib/performance-view.js'
+import { computePerformance, inpcStart, isrView, nativePriceTable, panelAdjustment, pickWindow, pnlByPosition, splitAdjusted, zipTable } from '../lib/performance-view.js'
 import DataSources from '../components/DataSources.jsx'
 import PnlCard from '../components/PnlCard.jsx'
 import IsrCard from '../components/IsrCard.jsx'
@@ -47,27 +48,48 @@ export default function Performance() {
   const usdList = useMemo(() => symbols.filter((s) => usdSymbols.has(s)), [symbols, usdSymbols])
   const needsFx = usdList.length > 0 || raw.some((t) => t.currency === 'USD')
 
-  const params = { range: win.range, interval: win.interval }
-  const panelMxn = useQuery({ ...panelQuery([...new Set([...symbols, benchmark])], { ...params, ccy: 'MXN' }), enabled: symbols.length > 0 })
-  const panelUsd = useQuery({ ...panelQuery(usdList, { ...params, ccy: 'USD' }), enabled: usdList.length > 0 })
+  // Con `panel.splits` los precios del libro van sin ajustar por dividendos (TWR exacto) y la
+  // referencia sale aparte, con rendimiento total, para que las dos cuenten los dividendos. Sin la
+  // capacidad se queda como antes: un solo panel ajustado, con la referencia adentro. Se espera al
+  // sondeo de /health para no pedir el panel dos veces con llaves distintas.
+  const caps = useCapabilities()
+  const probed = caps.status !== 'probing' && caps.status !== 'waking'
+  const splits = caps.status === 'ready' && caps.capabilities.has('panel.splits')
+  const inpcOn = caps.status === 'ready' && caps.capabilities.has('rates.inpc')
+  const params = { range: win.range, interval: win.interval, ...(splits ? { adjust: /** @type {const} */ ('splits') } : {}) }
+  const panelMxn = useQuery({ ...panelQuery([...new Set([...symbols, benchmark])], { ...params, ccy: 'MXN' }), enabled: probed && symbols.length > 0 })
+  const panelUsd = useQuery({ ...panelQuery(usdList, { ...params, ccy: 'USD' }), enabled: probed && usdList.length > 0 })
+  const panelBench = useQuery({
+    ...panelQuery([benchmark], { range: win.range, interval: win.interval, ccy: 'MXN' }),
+    enabled: probed && splits && symbols.length > 0,
+  })
   const dates = panelMxn.data?.dates ?? []
   const fxHist = useQuery({
     ...fxHistoryQuery({ start: dates[0] ? minusDays(dates[0], 10) : undefined, end: dates[dates.length - 1] }),
     enabled: needsFx && dates.length > 0,
   })
 
-  const isr = useMemo(() => isrView(raw), [raw])
-  const ready = Boolean(panelMxn.data) && (usdList.length === 0 || Boolean(panelUsd.data)) && (!needsFx || Boolean(fxHist.data))
+  // INPC para actualizar el costo del ISR. Sin la capacidad, o si falla (503 sin token de
+  // Banxico), la tarjeta se queda con el aviso de que va sin actualizar; no es un error de página.
+  const inpcFrom = useMemo(() => inpcStart(raw), [raw])
+  const inpc = useQuery({ ...inpcQuery({ start: inpcFrom ?? undefined }), enabled: inpcOn && inpcFrom != null, retry: false })
+  const isr = useMemo(() => isrView(raw, inpc.data?.monthly ?? null), [raw, inpc.data])
+  // Si la referencia con rendimiento total falla, se usa la del panel del libro antes que tumbar
+  // la página: la comparación queda sin dividendos de la referencia, pero el TWR sigue exacto.
+  const benchSettled = !splits || Boolean(panelBench.data) || panelBench.isError
+  const ready = Boolean(panelMxn.data) && (usdList.length === 0 || Boolean(panelUsd.data)) && (!needsFx || Boolean(fxHist.data)) && benchSettled
   const failed = panelMxn.isError || panelUsd.isError || fxHist.isError
   const view = useMemo(() => {
     if (!ready || !panelMxn.data) return null
+    const adjustment = panelAdjustment(panelMxn.data, usdList.length > 0 ? panelUsd.data : null)
     const prices = nativePriceTable(panelMxn.data, panelUsd.data, usdSymbols)
     const fx = zipTable(fxHist.data?.dates, fxHist.data?.values)
-    const bench = panelMxn.data.prices[benchmark] ? zipTable(panelMxn.data.dates, panelMxn.data.prices[benchmark]) : null
-    const perf = computePerformance({ transactions: txs, prices, fx, dates: panelMxn.data.dates, benchmark: bench })
+    const benchPanel = panelBench.data?.prices[benchmark] ? panelBench.data : panelMxn.data
+    const bench = benchPanel.prices[benchmark] ? zipTable(benchPanel.dates, benchPanel.prices[benchmark]) : null
+    const perf = computePerformance({ transactions: txs, prices, fx, dates: panelMxn.data.dates, benchmark: bench, adjustment })
     const at = perf.ok ? perf.windowDates[perf.windowDates.length - 1] : panelMxn.data.dates[panelMxn.data.dates.length - 1]
     return { perf, pnl: at ? pnlByPosition(txs, prices, fx, at) : null }
-  }, [ready, panelMxn.data, panelUsd.data, fxHist.data, usdSymbols, benchmark, txs])
+  }, [ready, panelMxn.data, panelUsd.data, panelBench.data, fxHist.data, usdSymbols, usdList.length, benchmark, txs])
 
   const header = (
     <PageHeader

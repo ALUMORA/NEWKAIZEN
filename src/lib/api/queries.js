@@ -91,6 +91,7 @@ export const queryKeys = {
   fxHistory: (params = {}) => ['api', 'fxHistory', { pair: 'USDMXN', ...params }],
   ratesMx: () => /** @type {const} */ (['api', 'rates', 'mx']),
   riskFree: (params = {}) => ['api', 'rates', 'rf', { tenorDays: 28, ...params }],
+  inpc: (params = {}) => ['api', 'rates', 'inpc', params],
   macroUs: () => /** @type {const} */ (['api', 'macro', 'us']),
   marketsOverview: () => /** @type {const} */ (['api', 'markets', 'overview']),
   marketsWorld: () => /** @type {const} */ (['api', 'markets', 'world']),
@@ -100,6 +101,7 @@ export const queryKeys = {
   statements: (symbol, freq = 'annual') => ['api', 'instrument', String(symbol).toUpperCase(), 'statements', freq],
   dividends: (symbol) => ['api', 'instrument', String(symbol).toUpperCase(), 'dividends'],
   valuation: (symbol, params = {}) => ['api', 'valuation', String(symbol).toUpperCase(), params],
+  assumptions: () => /** @type {const} */ (['api', 'assumptions']),
   momentum: (symbol) => ['api', 'momentum', String(symbol).toUpperCase()],
   factorScreener: (params = {}) => ['api', 'screeners', 'factors', { universe: 'mx', ...params }],
   magicScreener: (universe = 'us') => ['api', 'screeners', 'magic', universe],
@@ -163,6 +165,13 @@ export const riskFreeQuery = (params = {}) => ({
   staleTime: STALE_TIME.rates,
 })
 
+/** Serie mensual del INPC. Cambia una vez al mes: se trata como fundamental. */
+export const inpcQuery = (params = {}) => ({
+  queryKey: queryKeys.inpc(params),
+  queryFn: ({ signal }) => api.getInpc(params, { signal }),
+  staleTime: STALE_TIME.fundamentals,
+})
+
 export const macroUsQuery = () => ({
   queryKey: queryKeys.macroUs(),
   queryFn: ({ signal }) => api.getMacroUs({ signal }),
@@ -223,6 +232,12 @@ export const valuationQuery = (symbol, params = {}) => ({
   queryFn: ({ signal }) => api.getValuation(symbol, params, { signal }),
   staleTime: STALE_TIME.fundamentals,
   enabled: Boolean(symbol),
+})
+
+export const assumptionsQuery = () => ({
+  queryKey: queryKeys.assumptions(),
+  queryFn: ({ signal }) => api.getAssumptions({ signal }),
+  staleTime: STALE_TIME.fundamentals,
 })
 
 export const momentumQuery = (symbol) => ({

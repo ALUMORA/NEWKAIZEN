@@ -32,12 +32,29 @@ export const MAX_ASSETS = 20
 export const MIN_PERIODS = 52
 
 /**
- * Prima de riesgo de mercado por omisión. Es la de mercado maduro del archivo de Damodaran que
- * también usa la valuación (kaizen_api/data/damodaran_2026.json, "matureMarketErp"). No se le suma
- * prima país porque la tasa libre de riesgo es CETES, que ya trae el riesgo soberano de México.
+ * Prima de riesgo de mercado de RESPALDO. La que se usa sale de `GET /v2/assumptions` (`erp`, la
+ * misma de la valuación, con su fuente y fecha); esta copia de "matureMarketErp" de
+ * kaizen_api/data/damodaran_2026.json solo entra si el servidor no anuncia `assumptions` o la ruta
+ * falla, y la pantalla lo dice. No se le suma prima país porque la tasa libre de riesgo es CETES,
+ * que ya trae el riesgo soberano de México.
  */
 export const DEFAULT_ERP = 0.0423
 export const ERP_SOURCE = 'Damodaran, prima de mercado maduro, enero de 2026'
+
+/**
+ * Prima de mercado vigente para el optimizador: la de `/v2/assumptions` si llegó, la de respaldo
+ * si el servidor no la ofrece o falló, y null mientras se espera.
+ * @param {import('../../lib/api/types.js').AssumptionsResponse | undefined} data
+ * @param {{ available: boolean, failed: boolean }} state `available`: el servidor anuncia `assumptions`
+ * @returns {{ erp: number, source: string, asOf: string | null, fallback: boolean, stale: boolean } | null}
+ */
+export function marketPremium(data, { available, failed }) {
+  if (data && Number.isFinite(data.erp) && data.erp >= 0) {
+    return { erp: data.erp, source: data.source, asOf: data.asOf ?? null, fallback: false, stale: Boolean(data.meta?.stale) }
+  }
+  if (!available || failed || data) return { erp: DEFAULT_ERP, source: ERP_SOURCE, asOf: null, fallback: true, stale: false }
+  return null
+}
 
 export const MU_METHODS = /** @type {const} */ (['capm', 'jamesStein', 'historical'])
 export const COV_METHODS = /** @type {const} */ (['ledoitWolf', 'sample'])

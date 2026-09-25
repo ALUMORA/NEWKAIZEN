@@ -207,23 +207,42 @@ export function tradeGapFlows(transactions, prices, fx, dates) {
 }
 
 /**
+ * Ajuste de los cierres que dieron los paneles: `'splits'` solo si TODOS los que traen precios lo
+ * dicen (un API sin la capacidad `panel.splits` ignora `?adjust=splits` y contesta sin
+ * `adjustment`, que es `'total'`). Los que no llegaron (undefined) no cuentan.
+ * @param {...({ adjustment?: string } | null | undefined)} panels
+ * @returns {'total' | 'splits'}
+ */
+export function panelAdjustment(...panels) {
+  const got = panels.filter(Boolean)
+  return got.length > 0 && got.every((p) => p?.adjustment === 'splits') ? 'splits' : 'total'
+}
+
+/**
  * Desempeño del portafolio en pesos entre el primer corte con valor y el último valuado.
  *
- * Los cierres de /v2/panel vienen ajustados por dividendos (rendimiento total). Por eso:
- * - El TWR se mide sobre el libro SIN los dividendos cobrados, que ya van dentro del precio como si
- *   se hubieran reinvertido, y con cada compra y venta tomada al cierre (tradeGapFlows).
- * - El valor, la ganancia y el XIRR son de dinero real: llevan el efectivo de los dividendos y, si
- *   el libro arranca dentro de la ventana, parten de lo que de verdad aportaste, no del primer
- *   cierre ajustado.
+ * Con `adjustment: 'splits'` (cierres de `/v2/panel?adjust=splits`, sin ajustar por dividendos) el
+ * TWR se mide sobre el libro completo: el efectivo de cada dividendo es rendimiento, que es la
+ * medición exacta. Cada compra y venta se sigue tomando al cierre del corte en que cae
+ * (tradeGapFlows), que es la convención del TWR por cortes.
+ *
+ * Con `adjustment: 'total'` (respaldo para un API sin `panel.splits`) los cierres vienen ajustados
+ * por dividendos y ya los llevan dentro como reinvertidos. Por eso el TWR va SIN los dividendos
+ * cobrados, y el ajuste de tradeGapFlows además evita que cada compra se anote como pérdida por
+ * quedar arriba del cierre ajustado (ver docs/overhaul/notas/fase3-revision-RP.md).
+ *
+ * En los dos casos el valor, la ganancia y el XIRR son de dinero real: llevan el efectivo de los
+ * dividendos y, si el libro arranca dentro de la ventana, parten de lo que de verdad aportaste.
  * @param {{
  *   transactions: any[],
  *   prices: Record<string, Record<string, number>>,
  *   fx: Record<string, number>,
  *   dates: string[],
  *   benchmark?: Record<string, number> | null,
+ *   adjustment?: 'total' | 'splits',
  * }} input
  */
-export function computePerformance({ transactions, prices, fx, dates, benchmark = null }) {
+export function computePerformance({ transactions, prices, fx, dates, benchmark = null, adjustment = 'total' }) {
   const series = valueSeries(transactions, prices, fx, 'MXN', { dates })
   const start = series.values.findIndex((v) => isNum(v) && v > 0)
   let end = -1
@@ -249,8 +268,8 @@ export function computePerformance({ transactions, prices, fx, dates, benchmark 
   const startValue = fromZero ? 0 : /** @type {number} */ (values[0])
   const netFlows = fromZero ? flows.reduce((a, b) => a + b, 0) : flows.slice(1).reduce((a, b) => a + b, 0)
 
-  // TWR: sin dividendos cobrados y con los movimientos al cierre.
-  const priced = (transactions ?? []).filter((t) => t?.type !== 'dividend')
+  // TWR con los movimientos al cierre; con cierres ajustados por dividendos, sin los cobrados.
+  const priced = adjustment === 'splits' ? (transactions ?? []) : (transactions ?? []).filter((t) => t?.type !== 'dividend')
   const twrSeries = valueSeries(priced, prices, fx, 'MXN', { dates })
   const gaps = tradeGapFlows(priced, prices, fx, series.dates)
   const twrValues = twrSeries.values.slice(start, end + 1)
@@ -307,6 +326,7 @@ export function computePerformance({ transactions, prices, fx, dates, benchmark 
     xirrAmbiguous: signChanges(cashflows) > 1,
     unconverted,
     fromZero,
+    adjustment,
   }
 }
 
@@ -354,17 +374,36 @@ export function pnlByPosition(transactions, prices, fx, date) {
 }
 
 /**
- * ISR estimado por las ventas en pesos (LISR art. 129) con isrOnGains, sin INPC: el API todavía
- * no publica la serie mensual, así que el costo va sin actualizar y la ganancia sale por arriba.
- * Las ventas en dólares se quedan fuera porque, si fueron con una casa de bolsa del extranjero, su
- * tratamiento es otro.
+ * Primer mes que hace falta del INPC para las ventas del libro: el de la compra más vieja con
+ * fecha. Sirve de `start` de `/v2/rates/mx/inpc` para no pedir 26 años de serie. Null si no hay
+ * ventas con fechas (entonces no hace falta pedirla).
  * @param {any[]} transactions
+ * @returns {string | null} AAAA-MM-01
  */
-export function isrView(transactions) {
+export function inpcStart(transactions) {
+  const dates = realizedSales(transactions)
+    .filter((s) => s.currency === 'MXN' && isIso(s.costDate) && isIso(s.saleDate))
+    .map((s) => /** @type {string} */ (s.costDate))
+    .sort()
+  return dates[0] ? `${dates[0].slice(0, 7)}-01` : null
+}
+
+/**
+ * ISR estimado por las ventas en pesos (LISR art. 129) con isrOnGains. Con la serie del INPC
+ * (`/v2/rates/mx/inpc`, `{ "AAAA-MM": nivel }`) el costo se actualiza; sin ella (API sin
+ * `rates.inpc`, o 503 sin token de Banxico) va sin actualizar y la ganancia sale por arriba, y
+ * `inpc` queda en false para que la tarjeta lo diga. Las ventas en dólares se quedan fuera porque,
+ * si fueron con una casa de bolsa del extranjero, su tratamiento es otro.
+ * @param {any[]} transactions
+ * @param {Record<string, number> | null} [inpc]
+ */
+export function isrView(transactions, inpc = null) {
   const sales = realizedSales(transactions)
   const mxn = sales.filter((s) => s.currency === 'MXN')
+  const hasInpc = Boolean(inpc && Object.keys(inpc).length > 0)
   const estimate = isrOnGains({
     sales: mxn.map((s) => ({ symbol: s.symbol, proceeds: s.proceeds, cost: s.cost, costDate: s.costDate, saleDate: s.saleDate })),
+    inpc: hasInpc ? /** @type {Record<string, number>} */ (inpc) : {},
   })
   const dividends = (transactions ?? [])
     .filter((t) => t?.type === 'dividend' && t.currency !== 'USD' && isNum(t.amount))
@@ -375,5 +414,6 @@ export function isrView(transactions) {
     usdSales: sales.length - mxn.length,
     trimmed: sales.filter((s) => s.trimmed).length,
     dividendsMxn: dividends,
+    inpc: hasInpc,
   }
 }

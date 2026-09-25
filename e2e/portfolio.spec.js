@@ -95,6 +95,8 @@ const PANEL = ({ url }) => {
     json: {
       currency: ccy,
       interval: '1wk',
+      // Fase 3: el API con `panel.splits` responde `adjustment` cuando se pide ?adjust=splits.
+      ...(url.searchParams.get('adjust') === 'splits' ? { adjustment: 'splits' } : {}),
       dates: weeks,
       prices: Object.fromEntries(symbols.filter((sym) => table[sym]).map((sym) => [sym, table[sym]])),
       dropped: symbols.filter((sym) => !table[sym]).map((sym) => ({ symbol: sym, reason: 'No hay observaciones en el periodo pedido.' })),
@@ -419,6 +421,71 @@ test.describe('portafolio: rendimiento', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Rendimiento' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Ir a la bienvenida' })).toHaveAttribute('href', '/bienvenida')
   })
+})
+
+// Fase 3 (docs/requests/F1.md, pedidos 3 y 4): con `panel.splits` el libro se valúa con cierres
+// sin ajustar por dividendos y la referencia sale aparte con rendimiento total; con `rates.inpc` el
+// costo del ISR se actualiza. Libro con una compra de enero de 2025 para que el INPC aplique.
+const HEALTH_F3 = { ...HEALTH, capabilities: [...HEALTH.capabilities, 'panel.splits', 'rates.inpc'] }
+const INPC = { seriesId: 'SP1', base: '2Q julio 2018 = 100', monthly: { '2025-01': 100, '2026-08': 104 }, meta: meta({ asOf: '2026-08-01', source: 'banxico', delayMinutes: null }) }
+const INPC_STATE = {
+  ...STATE,
+  portfolios: [
+    {
+      ...STATE.portfolios[0],
+      transactions: [
+        tx({ id: 'i1', type: 'buy', date: '2025-01-10', symbol: 'WALMEX.MX', quantity: 100, price: 60 }),
+        tx({ id: 'i2', type: 'dividend', date: '2026-08-15', symbol: 'WALMEX.MX', amount: 100 }),
+        tx({ id: 'i3', type: 'sell', date: '2026-09-16', symbol: 'WALMEX.MX', quantity: 50, price: 66 }),
+      ],
+    },
+  ],
+}
+
+test.describe('portafolio: rendimiento con los campos de la fase 3', () => {
+  test('pide cierres sin ajustar por dividendos, la referencia con rendimiento total y actualiza el costo con el INPC', async ({ page, baseURL }) => {
+    await setupApp(page, { baseURL, session: true, health: HEALTH_F3, routes: { ...V2_ROUTES, 'GET /v2/rates/mx/inpc': { json: INPC } } })
+    await page.addInitScript((st) => window.localStorage.setItem('kaizen:v2', st), JSON.stringify(INPC_STATE))
+    /** @type {string[]} */
+    const panels = []
+    /** @type {string[]} */
+    const inpc = []
+    page.on('request', (r) => {
+      const u = new URL(r.url())
+      if (u.pathname === '/v2/panel') panels.push(`${String(u.searchParams.get('symbols')).split(',').sort().join(',')}|${u.searchParams.get('adjust') ?? 'total'}`)
+      if (u.pathname === '/v2/rates/mx/inpc') inpc.push(u.searchParams.get('start') ?? '')
+    })
+    await page.goto('/portafolio/rendimiento')
+    await expect(page.getByRole('region', { name: 'Resumen del periodo' })).toContainText('TWR del periodo')
+    // 50 vendidos a 66 con costo 60 actualizado por 104/100: 3,300 − 3,120 = 180 y 18 de ISR (sin INPC serían 30).
+    await expect(page.getByRole('table', { name: 'ISR estimado por ejercicio' }).getByRole('row', { name: /2026/ })).toContainText('$18.00')
+    const isr = page.getByRole('region', { name: 'ISR estimado por tus ventas' })
+    await expect(isr).toContainText('El costo se actualiza con el INPC')
+    await expect(isr).not.toContainText('Todavía no tenemos la serie mensual del INPC')
+    await expect(page.getByRole('region', { name: 'Cómo leer estos números' })).toContainText('van sin ajustar por dividendos')
+    expect(panels.sort()).toEqual(['NAFTRAC.MX,WALMEX.MX|splits', 'NAFTRAC.MX|total'])
+    expect(inpc).toEqual(['2025-01-01'])
+  })
+})
+
+// Sin la fixture automática: el INPC contesta 503 (API sin token de Banxico) a propósito.
+plainTest('portafolio: rendimiento con el INPC en 503 deja el aviso de costo sin actualizar', async ({ page, baseURL }) => {
+  const guards = attachGuards(page, { allow: expectedHttpError(503, 'GET', '/v2/rates/mx/inpc', 'la prueba simula el API sin token de Banxico') })
+  await setupApp(page, {
+    baseURL: /** @type {string} */ (baseURL),
+    session: true,
+    health: HEALTH_F3,
+    routes: {
+      ...V2_ROUTES,
+      'GET /v2/rates/mx/inpc': { status: 503, json: { error: { code: 'NOT_CONFIGURED', message: 'Falta BANXICO_TOKEN.' } } },
+    },
+  })
+  await page.addInitScript((st) => window.localStorage.setItem('kaizen:v2', st), JSON.stringify(INPC_STATE))
+  await page.goto('/portafolio/rendimiento')
+  await expect(page.getByRole('table', { name: 'ISR estimado por ejercicio' }).getByRole('row', { name: /2026/ })).toContainText('$30.00')
+  await expect(page.getByRole('region', { name: 'ISR estimado por tus ventas' })).toContainText('Todavía no tenemos la serie mensual del INPC')
+  await expect(page.getByRole('region', { name: 'Resumen del periodo' })).toContainText('TWR del periodo')
+  guards.assertClean()
 })
 
 // Sin la fixture automática: la prueba tumba el panel a propósito y lo permite con su motivo.

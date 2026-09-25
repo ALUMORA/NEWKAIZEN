@@ -361,6 +361,39 @@ test('/mercados: bolsas cerradas muestran la fecha de su último cierre', async 
   await expect(page.getByText('S&P/BMV IPC cerró con alza de 0.49%, en 61,234.52 puntos.')).toBeVisible()
 })
 
+test('/mercados: con lastClose del API (fase 3) la fecha de cierre sale del calendario de cada bolsa, no del dato más nuevo', async ({ page, baseURL }) => {
+  // 16 de septiembre: la BMV no abre (su último cierre es el martes 15) y la NYSE sí (miércoles 16).
+  // Los renglones traen asOf del 18, así que con el método anterior las dos dirían "vie 18 sep".
+  const closed = (label, lastClose) => ({ open: false, label, nextOpen: '2026-09-22T14:30:00Z', nextClose: '2026-09-22T21:00:00Z', lastClose })
+  const overview = {
+    ...OVERVIEW,
+    marketStatus: { bmv: closed('Cerrada. Abre mañana.', '2026-09-15'), nyse: closed('Cerrada. Abre mañana.', '2026-09-16') },
+  }
+  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: HEALTH, routes: { ...V2_ROUTES, 'GET /v2/markets/overview': { json: overview } } })
+  await page.goto('/mercados')
+  const exchanges = page.getByRole('region', { name: 'Estado de las bolsas' })
+  await expect(exchanges.getByText('Cierre mar 15 sep')).toHaveCount(1)
+  await expect(exchanges.getByText('Cierre mié 16 sep')).toHaveCount(1)
+  await expect(exchanges.getByText('Cierre vie 18 sep')).toHaveCount(0)
+})
+
+test('/mercados/cetes: con tenorDays por serie (fase 3) la tabla no adivina el plazo por el texto', async ({ page, baseURL }) => {
+  const tenors = { cetes28: 28, cetes91: 91, cetes182: 182, cetes364: 364 }
+  const rates = {
+    ...RATES,
+    items: [
+      ...RATES.items.map((it) => ({ ...it, verified: true, stale: false, tenorDays: tenors[it.id] ?? null })),
+      // Su texto dice CETES pero no es un plazo de subasta: con tenorDays null no entra a la tabla.
+      { ...rate('cetes_obj', 'Diferencial CETES 28 contra la tasa objetivo', 0.0001, 'fraction', 'X1', null, null), verified: true, stale: false, tenorDays: null },
+    ],
+  }
+  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: HEALTH, routes: { ...V2_ROUTES, 'GET /v2/rates/mx': { json: rates } } })
+  await page.goto('/mercados/cetes')
+  const table = page.getByRole('table', { name: 'CETES por plazo' })
+  await expect(table.getByRole('rowheader', { name: '364 días' })).toBeVisible()
+  await expect(table.getByRole('row')).toHaveCount(5)
+})
+
 test('/mercados: sin las capacidades en /health, cada sección lo dice y no pide nada', async ({ page, baseURL }) => {
   const api = await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: 'v2', routes: V2_ROUTES })
   await page.goto('/mercados')

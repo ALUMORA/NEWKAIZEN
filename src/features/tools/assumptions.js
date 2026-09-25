@@ -1,11 +1,12 @@
 // Supuestos editables del optimizador y su validación. Los campos van en porcentaje, como los
 // escribe la persona; el cálculo los recibe como fracción.
-import { DEFAULT_ERP } from './optimizer.js'
 
 export const DEFAULT_ASSUMPTIONS = Object.freeze({
   muMethod: /** @type {'capm' | 'jamesStein' | 'historical'} */ ('capm'),
   covMethod: /** @type {'ledoitWolf' | 'sample'} */ ('ledoitWolf'),
-  erpPct: /** @type {number | null} */ (Math.round(DEFAULT_ERP * 10000) / 100),
+  /** Solo cuenta si `erpTouched`; si no, manda la de /v2/assumptions (o la de respaldo). */
+  erpPct: /** @type {number | null} */ (null),
+  erpTouched: false,
   /** Solo cuenta si `rfTouched`; si no, manda la de CETES 28 del API. */
   rfPct: /** @type {number | null} */ (null),
   rfTouched: false,
@@ -24,6 +25,17 @@ export function riskFreePct(a, apiRfPct) {
   return a.rfTouched ? a.rfPct : apiRfPct
 }
 
+/**
+ * Prima de mercado en porcentaje: la escrita si la persona tocó el campo, si no la del API (o la de
+ * respaldo). `undefined` en `apiErpPct` quiere decir que todavía no llega.
+ * @param {Assumptions} a
+ * @param {number | null | undefined} apiErpPct
+ * @returns {number | null | undefined}
+ */
+export function marketPremiumPct(a, apiErpPct) {
+  return a.erpTouched ? a.erpPct : apiErpPct
+}
+
 /** @param {number} x */
 const fmt = (x) => (Math.round(x * 100) / 100).toLocaleString('es-MX')
 
@@ -32,12 +44,15 @@ const fmt = (x) => (Math.round(x * 100) / 100).toLocaleString('es-MX')
  * @param {Assumptions} a
  * @param {number} n cuántas emisoras entran a la optimización
  * @param {number | null} apiRfPct la tasa del API en porcentaje, o null si no llegó
+ * @param {number | null} [apiErpPct] la prima del API (o la de respaldo) en porcentaje; undefined
+ *   mientras se espera, que no es error pero tampoco deja calcular el CAPM
  * @returns {Partial<Record<'erpPct' | 'rfPct' | 'minPct' | 'maxPct', string>>}
  */
-export function validateAssumptions(a, n, apiRfPct) {
+export function validateAssumptions(a, n, apiRfPct, apiErpPct) {
   /** @type {Partial<Record<'erpPct' | 'rfPct' | 'minPct' | 'maxPct', string>>} */
   const errors = {}
-  if (a.muMethod === 'capm' && (a.erpPct === null || a.erpPct < 0 || a.erpPct > 20)) {
+  const erp = marketPremiumPct(a, apiErpPct)
+  if (a.muMethod === 'capm' && erp !== undefined && (erp === null || erp < 0 || erp > 20)) {
     errors.erpPct = 'Escribe una prima entre 0 % y 20 %.'
   }
   const rf = riskFreePct(a, apiRfPct)

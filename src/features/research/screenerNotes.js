@@ -1,6 +1,9 @@
 // Utilidades puras de las notas (meta.notes) de los screeners de fórmula mágica y FIBRAs.
 // El API escribe sus avisos como texto en español y nombra a las emisoras por su clave
-// ("FMTY14.MX: LTV, ... van en s/d porque ..."), así que aquí se reparten por emisora.
+// ("FMTY14.MX: LTV, ... van en s/d porque ..."), así que aquí se reparten por emisora. Desde la
+// fase 3 lo que es de un renglón llega en el renglón (`FibraRow.notes`, `MagicRow.ebitSource`) y el
+// reparto por texto queda solo como respaldo para respuestas de un API anterior (rowNotes,
+// ebitFallbackRows).
 
 /** @param {string} text */
 function escapeRe(text) {
@@ -53,6 +56,36 @@ export function ebitFallbackSymbols(notes) {
     }
   }
   return out
+}
+
+/**
+ * Claves con EBIT de respaldo. Desde la fase 3 cada `MagicRow` trae `ebitSource` y manda ese campo
+ * (`ebit_row` es el renglón EBIT de respaldo); un renglón de un API anterior no lo trae y entonces
+ * se busca en la lista de la nota (ebitFallbackSymbols), que es solo respaldo.
+ * @param {readonly { symbol: string, ebitSource?: string | null }[]} rows
+ * @param {readonly string[] | null | undefined} notes
+ * @returns {Set<string>}
+ */
+export function ebitFallbackRows(rows, notes) {
+  const fromNotes = rows.some((r) => r.ebitSource === undefined) ? ebitFallbackSymbols(notes) : new Set()
+  const out = new Set()
+  for (const row of rows) {
+    if (row.ebitSource !== undefined ? row.ebitSource === 'ebit_row' : fromNotes.has(row.symbol)) out.add(row.symbol)
+  }
+  return out
+}
+
+/**
+ * Motivos de las s/d de un renglón. Desde la fase 3 el API los manda en `row.notes` (una oración por
+ * motivo, sin el símbolo); un renglón de un API anterior no lo trae y entonces se toman las notas
+ * generales que lo nombran (notesFor), que es solo respaldo.
+ * @param {{ symbol: string, notes?: string[] | null }} row
+ * @param {readonly string[] | null | undefined} notes meta.notes de la respuesta
+ * @returns {string[]}
+ */
+export function rowNotes(row, notes) {
+  if (Array.isArray(row?.notes)) return row.notes.filter((n) => typeof n === 'string' && n.trim())
+  return notesFor(row?.symbol, notes)
 }
 
 const SOURCE_NAMES = Object.freeze({
