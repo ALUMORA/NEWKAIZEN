@@ -13,7 +13,7 @@ import { InputsCard } from '../components/InputsCard.jsx'
 import { PortfoliosCard } from '../components/PortfoliosCard.jsx'
 import { SymbolPicker } from '../components/SymbolPicker.jsx'
 import { ValidationCard } from '../components/ValidationCard.jsx'
-import { MAX_ASSETS, MIN_PERIODS } from '../optimizer.js'
+import { MAX_ASSETS, MIN_PERIODS, droppedSymbols } from '../optimizer.js'
 import { parseSymbols } from '../selection.js'
 import { useOptimizer } from '../useOptimizer.js'
 import '../tools.css'
@@ -50,7 +50,7 @@ export default function OptimizerPage() {
   }, { replace: true })
 
   const meta = m.panel.data?.meta
-  const dropped = [...new Set([...(m.panel.data?.dropped ?? []).map((/** @type {any} */ d) => d.symbol), ...(m.prep?.missing ?? [])])]
+  const dropped = droppedSymbols(m.panel.data, m.prep, symbols)
 
   let results
   if (symbols.length < 2) {
@@ -84,7 +84,7 @@ export default function OptimizerPage() {
         <EmptyState
           headingAs="h3"
           title="No alcanzan los datos para optimizar"
-          text={`Hacen falta al menos dos emisoras con ${MIN_PERIODS} semanas de precios en común. ${dropped.length ? `Quedaron fuera: ${dropped.join(', ')}.` : ''}`}
+          text={`Hacen falta al menos dos emisoras con ${MIN_PERIODS} semanas de precios en común${m.prep ? ` y hay ${m.prep.periods}` : ''}. Solo cuentan las fechas que todas tienen, así que una emisora reciente recorta la historia de las demás: quítala para ver si alcanza. ${dropped.length ? `Quedaron fuera: ${dropped.join(', ')}.` : ''}`}
         />
       </ResultCard>
     )

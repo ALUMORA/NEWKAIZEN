@@ -91,7 +91,8 @@ test.describe('herramientas: simulador', () => {
     await expect(page.locator('h1')).toHaveCount(1)
     await expect(page.getByText('Probabilidad de llegar a la meta')).toBeVisible()
     await expect(page.getByRole('region', { name: 'Escenario de retiro' })).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Lee la metodología en Aprender' })).toHaveAttribute('href', '/aprender')
+    await expect(page.getByText(/crecen un poco cada mes, al ritmo anual que elegiste/)).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Lee la metodología del simulador' })).toHaveAttribute('href', '/aprender/metodologia/simulador')
     await noHorizontalScroll(page)
   })
 

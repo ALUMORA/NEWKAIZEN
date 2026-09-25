@@ -1,2 +1,21 @@
 /* Envoltura de las páginas públicas de F5 (fuera del shell). Solo tokens. */
 .f5-public { padding-block: var(--space-7) var(--space-10); }
+.f5-public__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+.f5-public__brand {
+  font-weight: var(--weight-bold);
+  font-size: var(--text-lg);
+  color: var(--ink);
+  text-decoration: none;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.f5-public__brand:hover { text-decoration: underline; }
+.f5-public__cta { min-height: 44px; }

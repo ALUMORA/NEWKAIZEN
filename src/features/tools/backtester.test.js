@@ -63,3 +63,28 @@ describe('backtest', () => {
     expect(w.Z).toBeUndefined()
   })
 })
+
+// Caso calculado a mano en Python (revisión RT, 25 de septiembre de 2026): 8 semanas, 60 % A y
+// 40 % B. CAGR = (V_T / V_0)^(52/8) − 1, volatilidad = desviación muestral semanal por raíz de 52.
+describe('backtest contra un cálculo a mano', () => {
+  const A = [100, 104, 101, 108, 97, 103, 110, 112, 106]
+  const B = [50, 50.5, 51, 50.2, 51.5, 52, 51.8, 53, 54]
+  const dates = A.map((_, i) => new Date(Date.UTC(2026, 0, 2 + 7 * i)).toISOString().slice(0, 10))
+  const panel = { dates, prices: { A, B, [IPC_SYMBOL]: A, [SPX_SYMBOL]: B } }
+  const opts = { weights: { A: 0.6, B: 0.4 }, rebalance: /** @type {const} */ ('weekly'), benchmark: /** @type {const} */ ('ipc'), blendIpc: 0.5 }
+
+  it('comprar y mantener: 1.068, CAGR 53.360 %, volatilidad 25.263 %, caída máxima −5.297 %', () => {
+    const out = runBacktest(panel, { ...opts, strategy: 'buyAndHold' })
+    expect(out.growth.portfolio.at(-1).value).toBeCloseTo(1.068, 12)
+    expect(out.portfolio.cagr).toBeCloseTo(0.5336036817911272, 12)
+    expect(out.portfolio.vol).toBeCloseTo(0.2526340582356425, 12)
+    expect(out.drawdown.portfolio.maxDrawdown).toBeCloseTo(-0.05297256097560987, 12)
+  })
+
+  it('mezcla constante semanal: 1.073078, CAGR 58.162 %, volatilidad 24.851 %', () => {
+    const out = runBacktest(panel, { ...opts, strategy: 'constantMix' })
+    expect(out.growth.portfolio.at(-1).value).toBeCloseTo(1.073077877349414, 12)
+    expect(out.portfolio.cagr).toBeCloseTo(0.5816233568005598, 12)
+    expect(out.portfolio.vol).toBeCloseTo(0.2485109686498405, 12)
+  })
+})

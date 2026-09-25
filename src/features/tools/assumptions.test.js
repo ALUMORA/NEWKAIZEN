@@ -23,3 +23,14 @@ describe('supuestos del optimizador', () => {
     expect(validateAssumptions({ ...DEFAULT_ASSUMPTIONS, erpPct: null, muMethod: 'jamesStein' }, 2, 7)).toEqual({})
   })
 })
+
+describe('prima de mercado contra el archivo de Damodaran (revisión RT)', () => {
+  it('DEFAULT_ERP es la matureMarketErp de kaizen_api/data/damodaran_2026.json y la fuente dice su vintage', async () => {
+    const { readFileSync } = await import('node:fs')
+    const file = JSON.parse(readFileSync(new URL('../../../kaizen_api/data/damodaran_2026.json', import.meta.url), 'utf8'))
+    const { DEFAULT_ERP, ERP_SOURCE } = await import('./optimizer.js')
+    expect(DEFAULT_ERP).toBe(file.matureMarketErp)
+    expect(file.vintage).toBe('2026-01')
+    expect(ERP_SOURCE).toMatch(/enero de 2026/)
+  })
+})

@@ -55,12 +55,61 @@ export function objectsToCSV(items, columns, options) {
   return toCSV([header, ...rows], options)
 }
 
-/** Adivina el separador con la primera línea: coma, punto y coma o tabulador. */
-function sniffDelimiter(text) {
-  const firstLine = text.split(/\r?\n/, 1)[0] ?? ''
-  const counts = [',', ';', '\t'].map((d) => ({ d, n: firstLine.split(d).length - 1 }))
+/**
+ * Adivina el separador con la primera línea: coma, punto y coma o tabulador. Excel en español
+ * guarda con punto y coma porque la coma es su separador decimal.
+ * @param {string} text
+ * @returns {',' | ';' | '\t'}
+ */
+export function detectDelimiter(text) {
+  let src = String(text ?? '')
+  if (src.startsWith(BOM)) src = src.slice(1)
+  const firstLine = src.split(/\r?\n/, 1)[0] ?? ''
+  const counts = /** @type {const} */ ([',', ';', '\t']).map((d) => ({ d, n: firstLine.split(d).length - 1 }))
   counts.sort((a, b) => b.n - a.n)
   return counts[0].n > 0 ? counts[0].d : ','
+}
+
+/**
+ * Número escrito como lo escribe una persona en México o en Europa: "1,234.56", "1.234,56",
+ * "1234,56", "$1,060.50", "−12,5". Con las dos marcas, la que va al final es la decimal. Con una
+ * sola coma: si agrupa de tres en tres ("1,234") son miles; si no ("1234,56"), es decimal. Con
+ * `decimalComma` (archivos separados por punto y coma) la coma siempre es decimal y el punto
+ * siempre agrupa miles, así que "1.234" es mil doscientos treinta y cuatro.
+ * @param {unknown} text
+ * @param {{ decimalComma?: boolean }} [options]
+ * @returns {number | null} null si la celda está vacía; NaN si no se puede leer como número
+ */
+export function parseLocaleNumber(text, { decimalComma = false } = {}) {
+  if (text === null || text === undefined) return null
+  let s = String(text)
+    .trim()
+    .replace(/\u2212/g, '-')
+    .replace(/[$\s\u00a0\u202f]|MXN|USD/gi, '')
+  if (s === '') return null
+  if (!/^[-+]?[\d.,]+$/.test(s)) return Number.NaN
+  const commas = (s.match(/,/g) ?? []).length
+  const dots = (s.match(/\./g) ?? []).length
+  const unsigned = s.replace(/^[-+]/, '')
+  const grouped = (/** @type {string} */ mark) => new RegExp(`^\\d{1,3}(\\${mark}\\d{3})+$`).test(unsigned)
+  if (commas && dots) {
+    const decimal = s.lastIndexOf(',') > s.lastIndexOf('.') ? ',' : '.'
+    const group = decimal === ',' ? '.' : ','
+    if ((decimal === ',' ? commas : dots) > 1) return Number.NaN
+    s = s.split(group).join('').replace(decimal, '.')
+  } else if (commas) {
+    if (decimalComma) {
+      if (commas > 1) return Number.NaN
+      s = s.replace(',', '.')
+    } else if (grouped(',')) s = s.replace(/,/g, '')
+    else if (commas === 1) s = s.replace(',', '.')
+    else return Number.NaN
+  } else if (dots) {
+    if (grouped('.') && (decimalComma || dots > 1)) s = s.replace(/\./g, '')
+    else if (dots > 1) return Number.NaN
+  }
+  const n = Number(s)
+  return Number.isFinite(n) ? n : Number.NaN
 }
 
 /**
@@ -74,7 +123,7 @@ function sniffDelimiter(text) {
 export function parseCSV(text, { delimiter, unguard = false, skipEmptyLines = true } = {}) {
   let src = String(text ?? '')
   if (src.startsWith(BOM)) src = src.slice(1)
-  const sep = delimiter ?? sniffDelimiter(src)
+  const sep = delimiter ?? detectDelimiter(src)
   /** @type {string[][]} */
   const rows = []
   /** @type {string[]} */
