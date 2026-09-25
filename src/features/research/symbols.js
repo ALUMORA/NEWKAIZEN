@@ -10,3 +10,13 @@ export function parseSymbols(text) {
   }
   return out
 }
+
+/** Solo ligas http(s): una URL rara del proveedor (javascript:, data:) no se vuelve un enlace. */
+export function safeUrl(url) {
+  try {
+    const u = new URL(String(url ?? ''))
+    return u.protocol === 'https:' || u.protocol === 'http:' ? u.href : null
+  } catch {
+    return null
+  }
+}

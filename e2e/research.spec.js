@@ -14,7 +14,7 @@ const CAPTURE_DIR = process.env.F3_CAPTURE_DIR ?? ''
 
 const HEALTH = { ...HEALTH_V2, capabilities: [...HEALTH_V2.capabilities, 'markets.overview'] }
 
-import { INSTRUMENT, RESEARCH_ROUTES, VALUATION, meta } from './support/research-data.js'
+import { DIVIDENDS, INSTRUMENT, RESEARCH_ROUTES, VALUATION, meta } from './support/research-data.js'
 
 const V2_ROUTES = RESEARCH_ROUTES
 
@@ -91,7 +91,7 @@ test.describe('investigar: ficha de la emisora', () => {
     await expect(page.getByText('Walmex reporta ventas')).toBeVisible()
   })
 
-  test('emisora del SIC: tipo de cambio usado, aviso de moneda y dato de respaldo visibles', async ({ page, baseURL }) => {
+  test('emisora del SIC: tipo de cambio usado, DCF en la moneda en que reporta y dato de respaldo visibles', async ({ page, baseURL }) => {
     const sic = {
       ...INSTRUMENT,
       symbol: 'AAPL.MX',
@@ -101,11 +101,13 @@ test.describe('investigar: ficha de la emisora', () => {
       fxUsed: { pair: 'USDMXN', rate: 18.4321, asOf: '2026-09-19' },
       meta: meta({ fallback: true, stale: true, source: 'stooq', asOf: '2026-09-19' }),
     }
-    const warning = 'Los flujos se reportan en USD y el precio cotiza en MXN: el valor por acción se convirtió con el tipo de cambio del 19 sep.'
+    // Lo que escribe kaizen_api/domain/valuation/inputs.py: el DCF va en la moneda de los flujos.
+    const warning = 'La empresa reporta en USD y cotiza en MXN. El DCF se hace en USD, que es la moneda de sus flujos, y los múltiplos se comparan en MXN con USDMXN=X a 18.4321.'
+    const dcf = { ...VALUATION.dcf, inputs: { ...VALUATION.dcf.inputs, currency: 'USD' }, perShare: 12.34, warnings: [warning, ...VALUATION.dcf.warnings] }
     await open(page, /** @type {string} */ (baseURL), {
       routes: {
         'GET /v2/instrument/:symbol': { json: sic },
-        'GET /v2/valuation/:symbol': { json: { ...VALUATION, dcf: { ...VALUATION.dcf, warnings: [warning, ...VALUATION.dcf.warnings] } } },
+        'GET /v2/valuation/:symbol': { json: { ...VALUATION, symbol: 'AAPL.MX', currency: 'MXN', dcf } },
       },
     })
     await page.goto('/investigar/AAPL.MX')
@@ -114,6 +116,37 @@ test.describe('investigar: ficha de la emisora', () => {
     await expect(page.getByRole('region', { name: 'Resumen' }).getByText('18.4321')).toBeVisible()
     await expect(page.getByText(warning)).toBeVisible()
     await expect(page.getByText(/Respaldo/).first()).toBeVisible()
+    const valuation = page.getByRole('region', { name: 'Valuación' })
+    await expect(valuation.getByText('Valor por acción con estos supuestos (USD)')).toBeVisible()
+    await expect(valuation.getByText(/El DCF va en USD/)).toBeVisible()
+    await expect(valuation.getByRole('table', { name: /valor por acción en USD/ })).toBeVisible()
+  })
+
+  test('banco: el P/VL justificado se ve en la ficha y los avisos de cada sección no se esconden', async ({ page, baseURL }) => {
+    const bank = { applicable: true, justifiedPB: 1.84, roe: 0.21, costOfEquity: 0.145, growth: 0.06, impliedPrice: 171.23 }
+    const note = 'P/VL justificado: El crecimiento terminal (9.00%) deja menos de 2 puntos contra el costo de capital propio (14.50%); se recortó a 12.50%.'
+    const divNote = 'Este rendimiento sale de los dividendos pagados en los últimos 12 meses; Yahoo publica 4.45 %.'
+    await open(page, /** @type {string} */ (baseURL), {
+      routes: {
+        'GET /v2/valuation/:symbol': {
+          json: {
+            ...VALUATION,
+            dcf: { ...VALUATION.dcf, applicable: false, reason: 'Se valúa con el P/VL justificado del bloque de bancos.' },
+            bank,
+            meta: { ...VALUATION.meta, notes: [note] },
+          },
+        },
+        'GET /v2/instrument/:symbol/dividends': { json: { ...DIVIDENDS, meta: { ...DIVIDENDS.meta, notes: [divNote] } } },
+      },
+    })
+    await page.goto('/investigar/WALMEX.MX')
+    const valuation = page.getByRole('region', { name: 'Valuación' })
+    await expect(valuation.getByRole('heading', { name: 'P/VL justificado' })).toBeVisible()
+    await expect(valuation.getByText('1.84x')).toBeVisible()
+    await expect(valuation.getByText('$171.23').first()).toBeVisible()
+    await expect(valuation.getByRole('note', { name: 'Avisos de la valuación' })).toContainText('se recortó a 12.50%')
+    await expect(page.getByRole('note', { name: 'Avisos de los dividendos' })).toContainText('Yahoo publica 4.45 %')
+    await noHorizontalScroll(page)
   })
 })
 
@@ -137,6 +170,54 @@ test.describe('investigar: supuestos del DCF', () => {
     await expect.poll(() => seen.some((q) => q.get('erp') === '0.06' && q.get('years') === '7')).toBe(true)
     await expect(page.getByText('El valor terminal pesa 62%')).toBeVisible()
   })
+})
+
+test.describe('investigar: supuestos fuera de rango', () => {
+  test('un crecimiento terminal de 7 % se detiene en el formulario y no se manda', async ({ page, baseURL }) => {
+    /** @type {URLSearchParams[]} */
+    const seen = []
+    await open(page, /** @type {string} */ (baseURL), {
+      routes: {
+        'GET /v2/valuation/:symbol': ({ url }) => {
+          seen.push(url.searchParams)
+          return { json: VALUATION }
+        },
+      },
+    })
+    await page.goto('/investigar/WALMEX.MX')
+    await instrumentReady(page)
+    const tg = page.getByRole('textbox', { name: 'Crecimiento terminal' })
+    await tg.fill('7')
+    await page.getByRole('button', { name: 'Recalcular' }).click()
+    await expect(page.getByText('El crecimiento terminal va de −2 a 6 %.')).toBeVisible()
+    await expect(tg).toHaveAttribute('aria-invalid', 'true')
+    await expect(page.getByRole('table', { name: /Malla de sensibilidad/ })).toBeVisible()
+    expect(seen.some((q) => q.has('terminalGrowth'))).toBe(false)
+  })
+})
+
+plainTest('investigar: si el API rechaza los supuestos, el formulario y los múltiplos siguen y se puede volver', async ({ page, baseURL }) => {
+  const guards = attachGuards(page, { allow: expectedHttpError(422, 'GET', '/v2/valuation/WALMEX.MX', 'la prueba rechaza los supuestos a propósito') })
+  await open(page, /** @type {string} */ (baseURL), {
+    routes: {
+      'GET /v2/valuation/:symbol': ({ url }) =>
+        url.searchParams.has('erp')
+          ? { status: 422, json: { error: { code: 'VALIDATION_ERROR', message: 'Algún supuesto está fuera de rango.' } } }
+          : { json: VALUATION },
+    },
+  })
+  await page.goto('/investigar/WALMEX.MX')
+  await instrumentReady(page)
+  await page.getByRole('textbox', { name: 'Prima de mercado' }).fill('6')
+  await page.getByRole('button', { name: 'Recalcular' }).click()
+  const valuation = page.getByRole('region', { name: 'Valuación' })
+  await expect(valuation.getByRole('alert')).toContainText('fuera de rango', { timeout: 10_000 })
+  await expect(valuation.getByRole('form', { name: 'Supuestos del DCF' })).toBeVisible()
+  await expect(valuation.getByRole('table', { name: 'Múltiplos contra su referencia sectorial' })).toBeVisible()
+  await valuation.getByRole('button', { name: 'Volver a los supuestos del servidor' }).click()
+  await expect(valuation.getByRole('alert')).toHaveCount(0)
+  await expect(valuation.getByRole('table', { name: /Malla de sensibilidad/ })).toBeVisible()
+  guards.assertClean()
 })
 
 // Sin la fixture automática: esta prueba adjunta sus guardas con permisos explícitos para los 503.
