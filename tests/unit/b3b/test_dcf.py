@@ -138,3 +138,27 @@ def test_el_valor_crece_cuando_baja_la_wacc():
     barato = dcf.two_stage_fcff(100.0, 0.10, 5, 0.03, 0.08)
     assert barato.enterprise_value > caro.enterprise_value
     assert math.isfinite(barato.enterprise_value)
+
+
+@pytest.mark.parametrize("wacc", [0.0789, 0.0811, 0.0937, 0.1043])
+def test_el_centro_de_la_malla_repite_el_caso_base_cuando_g_se_recorto_contra_la_wacc(wacc: float) -> None:
+    """Con g recortado a WACC − 2 pp, el redondeo a 6 decimales dejaba el centro en s/d."""
+    g = dcf.clamp_terminal_growth(0.08, wacc, None, [])
+    base = dcf.two_stage_fcff(100.0, 0.05, 5, 0.08, wacc)
+    _, per_share = dcf.equity_bridge(base.enterprise_value, 0.0, 0.0, 10.0)
+    grid = dcf.sensitivity(
+        fcff0=100.0, growth=0.05, years=5, base_wacc=wacc, base_terminal_growth=g,
+        net_debt=0.0, minority_interest=0.0, shares=10.0,
+    )["grid"]
+    assert grid[2][2] is not None
+    assert grid[2][2] == pytest.approx(per_share, rel=1e-4)
+
+
+def test_el_centro_de_la_malla_no_se_pierde_cuando_g_se_recorto_a_la_tasa_libre_de_riesgo() -> None:
+    rf = 0.04123456
+    grid = dcf.sensitivity(
+        fcff0=100.0, growth=0.05, years=5, base_wacc=0.09, base_terminal_growth=rf,
+        net_debt=0.0, minority_interest=0.0, shares=10.0, rf=rf,
+    )["grid"]
+    assert grid[2][2] is not None
+    assert grid[2][3] is None and grid[2][4] is None
