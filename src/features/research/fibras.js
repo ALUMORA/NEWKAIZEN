@@ -70,7 +70,10 @@ export function describeRate(meta, rate) {
   return { label, against, missing, substitute, source, sourceLabel }
 }
 
-const RATE_NOTE_RE = /sustitut|token de Banxico|BANXICO_TOKEN|^Respaldo:/i
+// Frases de las notas de la tasa que escriben kaizen_api/domain/rates.py (get_rf_series) y
+// kaizen_api/domain/screeners/fibras.py (NO_RATE). Si el backend cambia la redacción, fibras.test.js
+// lo detecta con las mismas cadenas.
+const RATE_NOTE_RE = /sustitut|token de Banxico|BANXICO_TOKEN|^Respaldo:|revisión humana|Banxico no (respondió|tiene datos)|El SIE no confirmó|tasa de CETES 28/i
 
 /**
  * Separa las notas generales en las que explican la tasa de referencia y el resto.

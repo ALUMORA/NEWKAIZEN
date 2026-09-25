@@ -76,3 +76,19 @@ describe('rateDate', () => {
     expect(rateDate(null)).toBe(null)
   })
 })
+
+describe('splitRateNotes con las notas que escribe hoy el backend', () => {
+  // kaizen_api/domain/rates.py (get_rf_series) y kaizen_api/domain/screeners/fibras.py (NO_RATE).
+  const RATE_NOTES = [
+    'La serie SF43936 todavía no tiene revisión humana (verified: false en el catálogo), así que no se usó.',
+    'Banxico no respondió (UPSTREAM_UNAVAILABLE).',
+    'Banxico no tiene datos de CETES en ese rango de fechas.',
+    'El SIE no confirmó la serie SF43936, así que no se usó: el título no trae "28".',
+    'Todavía no hay tasa de CETES 28 en este servidor, así que el diferencial va en s/d.',
+  ]
+  it('cada nota de la tasa cae en la tarjeta de la tasa', () => {
+    const { rate, rest } = splitRateNotes([...RATE_NOTES, 'FUNO11.MX no trae precio en esta corrida.'])
+    expect(rate).toEqual(RATE_NOTES)
+    expect(rest).toEqual(['FUNO11.MX no trae precio en esta corrida.'])
+  })
+})

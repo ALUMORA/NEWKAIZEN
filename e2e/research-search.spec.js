@@ -213,6 +213,27 @@ test.describe('investigar: buscador', () => {
     await expect(page).toHaveURL(/\/investigar\/MSFT$/)
   })
 
+  test('Enter mientras llega la búsqueda nueva no abre un resultado de la búsqueda anterior', async ({ page, baseURL }) => {
+    await open(page, /** @type {string} */ (baseURL), {
+      routes: {
+        'GET /v2/search': ({ url }) => {
+          const q = url.searchParams.get('q')
+          return { json: searchResponse(q), ...(q === 'cemex' ? { delayMs: 1500 } : {}) }
+        },
+      },
+    })
+    await page.goto('/investigar')
+    const box = searchBox(page)
+    await box.fill('walmart')
+    await searchReady(page)
+    await box.fill('cemex')
+    // Ya pasó el retraso del buscador, pero la respuesta de "cemex" todavía no llega: en pantalla
+    // siguen los resultados de "walmart".
+    await page.waitForTimeout(500)
+    await box.press('Enter')
+    await expect(page).toHaveURL(/\/investigar\/CEMEXCPO\.MX$/)
+  })
+
   test('Enter sobre un resultado enfocado abre su ficha', async ({ page, baseURL }) => {
     await open(page, /** @type {string} */ (baseURL))
     await page.goto('/investigar?q=walmart')

@@ -65,6 +65,9 @@ export default function Search() {
   const debounced = useDebounced(q, SEARCH_DEBOUNCE_MS)
   const canSearch = status === 'ready'
   const search = useQuery({ ...searchQuery(debounced, SEARCH_LIMIT), enabled: canSearch && debounced.length > 0, placeholderData: (prev) => prev })
+  // Mientras llega la búsqueda nueva, placeholderData deja la lista anterior en pantalla; sirve
+  // para no parpadear, pero no cuenta como resultado de lo que está escrito.
+  const stale = search.isPlaceholderData
   const results = debounced && search.data ? search.data.results : []
 
   // La URL lleva lo buscado (?q=) para que Atrás y una liga compartida regresen a lo mismo. Si la
@@ -80,7 +83,7 @@ export default function Search() {
   }, [debounced, urlQ, setParams])
 
   const searching = canSearch && q.length > 0 && (q !== debounced || search.isFetching)
-  const live = statusText({ q, searching, count: search.isSuccess && q === debounced ? results.length : null, failed: search.isError && q === debounced })
+  const live = statusText({ q, searching, count: search.isSuccess && !stale && q === debounced ? results.length : null, failed: search.isError && q === debounced })
 
   /** @param {{ symbol: string, name?: string | null }} entry */
   function open(entry) {
@@ -90,8 +93,8 @@ export default function Search() {
   async function submit(event) {
     event.preventDefault()
     if (!q) return
-    let list = q === debounced ? results : []
-    if (canSearch && q !== debounced) {
+    let list = q === debounced && !stale ? results : []
+    if (canSearch && (q !== debounced || stale)) {
       try {
         list = (await queryClient.fetchQuery(searchQuery(q, SEARCH_LIMIT)))?.results ?? []
       } catch {
