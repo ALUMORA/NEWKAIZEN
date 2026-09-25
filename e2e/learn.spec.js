@@ -193,11 +193,8 @@ test.describe('F5: lista de seguimiento', () => {
 
       await table.getByRole('button', { name: 'Quitar WALMEX.MX' }).click()
       await expect(table.getByRole('row')).toHaveCount(2)
-      // En móvil el marco del shell tapa el aviso para el puntero (pendiente de C3, ver
-      // docs/requests/F5.md); se usa el teclado, que es igual de válido para Deshacer.
       const undo = page.getByRole('button', { name: 'Deshacer' })
-      await undo.focus()
-      await page.keyboard.press('Enter')
+      await undo.click()
       await expect(table.getByRole('row')).toHaveCount(3)
       await expect(table.getByRole('row').nth(1)).toContainText('WALMEX.MX')
     })
