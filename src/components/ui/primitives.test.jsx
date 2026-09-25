@@ -233,10 +233,16 @@ describe('Card', () => {
   // lugar, en móvil aparece una fila nueva y todo lo de abajo brinca (CLS de /mercados).
   it('con status todavía vacío guarda el lugar de la insignia, oculto para lectores de pantalla', () => {
     const { container } = render(<Card title="Resumen" status={undefined}>x</Card>)
-    const slot = container.querySelector('.kz-card__actions')
+    const slot = container.querySelector('.kz-card__actions .kz-card__status-slot')
     expect(slot).not.toBeNull()
-    expect(slot).toHaveAttribute('data-reserve')
     expect(slot).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  it('con acciones también guarda el lugar junto a ellas', () => {
+    const { container } = render(<Card title="Titulares" status={undefined} actions={<button type="button">Idioma</button>}>x</Card>)
+    const actions = container.querySelector('.kz-card__actions')
+    expect(actions?.querySelector('.kz-card__status-slot')).not.toBeNull()
+    expect(actions?.querySelector('button')).not.toBeNull()
   })
 
   it('sin la prop status no agrega nada al encabezado', () => {
@@ -247,8 +253,7 @@ describe('Card', () => {
   it('con status lleno muestra la insignia sin reserva', () => {
     const meta = { asOf: '2026-09-22T14:40:00Z', source: 'yahoo', delayMinutes: 15, stale: false, fallback: false, generatedAt: '2026-09-22T14:52:00Z', notes: [] }
     const { container } = render(<Card title="Resumen" status={meta}>x</Card>)
-    const slot = container.querySelector('.kz-card__actions')
-    expect(slot).not.toHaveAttribute('data-reserve')
-    expect(slot).not.toHaveAttribute('aria-hidden')
+    expect(container.querySelector('.kz-card__status-slot')).toBeNull()
+    expect(container.querySelector('.kz-card__actions')).not.toBeNull()
   })
 })

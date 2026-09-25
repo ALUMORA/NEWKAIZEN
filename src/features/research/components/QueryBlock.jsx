@@ -7,10 +7,10 @@ import { EmptyState, ErrorState, Skeleton, SrOnly } from '../../../components/ui
  *   isEmpty?: boolean, emptyTitle?: string, emptyText?: string, lines?: number,
  *   children: import('react').ReactNode | (() => import('react').ReactNode) }} props
  */
-export function QueryBlock({ query, isEmpty = false, emptyTitle = 'Sin datos', emptyText, lines = 4, children }) {
+export function QueryBlock({ query, isEmpty = false, emptyTitle = 'Sin datos', emptyText, lines = 4, reserve, children }) {
   if (query.isPending) {
     return (
-      <div aria-busy="true">
+      <div aria-busy="true" className={reserve ? 'kz-research-reserve' : undefined} data-reserve={reserve}>
         <SrOnly>Cargando</SrOnly>
         <Skeleton lines={lines} />
       </div>

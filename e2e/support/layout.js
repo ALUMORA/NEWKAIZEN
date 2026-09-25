@@ -15,3 +15,26 @@ export async function expectNoHorizontalScroll(page) {
   expect(innerWidth, 'el viewport de diseño no se ensancha').toBe(width)
   expect(scrollWidth, 'la página no se desplaza a lo ancho').toBeLessThanOrEqual(width)
 }
+
+/**
+ * Empieza a sumar el desplazamiento acumulado del layout (CLS) desde antes de que cargue la página.
+ * Llamarlo ANTES de page.goto; leerlo con readLayoutShift.
+ * @param {import('@playwright/test').Page} page
+ */
+export async function trackLayoutShift(page) {
+  await page.addInitScript(() => {
+    const w = /** @type {any} */ (window)
+    w.__cls = 0
+    new PerformanceObserver((list) => {
+      for (const e of /** @type {any[]} */ (list.getEntries())) if (!e.hadRecentInput) w.__cls += e.value
+    }).observe({ type: 'layout-shift', buffered: true })
+  })
+}
+
+/**
+ * @param {import('@playwright/test').Page} page
+ * @returns {Promise<number>}
+ */
+export async function readLayoutShift(page) {
+  return page.evaluate(() => /** @type {any} */ (window).__cls ?? 0)
+}

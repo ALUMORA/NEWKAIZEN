@@ -28,7 +28,7 @@ function Overview({ query }) {
   const ccy = data?.priceCurrency
   return (
     <Card title="Resumen" status={data?.meta}>
-      <QueryBlock query={query} lines={5}>
+      <QueryBlock query={query} lines={5} reserve="overview">
         {() => (
           <div className="kz-col" data-gap="3">
             <div className="kz-research-stats">

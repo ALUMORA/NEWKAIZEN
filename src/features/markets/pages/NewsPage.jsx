@@ -62,7 +62,7 @@ export default function NewsPage() {
         actions={<SegmentedControl label="Idioma" hideLabel items={LANGS} value={lang} onChange={setLang} name="idioma-noticias" />}
       >
         {q.isPending ? (
-          <div aria-busy="true">
+          <div aria-busy="true" className="markets-news-slot">
             <span className="sr-only">Cargando titulares</span>
             <Skeleton lines={6} />
           </div>

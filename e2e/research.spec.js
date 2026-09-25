@@ -15,7 +15,7 @@ const CAPTURE_DIR = process.env.F3_CAPTURE_DIR ?? ''
 const HEALTH = { ...HEALTH_V2, capabilities: [...HEALTH_V2.capabilities, 'markets.overview'] }
 
 import { DIVIDENDS, INSTRUMENT, RESEARCH_ROUTES, VALUATION, meta } from './support/research-data.js'
-import { expectNoHorizontalScroll } from './support/layout.js'
+import { expectNoHorizontalScroll, readLayoutShift, trackLayoutShift } from './support/layout.js'
 
 const V2_ROUTES = RESEARCH_ROUTES
 
@@ -308,4 +308,14 @@ plainTest('investigar: en el comparador, una emisora que no existe queda como s/
   await expect(page.getByText('No pudimos cargar NOPE. Sus columnas quedan como s/d.')).toBeVisible()
   await expect(page.getByRole('table', { name: 'Múltiplos y rentabilidad lado a lado' }).getByText('21.4x')).toBeVisible()
   guards.assertClean()
+})
+
+test('ficha: el Resumen no empuja la página cuando llega la emisora (CLS < 0.1)', async ({ page, baseURL }) => {
+  // Antes el esqueleto de cinco líneas medía la mitad del Resumen lleno: CLS de 0.66 en móvil.
+  await trackLayoutShift(page)
+  await open(page, baseURL, { routes: { 'GET /v2/instrument/:symbol': { json: INSTRUMENT, delayMs: 900 } } })
+  await page.goto('/investigar/WALMEX.MX')
+  await expect(page.getByRole('region', { name: 'Resumen' }).locator('.kz-research-stats')).toBeVisible({ timeout: 15_000 })
+  await page.waitForTimeout(500)
+  expect(await readLayoutShift(page), 'desplazamiento acumulado del layout').toBeLessThan(0.1)
 })

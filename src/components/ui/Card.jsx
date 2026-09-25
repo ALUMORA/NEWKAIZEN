@@ -28,7 +28,7 @@ export function Card(props) {
   const { title, titleAs = 'h2', description, info, actions, status, footer, padding = 'md', className, children, ...rest } = props
   const Title = titleAs
   const titleId = useId()
-  const reserveStatus = !status && !actions && Object.prototype.hasOwnProperty.call(props, 'status')
+  const pendingStatus = !status && Object.prototype.hasOwnProperty.call(props, 'status')
   const hasHeader = Boolean(title || description || actions || status)
   return (
     <section className={cn('kz-card', className)} data-padding={padding} aria-labelledby={title ? titleId : undefined} {...rest}>
@@ -45,10 +45,9 @@ export function Card(props) {
             )}
             {description && <p className="kz-card__description">{description}</p>}
           </div>
-          {reserveStatus && <div className="kz-card__actions" data-reserve="" aria-hidden="true" />}
-          {(actions || status) && (
+          {(actions || status || pendingStatus) && (
             <div className="kz-card__actions">
-              {status && <DataStatus {...status} />}
+              {status ? <DataStatus {...status} /> : pendingStatus ? <span className="kz-card__status-slot" aria-hidden="true" /> : null}
               {actions}
             </div>
           )}

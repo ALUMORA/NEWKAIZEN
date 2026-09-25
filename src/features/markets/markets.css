@@ -276,3 +276,7 @@
   color: var(--muted);
   line-height: var(--leading-normal);
 }
+
+/* La lista de titulares siempre es más alta que la pantalla: mientras carga, su hueco también, para
+   que el pie no aparezca y luego salte (CLS de 0.60 en móvil). */
+.markets-news-slot { min-height: 100vh; }

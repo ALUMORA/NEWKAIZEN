@@ -7,7 +7,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { test as plainTest } from '@playwright/test'
 import { test, expect, attachGuards } from './support/guards.js'
 import { HEALTH_V2, expectedHttpError, setupApp } from './support/app.js'
-import { expectNoHorizontalScroll } from './support/layout.js'
+import { expectNoHorizontalScroll, readLayoutShift, trackLayoutShift } from './support/layout.js'
 
 const WCAG_AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const THEMES = /** @type {const} */ (['light', 'dark'])
@@ -455,12 +455,7 @@ plainTest('/mercados: si el panorama y las tasas de EE. UU. fallan, el VIX lo di
 test('/mercados: el resumen y el estado de las bolsas no empujan la página al llegar (CLS < 0.1)', async ({ page, baseURL }) => {
   // Con el panorama tardando, antes el esqueleto medía la mitad que las cinco oraciones y todo lo
   // de abajo brincaba: Lighthouse medía CLS de 0.31 en móvil y 0.36 en escritorio.
-  await page.addInitScript(() => {
-    /** @type {any} */ (window).__cls = 0
-    new PerformanceObserver((list) => {
-      for (const e of /** @type {any[]} */ (list.getEntries())) if (!e.hadRecentInput) /** @type {any} */ (window).__cls += e.value
-    }).observe({ type: 'layout-shift', buffered: true })
-  })
+  await trackLayoutShift(page)
   await setupApp(page, {
     baseURL: /** @type {string} */ (baseURL),
     session: true,
@@ -470,6 +465,6 @@ test('/mercados: el resumen y el estado de las bolsas no empujan la página al l
   await page.goto('/mercados')
   await expect(page.locator('.markets-summary li').first()).toBeVisible({ timeout: 15_000 })
   await page.waitForTimeout(500)
-  const cls = await page.evaluate(() => /** @type {any} */ (window).__cls)
+  const cls = await readLayoutShift(page)
   expect(cls, 'desplazamiento acumulado del layout').toBeLessThan(0.1)
 })

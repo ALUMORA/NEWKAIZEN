@@ -28,3 +28,9 @@
 .kz-research-notes { color: var(--muted); font-size: var(--text-sm); }
 .kz-research-notes ul { margin: 0; padding-inline-start: var(--space-5); display: flex; flex-direction: column; gap: var(--space-1); }
 .kz-research-form__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+/* Mientras carga, el Resumen de la ficha ocupa lo que suele medir ya lleno: si no, al llegar empuja
+   todo lo de abajo (CLS de 0.66 en móvil). */
+.kz-research-reserve[data-reserve="overview"] { min-height: 50rem; }
+@media (min-width: 600px) { .kz-research-reserve[data-reserve="overview"] { min-height: 36rem; } }
+@media (min-width: 1040px) { .kz-research-reserve[data-reserve="overview"] { min-height: 24.5rem; } }
