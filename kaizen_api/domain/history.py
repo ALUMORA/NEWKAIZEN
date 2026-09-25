@@ -181,7 +181,7 @@ def _only_trading_sessions(
         )
     if kept_dates and _dt.date.fromisoformat(kept_dates[0]).year < min(years):
         notes.append(
-            f"El calendario de {calendar['label']} cubre {min(years)} y {max(years)}: antes de "
+            f"El calendario de {calendar['label']} cubre de {min(years)} a {max(years)}: antes de "
             f"{min(years)} solo se verificaron fines de semana, no días inhábiles."
         )
     return kept_dates, kept_closes, notes

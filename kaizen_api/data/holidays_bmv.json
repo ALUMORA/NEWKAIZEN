@@ -4,11 +4,27 @@
   "label": "Bolsa Mexicana de Valores",
   "timezone": "America/Mexico_City",
   "source": "curated",
-  "updatedAt": "2026-09-22",
+  "updatedAt": "2026-09-25",
   "tradingDays": [1, 2, 3, 4, 5],
   "regularHours": { "open": "08:30", "close": "15:00" },
-  "years": [2026, 2027],
+  "years": [2025, 2026, 2027],
+  "fuentes": {
+    "2025": "Disposiciones de carácter general que señalan los días del año 2025 en que las entidades financieras sujetas a la supervisión de la CNBV (bolsas de valores incluidas, artículo 1) deberán cerrar sus puertas, DOF del 27 de diciembre de 2024 (https://dof.gob.mx/nota_detalle.php?codigo=5746258&fecha=27/12/2024). La página de días festivos de la BMV ya solo muestra 2026. Cotejado el 2026-09-25.",
+    "2026": "Calendario de días festivos de Grupo BMV (https://www.bmv.com.mx/es/grupo-bmv/calendario-de-dias-festivos), cotejado el 2026-09-25.",
+    "2027": "Derivado con las mismas reglas del DOF de 2025 y 2026 (https://dof.gob.mx/nota_detalle.php?codigo=5746258&fecha=27/12/2024). La CNBV publica los días de 2027 en diciembre de 2026: hay que cotejarlo entonces."
+  },
   "holidays": {
+    "2025-01-01": "Año Nuevo",
+    "2025-02-03": "Día de la Constitución",
+    "2025-03-17": "Natalicio de Benito Juárez",
+    "2025-04-17": "Jueves Santo",
+    "2025-04-18": "Viernes Santo",
+    "2025-05-01": "Día del Trabajo",
+    "2025-09-16": "Independencia de México",
+    "2025-11-02": "Día de Muertos",
+    "2025-11-17": "Aniversario de la Revolución Mexicana",
+    "2025-12-12": "Día de la Virgen de Guadalupe",
+    "2025-12-25": "Navidad",
     "2026-01-01": "Año Nuevo",
     "2026-02-02": "Día de la Constitución",
     "2026-03-16": "Natalicio de Benito Juárez",
@@ -34,6 +50,7 @@
   },
   "earlyCloses": {},
   "notes": [
+    "En 2025 el Día de Muertos cayó domingo: el DOF lo lista igual, pero no mueve ninguna jornada.",
     "La BMV no publica un calendario fijo de jornadas recortadas, así que aquí no hay ninguna. Si algún día opera con horario corto por aviso, este calendario no lo refleja.",
     "México no aplica horario de verano desde 2022, así que America/Mexico_City está en UTC-6 todo el año."
   ]

@@ -22,8 +22,9 @@ from kaizen_api.routers import quotes as quotes_router
 
 # ─── Barras de días en que la bolsa no operó ─────────────────────────────────
 
-CERRADOS_BMV = ("2026-02-02", "2026-03-16", "2026-04-02", "2026-05-01", "2026-09-16")
-"""Días inhábiles de la BMV que Yahoo servía con el cierre anterior repetido en NAFTRAC.MX."""
+CERRADOS_BMV = ("2025-11-17", "2025-12-12", "2026-02-02", "2026-03-16", "2026-04-02", "2026-05-01", "2026-09-16")
+"""Días inhábiles de la BMV que Yahoo servía con el cierre anterior repetido en NAFTRAC.MX. Los dos
+de 2025 se descartan desde que el calendario cubre 2025 (DOF del 27 de diciembre de 2024)."""
 
 
 def test_el_historico_no_publica_barras_de_dias_inhabiles_de_la_bmv(b2a_replay) -> None:
@@ -35,21 +36,22 @@ def test_el_historico_no_publica_barras_de_dias_inhabiles_de_la_bmv(b2a_replay) 
 def test_el_historico_dice_cuantas_barras_descarto_y_por_que(b2a_replay) -> None:
     series = history.get_series("NAFTRAC.MX", "1y", "1d", "native")
     nota = next(n for n in series.notes if "descartaron" in n)
-    assert "5 barras" in nota and "cierre anterior repetido" in nota
+    assert "7 barras" in nota and "cierre anterior repetido" in nota
 
 
 def test_descartar_no_deja_rendimientos_diarios_de_cero_inventados(b2a_replay) -> None:
     """Cada fecha quitada metía un rendimiento de 0.00% que nadie operó y que bajaba la volatilidad.
 
-    Se mide sobre 2026, que es el tramo que el calendario cubre. Antes de 2026 quedan dos cierres
-    repetidos (2025-11-17 y 2025-12-12) que el archivo de días inhábiles todavía no alcanza, y por
-    eso la serie lo dice en sus notas en vez de callarlo.
+    Desde que el calendario cubre 2025, el año completo queda dentro: los cierres repetidos del
+    2025-11-17 y el 2025-12-12, que antes se colaban, ya se descartan, y la serie ya no tiene que
+    avisar que antes de 2026 solo se verificaron fines de semana.
     """
     series = history.get_series("NAFTRAC.MX", "1y", "1d", "native")
+    assert series.dates[0] >= "2025-01-01"
     puntos = list(zip(series.dates, series.close, strict=True))
-    ceros = [b for (_, va), (b, vb) in zip(puntos, puntos[1:], strict=False) if va == vb and b >= "2026-01-01"]
+    ceros = [b for (_, va), (b, vb) in zip(puntos, puntos[1:], strict=False) if va == vb]
     assert ceros == []
-    assert any("solo se verificaron fines de semana" in n for n in series.notes)
+    assert not any("solo se verificaron fines de semana" in n for n in series.notes)
 
 
 def test_un_simbolo_de_estados_unidos_no_pierde_ninguna_barra(b2a_replay) -> None:
