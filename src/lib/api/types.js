@@ -89,8 +89,10 @@
  */
 
 /**
+ * `adjustment` (fase 3): `'splits'` si se pidió `?adjust=splits` (cierres sin ajustar por
+ * dividendos, solo por splits; capacidad `panel.splits`); falta en un API anterior, que es `'total'`.
  * @typedef {{
- *   currency: string, interval: Interval, dates: string[],
+ *   currency: string, interval: Interval, adjustment?: 'total' | 'splits', dates: string[],
  *   prices: Record<string, number[]>, dropped: { symbol: string, reason: string }[], meta: Meta,
  * }} PanelResponse
  */
@@ -112,6 +114,12 @@
  *   verified?: boolean, stale?: boolean, tenorDays?: 28 | 91 | 182 | 364 | null,
  * }} RateItem
  * @typedef {{ items: RateItem[], meta: Meta }} RatesMxResponse
+ */
+
+/**
+ * `GET /v2/rates/mx/inpc` (fase 3, capacidad `rates.inpc`): nivel mensual del INPC general (SIE SP1),
+ * `monthly` es `{ "AAAA-MM": nivel }` en orden cronológico.
+ * @typedef {{ seriesId: string, base: string | null, monthly: Record<string, number>, meta: Meta }} InpcResponse
  */
 
 /**
@@ -137,7 +145,9 @@
 /**
  * @typedef {{ symbol: string, label: string, price: number | null, change: number | null, changePct: number | null, currency: string, asOf: string | null }} OverviewItem
  * @typedef {{ id: 'mx' | 'us' | 'global' | 'fx' | 'commodities' | 'crypto', label: string, items: OverviewItem[] }} OverviewGroup
- * @typedef {{ open: boolean, label: string, nextOpen: string | null, nextClose: string | null }} MarketStatus
+ * `lastClose` (fase 3): fecha AAAA-MM-DD de la última jornada ya cerrada de esa bolsa, según su
+ * calendario; falta en un API anterior.
+ * @typedef {{ open: boolean, label: string, nextOpen: string | null, nextClose: string | null, lastClose?: string | null }} MarketStatus
  * @typedef {{ groups: OverviewGroup[], marketStatus: { bmv: MarketStatus, nyse: MarketStatus }, meta: Meta }} MarketsOverviewResponse
  */
 
@@ -255,6 +265,7 @@
  *   symbol: string, name: string, sector: string | null, ebit: number, enterpriseValue: number,
  *   earningsYield: number, returnOnCapital: number, rankEY: number, rankROC: number, rank: number,
  *   currency: string, fiscalPeriodEnd: string | null,
+ *   ebitSource?: 'operating_income' | 'ebit_row' | null,
  * }} MagicRow
  * @typedef {{
  *   universe: { id: string, name: string, size: number, description: string },
@@ -263,15 +274,28 @@
  */
 
 /**
+ * `notes` (fase 3): el motivo de cada cifra en s/d de ese renglón, sin el símbolo. `rate` (fase 3):
+ * la tasa de `cetes28` con su fecha, fuente, si es sustituta y su plazo real; null sin tasa.
+ * Los dos faltan en un API anterior.
  * @typedef {{
- *   symbol: string, name: string, price: number | null, currency: string, financialCurrency: string,
+ *   symbol: string, name: string | null, price: number | null, currency: string, financialCurrency: string | null,
  *   marketCap: number | null, distributionYield: number | null, capRate: number | null,
  *   navPerCbfi: number | null, pNav: number | null, ltv: number | null, debtToMarketCap: number | null,
  *   cashFlowYield: number | null, cashFlowBasis: 'ffo_approx' | 'ocf' | 'fcf' | null,
  *   spreadVsCetes: number | null, signal: 'descuento' | 'en_linea' | 'prima' | 'sin_datos',
- *   type: 'propiedades' | 'hipotecaria' | 'energia' | 'otro',
+ *   type: 'propiedades' | 'hipotecaria' | 'energia' | 'otro', notes?: string[],
  * }} FibraRow
- * @typedef {{ rows: FibraRow[], cetes28: number | null, meta: Meta }} FibrasScreenerResponse
+ * @typedef {{ value: number, asOf: string | null, source: 'banxico' | 'fred' | null, fallback: boolean, tenorDays: number | null }} FibrasRate
+ * @typedef {{ rows: FibraRow[], cetes28: number | null, rate?: FibrasRate | null, meta: Meta }} FibrasScreenerResponse
+ */
+
+/**
+ * `GET /v2/assumptions` (fase 3, capacidad `assumptions`): prima de mercado por omisión (la misma de
+ * `/v2/valuation` sin `?erp=`), la de mercado maduro y la prima país por país, de Damodaran.
+ * @typedef {{
+ *   erp: number, matureMarketErp: number, crp: Partial<Record<'MX' | 'US', number>>,
+ *   source: string, sourceUrl: string, vintage: string, asOf: string, meta: Meta,
+ * }} AssumptionsResponse
  */
 
 /**
