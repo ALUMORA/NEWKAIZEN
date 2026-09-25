@@ -59,6 +59,8 @@ describe('parseCell y parseDateCell', () => {
     expect(parseCell('1,234.56')).toBe(1234.56)
     expect(parseCell('1.234,56')).toBe(1234.56)
     expect(parseCell('1.234.567,5')).toBe(1234567.5)
+    expect(parseCell('1.234', { decimalComma: true })).toBe(1234)
+    expect(parseCell('12,5', { decimalComma: true })).toBe(12.5)
     expect(parseCell('$ 2 500')).toBe(2500)
     expect(parseCell('−5')).toBe(-5)
     expect(parseCell('0,375')).toBe(0.375)
