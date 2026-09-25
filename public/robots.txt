@@ -1,0 +1,5 @@
+# Las páginas públicas (aprender, legales) se pueden indexar; lo demás pide sesión.
+User-agent: *
+Allow: /aprender
+Allow: /legal/
+Disallow: /
