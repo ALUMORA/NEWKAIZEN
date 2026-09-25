@@ -1,0 +1,46 @@
+{
+ "set": "2026-09-22-recorrido",
+ "entries": {
+  "yf:FEMSAUBD.MX:history?period=1y": {
+   "file": "yf-FEMSAUBD.MX-history-ce98aeb2efef8183.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-25T22:33:34+00:00"
+  },
+  "yf:^VIX:history?period=5y": {
+   "file": "yf-idx-VIX-history-d061b2064962a93a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-25T22:33:33+00:00"
+  },
+  "yf:^VIX:info": {
+   "file": "yf-idx-VIX-info-2b2c9ecfb2dd6817.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-25T22:33:33+00:00"
+  }
+ },
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "created_at": "2026-09-25T22:33:31+00:00",
+ "yfinance_version": "1.7.0",
+ "layered_on": [
+  "2026-09-22"
+ ],
+ "lookup_order": [
+  "2026-09-22",
+  "2026-09-22-recorrido"
+ ],
+ "summary": {
+  "keys_total": 3,
+  "keys_by_provider": {
+   "yf": 3
+  },
+  "exceptions_by_provider": {},
+  "empty_by_provider": {},
+  "symbols_with_failed_or_empty_calls": {}
+ },
+ "updated_at": "2026-09-25T22:33:34+00:00"
+}
