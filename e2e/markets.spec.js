@@ -53,8 +53,8 @@ const OVERVIEW = {
     { id: 'crypto', label: 'Cripto', items: [item('BTC-USD', 'Bitcoin', 65210.4, 1340.1, 0.021, 'USD')] },
   ],
   marketStatus: {
-    bmv: { open: true, label: 'Abierto. Cierra hoy a las 15:00 h de la Ciudad de México.', nextOpen: '2026-09-23T14:30:00Z', nextClose: '2026-09-22T21:00:00Z' },
-    nyse: { open: true, label: 'Abierto. Cierra hoy a las 16:00 h de Nueva York.', nextOpen: '2026-09-23T13:30:00Z', nextClose: '2026-09-22T20:00:00Z' },
+    bmv: { open: true, label: 'Abierta. Cierra hoy a las 15:00 h de la Ciudad de México.', nextOpen: '2026-09-23T14:30:00Z', nextClose: '2026-09-22T21:00:00Z' },
+    nyse: { open: true, label: 'Abierta. Cierra hoy a las 16:00 h de Nueva York.', nextOpen: '2026-09-23T13:30:00Z', nextClose: '2026-09-22T20:00:00Z' },
   },
   meta: meta({ notes: ['Sin dato de ^HSI en esta corrida; se muestran sin valor.'] }),
 }
@@ -327,7 +327,7 @@ test('/mercados: bolsas cerradas muestran la fecha de su último cierre', async 
   const overview = {
     ...OVERVIEW,
     groups: OVERVIEW.groups.map(onFriday),
-    marketStatus: { bmv: closed('Cerrado. Abre hoy a las 8:30 h de la Ciudad de México.'), nyse: closed('Cerrado. Abre hoy a las 9:30 h de Nueva York.') },
+    marketStatus: { bmv: closed('Cerrada. Abre hoy a las 8:30 h de la Ciudad de México.'), nyse: closed('Cerrada. Abre hoy a las 9:30 h de Nueva York.') },
   }
   await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, legacyApi: true, health: HEALTH, routes: { ...V2_ROUTES, 'GET /v2/markets/overview': { json: overview } } })
   await page.goto('/mercados')

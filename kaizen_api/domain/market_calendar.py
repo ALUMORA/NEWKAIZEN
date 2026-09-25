@@ -171,14 +171,14 @@ def status(exchange: str, now: _dt.datetime | None = None) -> ExchangeStatus:
     if is_open:
         following = _next_session(calendar, tz, closes)
         next_open = iso_instant(following[0]) if following else None
-        label = f"Abierto. Cierra hoy a las {_pretty_time(closes)} h de {where}."
+        label = f"Abierta. Cierra hoy a las {_pretty_time(closes)} h de {where}."
         return ExchangeStatus(True, label, next_open, iso_instant(closes), notes)
 
     reason = ""
     today_holiday = holiday_name(calendar, moment.date())
     if today_holiday:
         reason = f" por {today_holiday}"
-    label = f"Cerrado{reason}. Abre {_when(moment, opens)} a las {_pretty_time(opens)} h de {where}."
+    label = f"Cerrada{reason}. Abre {_when(moment, opens)} a las {_pretty_time(opens)} h de {where}."
     return ExchangeStatus(False, label, iso_instant(opens), iso_instant(closes), notes)
 
 
