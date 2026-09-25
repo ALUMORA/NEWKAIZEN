@@ -302,6 +302,18 @@ test.describe('screener: fórmula mágica', () => {
     await expect(page.getByText(/usan el renglón EBIT de la fuente/)).toBeVisible()
   })
 
+  test('fase 3: el EBIT de respaldo sale de ebitSource por renglón, no de la lista de la nota', async ({ page, baseURL }) => {
+    // La nota nombra a AMXB.MX, pero ebitSource dice otra cosa: manda el campo.
+    const rows = MAGIC_MX.rows.map((r) => ({ ...r, ebitSource: r.symbol === 'WALMEX.MX' ? 'ebit_row' : 'operating_income' }))
+    const withSource = { ...MAGIC_MX, rows, meta: { ...MAGIC_MX.meta, notes: [...MAGIC_MX.meta.notes, EBIT_NOTE] } }
+    await open(page, /** @type {string} */ (baseURL), { routes: { 'GET /v2/screeners/magic': { json: withSource } } })
+    await page.goto('/screener/formula-magica')
+    await magicReady(page)
+    const { row } = tableOf(page, 'Ranking de la fórmula mágica')
+    await expect(row('WALMEX.MX').getByText('EBIT de respaldo')).toBeVisible()
+    await expect(row('AMXB.MX').getByText('EBIT de respaldo')).toHaveCount(0)
+  })
+
   test('la emisora abre su ficha', async ({ page, baseURL }) => {
     await open(page, /** @type {string} */ (baseURL))
     await page.goto('/screener/formula-magica')
@@ -396,6 +408,33 @@ test.describe('screener: FIBRAs', () => {
     await expect(rate.getByText('CETES 28 días', { exact: true })).toBeVisible()
     await expect(rate.getByText('7.25%')).toBeVisible()
     await expect(rate.getByRole('note', { name: 'Tasa sustituta' })).toHaveCount(0)
+  })
+
+  test('fase 3: motivos por renglón (FibraRow.notes) y tasa con su fecha y fuente (rate), sin leer meta.notes', async ({ page, baseURL }) => {
+    const OWN = { 'FMTY14.MX': ['Los estados financieros que publica Yahoo son del fiduciario, no de esta FIBRA.'], 'STORAGE18.MX': ['Yahoo no publica la deuda ni el flujo de esta FIBRA.'] }
+    const fase3 = {
+      ...FIBRAS,
+      rows: FIBRAS.rows.map((r) => ({ ...r, notes: OWN[r.symbol] ?? [] })),
+      cetes28: 0.0725,
+      // meta sigue diciendo FRED y 2026-08-01, como una respuesta vieja: manda `rate`.
+      rate: { value: 0.0725, asOf: '2026-09-18', source: 'banxico', fallback: false, tenorDays: 28 },
+    }
+    await open(page, /** @type {string} */ (baseURL), { routes: { 'GET /v2/screeners/fibras': { json: fase3 } } })
+    await page.goto('/screener/fibras')
+    await fibrasReady(page)
+    const rate = page.getByRole('region', { name: 'Tasa de referencia' })
+    await expect(rate.getByText('CETES 28 días', { exact: true })).toBeVisible()
+    await expect(rate.getByText('Fuente: Banxico, dato del 18 sep 2026')).toBeVisible()
+    await expect(rate.getByRole('note', { name: 'Tasa sustituta' })).toHaveCount(0)
+
+    const reasons = page.getByRole('region', { name: 'Datos que faltan y por qué' })
+    await expect(reasons.getByText(OWN['FMTY14.MX'][0])).toBeVisible()
+    await expect(reasons.getByText(OWN['STORAGE18.MX'][0])).toBeVisible()
+    // La nota general que nombra a FMTY14.MX ya no se reparte a su renglón.
+    await expect(reasons.getByText(FMTY_NOTE)).toHaveCount(0)
+    const { row } = tableOf(page, 'FIBRAs ordenadas por P/NAV')
+    await row('FMTY14.MX').getByRole('button', { name: 'Por qué hay s/d en FMTY14.MX' }).click()
+    await expect(page.getByRole('dialog', { name: 'FMTY14.MX: por qué hay s/d' })).toContainText(OWN['FMTY14.MX'][0])
   })
 
   test('las FIBRAs adicionales viajan en la URL y en el request', async ({ page, baseURL }) => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ebitFallbackSymbols, generalNotes, mentions, notesFor, readableMeta, sourceLabel } from './screenerNotes.js'
+import { ebitFallbackRows, ebitFallbackSymbols, generalNotes, mentions, notesFor, readableMeta, rowNotes, sourceLabel } from './screenerNotes.js'
 
 // Notas con la redacción real de kaizen_api/domain/screeners/{fibras,magic}.py.
 const FMTY = 'FMTY14.MX: LTV, deuda entre capitalización, cap rate y flujo van en s/d porque los estados financieros que publica Yahoo no son de esta FIBRA o ya no la describen. Yahoo la clasifica como banco (Banks - Regional); su balance es idéntico al de FHIPO14.MX, así que es el del fiduciario que comparten.'
@@ -59,5 +59,30 @@ describe('sourceLabel y readableMeta', () => {
     expect(readableMeta(meta)).toEqual({ ...meta, source: 'Yahoo Finance, cálculo de Kaizen y FRED' })
     expect(readableMeta(meta, { source: 'FRED', asOf: '2026-08-01' })).toMatchObject({ source: 'FRED', asOf: '2026-08-01', fallback: true })
     expect(readableMeta(undefined)).toBe(undefined)
+  })
+})
+
+describe('campos por renglón de la fase 3, con las notas como respaldo', () => {
+  const META_NOTES = [
+    'FMTY14.MX: LTV, deuda entre capitalización van en s/d porque el balance no es de la FIBRA.',
+    'Sin utilidad de operación reportada, se usó el renglón EBIT de Yahoo para: AAA, BBB.',
+  ]
+
+  it('rowNotes usa row.notes cuando viene, aunque meta.notes diga otra cosa', () => {
+    expect(rowNotes({ symbol: 'FMTY14.MX', notes: ['El balance no es de la FIBRA.'] }, META_NOTES)).toEqual(['El balance no es de la FIBRA.'])
+    // Un renglón completo del API nuevo trae [] y no hereda la nota general que lo nombra.
+    expect(rowNotes({ symbol: 'FMTY14.MX', notes: [] }, META_NOTES)).toEqual([])
+    // API anterior: sin el campo, las notas que lo nombran.
+    expect(rowNotes({ symbol: 'FMTY14.MX' }, META_NOTES)).toEqual([META_NOTES[0]])
+  })
+
+  it('ebitFallbackRows usa ebitSource y solo cae a la nota en renglones sin el campo', () => {
+    const rows = [
+      { symbol: 'AAA', ebitSource: 'operating_income' },
+      { symbol: 'BBB', ebitSource: 'ebit_row' },
+      { symbol: 'CCC', ebitSource: 'ebit_row' },
+    ]
+    expect([...ebitFallbackRows(rows, META_NOTES)].sort()).toEqual(['BBB', 'CCC'])
+    expect([...ebitFallbackRows([{ symbol: 'AAA' }, { symbol: 'CCC' }], META_NOTES)]).toEqual(['AAA'])
   })
 })
