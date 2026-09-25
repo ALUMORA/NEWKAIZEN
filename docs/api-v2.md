@@ -247,9 +247,20 @@ están en `docs/OWNERSHIP.md`).
   `symbols=A,B`, hasta 50, y sin `custom` no se acepta `symbols`) → `FactorsResponse`.
 - `GET /v2/screeners/magic?universe=us` (`us` o `mx`) → `MagicResponse`. Solo EBIT reportado, nunca
   estimado; `partial: true` si no respondieron todas las emisoras.
+  - `ebitSource` por renglón (opcional, aditivo de la fase 3, pedido F3c-2): `operating_income`
+    si el EBIT es la utilidad de operación reportada, `ebit_row` si se usó el renglón "EBIT" de
+    Yahoo como respaldo (puede traer partidas no operativas). La nota de `meta.notes` que lista las
+    emisoras de respaldo se conserva igual. Ausente o `null` en un API anterior.
 - `GET /v2/screeners/fibras?extra=A,B` (hasta 20 extra) → `FibrasResponse`. `signal` es
   `descuento`, `en_linea`, `prima` o `sin_datos` (descripción del precio contra el NAV, no una
   recomendación). `ltv` es deuda entre activos totales.
+  - `notes` por renglón (opcional, aditivo de la fase 3, pedido F3c-2): una oración por motivo,
+    sin el símbolo, que nombra las cifras de ESE renglón que van en `null` y por qué (estados
+    ajenos o viejos, deuda que no cuadra, otra moneda de reporte, historia de pagos ilegible o sin
+    pagos, sin tasa de referencia, sin precio, sin NAV, o el proveedor no respondió). Toda cifra en
+    `null` queda nombrada en alguna nota; lo que ningún motivo explica sale como "Yahoo no publica
+    el dato con que se calcula". Vacía si no falta nada. `meta.notes` conserva los mismos avisos con
+    la clave de la FIBRA al frente.
 
 ## Recetas y referencias para el cliente
 
@@ -1156,6 +1167,7 @@ Solo EBIT reportado (nunca estimado); earningsYield y returnOnCapital como fracc
 | `rank` | integer | sí | mín 1 |
 | `currency` | currency | sí |  |
 | `fiscalPeriodEnd` | date \| null | sí |  |
+| `ebitSource` | "operating_income" \| "ebit_row" \| null | no | De dónde salió el EBIT: operating_income es la utilidad de operación reportada (lo normal); ebit_row es el renglón EBIT de Yahoo, de respaldo, que puede traer partidas no operativas. null o ausente es un API anterior a la fase 3 |
 
 #### ExcludedSymbol
 
@@ -1193,6 +1205,7 @@ Solo EBIT reportado (nunca estimado); earningsYield y returnOnCapital como fracc
 | `spreadVsCetes` | fraction \| null | sí |  |
 | `signal` | "descuento" \| "en_linea" \| "prima" \| "sin_datos" | sí |  |
 | `type` | "propiedades" \| "hipotecaria" \| "energia" \| "otro" | sí |  |
+| `notes` | string[] | no | Motivo de cada cifra en s/d de este renglón, en español y sin el símbolo; vacía si no falta nada. meta.notes conserva los mismos avisos por FIBRA con su clave |
 
 #### InsidersResponse
 

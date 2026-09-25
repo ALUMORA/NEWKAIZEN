@@ -888,6 +888,14 @@ class MagicRow(ContractModel):
     rank: int = Field(ge=1)
     currency: Currency
     fiscalPeriodEnd: IsoDate | None
+    ebitSource: Literal["operating_income", "ebit_row"] | None = Field(
+        default=None,
+        description=(
+            "De dónde salió el EBIT: operating_income es la utilidad de operación reportada (lo normal);"
+            " ebit_row es el renglón EBIT de Yahoo, de respaldo, que puede traer partidas no operativas."
+            " null o ausente es un API anterior a la fase 3"
+        ),
+    )
 
 
 class ExcludedSymbol(ContractModel):
@@ -921,6 +929,13 @@ class FibraRow(ContractModel):
     spreadVsCetes: Fraction | None
     signal: Literal["descuento", "en_linea", "prima", "sin_datos"]
     type: Literal["propiedades", "hipotecaria", "energia", "otro"]
+    notes: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Motivo de cada cifra en s/d de este renglón, en español y sin el símbolo; vacía si no falta"
+            " nada. meta.notes conserva los mismos avisos por FIBRA con su clave"
+        ),
+    )
 
 
 class FibrasResponse(ContractModel):
