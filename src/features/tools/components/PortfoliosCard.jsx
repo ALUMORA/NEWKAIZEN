@@ -26,7 +26,7 @@ export function PortfoliosCard({ assets, solve, rfAnnual, status, description })
   const columns = [
     { key: 'symbol', header: 'Emisora', format: (v) => <span className="mono">{v}</span> },
     ...PORTFOLIOS.map((p) => ({ key: p.key, header: p.label, numeric: true, sortable: true, format: (v) => pct(v) })),
-    ...(hasCurrent ? [{ key: 'current', header: 'Tu cartera hoy', numeric: true, sortable: true, format: (v) => pct(v) }] : []),
+    ...(hasCurrent ? [{ key: 'current', header: 'Tu portafolio hoy', numeric: true, sortable: true, format: (v) => pct(v) }] : []),
   ]
   const notConverged = PORTFOLIOS.filter((p) => solve[p.key] && solve[p.key].converged === false).map((p) => p.label)
 

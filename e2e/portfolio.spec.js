@@ -447,6 +447,8 @@ test.describe('portafolio: resumen', () => {
       await page.goto('/portafolio')
       await expect(page.getByRole('heading', { level: 1, name: 'Mi portafolio' })).toBeVisible()
       await expect(page.locator('h1')).toHaveCount(1)
+      // el nombre por omisión no se repite como etiqueta arriba del h1
+      await expect(page.locator('main .kz-eyebrow').filter({ hasText: /^Mi portafolio$/i })).toHaveCount(0)
       const summary = page.getByRole('region', { name: 'Resumen' })
       // 150 WALMEX a 65, 5 AAPL a 240 dólares con 18.4321 y 10,300 de efectivo.
       await expect(summary).toContainText('$42,168.52 MXN')

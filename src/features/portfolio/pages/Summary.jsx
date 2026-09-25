@@ -67,7 +67,8 @@ export default function Summary() {
   const header = (
     <PageHeader
       title="Mi portafolio"
-      eyebrow={active?.name}
+      // El nombre por omisión repite el h1 ("MI PORTAFOLIO / Mi portafolio"); solo va si es otro.
+      eyebrow={active?.name && active.name.trim().toLowerCase() !== 'mi portafolio' ? active.name : undefined}
       description="Tu portafolio a precios de hoy: cuánto vale en pesos, cómo le va y cómo está repartido."
       actions={selector}
     />

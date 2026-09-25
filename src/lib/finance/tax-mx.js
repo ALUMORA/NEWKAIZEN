@@ -15,6 +15,8 @@
 // - Las pérdidas del mismo tipo restan a las ganancias del mismo ejercicio, y lo que sobra se
 //   arrastra a ejercicios siguientes (la ley permite hasta diez).
 
+import { fmtMoney } from '../format.js'
+
 /** Tasa del ISR sobre la ganancia anual por enajenación de acciones en bolsa. */
 export const ISR_GAINS_RATE = 0.1
 /** Retención sobre dividendos de emisoras mexicanas (LISR art. 140). */
@@ -230,14 +232,18 @@ export function isrOnGains({ sales, inpc = {}, rate = ISR_GAINS_RATE, lossCarryI
     )
   }
   if (withoutDate > 0) {
-    notes.push(`${withoutDate} ventas no traen fecha, así que quedaron en un grupo aparte y no se les asignó ejercicio.`)
+    notes.push(
+      withoutDate === 1
+        ? '1 venta no trae fecha, así que quedó en un grupo aparte y no se le asignó ejercicio.'
+        : `${withoutDate} ventas no traen fecha, así que quedaron en un grupo aparte y no se les asignó ejercicio.`,
+    )
   }
   if (dropped.length > 0) {
-    notes.push(`Se descartaron ${dropped.length} ventas con datos incompletos.`)
+    notes.push(dropped.length === 1 ? 'Se descartó 1 venta con datos incompletos.' : `Se descartaron ${dropped.length} ventas con datos incompletos.`)
   }
   if (expired > 0) {
     notes.push(
-      `Caducaron ${expired.toFixed(2)} de pérdidas que ya pasaron los ${LOSS_CARRY_YEARS} ejercicios, así que dejaron de restar.`,
+      `Caducaron ${fmtMoney(expired)} de pérdidas que ya pasaron los ${LOSS_CARRY_YEARS} ejercicios, así que dejaron de restar.`,
     )
   }
   if (carry > 0) {

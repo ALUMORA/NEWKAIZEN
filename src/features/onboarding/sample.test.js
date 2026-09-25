@@ -21,7 +21,7 @@ describe('rowsToRawTransactions', () => {
 
   it('una fila sin símbolo en una compra se rechaza con motivo en español', () => {
     const raw = rowsToRawTransactions([{ tipo: 'compra', cantidad: '5', precio: '10' }])
-    expect(validateTransaction(raw[0]).reason).toBe('falta el símbolo')
+    expect(validateTransaction(raw[0]).reason).toBe('falta la clave')
   })
 })
 

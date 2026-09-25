@@ -96,7 +96,7 @@ export function wholeShareRebalance({
     const held = isNum(holdings?.[symbol]) ? /** @type {number} */ (holdings[symbol]) : 0
     if (!isNum(p) || /** @type {number} */ (p) <= 0) {
       if (held > EPS) return null
-      skipped.push({ symbol, reason: 'No hay precio para ese símbolo.' })
+      skipped.push({ symbol, reason: 'No hay precio para esa clave.' })
       continue
     }
     price[symbol] = /** @type {number} */ (p)

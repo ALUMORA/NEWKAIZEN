@@ -185,7 +185,7 @@ export default function OptimizerPage() {
             <ul className="kz-tool__notes">
               <li>Solo largo: sin ventas en corto ni apalancamiento. Los pesos de cada cartera suman 100 %.</li>
               <li>Covarianzas y betas salen del pasado; en las crisis las correlaciones cambian.</li>
-              <li>No incluye comisiones ni impuestos. Mover tu cartera hacia otra tiene un costo real.</li>
+              <li>No incluye comisiones ni impuestos. Mover tu portafolio hacia una de estas carteras tiene un costo real.</li>
               <li>Las carteras dependen de los supuestos. Por eso ves tres y la frontera, no una sola respuesta.</li>
               <li>Es una herramienta de análisis, no una recomendación de inversión.</li>
             </ul>

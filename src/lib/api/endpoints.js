@@ -29,7 +29,7 @@ export const MAX_SYMBOLS = 50
 export function normalizeSymbol(symbol) {
   const s = String(symbol ?? '').trim()
   if (!SYMBOL_RE.test(s)) {
-    throw new ApiError({ status: 400, code: 'INVALID_SYMBOL', message: `"${s.slice(0, 24)}" no es un símbolo válido.` })
+    throw new ApiError({ status: 400, code: 'INVALID_SYMBOL', message: `"${s.slice(0, 24)}" no es una clave válida.` })
   }
   return s.toUpperCase()
 }
@@ -37,9 +37,9 @@ export function normalizeSymbol(symbol) {
 /** @param {string[]} symbols @returns {string[]} únicos, en mayúsculas, validados */
 export function normalizeSymbols(symbols) {
   const out = [...new Set((symbols ?? []).map(normalizeSymbol))]
-  if (out.length === 0) throw new ApiError({ status: 400, code: 'VALIDATION_ERROR', message: 'Falta al menos un símbolo.' })
+  if (out.length === 0) throw new ApiError({ status: 400, code: 'VALIDATION_ERROR', message: 'Falta al menos una clave.' })
   if (out.length > MAX_SYMBOLS) {
-    throw new ApiError({ status: 400, code: 'VALIDATION_ERROR', message: `Se pueden pedir hasta ${MAX_SYMBOLS} símbolos a la vez.` })
+    throw new ApiError({ status: 400, code: 'VALIDATION_ERROR', message: `Se pueden pedir hasta ${MAX_SYMBOLS} claves a la vez.` })
   }
   return out
 }

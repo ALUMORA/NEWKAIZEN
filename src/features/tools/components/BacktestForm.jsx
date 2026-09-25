@@ -17,7 +17,7 @@ const STRATEGIES = [
  */
 export function BacktestForm({ state, set, hasPortfolio, portfolioSymbols, onSymbols, manual, blendError, onEqual }) {
   const modes = [
-    { value: 'portfolio', label: 'Mi cartera hoy', disabled: !hasPortfolio },
+    { value: 'portfolio', label: 'Mi portafolio hoy', disabled: !hasPortfolio },
     { value: 'manual', label: 'Los escribo yo' },
   ]
   return (
@@ -28,7 +28,7 @@ export function BacktestForm({ state, set, hasPortfolio, portfolioSymbols, onSym
         <legend>Pesos</legend>
         <SegmentedControl label="De dónde salen los pesos" hideLabel items={modes} value={state.mode} onChange={(v) => set({ mode: v })} name="bt-mode" />
         {state.mode === 'portfolio' ? (
-          <p className="kz-tool__hint">Cada emisora pesa lo que vale hoy en tu cartera activa. Esos pesos se aplican desde el inicio del periodo.</p>
+          <p className="kz-tool__hint">Cada emisora pesa lo que vale hoy en tu portafolio activo. Esos pesos se aplican desde el inicio del periodo.</p>
         ) : (
           <>
             <SymbolPicker id="bt-symbols" selected={state.symbols} onChange={onSymbols} max={MAX_BT_ASSETS} portfolioSymbols={portfolioSymbols} />
