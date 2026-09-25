@@ -418,3 +418,25 @@ plainTest('/mercados: si el panorama y las tasas de EE. UU. fallan, el VIX lo di
   await expect(vix.getByText('Sin valor del VIX por ahora')).toHaveCount(0)
   guards.assertClean()
 })
+
+test('/mercados: el resumen y el estado de las bolsas no empujan la página al llegar (CLS < 0.1)', async ({ page, baseURL }) => {
+  // Con el panorama tardando, antes el esqueleto medía la mitad que las cinco oraciones y todo lo
+  // de abajo brincaba: Lighthouse medía CLS de 0.31 en móvil y 0.36 en escritorio.
+  await page.addInitScript(() => {
+    /** @type {any} */ (window).__cls = 0
+    new PerformanceObserver((list) => {
+      for (const e of /** @type {any[]} */ (list.getEntries())) if (!e.hadRecentInput) /** @type {any} */ (window).__cls += e.value
+    }).observe({ type: 'layout-shift', buffered: true })
+  })
+  await setupApp(page, {
+    baseURL: /** @type {string} */ (baseURL),
+    session: true,
+    health: HEALTH,
+    routes: { ...V2_ROUTES, 'GET /v2/markets/overview': { json: OVERVIEW, delayMs: 900 } },
+  })
+  await page.goto('/mercados')
+  await expect(page.locator('.markets-summary li').first()).toBeVisible({ timeout: 15_000 })
+  await page.waitForTimeout(500)
+  const cls = await page.evaluate(() => /** @type {any} */ (window).__cls)
+  expect(cls, 'desplazamiento acumulado del layout').toBeLessThan(0.1)
+})

@@ -34,10 +34,10 @@ export function ExchangesCard() {
   return (
     <Card title="Estado de las bolsas" description="Con la bolsa abierta los precios llegan con retraso; cerrada, son los del último cierre." status={q.data?.meta}>
       {loading ? (
-        <div className="kz-col" aria-busy="true">
+        <div className="markets-exchanges" aria-busy="true">
           <span className="sr-only">Cargando</span>
-          <Skeleton height={64} />
-          <Skeleton height={64} />
+          <Skeleton height={124} />
+          <Skeleton height={124} />
         </div>
       ) : null}
       {!loading && !feature.enabled ? <EmptyState size="sm" title="Sin estado de las bolsas" text={feature.reason} /> : null}
@@ -64,22 +64,25 @@ export function SummaryCard() {
       description="Qué subió, qué bajó y cuánto, contra el cierre anterior. Solo cifras: sin opiniones ni causas."
       status={q.data?.meta}
     >
-      {loading ? (
-        <div aria-busy="true">
-          <span className="sr-only">Cargando</span>
-          <Skeleton lines={4} />
-        </div>
-      ) : null}
-      {!loading && !feature.enabled ? <EmptyState size="sm" title="Sin resumen por ahora" text={feature.reason} /> : null}
-      {q.isError ? <ErrorState size="sm" message="No pudimos traer las cifras del día." onRetry={() => q.refetch()} retrying={q.isFetching} /> : null}
-      {q.data && !lines.length ? <EmptyState size="sm" title="Sin cifras para resumir" text="El servidor no trajo precios en esta actualización." /> : null}
-      {lines.length ? (
-        <ul className="markets-summary">
-          {lines.map((l) => (
-            <li key={l.id}>{l.text}</li>
-          ))}
-        </ul>
-      ) : null}
+      {/* El hueco mide lo que suelen medir las cinco oraciones, para que al llegar no empujen la página (CLS). */}
+      <div className="markets-summary-slot" data-state={loading ? 'loading' : lines.length ? 'ready' : 'other'}>
+        {loading ? (
+          <div aria-busy="true">
+            <span className="sr-only">Cargando</span>
+            <Skeleton lines={5} />
+          </div>
+        ) : null}
+        {!loading && !feature.enabled ? <EmptyState size="sm" title="Sin resumen por ahora" text={feature.reason} /> : null}
+        {q.isError ? <ErrorState size="sm" message="No pudimos traer las cifras del día." onRetry={() => q.refetch()} retrying={q.isFetching} /> : null}
+        {q.data && !lines.length ? <EmptyState size="sm" title="Sin cifras para resumir" text="El servidor no trajo precios en esta actualización." /> : null}
+        {lines.length ? (
+          <ul className="markets-summary">
+            {lines.map((l) => (
+              <li key={l.id}>{l.text}</li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
       {q.data ? <ApiNotes meta={q.data.meta} label="Avisos del panorama" /> : null}
     </Card>
   )

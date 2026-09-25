@@ -118,6 +118,16 @@
   font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;
 }
+.markets-summary-slot[data-state="loading"],
+.markets-summary-slot[data-state="ready"] { min-height: 21rem; }
+@media (min-width: 600px) {
+  .markets-summary-slot[data-state="loading"],
+  .markets-summary-slot[data-state="ready"] { min-height: 14rem; }
+}
+@media (min-width: 1040px) {
+  .markets-summary-slot[data-state="loading"],
+  .markets-summary-slot[data-state="ready"] { min-height: 11rem; }
+}
 .markets-summary {
   margin: 0;
   padding-left: var(--space-5);

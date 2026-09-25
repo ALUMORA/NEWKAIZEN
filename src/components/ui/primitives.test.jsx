@@ -3,7 +3,7 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
-import { DataTable, Delta, IconButton, Input, Money, NumberInput, Stat, TabPanel, Tabs, UiProvider, useToast } from './index.js'
+import { Card, DataTable, Delta, IconButton, Input, Money, NumberInput, Stat, TabPanel, Tabs, UiProvider, useToast } from './index.js'
 
 describe('Field e Input', () => {
   it('conecta label, ayuda y error, y marca aria-invalid y required', () => {
@@ -225,5 +225,30 @@ describe('UiProvider: avisos', () => {
     act(() => vi.advanceTimersByTime(1100))
     expect(screen.getByRole('region', { name: 'Avisos' })).not.toHaveTextContent('Guardado')
     vi.useRealTimers()
+  })
+})
+
+describe('Card', () => {
+  // Con status={q.data?.meta} la insignia llega junto con el dato; si el encabezado no le guarda
+  // lugar, en móvil aparece una fila nueva y todo lo de abajo brinca (CLS de /mercados).
+  it('con status todavía vacío guarda el lugar de la insignia, oculto para lectores de pantalla', () => {
+    const { container } = render(<Card title="Resumen" status={undefined}>x</Card>)
+    const slot = container.querySelector('.kz-card__actions')
+    expect(slot).not.toBeNull()
+    expect(slot).toHaveAttribute('data-reserve')
+    expect(slot).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  it('sin la prop status no agrega nada al encabezado', () => {
+    const { container } = render(<Card title="Resumen">x</Card>)
+    expect(container.querySelector('.kz-card__actions')).toBeNull()
+  })
+
+  it('con status lleno muestra la insignia sin reserva', () => {
+    const meta = { asOf: '2026-09-22T14:40:00Z', source: 'yahoo', delayMinutes: 15, stale: false, fallback: false, generatedAt: '2026-09-22T14:52:00Z', notes: [] }
+    const { container } = render(<Card title="Resumen" status={meta}>x</Card>)
+    const slot = container.querySelector('.kz-card__actions')
+    expect(slot).not.toHaveAttribute('data-reserve')
+    expect(slot).not.toHaveAttribute('aria-hidden')
   })
 })
