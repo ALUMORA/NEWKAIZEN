@@ -269,7 +269,7 @@ test('/mercados/mexico: el FIX sale una sola vez, el Bono M de FRED dice sin ver
     'GET /v2/rates/mx': { json: withFix },
     'GET /v2/rates/rf': { json: { ...RF, tenorDays: 91, source: 'fred_ir3tib', fallback: true, meta: meta({ asOf: '2026-09-18', source: 'fred_ir3tib', delayMinutes: null, fallback: true }) } },
   }
-  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, legacyApi: true, health: HEALTH, routes })
+  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: HEALTH, routes })
   await page.goto('/mercados/mexico')
   await expect(page.getByText('Serie SF43718')).toBeVisible()
   await expect(page.getByText('Dólar FIX', { exact: true })).toHaveCount(0)
@@ -408,7 +408,6 @@ plainTest('/mercados: si el panorama y las tasas de EE. UU. fallan, el VIX lo di
   await setupApp(page, {
     baseURL: /** @type {string} */ (baseURL),
     session: true,
-    legacyApi: true,
     health: HEALTH,
     routes: { ...V2_ROUTES, 'GET /v2/markets/overview': down, 'GET /v2/macro/us': down },
   })

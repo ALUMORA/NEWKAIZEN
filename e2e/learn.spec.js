@@ -245,7 +245,7 @@ test.describe('F5: bienvenida', () => {
   })
 
   test('un CSV de Excel en español con coma decimal se importa bien y avisa las columnas que no reconoce', async ({ page, baseURL }) => {
-    await open(page, baseURL, '/bienvenida', { session: true, legacyApi: true })
+    await open(page, baseURL, '/bienvenida', { session: true })
     const csv = 'tipo;fecha;símbolo;cantidad;precio;moneda;casa de bolsa\ncompra;2026-03-02;WALMEX.MX;10;1.234,56;MXN;GBM\ncompra;2026-03-03;WALMEX.MX;2;60,5;MXN;GBM\n'
     await page.getByLabel('Elegir archivo CSV').setInputFiles({ name: 'excel.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) })
     await expect(page.getByRole('status').filter({ hasText: 'excel.csv' })).toContainText('2 movimientos válidos')
