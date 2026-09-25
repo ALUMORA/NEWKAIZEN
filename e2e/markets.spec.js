@@ -7,6 +7,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { test as plainTest } from '@playwright/test'
 import { test, expect, attachGuards } from './support/guards.js'
 import { HEALTH_V2, expectedHttpError, setupApp } from './support/app.js'
+import { expectNoHorizontalScroll } from './support/layout.js'
 
 const WCAG_AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const THEMES = /** @type {const} */ (['light', 'dark'])
@@ -185,14 +186,13 @@ async function expectNoAxeViolations(page, context) {
 }
 
 async function noHorizontalScroll(page) {
-  const { scrollWidth, innerWidth } = await page.evaluate(() => ({ scrollWidth: document.documentElement.scrollWidth, innerWidth: window.innerWidth }))
-  expect(scrollWidth, 'la página no se desplaza a lo ancho').toBeLessThanOrEqual(innerWidth)
+  await expectNoHorizontalScroll(page)
 }
 
 for (const p of PAGES) {
   for (const theme of THEMES) {
     test(`${p.path} (${theme}): h1, datos, axe AA y sin scroll horizontal`, async ({ page, baseURL }, testInfo) => {
-      await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, legacyApi: true, health: HEALTH, routes: V2_ROUTES })
+      await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: HEALTH, routes: V2_ROUTES })
       await page.addInitScript((t) => window.localStorage.setItem('kaizen_theme', t), theme)
       await page.goto(p.path)
       await expect(page.getByRole('heading', { level: 1, name: p.h1 })).toBeVisible()
@@ -206,7 +206,7 @@ for (const p of PAGES) {
 }
 
 test('/mercados/mexico: respaldo y serie sin verificar se notan, cambios en pb', async ({ page, baseURL }) => {
-  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, legacyApi: true, health: HEALTH, routes: V2_ROUTES })
+  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: HEALTH, routes: V2_ROUTES })
   await page.goto('/mercados/mexico')
   await expect(page.getByText('no está verificada')).toBeVisible()
   await expect(page.getByText(/Este dato viene de una fuente de respaldo/).first()).toBeVisible()
@@ -214,7 +214,7 @@ test('/mercados/mexico: respaldo y serie sin verificar se notan, cambios en pb',
 })
 
 test('/mercados/cetes: tasa prellenada, 11 % a 28 días da efectiva de 11.75 % y retención sobre el capital', async ({ page, baseURL }) => {
-  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, legacyApi: true, health: HEALTH, routes: V2_ROUTES })
+  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: HEALTH, routes: V2_ROUTES })
   await page.goto('/mercados/cetes')
   const rate = page.getByLabel('Tasa anual')
   await expect(rate).toHaveValue(/7\.25/)
@@ -230,7 +230,7 @@ test('/mercados/cetes: tasa prellenada, 11 % a 28 días da efectiva de 11.75 % y
 })
 
 test('/mercados/noticias: liga externa segura, sin resumen ni ánimo, filtro por idioma', async ({ page, baseURL }) => {
-  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, legacyApi: true, health: HEALTH, routes: V2_ROUTES })
+  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: HEALTH, routes: V2_ROUTES })
   await page.goto('/mercados/noticias')
   const link = page.getByRole('link', { name: /Banxico recorta/ })
   await expect(link).toHaveAttribute('rel', 'noopener noreferrer')
@@ -248,7 +248,7 @@ test('/mercados/mexico: la serie de CETES de respaldo (FRED) se marca y el FIX s
     'GET /v2/rates/mx': { json: { items: [], meta: meta({ asOf: null, source: 'banxico', delayMinutes: null }) } },
     'GET /v2/rates/rf': { json: { ...RF, source: 'fred_ir3tib', fallback: true, meta: meta({ asOf: '2026-09-18', source: 'fred_ir3tib', delayMinutes: null, fallback: true }) } },
   }
-  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, legacyApi: true, health: HEALTH, routes })
+  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: HEALTH, routes })
   await page.goto('/mercados/mexico')
   await expect(page.getByText('Sin tasas por ahora')).toBeVisible()
   await expect(page.getByText('18.4321').first()).toBeVisible()
@@ -256,7 +256,7 @@ test('/mercados/mexico: la serie de CETES de respaldo (FRED) se marca y el FIX s
 })
 
 test('/mercados: bolsas abiertas con retraso, resumen factual, USD/MXN neutral y ligas', async ({ page, baseURL }) => {
-  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, legacyApi: true, health: HEALTH, routes: V2_ROUTES })
+  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: HEALTH, routes: V2_ROUTES })
   await page.goto('/mercados')
   await expect(page).toHaveTitle('Mercados · Kaizen')
   const exchanges = page.getByRole('region', { name: 'Estado de las bolsas' })
@@ -297,7 +297,7 @@ test('/mercados: bolsas abiertas con retraso, resumen factual, USD/MXN neutral y
 })
 
 test('/mercados: sin duplicados, VIX con su percentil de cinco años y tasas de EE. UU. en pb', async ({ page, baseURL }) => {
-  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, legacyApi: true, health: HEALTH, routes: V2_ROUTES })
+  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: HEALTH, routes: V2_ROUTES })
   await page.goto('/mercados')
   const vix = page.getByRole('region', { name: 'VIX y su percentil' })
   await expect(vix.getByText(`Percentil ${VIX_PCTL}`, { exact: true })).toBeVisible()
@@ -329,7 +329,7 @@ test('/mercados: bolsas cerradas muestran la fecha de su último cierre', async 
     groups: OVERVIEW.groups.map(onFriday),
     marketStatus: { bmv: closed('Cerrado. Abre hoy a las 8:30 h de la Ciudad de México.'), nyse: closed('Cerrado. Abre hoy a las 9:30 h de Nueva York.') },
   }
-  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, legacyApi: true, health: HEALTH, routes: { ...V2_ROUTES, 'GET /v2/markets/overview': { json: overview } } })
+  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: HEALTH, routes: { ...V2_ROUTES, 'GET /v2/markets/overview': { json: overview } } })
   await page.goto('/mercados')
   const exchanges = page.getByRole('region', { name: 'Estado de las bolsas' })
   await expect(exchanges.getByText('Cerrada', { exact: true })).toHaveCount(2)
@@ -338,7 +338,7 @@ test('/mercados: bolsas cerradas muestran la fecha de su último cierre', async 
 })
 
 test('/mercados: sin las capacidades en /health, cada sección lo dice y no pide nada', async ({ page, baseURL }) => {
-  const api = await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, legacyApi: true, health: 'v2', routes: V2_ROUTES })
+  const api = await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: 'v2', routes: V2_ROUTES })
   await page.goto('/mercados')
   await expect(page.getByRole('heading', { level: 1, name: 'Mercados' })).toBeVisible()
   await expect(page.getByText('Sin panorama por ahora')).toBeVisible()
@@ -360,7 +360,6 @@ plainTest('/mercados: una sección caída no tumba las demás', async ({ page, b
   await setupApp(page, {
     baseURL: /** @type {string} */ (baseURL),
     session: true,
-    legacyApi: true,
     health: HEALTH,
     routes: { ...V2_ROUTES, 'GET /v2/markets/world': down, 'GET /v2/history/:symbol': down },
   })

@@ -4,6 +4,9 @@
 //
 //   await fixTime(page, '2026-09-22T14:30:00.000Z')
 
+/** Instante por omisión de las pruebas: la hora a la que se grabaron las fixtures del 22 sep. */
+export const E2E_NOW = '2026-09-22T14:52:19.000Z'
+
 /**
  * @param {import('@playwright/test').Page} page
  * @param {string | number | Date} iso instante ISO (con zona) o epoch en ms
