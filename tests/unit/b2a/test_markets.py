@@ -71,7 +71,7 @@ def test_la_variacion_es_fraccion_y_sale_del_ultimo_par_de_cierres(monkeypatch) 
     assert ipc["change"] == 10.0
     assert ipc["changePct"] == pytest.approx(0.10)
     assert as_of == "2026-09-22"
-    assert notes and "Sin dato de" in notes[0]
+    assert notes and notes[0].startswith("Sin dato en esta actualización de ")
 
 
 def test_un_simbolo_sin_dato_sale_en_blanco_y_no_se_inventa(monkeypatch) -> None:
@@ -80,7 +80,8 @@ def test_un_simbolo_sin_dato_sale_en_blanco_y_no_se_inventa(monkeypatch) -> None
     valores = [i["price"] for g in groups for i in g["items"]]
     assert valores and all(v is None for v in valores)
     assert as_of is None
-    assert notes and "Sin dato de" in notes[0]
+    # con todo caído el aviso cuenta los faltantes en vez de listar treinta y tantos
+    assert notes and notes[0] == f"Sin dato en esta actualización de {len(valores)} instrumentos; salen como s/d."
 
 
 def test_la_ruta_del_panorama_cumple_el_contrato(client) -> None:
@@ -116,3 +117,23 @@ def test_el_mapa_mundial_sale_en_dolares_con_pais_iso(client) -> None:
 def test_cada_pais_del_mapa_tiene_nombre_en_espaniol() -> None:
     faltan = set(markets_domain._WORLDMAP_SYMS.values()) - set(markets_domain.WORLD_COUNTRIES)
     assert faltan == set(), faltan
+
+
+def test_avisos_de_datos_faltantes_en_espanol_con_nombre_y_plural(monkeypatch) -> None:
+    """Un solo faltante va en singular; varios se unen con "y"; nunca la clave de Yahoo sola."""
+    assert markets_domain._join_es(["A"]) == "A"
+    assert markets_domain._join_es(["A", "B", "C"]) == "A, B y C"
+    world = dict(markets_domain._WORLDMAP_SYMS)
+    first = next(iter(world))
+    closes = {"dates": ["2026-09-21", "2026-09-22"], "closes": [100.0, 101.0]}
+    monkeypatch.setattr(prices, "download_closes", lambda *a, **k: {s: closes for s in world if s != first})
+    # panorama con un solo faltante: se nombra como lo lee una persona, con la clave entre paréntesis
+    syms = list(markets_domain._MARKET_SYMS.values())
+    monkeypatch.setattr(prices, "download_closes", lambda *a, **k: {s: closes for s in syms if s != "^HSI"})
+    _, _, overview_notes = markets_domain.overview_data()
+    assert overview_notes == ["Sin dato en esta actualización de Hang Seng (^HSI); sale como s/d."]
+    monkeypatch.setattr(prices, "download_closes", lambda *a, **k: {s: closes for s in world if s != first})
+    items, _, notes = markets_domain.world_data()
+    assert len(items) == len(world) - 1
+    label = markets_domain.WORLD_COUNTRIES.get(world[first], world[first])
+    assert notes == [f"Sin dato en esta actualización de {label} ({first}); ese país no sale en la lista."]

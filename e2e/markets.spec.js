@@ -57,7 +57,7 @@ const OVERVIEW = {
     bmv: { open: true, label: 'Abierta. Cierra hoy a las 15:00 h de la Ciudad de México.', nextOpen: '2026-09-23T14:30:00Z', nextClose: '2026-09-22T21:00:00Z' },
     nyse: { open: true, label: 'Abierta. Cierra hoy a las 16:00 h de Nueva York.', nextOpen: '2026-09-23T13:30:00Z', nextClose: '2026-09-22T20:00:00Z' },
   },
-  meta: meta({ notes: ['Sin dato de ^HSI en esta corrida; se muestran sin valor.'] }),
+  meta: meta({ notes: ['Sin dato en esta actualización de Hang Seng (^HSI); sale como s/d.'] }),
 }
 
 const rate = (id, label, value, unit, seriesId, previous, changeBp, asOf = '2026-09-18') => ({ id, label, value, unit, asOf, seriesId, source: 'banxico', previous, changeBp })
@@ -296,7 +296,7 @@ test('/mercados: bolsas abiertas con retraso, resumen factual, USD/MXN neutral y
   await expect(summary.getByText('El dólar sube 0.27% frente al peso, a 18.4321 pesos por dólar: peso más débil.')).toBeVisible()
   await expect(summary.getByText('Mayor alza: Bitcoin, +2.10%. Mayor baja: Petróleo WTI, −1.79%.')).toBeVisible()
   await expect(summary.getByText('Sin dato en esta actualización: Hang Seng.')).toBeVisible()
-  await expect(summary.getByText('Sin dato de ^HSI en esta corrida; se muestran sin valor.')).toBeVisible()
+  await expect(summary.getByText('Sin dato en esta actualización de Hang Seng (^HSI); sale como s/d.')).toBeVisible()
   // Ni ánimo ni "miedo y codicia" en ningún lado.
   await expect(page.getByText(/sentimiento|codicia|cauteloso|optimista|pesimista/i)).toHaveCount(0)
 
