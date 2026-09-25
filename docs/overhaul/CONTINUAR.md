@@ -1,7 +1,7 @@
 # CONTINUAR: rehacer NEWKAIZEN como "Bloomberg-lite"
 
-Actualizado el **23 de septiembre de 2026**, con la primera tanda de la fase 3. Este archivo
-es el punto de entrada para la siguiente sesión. Todo lo que hace falta está en `docs/overhaul/`.
+Actualizado el **25 de septiembre de 2026**: fase 3 revisada completa, fase 4 (seguridad, copy y UX)
+hecha y compuerta G4 medida. Este archivo es el punto de entrada para la siguiente sesión. Todo lo que hace falta está en `docs/overhaul/`.
 
 ## Qué es esto
 
@@ -219,16 +219,81 @@ portafolio, optimizador, backtest, screeners) y M3.
   `e2e/fixtures/legacy`, proyectos baseline de `playwright.config.js` y la opción `legacyApi` de
   `setupApp`, que todavía pasan varios specs aunque ya no haga falta).
 
+### 25 de septiembre de 2026: revisión de la fase 3, fase 4 y G4
+
+Todo en `analizavende` y en `origin/analizavende`, nada en `main`. Se hizo con 9 agentes (Agent, no
+Workflow) en worktrees propios, en tandas de 4 o 5 con hora límite, más integración y recorrido del
+orquestador. Reportes en `docs/overhaul/notas/`: `fase3-revision-RP.md`, `-RM.md`, `-RT.md`,
+`sie-catalogo.md`, `fase4-seguridad.md`, `fase3-api-pedidos.md`, `fase3-adopcion-api.md`,
+`fase4-copy-ux.md`.
+
+- **Revisión de F1, F2, F3b, F3c, F4 y PF** (nunca se habían revisado): un blocker (el rebalanceo
+  pedía vender casi todo con compras sin depósito) y unos 15 major, todos corregidos con prueba que
+  falla antes. Los más graves: el TWR daba 5.55 % contra 31.30 % real por mezclar precio pagado con
+  cierres ajustados; el DCF de emisoras del SIC salía en USD con formato de pesos; el FIX duplicado y
+  el dólar de Yahoo etiquetado como FIX; el CSV leía `1.234,56` como 1.23456; sin token la tasa de
+  respaldo se convertía a 28 días en vez de 91.
+- **SIE**: ids correctos (`SF44071` Bono M 10 años, `SP30578` y `SP74662` inflación anual y
+  subyacente), CETES de subasta con su periodicidad real, las 12 series con `verified: true` probadas
+  en vivo. Calendarios BMV y NYSE con 2025 (DOF y NYSE Group, con el cierre por Carter).
+- **Seguridad**: pass_with_issues. `AUTH_REQUIRED` ya es verdadero por omisión en producción, el login
+  tiene tope de 16 KB, la bitácora escapa caracteres de control y la CSP ya no bloquea fuentes. El
+  historial del repo público no tiene secretos; dependencias sin CVE conocidos.
+- **API**: `verified`, `stale` y `tenorDays` por serie, `marketStatus.lastClose`, `FibraRow.notes`,
+  `MagicRow.ebitSource`, `FibrasResponse.rate`, `GET /v2/assumptions`, `GET /v2/rates/mx/inpc` (SIE
+  `SP1`, sin respaldo: sin token da 503) y `/v2/panel?adjust=splits`. Las pantallas ya los usan, con
+  lo viejo como respaldo mientras Render no tenga el backend v2.
+- **Copy y UX**: títulos de pestaña únicos, subpáginas alcanzables en móvil, "Primeros pasos" en
+  /mercados, avisos del API sin jerga técnica, términos unificados ("clave", "portafolio",
+  "Lista de seguimiento").
+- **e2e**: se retiró toda la infraestructura del legado (HAR, grabadores, baseline, `legacyApi`), el
+  scroll horizontal se mide contra el viewport emulado (`e2e/support/layout.js`) y **la CI ya corre
+  e2e en Linux** (job nuevo en `check.yml`). El aviso con Deshacer ya recibe clic en móvil.
+- **G4, medido por el orquestador**: Lighthouse con Brave sobre el build y el replay. Públicas: 100 en
+  escritorio, 92 a 96 en móvil, accesibilidad y buenas prácticas 100, SEO 100 con el `robots.txt`
+  nuevo. Con sesión (`scripts/lighthouse-sesion.mjs`): 94 a 100 en móvil y 100 en escritorio en las 20
+  rutas. Para llegar ahí se corrigió CLS: /mercados 0.36, noticias 0.60 y la ficha 0.66 bajaron a
+  menos de 0.05 (esqueletos del tamaño real y `Card` que reserva el lugar de su insignia); hay
+  pruebas e2e de CLS en /mercados y en la ficha.
+- **Hallado solo al mirar la página**: /portafolio/riesgo pedía `range=3y`, que el contrato no tiene,
+  y el API contestaba 422; los mocks de e2e aceptan cualquier rango y por eso pasaba. Ahora pide 5y y
+  recorta, y `getPanel`/`getHistory` rechazan un periodo fuera del contrato antes de salir a la red.
+- Capa de replay nueva `2026-09-22-recorrido` (VIX a 5 años, panel del portafolio de ejemplo,
+  screener de factores y FIBRAs); `newkaizen-replay` del `launch.json` ya la carga.
+
+Compuerta final: `npm run check` 2,114 pruebas y bundle al 75 %, pytest 1,519 y 6 omitidas, ruff
+limpio, e2e completa en local 459 pasadas y 0 fallas (47 omitidas, las de un solo viewport).
+
 ### Lo que falta, en orden
 
-1. ~~C1, C2 y C3, el sistema de diseño~~: cerrado el 23 de septiembre, ver arriba.
-2. **Fase 3, las features F1 a F5**, que es lo que de verdad cambia lo que el usuario ve: hoy la
-   interfaz sigue siendo la del legado, aunque abajo ya esté el API v2 honesto.
-3. **M3**: borrar `src/legacy` cuando las features lo reemplacen. Ahí se van los 76 guiones largos
-   visibles y los `—` como dato faltante.
-4. **Fases 4 y 5**: revisores de finanzas, seguridad, UX y copy, y el cierre con preview y reporte.
-5. ~~Defectos abiertos de la revisión de la fase 2~~ y 6. ~~`fxUsed.asOf` en null~~: cerrados el 23 de
-   septiembre, ver arriba.
+Fases 0 a 4 cerradas en código. Lo que queda, de más a menos valor:
+
+1. **Lo del dueño** (sección final): servicio v2 en Render, `VITE_API_URL` en Vercel y merge a `main`.
+   Sin eso nada de esto lo ve nadie.
+2. **Confirmar la CI de e2e en Linux**: la última corrida antes de este cierre falló 1 de 451, la
+   tabla de pruebas del screener de factores a 1440 (en la Mac cabe con 0 px de sobra). Se angostaron
+   los encabezados a 11ch; si vuelve a fallar, la tabla necesita menos columnas fijas o scroll propio
+   aceptado.
+3. **Decisiones del dueño** que dejaron las revisiones:
+   - CAPM del optimizador sin prima país contra DCF con ella: elegir un criterio.
+   - INPC que baja da factor menor que 1 y sube el ISR: confirmar con contador (CFF 17-A, LISR 129).
+   - Convención de tipo de cambio: FIX contra el del DOF.
+   - Nombres: Screener, Backtest y walk forward, ¿se traducen?
+   - `/aprender` y legales fuera del shell con sesión (cambio del router).
+   - `render.yaml` todavía declara `kaizen-backend` en modo desarrollo; conviene quitarlo.
+   - `scripts/hash_password.py` solo avisa ante contraseñas cortas en vez de rechazarlas.
+   - El portafolio del navegador no se borra al cerrar sesión (va con la decisión de Supabase).
+   - Retención de FIBRAs al 30 por ciento sobre el resultado fiscal (pendiente desde B3c).
+4. **Al desplegar Render**: revisar cómo llega `X-Forwarded-For` (el límite por IP del login depende de
+   eso) y, con el backend v2 en vivo, borrar el parseo de `meta.notes` que quedó como respaldo en
+   FIBRAs y fórmula mágica.
+5. **Menores abiertos**: `docs/metodologia/portafolio.md:81-88` describe el arreglo viejo del TWR;
+   `avgFx` de `ledger.js` pondera por títulos fuera de Mi portafolio; la industria de la ficha llega
+   en inglés (tabla de traducción en el API); `%` con y sin espacio; el Heatmap esconde valores a
+   390 px; BMV 2027 hay que cotejarla cuando la publique la CNBV (diciembre 2026); A3 con 6 minors; la
+   lista de noticias reserva `100vh` al cargar y con pocos titulares se encoge.
+6. La prueba de desempeño de Monte Carlo (400 ms en local) falla con la Mac cargada por agentes; en
+   corridas en paralelo usar `KAIZEN_PERF_MS=2000`, como la CI.
 
 ## Cómo trabajar aquí
 
@@ -242,7 +307,17 @@ portafolio, optimizador, backtest, screeners) y M3.
 3. Cada stream corre `node scripts/check-ownership.mjs <id>` antes de entregar, y el orquestador
    corre el modo `--coverage` con la lista de streams vivos antes de arrancar una fase.
 4. Puertos por stream: web 5300+2i, API 8100+i. Nunca 8002, 5180 ni 4180, que son los del dueño.
-   Máximo 3 agentes con navegador a la vez (24 GB de RAM).
+   Máximo 3 agentes con navegador a la vez (24 GB de RAM). Cada agente corre e2e con su
+   `E2E_PORT=53xx`; el 5291 por omisión choca.
+5. **Recorrido real antes de cerrar una fase**: `preview_start` de `newkaizen-replay` y
+   `newkaizen-preview` (o `-frontend`), portafolio de ejemplo desde /bienvenida y Lighthouse con
+   `node scripts/lighthouse-sesion.mjs <rutas>`. Los mocks de e2e aceptan cualquier query: el 422 de
+   Riesgo y el CLS de 0.66 solo salieron así. Un 500 `ReplayMiss` es hueco de grabación, no del código:
+   se graba en una capa (`--set 2026-09-22,2026-09-22-recorrido --grabar-en 2026-09-22-recorrido`).
+6. **Agent o Workflow (ultracode)**: con Opus 5.5 en esfuerzo alto, Agent con 4 o 5 agentes por tanda
+   y hora límite fue suficiente para revisar y corregir; ultracode vale para lo que es ancho y
+   uniforme (auditoría completa, una fase nueva con 8 o más streams independientes, verificación
+   adversaria de cada hallazgo). Detalle en la memoria del proyecto.
 
 ## Decisiones ya tomadas (no re-discutir)
 
@@ -304,8 +379,9 @@ portafolio, optimizador, backtest, screeners) y M3.
 ## Lo que solo el usuario puede hacer
 
 1. Pedirle a Arturo que no edite `App.jsx` por ahora y que después rebasee sobre `analizavende`.
-2. Sacar un token gratis de Banxico SIE (la llave de FRED es opcional). Sin él, B2b deja las series
-   marcadas como no verificadas y las tasas MX salen por el respaldo de FRED, señalado como respaldo.
+2. ~~Sacar un token de Banxico SIE~~: hecho; vive en `.env.local` y NUNCA en el repo. Hay que ponerlo
+   como `BANXICO_TOKEN` en Render: sin él las tasas MX salen por el respaldo de FRED y
+   `/v2/rates/mx/inpc` contesta 503.
 3. Crear el servicio nuevo en Render desde `render.yaml` (rama `analizavende`, health check en
    `/health`) con `SECRET_KEY`, `USERS` (hashes de `scripts/hash_password.py`), `ALLOWED_ORIGINS`,
    `BANXICO_TOKEN` y `AUTH_REQUIRED=true`.
