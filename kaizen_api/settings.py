@@ -6,6 +6,8 @@ Variables (todas opcionales en desarrollo):
 PORT                   Puerto HTTP. Default 8002 (Render lo define solo).
 KAIZEN_ENV             ``development`` (default) o ``production``.
 AUTH_REQUIRED          ``true`` exige ``Authorization: Bearer`` en todo salvo /health y /auth/login.
+                       Default: encendido en producción (hay que apagarlo explícitamente, con aviso)
+                       y apagado fuera de producción.
 SECRET_KEY             Llave HS256 de los JWT, 32 caracteres o más. Es obligatoria en producción y
                        siempre que AUTH_REQUIRED esté activo, en cualquier entorno.
 USERS                  JSON ``{"usuario": "scrypt$n$r$p$salt_hex$hash_hex"}`` (scripts/hash_password.py
@@ -304,7 +306,14 @@ class Settings:
             raise SettingsError(f"KAIZEN_ENV debe ser development o production, no {kaizen_env!r}")
         production = kaizen_env == "production"
 
-        auth_required = _flag(env, "AUTH_REQUIRED", False)
+        # Cerrado por omisión en producción: sin la variable, el API exige sesión. Antes el default
+        # era False en cualquier entorno, así que un servicio creado a mano (o sin la variable)
+        # dejaba todas las rutas de datos abiertas mientras el frontend seguía pidiendo login.
+        auth_required = _flag(env, "AUTH_REQUIRED", production)
+        if production and not auth_required:
+            warnings.append(
+                "AUTH_REQUIRED=false en producción: todas las rutas de datos quedan abiertas sin sesión"
+            )
         secret = _resolve_secret(env.get("SECRET_KEY") or "", production, auth_required, warnings)
 
         origin_regex = _origin_regex(env, production, warnings)

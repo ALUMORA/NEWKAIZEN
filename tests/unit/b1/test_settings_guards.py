@@ -123,7 +123,10 @@ def test_legacy_routes_are_off_in_production_unless_asked_explicitly():
 
     on = _client(**PROD, KAIZEN_LEGACY_ROUTES="1")
     assert "legacy.v1" in on.get("/health").json()["capabilities"]
-    assert on.get("/stock/AAPL%20X").status_code == 200  # ticker inválido: respuesta v1, no 404
+    # Montadas (no 404) y detrás de la sesión, que en producción va encendida por omisión (SEC).
+    assert on.get("/stock/AAPL%20X").status_code == 401
+    abiertas = _client(**PROD, KAIZEN_LEGACY_ROUTES="1", AUTH_REQUIRED="false")
+    assert abiertas.get("/stock/AAPL%20X").status_code == 200  # ticker inválido: respuesta v1, no 404
     assert any("KAIZEN_LEGACY_ROUTES=1 en producción" in w for w in Settings.from_env({**PROD, "KAIZEN_LEGACY_ROUTES": "1"}).warnings)
 
 

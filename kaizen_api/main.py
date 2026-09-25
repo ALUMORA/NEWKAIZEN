@@ -20,11 +20,12 @@ import uuid
 from typing import Any
 
 from fastapi import Depends, FastAPI
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
 
 from kaizen_api import __version__
-from kaizen_api.errors import error_body, install_exception_handlers
+from kaizen_api.errors import error_body, install_exception_handlers, log_safe
 from kaizen_api.routers import (
     auth,
     events,
@@ -99,7 +100,9 @@ class RequestLogMiddleware:
             await self.app(scope, receive, _send)
         finally:
             ms = (time.perf_counter() - started) * 1000
-            logger.info("%s %s %s %.0fms rid=%s", scope.get("method"), scope.get("path"), status, ms, rid)
+            logger.info(
+                "%s %s %s %.0fms rid=%s", log_safe(scope.get("method")), log_safe(scope.get("path")), status, ms, rid
+            )
 
 
 class CatchAllMiddleware:
@@ -130,8 +133,8 @@ class CatchAllMiddleware:
             rid = (scope.get("state") or {}).get("request_id")
             logger.error(
                 "error interno en %s %s rid=%s\n%s",
-                scope.get("method"),
-                scope.get("path"),
+                log_safe(scope.get("method")),
+                log_safe(scope.get("path")),
                 rid,
                 "".join(traceback.format_exception(exc)),
             )
@@ -191,8 +194,8 @@ class ConcurrencyLimitMiddleware:
             logger.warning(
                 "saturado: %s requests en vuelo, se rechaza %s %s",
                 self.in_flight,
-                scope.get("method"),
-                scope.get("path"),
+                log_safe(scope.get("method")),
+                log_safe(scope.get("path")),
             )
             body = json.dumps(error_body("RATE_LIMITED", self.MESSAGE), ensure_ascii=False).encode("utf-8")
             await send(
@@ -214,6 +217,74 @@ class ConcurrencyLimitMiddleware:
             await self.app(scope, receive, send)
         finally:
             self.in_flight -= 1
+
+
+MAX_BODY_BYTES = 16 * 1024
+"""Tope del cuerpo de un request. El API solo recibe el ``{username, password}`` del login (y el del
+``POST /login`` v1): 16 KB sobran y dejan fuera el request de cientos de MB que antes se leía completo
+a memoria, sin sesión y antes del límite de tasa."""
+
+MSG_BODY_TOO_LARGE = "La solicitud es demasiado grande."
+
+
+class BodySizeLimitMiddleware:
+    """Contesta 413 a un cuerpo de más de ``max_bytes``, lo declare o no el cliente.
+
+    * Con ``Content-Length`` mayor al tope (o que no es un entero): 413 (o 400) sin leer nada.
+    * Sin ``Content-Length`` (``Transfer-Encoding: chunked``): se cuentan los bytes conforme llegan y,
+      al pasarse, ``receive`` lanza ``HTTPException(413)``. FastAPI la deja pasar tal cual cuando lee
+      el cuerpo y los manejadores de ``errors.py`` la vuelven el cuerpo del contrato.
+
+    Va por dentro de CORS (para que el navegador pueda leer el 413) y por fuera de los routers.
+    El código es ``BAD_REQUEST`` porque el contrato congelado no tiene uno para 413.
+    """
+
+    def __init__(self, app: Any, max_bytes: int = MAX_BODY_BYTES):
+        self.app = app
+        self.max_bytes = int(max_bytes)
+
+    async def _refuse(self, send: Any, status: int, message: str) -> None:
+        body = json.dumps(error_body("BAD_REQUEST", message), ensure_ascii=False).encode("utf-8")
+        await send(
+            {
+                "type": "http.response.start",
+                "status": status,
+                "headers": [
+                    (b"content-type", b"application/json"),
+                    (b"content-length", str(len(body)).encode()),
+                    (b"cache-control", b"no-store"),
+                    (b"connection", b"close"),
+                ],
+            }
+        )
+        await send({"type": "http.response.body", "body": body})
+
+    async def __call__(self, scope: dict, receive: Any, send: Any) -> None:
+        if scope.get("type") != "http":
+            await self.app(scope, receive, send)
+            return
+        declared = [v for k, v in scope.get("headers") or [] if k.lower() == b"content-length"]
+        if declared:
+            raw = declared[0].decode("latin-1").strip()
+            if not raw.isdigit() or len(set(declared)) > 1:
+                await self._refuse(send, 400, "La longitud declarada del cuerpo no es válida.")
+                return
+            if int(raw) > self.max_bytes:
+                await self._refuse(send, 413, MSG_BODY_TOO_LARGE)
+                return
+        limit = self.max_bytes
+        seen = 0
+
+        async def _receive() -> dict:
+            nonlocal seen
+            message = await receive()
+            if message.get("type") == "http.request":
+                seen += len(message.get("body") or b"")
+                if seen > limit:
+                    raise StarletteHTTPException(413, MSG_BODY_TOO_LARGE)
+            return message
+
+        await self.app(scope, _receive, send)
 
 
 def _collect_capabilities(settings: Settings) -> list[str]:
@@ -255,10 +326,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.capabilities = _collect_capabilities(settings)
 
     # add_middleware apila hacia afuera: el último agregado es el más externo. De afuera hacia
-    # adentro quedan: registro del request, CORS, guarda de carga, GZip, captura de errores.
+    # adentro quedan: registro del request, CORS, guarda de carga, tope del cuerpo, GZip, captura
+    # de errores.
     # La guarda va por DENTRO de CORS para que su 503 lleve Access-Control-Allow-Origin.
     app.add_middleware(CatchAllMiddleware)
     app.add_middleware(GZipMiddleware, minimum_size=1024)
+    app.add_middleware(BodySizeLimitMiddleware)
     app.add_middleware(ConcurrencyLimitMiddleware, limit=settings.max_concurrency)
     app.add_middleware(
         CORSMiddleware,

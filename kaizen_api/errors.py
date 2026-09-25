@@ -15,6 +15,7 @@ Uso en una ruta::
 from __future__ import annotations
 
 import logging
+import re
 from collections.abc import Mapping
 from typing import Any
 
@@ -58,6 +59,20 @@ SYMBOL_PARAMS = frozenset({"symbol", "symbols", "extra"})
 _FORMAT_ERRORS = frozenset({"string_pattern_mismatch", "string_too_long", "string_too_short"})
 
 _ERROR_HEADERS = {"Cache-Control": "no-store"}
+
+
+_CONTROL_CHARS = re.compile(r"[\x00-\x1f\x7f]")
+
+
+def log_safe(value: Any, limit: int = 300) -> str:
+    """Texto apto para un renglón de bitácora: sin caracteres de control y acotado.
+
+    ``scope["path"]`` llega DECODIFICADO, así que ``/x%0A...`` trae un salto de línea de verdad y
+    con él cualquiera podía escribir renglones falsos en la bitácora. Los caracteres de control se
+    escapan (``\\n``, ``\\x1b``) en vez de borrarse, para que el intento quede a la vista.
+    """
+    text = str(value if value is not None else "")[:limit]
+    return _CONTROL_CHARS.sub(lambda m: m.group().encode("unicode_escape").decode("ascii"), text)
 
 
 class ApiError(Exception):
@@ -150,7 +165,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
 async def internal_error_handler(request: Request, exc: Exception) -> JSONResponse:
     state = request.scope.get("state")
     rid = state.get("request_id") if isinstance(state, dict) else None
-    logger.error("error interno en %s %s rid=%s", request.method, request.url.path, rid, exc_info=exc)
+    logger.error("error interno en %s %s rid=%s", log_safe(request.method), log_safe(request.url.path), rid, exc_info=exc)
     return error_response(500, "INTERNAL")
 
 
