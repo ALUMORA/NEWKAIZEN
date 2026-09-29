@@ -64,3 +64,5 @@
 }
 .kz-symbol-chip__remove:hover { background: var(--surface); color: var(--ink); }
 .kz-symbol-chip__remove:focus-visible { outline: 3px solid var(--focus); outline-offset: 1px; }
+/* Etiqueta de renglón del comparador: con o sin InfoTip, la misma altura. */
+.kz-research-rowlabel { align-items: center; display: inline-flex; gap: var(--space-1); min-height: 24px; }

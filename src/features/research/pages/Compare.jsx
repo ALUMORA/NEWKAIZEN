@@ -38,15 +38,13 @@ function Fundamentals({ symbols }) {
       key: 'label',
       header: 'Dato',
       minWidth: 160,
-      format: (v, row) =>
-        row.termKey ? (
-          <span className="kz-row" data-gap="1">
-            {v}
-            <InfoTip termKey={row.termKey} term={v} />
-          </span>
-        ) : (
-          v
-        ),
+      // Todas las etiquetas miden lo mismo con o sin InfoTip, para que los renglones no bailen.
+      format: (v, row) => (
+        <span className="kz-research-rowlabel">
+          {v}
+          {row.termKey ? <InfoTip termKey={row.termKey} term={v} /> : null}
+        </span>
+      ),
     },
     ...symbols.map((s, i) => ({
       key: s,
