@@ -110,6 +110,41 @@ export function nativePriceTable(panelMxn, panelUsd, usdSymbols) {
 }
 
 /**
+ * Tipo de cambio implícito del panel (docs/api-v2.md, paso 5): en cada fecha que esté en los dos
+ * paneles, precio en pesos ÷ precio en dólares de la misma emisora. Es exactamente el que usó el
+ * servidor para convertir (FIX con su relleno de hasta 3 días), cosa que /v2/fx/history no
+ * reproduce fecha por fecha. El ajuste por splits o dividendos multiplica igual las dos monedas y
+ * no mueve el cociente. Con varias emisoras en dólares se promedian sus cocientes, que solo
+ * difieren por el redondeo de cada precio.
+ * @param {{ dates: string[], prices: Record<string, (number | null)[]> } | null | undefined} panelMxn
+ * @param {{ dates: string[], prices: Record<string, (number | null)[]> } | null | undefined} panelNative ccy=USD
+ * @returns {Record<string, number>} pesos por dólar por fecha
+ */
+export function impliedFx(panelMxn, panelNative) {
+  /** @type {Record<string, number>} */
+  const out = {}
+  if (!panelMxn || !panelNative) return out
+  /** @type {Map<string, number>} */
+  const mxnIndex = new Map((panelMxn.dates ?? []).map((d, i) => [d, i]))
+  ;(panelNative.dates ?? []).forEach((date, j) => {
+    const i = mxnIndex.get(date)
+    if (i === undefined || !isIso(date)) return
+    let sum = 0
+    let n = 0
+    for (const [symbol, native] of Object.entries(panelNative.prices ?? {})) {
+      const usd = native?.[j]
+      const mxn = panelMxn.prices?.[symbol]?.[i]
+      if (isNum(usd) && usd > 0 && isNum(mxn) && mxn > 0) {
+        sum += mxn / usd
+        n += 1
+      }
+    }
+    if (n > 0) out[date] = sum / n
+  })
+  return out
+}
+
+/**
  * Valor vigente en una fecha: el de esa fecha o el último anterior.
  * @param {Record<string, number> | undefined} table
  * @param {string} date

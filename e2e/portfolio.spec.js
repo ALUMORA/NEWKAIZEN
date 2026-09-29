@@ -415,6 +415,37 @@ test.describe('portafolio: rendimiento', () => {
     })
   }
 
+  test('con una emisora en dólares el tipo de cambio sale del panel y no pide /v2/fx/history', async ({ page, baseURL }) => {
+    await open(page, baseURL, { state: PERF_STATE })
+    let fxHistoryCalls = 0
+    await page.route(/\/v2\/fx\/history/, (route) => {
+      fxHistoryCalls += 1
+      return route.fallback()
+    })
+    await page.goto('/portafolio/rendimiento')
+    const aapl = page.getByRole('table', { name: 'Resultado por posición' }).getByRole('row', { name: /AAPL/ })
+    // El tipo de cambio de hoy es el cociente del panel: 18.4125, el mismo con que el servidor convirtió.
+    await expect(aapl).toContainText('18.4125')
+    await expect(page.getByRole('region', { name: 'Resumen del periodo' }).locator('.kz-stat__value').filter({ hasText: 's/d' })).toHaveCount(0)
+    expect(fxHistoryCalls).toBe(0)
+  })
+
+  test('con efectivo en dólares y ninguna emisora en dólares usa el FIX de respaldo', async ({ page, baseURL }) => {
+    const usdCash = tx({ id: 'u1', type: 'deposit', date: '2026-09-03', amount: 100, currency: 'USD' })
+    await open(page, baseURL, { state: { ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: [...STATE.portfolios[0].transactions, usdCash] }] } })
+    /** @type {string[]} */
+    const fxHistory = []
+    page.on('request', (r) => {
+      const u = new URL(r.url())
+      if (u.pathname === '/v2/fx/history') fxHistory.push(`${u.searchParams.get('start')}|${u.searchParams.get('end')}`)
+    })
+    await page.goto('/portafolio/rendimiento')
+    await expect(page.getByRole('region', { name: 'Resumen del periodo' })).toContainText('TWR del periodo')
+    await expect(page.getByRole('region', { name: 'Resumen del periodo' }).locator('.kz-stat__value').filter({ hasText: 's/d' })).toHaveCount(0)
+    // Diez días antes del primer cierre del panel simulado (1 jul) y hasta el último.
+    expect(fxHistory).toEqual(['2026-06-21|2026-09-22'])
+  })
+
   test('sin compras lleva a Movimientos y sin portafolio a la bienvenida', async ({ page, baseURL }) => {
     await open(page, baseURL, { state: { ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: [STATE.portfolios[0].transactions[0]] }] } })
     await page.goto('/portafolio/rendimiento')

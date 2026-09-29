@@ -1,7 +1,10 @@
 // /portafolio/rendimiento: valor del portafolio en el tiempo desde el libro, TWR y XIRR, contra
 // la referencia de settings.benchmark, P&L en efecto precio y efecto tipo de cambio, e ISR
 // estimado. Los precios salen de /v2/panel dos veces: ccy=MXN (pesos, y la referencia) y ccy=USD
-// (lo que cotiza en dólares, en su moneda); el tipo de cambio, del FIX de /v2/fx/history.
+// (lo que cotiza en dólares, en su moneda). El tipo de cambio es el implícito de esos dos paneles,
+// precio en pesos ÷ precio en dólares por fecha común (docs/api-v2.md, paso 5), que es el mismo con
+// el que el servidor convirtió; /v2/fx/history queda solo de respaldo para un libro con efectivo en
+// dólares y ninguna emisora en dólares, donde no hay cociente que sacar.
 // Las fórmulas son las de src/lib/finance y las de docs/metodologia/portafolio.md.
 import { lazy, Suspense, useMemo } from 'react'
 import { Link } from 'react-router'
@@ -13,7 +16,7 @@ import { useCapabilities } from '../../../lib/api/capabilities.js'
 import { DEFAULT_BENCHMARK, useStore } from '../../../lib/storage.js'
 import { PATHS } from '../../../app/paths.js'
 import { minusDays, todayMx } from '../tx-labels.js'
-import { computePerformance, inpcStart, isrView, nativePriceTable, panelAdjustment, pickWindow, pnlByPosition, splitAdjusted, zipTable } from '../lib/performance-view.js'
+import { computePerformance, impliedFx, inpcStart, isrView, nativePriceTable, panelAdjustment, pickWindow, pnlByPosition, splitAdjusted, zipTable } from '../lib/performance-view.js'
 import DataSources from '../components/DataSources.jsx'
 import PnlCard from '../components/PnlCard.jsx'
 import IsrCard from '../components/IsrCard.jsx'
@@ -64,9 +67,11 @@ export default function Performance() {
     enabled: probed && splits && symbols.length > 0,
   })
   const dates = panelMxn.data?.dates ?? []
+  // Con alguna emisora en dólares el tipo de cambio sale del cociente de los dos paneles.
+  const needsFxHist = needsFx && usdList.length === 0
   const fxHist = useQuery({
     ...fxHistoryQuery({ start: dates[0] ? minusDays(dates[0], 10) : undefined, end: dates[dates.length - 1] }),
-    enabled: needsFx && dates.length > 0,
+    enabled: needsFxHist && dates.length > 0,
   })
 
   // INPC para actualizar el costo del ISR. Sin la capacidad, o si falla (503 sin token de
@@ -77,13 +82,13 @@ export default function Performance() {
   // Si la referencia con rendimiento total falla, se usa la del panel del libro antes que tumbar
   // la página: la comparación queda sin dividendos de la referencia, pero el TWR sigue exacto.
   const benchSettled = !splits || Boolean(panelBench.data) || panelBench.isError
-  const ready = Boolean(panelMxn.data) && (usdList.length === 0 || Boolean(panelUsd.data)) && (!needsFx || Boolean(fxHist.data)) && benchSettled
+  const ready = Boolean(panelMxn.data) && (usdList.length === 0 || Boolean(panelUsd.data)) && (!needsFxHist || Boolean(fxHist.data)) && benchSettled
   const failed = panelMxn.isError || panelUsd.isError || fxHist.isError
   const view = useMemo(() => {
     if (!ready || !panelMxn.data) return null
     const adjustment = panelAdjustment(panelMxn.data, usdList.length > 0 ? panelUsd.data : null)
     const prices = nativePriceTable(panelMxn.data, panelUsd.data, usdSymbols)
-    const fx = zipTable(fxHist.data?.dates, fxHist.data?.values)
+    const fx = usdList.length > 0 ? impliedFx(panelMxn.data, panelUsd.data) : zipTable(fxHist.data?.dates, fxHist.data?.values)
     const benchPanel = panelBench.data?.prices[benchmark] ? panelBench.data : panelMxn.data
     const bench = benchPanel.prices[benchmark] ? zipTable(benchPanel.dates, benchPanel.prices[benchmark]) : null
     const perf = computePerformance({ transactions: txs, prices, fx, dates: panelMxn.data.dates, benchmark: bench, adjustment })
