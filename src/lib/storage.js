@@ -18,11 +18,10 @@
 // siga montado (hasta M3), la app vieja sigue escribiendo momentum_portfolios y
 // momentum_screener, y eso ya no llega a "kaizen:v2"; al revés tampoco. Volver a migrar solo
 // porque cambiaron las llaves viejas pisaría lo que la persona haya hecho en la app nueva, así
-// que no se hace automáticamente. Para que esa divergencia se pueda detectar, al crear el estado
-// v2 se guarda en `legacyHashes` (el sobre de la migración) una huella de cada llave vieja, y
-// legacyChangedSinceMigration() dice cuáles cambiaron desde entonces. Quien tenga que resolverlo
-// (F1, con la página nueva de portafolio) decide qué ofrecerle a la persona: re-importar, o
-// retirar las tabs legadas que leen esas llaves. Ver docs/overhaul/notas.
+// que no se hace automáticamente. Al crear el estado v2 se guarda en `legacyHashes` (el sobre de
+// la migración) una huella de cada llave vieja. Desde M3 la app vieja ya no se monta, así que
+// nadie vuelve a escribir esas llaves y ya no hay divergencia que vigilar: la huella se conserva
+// en el sobre para no cambiar el formato guardado.
 //
 // Versión más nueva: si "kaizen:v2" trae un `v` mayor que 2 (una build más nueva escribió ahí),
 // NO se toca. No se respalda, no se re-migra y no se sobrescribe: se sirve un estado vacío de
@@ -161,44 +160,6 @@ function snapshotLegacyKeys(get) {
   const out = {}
   for (const key of Object.values(LEGACY_KEYS)) out[key] = hashLegacyValue(get(key))
   return out
-}
-
-/**
- * ¿`value` es exactamente lo que la app vieja guarda sin que la persona haya tocado nada?
- *
- * Hace falta porque el Workspace legado escribe "momentum_screener" con su lista por defecto en
- * cada montaje (App.legacy.jsx, efecto "Persistir screener", que vive en el Workspace y no en la
- * tab del screener). O sea que a quien estrena la app nueva y luego abre cualquier ruta legada le
- * aparece una llave vieja que no existía al migrar, y sin este filtro legacyChangedSinceMigration()
- * la reportaría como divergencia para siempre sin que nadie haya cambiado nada.
- * @param {string} key
- * @param {string | null} value
- */
-function isLegacyDefaultValue(key, value) {
-  if (typeof value !== 'string') return false
-  if (key === LEGACY_KEYS.screener) {
-    const list = parseScreenerList(value)
-    if (!list) return false
-    /** @type {string[]} */
-    const symbols = []
-    for (const raw of list) {
-      const sym = normalizeSymbol(raw)
-      if (!sym) return false
-      if (!symbols.includes(sym)) symbols.push(sym)
-    }
-    return symbols.join(',') === LEGACY_DEFAULT_SCREENER
-  }
-  if (key === LEGACY_KEYS.portfolios || key === LEGACY_KEYS.portfolio) {
-    try {
-      const parsed = JSON.parse(value)
-      if (key === LEGACY_KEYS.portfolio) return signature(parsed) === LEGACY_DEFAULT_POSITIONS
-      if (!Array.isArray(parsed) || parsed.length !== 1) return false
-      return signature(parsed[0]?.positions) === LEGACY_DEFAULT_POSITIONS
-    } catch {
-      return false
-    }
-  }
-  return false
 }
 
 // ─── Validación ─────────────────────────────────────────────────────────────
@@ -757,31 +718,6 @@ export function update(fn) {
  */
 export function getStorageError() {
   return lastError
-}
-
-/**
- * ¿Las llaves de la app vieja cambiaron desde que se creó el estado v2? La migración es una foto
- * única (ver el encabezado del archivo): mientras src/legacy siga montado, la app vieja sigue
- * escribiendo momentum_portfolios y momentum_screener sin que eso llegue a "kaizen:v2". Esto no
- * re-migra nada; solo lo reporta, para que F1 decida qué ofrecerle a la persona.
- * No cuenta como cambio una llave que no existía al migrar y que hoy tiene exactamente el valor por
- * defecto del legado: eso no lo escribió la persona, lo escribe el Workspace legado al montarse
- * (ver isLegacyDefaultValue). Sin ese filtro, el primer paso por cualquier ruta legada dejaba
- * "momentum_screener" marcado como divergente para siempre.
- * @returns {{ known: boolean, changed: string[], hashes: LegacyHashes }}
- *   known: false si el estado v2 no trae la foto (datos de antes de este cambio, o de solo
- *   lectura). changed: las llaves viejas cuyo contenido ya no es el de la migración.
- */
-export function legacyChangedSinceMigration() {
-  const recorded = load().legacyHashes
-  const hashes = snapshotLegacyKeys(safeGet)
-  if (!recorded) return { known: false, changed: [], hashes }
-  const changed = Object.keys(recorded).filter((key) => {
-    if (recorded[key] === (hashes[key] ?? null)) return false
-    if (recorded[key] === null && isLegacyDefaultValue(key, safeGet(key))) return false
-    return true
-  })
-  return { known: true, changed, hashes }
 }
 
 function onStorageEvent(event) {
