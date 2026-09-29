@@ -5,7 +5,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { instrumentQuery, panelQuery } from '../../../lib/api/queries.js'
 import { fmtMoney, fmtMultiple, fmtPct } from '../../../lib/format.js'
-import { Button, Card, DataStatus, DataTable, Delta, EmptyState, Input, PageHeader, Skeleton } from '../../../components/ui/index.js'
+import { Button, Card, DataStatus, DataTable, Delta, EmptyState, InfoTip, Input, PageHeader, Skeleton } from '../../../components/ui/index.js'
 import { PATHS, pathCompare, pathInstrument } from '../../../app/paths.js'
 import { QueryBlock } from '../components/QueryBlock.jsx'
 import { parseSymbols } from '../symbols.js'
@@ -14,16 +14,17 @@ import '../research.css'
 
 const MIN = 2
 const MAX = 5
+/** `termKey`: llave del glosario para el InfoTip del renglón (las mismas que usa la ficha). */
 const METRICS = [
   { key: 'price', label: 'Precio', format: (i) => fmtMoney(i.quote?.price, i.priceCurrency) },
   { key: 'changePct', label: 'Cambio del día', format: (i) => <Delta value={i.quote?.changePct} /> },
-  { key: 'pe', label: 'P/U', format: (i) => fmtMultiple(i.fundamentals?.pe) },
-  { key: 'pb', label: 'P/VL', format: (i) => fmtMultiple(i.fundamentals?.pb) },
-  { key: 'evEbitda', label: 'VE/EBITDA', format: (i) => fmtMultiple(i.fundamentals?.evEbitda) },
-  { key: 'dividendYield', label: 'Rendimiento por dividendo', format: (i) => fmtPct(i.fundamentals?.dividendYield) },
-  { key: 'roe', label: 'ROE', format: (i) => fmtPct(i.fundamentals?.roe) },
+  { key: 'pe', label: 'P/U', termKey: 'p-u', format: (i) => fmtMultiple(i.fundamentals?.pe) },
+  { key: 'pb', label: 'P/VL', termKey: 'p-vl', format: (i) => fmtMultiple(i.fundamentals?.pb) },
+  { key: 'evEbitda', label: 'VE/EBITDA', termKey: 'ev-ebitda', format: (i) => fmtMultiple(i.fundamentals?.evEbitda) },
+  { key: 'dividendYield', label: 'Rendimiento por dividendo', termKey: 'rendimiento-por-dividendo', format: (i) => fmtPct(i.fundamentals?.dividendYield) },
+  { key: 'roe', label: 'ROE', termKey: 'roe', format: (i) => fmtPct(i.fundamentals?.roe) },
   { key: 'netMargin', label: 'Margen neto', format: (i) => fmtPct(i.fundamentals?.netMargin) },
-  { key: 'debtToEquity', label: 'Deuda / capital', format: (i) => fmtMultiple(i.fundamentals?.debtToEquity, { decimals: 2 }) },
+  { key: 'debtToEquity', label: 'Deuda / capital', termKey: 'deuda-capital', format: (i) => fmtMultiple(i.fundamentals?.debtToEquity, { decimals: 2 }) },
   { key: 'revenueGrowthYoY', label: 'Crecimiento de ingresos', format: (i) => <Delta value={i.fundamentals?.revenueGrowthYoY} /> },
 ]
 
@@ -32,7 +33,20 @@ function Fundamentals({ symbols }) {
   const loading = queries.some((q) => q.isPending)
   const failed = symbols.filter((_, i) => queries[i].isError)
   const columns = [
-    { key: 'label', header: 'Dato', minWidth: 160 },
+    {
+      key: 'label',
+      header: 'Dato',
+      minWidth: 160,
+      format: (v, row) =>
+        row.termKey ? (
+          <span className="kz-row" data-gap="1">
+            {v}
+            <InfoTip termKey={row.termKey} term={v} />
+          </span>
+        ) : (
+          v
+        ),
+    },
     ...symbols.map((s, i) => ({
       key: s,
       header: queries[i].data?.name ? `${s}` : s,
