@@ -133,3 +133,16 @@ export function pushRecent(entry) {
   }
   return list
 }
+
+/**
+ * Borra los recientes guardados (los mismos de la paleta y del buscador de /investigar).
+ * @returns {{ symbol: string, name?: string }[]} la lista vacía, para usarla como estado nuevo
+ */
+export function clearRecents() {
+  try {
+    globalThis.localStorage?.removeItem(RECENT_KEY)
+  } catch {
+    /* sin almacenamiento: no había nada guardado */
+  }
+  return []
+}
