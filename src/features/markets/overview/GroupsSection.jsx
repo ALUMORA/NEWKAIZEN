@@ -3,8 +3,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { Card, DataTable, Delta, EmptyState, ErrorState, SectionHeading, Skeleton } from '../../../components/ui/index.js'
 import { marketsOverviewQuery } from '../../../lib/api/queries.js'
-import { MISSING } from '../../../lib/format.js'
-import { DXY_SYMBOL, EXCHANGES, dedupeMarkets, fmtItemPrice, fmtSessionDay, fxHint, isFxLike } from '../pages/overview-model.js'
+import { MISSING, fmtWeekday } from '../../../lib/format.js'
+import { DXY_SYMBOL, EXCHANGES, dedupeMarkets, fmtItemPrice, fxHint, isFxLike } from '../pages/overview-model.js'
 import { useFeature } from './useFeature.js'
 
 const DESCRIPTIONS = {
@@ -29,7 +29,7 @@ function columnsFor(groupId) {
           <span>{v}</span>
           <span className="markets-instrument__symbol">
             <span className="mono">{row.symbol}</span> ·{' '}
-            <span className="markets-nowrap">{row.asOf ? `dato del ${fmtSessionDay(String(row.asOf), tz)}` : `fecha ${MISSING}`}</span>
+            <span className="markets-nowrap">{row.asOf ? `dato del ${fmtWeekday(String(row.asOf), { timeZone: tz })}` : `fecha ${MISSING}`}</span>
           </span>
         </span>
       ),

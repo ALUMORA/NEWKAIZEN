@@ -1,43 +1,16 @@
 // Lógica sin React del panorama de /mercados: qué se muestra una sola vez, cómo se escribe cada
 // precio, qué dice el estado de cada bolsa y el resumen del día. El resumen es factual a propósito:
 // qué subió, qué bajó y cuánto, sin etiqueta de ánimo ni afirmaciones de causa.
-import { MISSING, fmtInt, fmtMoney, fmtNumber, fmtPct } from '../../../lib/format.js'
+import { MISSING, fmtInt, fmtMoney, fmtNumber, fmtPct, fmtWeekday } from '../../../lib/format.js'
 
 export const VIX_SYMBOL = '^VIX'
 export const DXY_SYMBOL = 'DX-Y.NYB'
 export const USDMXN_SYMBOL = 'USDMXN=X'
 
-const WEEKDAYS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
-const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
-const DATE_ONLY = /^(\d{4})-(\d{2})-(\d{2})$/
-
 /** Zona de cada bolsa: la fecha de un cierre se lee en la hora de su propia bolsa. */
 export const EXCHANGES = {
   bmv: { id: 'bmv', name: 'BMV', long: 'Bolsa Mexicana de Valores', tz: 'America/Mexico_City', group: 'mx' },
   nyse: { id: 'nyse', name: 'NYSE', long: 'Bolsa de Nueva York', tz: 'America/New_York', group: 'us' },
-}
-
-/**
- * "vie 18 sep". Una fecha sola se toma tal cual; un instante se lee en la zona de la bolsa.
- * @param {unknown} value @param {string} [tz] @returns {string}
- */
-export function fmtSessionDay(value, tz = 'America/Mexico_City') {
-  if (typeof value !== 'string' || !value.trim()) return MISSING
-  const text = value.trim()
-  let y, m, d
-  const only = DATE_ONLY.exec(text)
-  if (only) {
-    ;[y, m, d] = [Number(only[1]), Number(only[2]), Number(only[3])]
-  } else {
-    const date = new Date(text)
-    if (Number.isNaN(date.getTime())) return MISSING
-    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date)
-    const get = (type) => Number(parts.find((p) => p.type === type)?.value)
-    ;[y, m, d] = [get('year'), get('month'), get('day')]
-  }
-  const utc = new Date(Date.UTC(y, m - 1, d))
-  if (utc.getUTCMonth() !== m - 1 || utc.getUTCDate() !== d) return MISSING
-  return `${WEEKDAYS[utc.getUTCDay()]} ${d} ${MONTHS[m - 1]}`
 }
 
 /** Fecha más nueva de los renglones de un grupo, o null. */
@@ -63,7 +36,7 @@ export function exchangeTiming(status, { lastAsOf = null, delayMinutes = null, t
     return { known: true, open: true, state: 'Abierta', timing, detail: status.label ?? '' }
   }
   const closed = status.lastClose || lastAsOf
-  const day = closed ? fmtSessionDay(closed, tz) : MISSING
+  const day = closed ? fmtWeekday(closed, { timeZone: tz }) : MISSING
   return { known: true, open: false, state: 'Cerrada', timing: day === MISSING ? 'Cierre s/d' : `Cierre ${day}`, detail: status.label ?? '' }
 }
 
