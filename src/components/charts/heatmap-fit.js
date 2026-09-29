@@ -1,8 +1,8 @@
 // Qué texto cabe en una celda y en un encabezado del mapa de calor. Puro, sin DOM: mide con
 // textWidth (12 px) y, para el respaldo compacto a 10 px, con esa misma medida escalada 10/12.
-// Orden de respaldo de una celda: la cifra completa a 12 px; a 10 px sin el cero inicial (".53",
-// "−.12"); a 10 px con un decimal menos ("−.1"); y si ni así cabe, nada: la tabla y el resumen de
-// la gráfica la siguen diciendo.
+// Orden de respaldo, uno solo para toda la matriz: la cifra completa a 12 px; a 10 px sin el cero
+// inicial (".53", "−.12"); a 10 px con un decimal menos ("−.1"); y si ni así cabe, nada: la tabla y
+// el resumen de la gráfica la siguen diciendo.
 import { MISSING, isNum } from '../../lib/format.js'
 import { fitText, textWidth } from './measure.js'
 import { valueFormatter } from './scale.js'
@@ -27,31 +27,59 @@ export function compactNumber(text) {
 /** @param {string} text */
 const compactWidth = (text) => textWidth(text) * COMPACT_SCALE
 
+/** @typedef {'full' | 'compact' | 'compact1'} CellLevel */
+
 /**
- * Texto de una celda, o null si no cabe ninguna versión.
- * @param {number | null | undefined} value
+ * Un solo nivel de respaldo para toda la matriz, decidido por la cifra más ancha: completo a 12 px,
+ * compacto a 10 px, o compacto con un decimal menos. Así no conviven "0.53" a 12 px con "−.12" a
+ * 10 px, ni ".96" con "−.1". No baja a un decimal si una cifra distinta de cero quedaría en cero
+ * (perdería el signo). null: ninguna celda lleva cifra.
+ * @param {ReadonlyArray<ReadonlyArray<number | null | undefined>>} values
  * @param {{ cellW: number, cellHeight?: number, showValues?: 'auto' | boolean, format?: 'number' | 'pct', decimals?: number }} options
+ * @returns {CellLevel | null}
+ */
+export function heatmapCellLevel(values, { cellW, cellHeight = 34, showValues = 'auto', format = 'number', decimals = 2 }) {
+  if (showValues === false) return null
+  if (showValues === true) return 'full'
+  const flat = values.flat()
+  const fmt = valueFormatter(format, { decimals })
+  const full = flat.map((v) => (isNum(v) ? fmt(v) : MISSING))
+  if (cellHeight >= MIN_H && full.every((t) => textWidth(t) + PAD <= cellW)) return 'full'
+  if (cellHeight < MIN_H_COMPACT) return null
+  const fits = (/** @type {string[]} */ texts) => texts.every((t) => compactWidth(compactNumber(t)) + PAD_COMPACT <= cellW)
+  if (fits(full)) return 'compact'
+  if (decimals <= 1) return null
+  const scale = format === 'pct' ? 100 : 1
+  const vanishes = flat.some((v) => isNum(v) && v !== 0 && Math.round(Math.abs(v) * scale * 10 ** (decimals - 1)) === 0)
+  if (vanishes) return null
+  const fmt1 = valueFormatter(format, { decimals: decimals - 1 })
+  return fits(flat.map((v) => (isNum(v) ? fmt1(v) : MISSING))) ? 'compact1' : null
+}
+
+/**
+ * Texto de una celda con el nivel de su matriz (de heatmapCellLevel), o null si la matriz no lleva
+ * cifras.
+ * @param {number | null | undefined} value
+ * @param {CellLevel | null} level
+ * @param {{ format?: 'number' | 'pct', decimals?: number }} [options]
  * @returns {{ text: string, compact: boolean } | null}
  */
-export function heatmapCellText(value, { cellW, cellHeight = 34, showValues = 'auto', format = 'number', decimals = 2 }) {
-  if (showValues === false) return null
-  const full = isNum(value) ? valueFormatter(format, { decimals })(value) : MISSING
-  if (showValues === true) return { text: full, compact: false }
-  if (cellHeight >= MIN_H && textWidth(full) + PAD <= cellW) return { text: full, compact: false }
-  if (cellHeight < MIN_H_COMPACT) return null
-  const options = [compactNumber(full)]
-  if (isNum(value) && decimals > 1) options.push(compactNumber(valueFormatter(format, { decimals: decimals - 1 })(value)))
-  const text = options.find((t) => compactWidth(t) + PAD_COMPACT <= cellW)
-  return text ? { text, compact: true } : null
+export function heatmapCellText(value, level, { format = 'number', decimals = 2 } = {}) {
+  if (!level) return null
+  if (!isNum(value)) return { text: MISSING, compact: level !== 'full' }
+  if (level === 'full') return { text: valueFormatter(format, { decimals })(value), compact: false }
+  const d = level === 'compact1' ? decimals - 1 : decimals
+  return { text: compactNumber(valueFormatter(format, { decimals: d })(value)), compact: true }
 }
 
 /** Alto de la franja de encabezados horizontales y tope de la de encabezados verticales. */
 const HEAD_H = 24
-const MAX_VERTICAL = 72
+// 87 px: doce caracteres a 7.2 px, para que las claves de la BMV con .MX ("GFNORTEO.MX") quepan.
+const MAX_VERTICAL = 87
 
 /**
  * Encabezados de columna, todos con la misma regla: completos a 12 px si caben; si no, a 10 px; y
- * si ni así caben, verticales a 10 px y completos (recortados solo pasando de diez caracteres), con la franja
+ * si ni así caben, verticales a 10 px y completos (recortados solo pasando de doce caracteres), con la franja
  * del alto de la más larga. Antes se recortaban a lo ancho y "GFNORTE" quedaba en "GFN…".
  * @param {string[]} columns @param {number} cellW
  * @returns {{ labels: string[], compact: boolean, vertical: boolean, height: number }}

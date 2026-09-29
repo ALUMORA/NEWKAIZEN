@@ -6,7 +6,7 @@ import { isNum } from '../../lib/format.js'
 import { ChartFrame } from './ChartFrame.jsx'
 import { useWidth } from './hooks.js'
 import { fitText, textWidth } from './measure.js'
-import { heatmapCellText, heatmapHeaders } from './heatmap-fit.js'
+import { heatmapCellLevel, heatmapCellText, heatmapHeaders } from './heatmap-fit.js'
 import { valueFormatter } from './scale.js'
 import { CUTS, DIVERGING, divergingIndex, maxAbs } from './diverging.js'
 
@@ -44,6 +44,8 @@ export function Heatmap({
   const cellW = empty ? 0 : Math.max(1, (width - labelW) / columns.length)
   const heads = empty ? null : heatmapHeaders(columns, cellW)
   const headH = heads?.height ?? 24
+  // Un solo formato para todas las celdas: lo decide la cifra más ancha de la matriz.
+  const level = empty ? null : heatmapCellLevel(values ?? [], { cellW, cellHeight, showValues, format, decimals })
   const h = empty ? 160 : headH + rows.length * cellHeight
   return (
     <ChartFrame title={title} titleAs={titleAs} description={description} summary={autoSummary} legend={legend} table={table}
@@ -65,7 +67,7 @@ export function Heatmap({
                 {columns.map((c, j) => {
                   const v = values?.[i]?.[j]
                   const k = divergingIndex(v, m)
-                  const label = heatmapCellText(v, { cellW, cellHeight, showValues, format, decimals })
+                  const label = heatmapCellText(v, level, { format, decimals })
                   const x = labelW + cellW * j
                   const y = headH + cellHeight * i
                   return (
