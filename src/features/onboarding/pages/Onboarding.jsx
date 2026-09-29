@@ -1,7 +1,8 @@
 // /bienvenida: tres formas de empezar. Un portafolio de EJEMPLO, importar un CSV o empezar vacío.
-// Cualquiera de las tres guarda settings.onboardingDone y lleva a /portafolio/movimientos, que lee
-// el storage v2. No a /portafolio: mientras esa ruta monte el legado, ahí se ve el portafolio fijo
-// del código (DEFAULT_PORTFOLIOS) y no el que se acaba de crear.
+// Cualquiera de las tres guarda settings.onboardingDone y lleva a /portafolio/movimientos: ahí se
+// ve de inmediato el libro que se acaba de crear (o se captura el primer movimiento si quedó vacío),
+// que es lo que la persona quiere revisar primero. Desde M3 /portafolio ya no monta el legado, así
+// que mandar ahí también sería correcto; se queda en Movimientos por eso, no por el legado.
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Badge, Button, Card, PageHeader, useToast } from '../../../components/ui/index.js'
