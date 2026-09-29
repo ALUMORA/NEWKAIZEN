@@ -47,7 +47,8 @@ export const INSTRUMENT = {
   exchange: 'BMV',
   type: 'equity',
   sector: 'Consumo básico',
-  industry: 'Tiendas de autoservicio',
+  // Tal como la manda Yahoo: el API no la traduce, la ficha sí (industryEs).
+  industry: 'Discount Stores',
   country: 'México',
   description: 'Opera tiendas de autoservicio y clubes de precio en México y Centroamérica.',
   website: null,

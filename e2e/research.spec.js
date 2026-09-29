@@ -97,6 +97,38 @@ test.describe('investigar: ficha de la emisora', () => {
     await expect(resumen.getByText(english)).toHaveAttribute('lang', 'en')
   })
 
+  test('la industria de Yahoo sale en español y el eyebrow dice lo mismo que la pestaña', async ({ page, baseURL }) => {
+    await open(page, /** @type {string} */ (baseURL))
+    await page.goto('/investigar/WALMEX.MX')
+    await instrumentReady(page)
+    const resumen = page.getByRole('region', { name: 'Resumen' })
+    await expect(resumen.getByText(/· Tiendas de autoservicio y descuento ·/)).toBeVisible()
+    await expect(resumen.getByText(/Discount Stores/)).toHaveCount(0)
+    await expect(page).toHaveTitle('Ficha de WALMEX.MX · Kaizen')
+    await expect(page.getByText('Ficha de WALMEX.MX', { exact: true })).toBeVisible()
+    await expect(page.getByText('Ficha de la emisora', { exact: true })).toHaveCount(0)
+  })
+
+  test('una industria que no está en la tabla se queda como llegó y marcada en inglés', async ({ page, baseURL }) => {
+    await open(page, /** @type {string} */ (baseURL), {
+      routes: { 'GET /v2/instrument/:symbol': { json: { ...INSTRUMENT, industry: 'Space Mining' } } },
+    })
+    await page.goto('/investigar/WALMEX.MX')
+    await instrumentReady(page)
+    await expect(page.getByRole('region', { name: 'Resumen' }).getByText('Space Mining', { exact: true })).toHaveAttribute('lang', 'en')
+  })
+
+  test('el rendimiento por dividendo trae su InfoTip, que liga a /aprender', async ({ page, baseURL }) => {
+    await open(page, /** @type {string} */ (baseURL))
+    await page.goto('/investigar/WALMEX.MX')
+    await instrumentReady(page)
+    await page.getByRole('region', { name: 'Resumen' }).getByRole('button', { name: 'Qué es Rendimiento por dividendo' }).click()
+    const pop = page.getByRole('dialog', { name: 'Rendimiento por dividendo' })
+    await expect(pop.getByRole('link', { name: 'Ver más sobre Rendimiento por dividendo' })).toHaveAttribute('href', '/aprender/rendimiento-por-dividendo')
+    await page.keyboard.press('Escape')
+    await expect(pop).toBeHidden()
+  })
+
   test('DCF que no aplica: muestra la razón y el resto de la ficha', async ({ page, baseURL }) => {
     await open(page, /** @type {string} */ (baseURL), {
       routes: { 'GET /v2/valuation/:symbol': { json: { ...VALUATION, dcf: { ...VALUATION.dcf, applicable: false, reason: 'El flujo libre es negativo: el DCF no aplica.' } } } },
