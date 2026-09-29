@@ -1,7 +1,7 @@
 // Elegir emisoras: del portafolio activo, por búsqueda en /v2/search o escribiendo la clave.
 // La búsqueda es el SearchCombobox compartido (el de la paleta ⌘K): flechas y Enter eligen una
-// opción. Sin opciones (búsqueda caída, servidor viejo o todavía buscando), Enter manda la clave
-// escrita al formulario, igual que el botón "Agregar". Las elegidas quedan como lista con botón
+// opción. Sin opciones (búsqueda caída o servidor viejo) o mientras la búsqueda no alcanza al texto,
+// Enter agrega la clave escrita, igual que el botón "Agregar". Las elegidas quedan como lista con botón
 // para quitar cada una; nada vive solo en un hover.
 import { useState } from 'react'
 import { CircleAlert, Plus, X } from 'lucide-react'
@@ -59,6 +59,13 @@ export function SymbolPicker({ id, selected, onChange, max, portfolioSymbols = n
             setError(null)
           }}
           onSelect={(option) => add(option.symbol ?? option.label)}
+          // En los 200 ms del debounce las opciones todavía son del texto anterior: Enter agrega lo
+          // escrito, no la primera de esa búsqueda vieja.
+          onEnter={({ q: typed, searching }) => {
+            if (!searching) return false
+            add(typed)
+            return true
+          }}
           exclude={selected}
           limit={SEARCH_LIMIT}
           clearOnSelect={false}

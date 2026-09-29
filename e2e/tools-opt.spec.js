@@ -321,6 +321,21 @@ test.describe('herramientas: optimizador', () => {
     await expect(page.getByRole('heading', { name: 'Elige al menos dos emisoras' })).toBeVisible()
   })
 
+  // Durante los 200 ms del debounce la lista todavía muestra lo del texto anterior: Enter justo
+  // después de teclear agrega lo escrito, no la primera opción de la búsqueda vieja.
+  test('Enter justo después de teclear agrega la clave escrita, no una opción de la búsqueda anterior', async ({ page, baseURL }) => {
+    await open(page, /** @type {string} */ (baseURL), { state: EMPTY_STATE })
+    await page.goto('/herramientas/optimizador')
+    const search = page.getByRole('combobox', { name: 'Agregar emisora' })
+    await search.fill('w')
+    await expect(page.getByRole('option', { name: /WALMEX\.MX/ })).toBeVisible()
+    await search.pressSequentially('mt')
+    await search.press('Enter')
+    await expect(page).toHaveURL(/symbols=WMT$/)
+    await expect(page.getByRole('button', { name: 'Quitar WMT' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Quitar WALMEX.MX' })).toHaveCount(0)
+  })
+
   test('supuestos: sin prima no hay máximo Sharpe, James y Stein y una caja imposible', async ({ page, baseURL }) => {
     await open(page, /** @type {string} */ (baseURL))
     await page.goto('/herramientas/optimizador?symbols=WALMEX.MX,AMXB.MX')
