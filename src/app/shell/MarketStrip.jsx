@@ -1,6 +1,6 @@
 // Tira compacta de mercado en la barra superior: IPC, S&P 500, USD/MXN, CETES 28 y VIX con valor
 // y cambio, y un DataStatus para toda la tira. En pantallas angostas se desplaza dentro de su
-// propio contenedor, nunca empuja la página a lo ancho. Solo consulta cuando el API v2 está listo
+// propio contenedor, nunca empuja la página a lo ancho, y el borde con cifras ocultas se desvanece. Solo consulta cuando el API v2 está listo
 // y anuncia la capacidad "markets.overview" en /health: la tira va completa o no va (CETES 28 sale
 // además de /v2/rates/mx). Con el servidor viejo, dormido, caído o sin esa capacidad no manda nada
 // y dice "Sin datos".
@@ -31,25 +31,39 @@ export function StripCell({ item }) {
   )
 }
 
-/** tabIndex 0 solo cuando la tira no cabe y hay que desplazarla con el teclado. */
+/**
+ * Si la tira no cabe: tabIndex 0 para desplazarla con el teclado, y qué borde tiene cifras ocultas
+ * ('end' al principio, 'start' al final, 'both' en medio) para desvanecer ese borde con una máscara.
+ * @returns {[import('react').RefObject<HTMLDivElement | null>, boolean, 'start' | 'end' | 'both' | undefined]}
+ */
 function useOverflow() {
   const ref = useRef(/** @type {HTMLDivElement | null} */ (null))
-  const [overflow, setOverflow] = useState(false)
+  const [state, setState] = useState(/** @type {{ overflow: boolean, fade?: 'start' | 'end' | 'both' }} */ ({ overflow: false }))
   useEffect(() => {
     const el = ref.current
     if (!el || typeof ResizeObserver === 'undefined') return undefined
-    const check = () => setOverflow(el.scrollWidth > el.clientWidth + 1)
+    const check = () => {
+      const overflow = el.scrollWidth > el.clientWidth + 1
+      const hiddenStart = overflow && el.scrollLeft > 1
+      const hiddenEnd = overflow && el.scrollLeft + el.clientWidth < el.scrollWidth - 1
+      const fade = hiddenStart && hiddenEnd ? 'both' : hiddenStart ? 'start' : hiddenEnd ? 'end' : undefined
+      setState((prev) => (prev.overflow === overflow && prev.fade === fade ? prev : { overflow, fade }))
+    }
     const ro = new ResizeObserver(check)
     ro.observe(el)
     if (el.firstElementChild) ro.observe(el.firstElementChild)
+    el.addEventListener('scroll', check, { passive: true })
     check()
-    return () => ro.disconnect()
+    return () => {
+      ro.disconnect()
+      el.removeEventListener('scroll', check)
+    }
   }, [])
-  return [ref, overflow]
+  return [ref, state.overflow, state.fade]
 }
 
 export default function MarketStrip() {
-  const [scrollRef, overflow] = useOverflow()
+  const [scrollRef, overflow, fade] = useOverflow()
   const { status, capabilities } = useCapabilities()
   const ready = status === 'ready' && Boolean(capabilities?.has('markets.overview'))
   const overview = useQuery({ ...marketsOverviewQuery(), enabled: ready })
@@ -62,6 +76,7 @@ export default function MarketStrip() {
       <div
         aria-label={overflow ? 'Cifras del mercado, desplázate para ver todas' : 'Cifras del mercado'}
         className="kz-strip__scroll"
+        data-fade={fade}
         ref={/** @type {import('react').RefObject<HTMLDivElement>} */ (scrollRef)}
         role="group"
         tabIndex={overflow ? 0 : undefined}
