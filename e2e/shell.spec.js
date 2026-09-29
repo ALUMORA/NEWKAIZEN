@@ -409,10 +409,10 @@ test.describe('shell: avisos', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Lista de seguimiento')
 
     // Dos altas y una baja: tres avisos apilados y una tabla más ancha que el teléfono.
-    const search = page.getByRole('searchbox', { name: /Agregar una emisora/ })
+    const search = page.getByRole('combobox', { name: /Agregar una emisora/ })
     for (const [q, symbol] of [['walmex', 'WALMEX.MX'], ['wmt', 'WMT']]) {
       await search.fill(q)
-      await page.getByRole('button', { name: `Agregar ${symbol}` }).click()
+      await page.getByRole('option', { name: new RegExp(`^${symbol.replace('.', '\\.')}`) }).click()
     }
     const table = page.getByRole('table', { name: 'Emisoras en seguimiento' })
     await expect(table.getByRole('row')).toHaveCount(3)

@@ -6,8 +6,9 @@
 // Capturas para revisión: con F5_CAPTURE_DIR=/ruta se guarda una por página y viewport.
 import { readFileSync, readdirSync } from 'node:fs'
 import AxeBuilder from '@axe-core/playwright'
-import { test, expect } from './support/guards.js'
-import { HEALTH_V2, setupApp } from './support/app.js'
+import { test as plainTest } from '@playwright/test'
+import { test, expect, attachGuards } from './support/guards.js'
+import { HEALTH_V2, expectedHttpError, setupApp } from './support/app.js'
 
 const WCAG_AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const THEMES = /** @type {const} */ (['light', 'dark'])
@@ -186,11 +187,21 @@ test.describe('F5: lista de seguimiento', () => {
       await expect(page.getByText('Tu lista está vacía')).toBeVisible()
       await expectNoAxeViolations(page, `/watchlist vacía ${theme}`)
 
-      const search = page.getByRole('searchbox', { name: /Agregar una emisora/ })
+      // El buscador es el SearchCombobox compartido: opciones con rol option y axe con la lista abierta.
+      const search = page.getByRole('combobox', { name: /Agregar una emisora/ })
       await search.fill('walmex')
-      await page.getByRole('button', { name: 'Agregar WALMEX.MX' }).click()
+      const walmex = page.getByRole('option', { name: /WALMEX\.MX/ })
+      await expect(walmex).toBeVisible()
+      await expectNoAxeViolations(page, `/watchlist con la búsqueda abierta ${theme}`)
+      await walmex.click()
+      await expect(search).toHaveValue('')
       await search.fill('femsa')
-      await page.getByRole('button', { name: 'Agregar FEMSAUBD.MX' }).click()
+      await page.getByRole('option', { name: /FEMSAUBD\.MX/ }).click()
+      // Lo que ya está en la lista no se vuelve a ofrecer.
+      await search.fill('walmex')
+      await expect(page.getByText('Sin resultados').first()).toBeVisible()
+      await expect(page.getByRole('option', { name: /WALMEX\.MX/ })).toHaveCount(0)
+      await search.fill('')
       const table = page.getByRole('table', { name: 'Emisoras en seguimiento' })
       await expect(table.getByRole('row')).toHaveCount(3)
       await expect(table).toContainText('+1.08%')
@@ -208,6 +219,30 @@ test.describe('F5: lista de seguimiento', () => {
       await expect(table.getByRole('row').nth(1)).toContainText('WALMEX.MX')
     })
   }
+})
+
+// Con la búsqueda caída la lista de seguimiento sigue aceptando la clave escrita con Enter.
+plainTest('/watchlist: con la búsqueda caída, escribir la clave y dar Enter la agrega', async ({ page, baseURL }) => {
+  const guards = attachGuards(page, { allow: expectedHttpError(503, 'GET', '/v2/search', 'la prueba tumba la búsqueda a propósito') })
+  const down = { status: 503, json: { error: { code: 'UPSTREAM_UNAVAILABLE', message: 'La búsqueda no responde.' } } }
+  await open(page, /** @type {string} */ (baseURL), '/watchlist', { session: true, routes: { 'GET /v2/search': down } })
+  const search = page.getByRole('combobox', { name: /Agregar una emisora/ })
+  await search.fill('walmex.mx')
+  await expect(page.getByText('No se pudo buscar ahora. Intenta de nuevo en un momento.').first()).toBeVisible({ timeout: 10_000 })
+  await search.press('Enter')
+  const table = page.getByRole('table', { name: 'Emisoras en seguimiento' })
+  await expect(table.getByRole('row')).toHaveCount(2)
+  await expect(table).toContainText('WALMEX.MX')
+  await expect(search).toHaveValue('')
+  // Repetida o mal escrita: lo dice y no la agrega.
+  await search.fill('WALMEX.MX')
+  await search.press('Enter')
+  await expect(page.getByText('WALMEX.MX ya está en tu lista.')).toBeVisible()
+  await search.fill('no es clave')
+  await search.press('Enter')
+  await expect(page.getByText(/Escribe una clave válida/)).toBeVisible()
+  await expect(table.getByRole('row')).toHaveCount(2)
+  guards.assertClean()
 })
 
 const readStore = (page) => page.evaluate(() => JSON.parse(window.localStorage.getItem('kaizen:v2') ?? 'null'))
