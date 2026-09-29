@@ -474,8 +474,17 @@ const onTab = (tab, table) => async (page) => {
   await expect(page.getByRole('table', { name: table })).toBeVisible()
 }
 
+/** Lista propia armada: el buscador de claves con sus fichas, arriba del tablero. */
+async function customListReady(page) {
+  await expect(page.getByRole('heading', { level: 1, name: 'Screener de factores' })).toBeVisible()
+  await expect(page.getByRole('list', { name: 'Emisoras de tu lista' }).getByRole('listitem')).toHaveCount(3)
+  await expect(page.getByRole('combobox', { name: 'Agregar emisora a tu lista' })).toBeVisible()
+  await expect(bodyRows(scoresTable(page))).toHaveCount(3)
+}
+
 const PAGES = [
   { path: '/investigar?q=walmart', ready: searchReady, name: 'buscador' },
+  { path: '/screener?universo=propia&symbols=AAPL,MSFT,WALMEX.MX', ready: customListReady, name: 'screener-lista-propia' },
   { path: '/screener', ready: screenerReady, name: 'screener' },
   { path: '/screener', ready: onTab('Pruebas', 'Pruebas cumple o no cumple'), name: 'screener-pruebas' },
   { path: '/screener', ready: onTab('Métricas', 'Métricas crudas'), name: 'screener-metricas' },

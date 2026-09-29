@@ -361,6 +361,21 @@ test.describe('investigar: comparar', () => {
     await noHorizontalScroll(page)
   })
 
+  test('sin búsqueda disponible todavía, las claves escritas con Enter siguen sirviendo', async ({ page, baseURL }) => {
+    // /health tarda: el buscador no puede buscar por nombre y lo dice, pero acepta claves.
+    const api = await setupApp(page, { baseURL, session: true, health: HEALTH, healthDelayMs: 30_000, routes: V2_ROUTES })
+    await page.goto('/investigar/comparar')
+    await expect(page.getByRole('heading', { level: 2, name: 'Elige al menos dos emisoras' })).toBeVisible()
+    const box = page.getByRole('combobox', { name: 'Agregar emisora' })
+    await expect(page.getByText(/La búsqueda por nombre no está disponible ahora/)).toBeVisible()
+    await box.fill('walmex.mx aapl')
+    await box.press('Enter')
+    await expect(page.getByRole('list', { name: 'Emisoras a comparar' }).getByRole('listitem')).toHaveText(['WALMEX.MX', 'AAPL'])
+    await box.press('Enter')
+    await expect(page).toHaveURL(/symbols=WALMEX\.MX,AAPL/)
+    expect(api.calls.some((c) => c.startsWith('GET /v2/search'))).toBe(false)
+  })
+
   test('sin emisoras pide elegir al menos dos', async ({ page, baseURL }) => {
     await open(page, /** @type {string} */ (baseURL))
     await page.goto('/investigar/comparar')
