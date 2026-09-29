@@ -54,9 +54,8 @@ def run(transactions, as_of=None):
                 "currency": currency,
                 "realized": Fraction(0),
                 "first_buy": None,
-                "fx_qty": Fraction(0),
-                "fx_sum": Fraction(0),
-                "fx_known": True,
+                # costo del lote con cada compra pasada a pesos con su propio tipo de cambio
+                "cost_mxn": Fraction(0),
             }
         return book[symbol]
 
@@ -98,9 +97,7 @@ def run(transactions, as_of=None):
                     currency=ccy,
                     realized=Fraction(0),
                     first_buy=None,
-                    fx_qty=Fraction(0),
-                    fx_sum=Fraction(0),
-                    fx_known=True,
+                    cost_mxn=Fraction(0),
                 )
             price = None if tx.get("price") is None else F(tx["price"])
             amount = None if price is None else qty * price + fees
@@ -112,12 +109,14 @@ def run(transactions, as_of=None):
             )
             if date is not None and (lot["first_buy"] is None or date < lot["first_buy"]):
                 lot["first_buy"] = date
+            # el tipo de cambio pesa por lo que costo la compra (cantidad x precio + comisiones),
+            # no por titulos: costo en su moneda x avgFx = pesos pagados, y un split no lo mueve
             fx = tx.get("fxRate")
-            if fx is not None and F(fx) > 0:
-                lot["fx_qty"] += qty
-                lot["fx_sum"] += qty * F(fx)
+            fx = F(fx) if fx is not None and F(fx) > 0 else None
+            if lot["cost_mxn"] is None or lot["cost"] is None or amount is None or fx is None:
+                lot["cost_mxn"] = None
             else:
-                lot["fx_known"] = False
+                lot["cost_mxn"] += amount * fx
             if amount is not None:
                 short = amount - (cash[ccy] + funded[ccy])
                 if short > 0:
@@ -148,11 +147,16 @@ def run(transactions, as_of=None):
                 }
             )
             lot["realized"] = None if lot["realized"] is None or gain is None else lot["realized"] + gain
+            share = qty / lot["quantity"]
             lot["quantity"] -= qty
             if lot["quantity"] == 0:
                 lot["cost"] = Fraction(0)
-            elif avg is not None and lot["cost"] is not None:
-                lot["cost"] -= avg * qty
+                lot["cost_mxn"] = Fraction(0)
+            else:
+                if avg is not None and lot["cost"] is not None:
+                    lot["cost"] -= avg * qty
+                if lot["cost_mxn"] is not None:
+                    lot["cost_mxn"] -= lot["cost_mxn"] * share
             if proceeds is not None:
                 # el dinero entra en la moneda del movimiento, no en la del lote
                 cash[ccy] += proceeds
@@ -181,7 +185,11 @@ def run(transactions, as_of=None):
                 "costBasis": None if lot["cost"] is None else float(lot["cost"]),
                 "realizedPnl": None if lot["realized"] is None else float(lot["realized"]),
                 "firstBuyDate": lot["first_buy"],
-                "avgFx": float(lot["fx_sum"] / lot["fx_qty"]) if lot["fx_known"] and lot["fx_qty"] > 0 else None,
+                "avgFx": (
+                    float(lot["cost_mxn"] / lot["cost"])
+                    if lot["cost"] is not None and lot["cost_mxn"] is not None and lot["cost"] > 0
+                    else None
+                ),
             }
         )
     return {
@@ -389,6 +397,26 @@ def build():
                     tx("deposit", id="d1", date="2026-01-01", amount=3000, currency="MXN"),
                     tx("buy", id="b1", date="2026-01-02", symbol="AAPL", quantity=80, price=100, currency="MXN"),
                     tx("buy", id="b2", date="2026-01-03", symbol="AAPL", quantity=5, price=100, currency="MXN"),
+                ],
+                "asOf": None,
+            },
+            "tol": TOL,
+        }
+    )
+    cases.append(
+        {
+            "name": "tipo-de-cambio-por-costo-con-split",
+            "input": {
+                # 10 a 100 con 17 y, despues de un split 2 por 1, 10 a 50 con 20: costaron 1,000 y
+                # 500 dolares, asi que el tipo de cambio es 18. Por titulos daria 18.5, y sin
+                # reescalar el split la segunda compra pesaria doble.
+                "transactions": [
+                    tx("buy", id="b1", date="2026-01-02", symbol="AAPL", quantity=10, price=100, currency="USD", fxRate=17),
+                    tx("split", id="sp1", date="2026-02-02", symbol="AAPL", ratio=2, currency="USD"),
+                    tx("buy", id="b2", date="2026-03-02", symbol="AAPL", quantity=10, price=50, currency="USD", fxRate=20),
+                    tx("buy", id="b3", date="2026-03-03", symbol="MSFT", quantity=10, price=100, currency="USD", fxRate=17),
+                    tx("buy", id="b4", date="2026-03-04", symbol="MSFT", quantity=10, price=200, currency="USD", fxRate=20, fees=15),
+                    tx("sell", id="s1", date="2026-04-02", symbol="MSFT", quantity=7, price=210, currency="USD", fees=5),
                 ],
                 "asOf": None,
             },

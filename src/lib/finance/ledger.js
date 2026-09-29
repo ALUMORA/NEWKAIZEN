@@ -34,8 +34,11 @@
  *     utilidad realizada está en `realizedPnlBySymbol` y en `realizedSales`.
  *   firstBuyDate: fecha de la primera compra con fecha del lote abierto; null si ninguna la trae.
  *   avgFx: tipo de cambio de las compras (pesos por unidad de la moneda del movimiento),
- *     ponderado por cantidad; null si alguna compra no lo trae. En posiciones en MXN suele ser
- *     null y no hace falta.
+ *     ponderado por lo que costó cada compra en su moneda (cantidad × precio + comisiones), así
+ *     que costBasis × avgFx es exactamente lo que se pagó en pesos por el lote vigente. Una venta
+ *     saca costo a promedio en las dos monedas a la par y un split no lo mueve. null si alguna
+ *     compra del lote no trae tipo de cambio, no trae precio o va en otra moneda. En posiciones en
+ *     MXN suele ser null y no hace falta.
  * @typedef {Position & {
  *   realizedPnl: number | null,
  *   firstBuyDate: string | null,
@@ -140,8 +143,10 @@ export function orderTransactions(transactions, asOf = null) {
  * @typedef {{
  *   quantity: number, cost: number | null, currency: Currency,
  *   realized: number | null, firstBuyDate: string | null,
- *   fxQty: number, fxSum: number, fxKnown: boolean,
+ *   costFx: number | null,
  * }} Lot
+ * costFx: el mismo costo que `cost`, pero con cada compra convertida a pesos con su propio tipo
+ * de cambio. null en cuanto una compra del lote no lo trae o el costo es desconocido.
  */
 
 /** @returns {Lot} */
@@ -152,9 +157,7 @@ function emptyLot(/** @type {Currency} */ currency) {
     currency,
     realized: 0,
     firstBuyDate: null,
-    fxQty: 0,
-    fxSum: 0,
-    fxKnown: true,
+    costFx: 0,
   }
 }
 
@@ -241,9 +244,7 @@ function runLedger(transactions, { asOf = null, dates = null } = {}) {
         lot.currency = ccy
         lot.realized = 0
         lot.firstBuyDate = null
-        lot.fxQty = 0
-        lot.fxSum = 0
-        lot.fxKnown = true
+        lot.costFx = 0
       }
       const price = isNum(tx.price) ? /** @type {number} */ (tx.price) : null
       const amount = price === null ? null : qty * price + fees
@@ -255,12 +256,10 @@ function runLedger(transactions, { asOf = null, dates = null } = {}) {
       if (isIsoDate(tx.date) && (lot.firstBuyDate === null || tx.date < lot.firstBuyDate)) {
         lot.firstBuyDate = tx.date
       }
-      if (isNum(tx.fxRate) && /** @type {number} */ (tx.fxRate) > 0) {
-        lot.fxQty += qty
-        lot.fxSum += qty * /** @type {number} */ (tx.fxRate)
-      } else {
-        lot.fxKnown = false
-      }
+      // El tipo de cambio pesa por lo que costó la compra, no por cuántos títulos trajo: así el
+      // costo en pesos cuadra y un split (que multiplica títulos sin mover costo) no lo altera.
+      const fx = rateOf(tx)
+      lot.costFx = lot.costFx === null || lot.cost === null || amount === null || fx === null ? null : lot.costFx + amount * fx
       if (amount !== null) {
         // El faltante se mide contra el efectivo YA considerando lo que se dio por aportado antes
         // (cash + funded). Medirlo solo contra cash vuelve a financiar dinero ya financiado, porque
@@ -304,8 +303,11 @@ function runLedger(transactions, { asOf = null, dates = null } = {}) {
       if (lot.quantity <= EPSILON) {
         lot.quantity = 0
         lot.cost = 0
-      } else if (avg !== null && lot.cost !== null) {
-        lot.cost -= avg * qty
+        lot.costFx = 0
+      } else {
+        if (avg !== null && lot.cost !== null) lot.cost -= avg * qty
+        // Lo que sale en pesos es la misma fracción del lote que sale en su moneda.
+        if (lot.costFx !== null) lot.costFx -= (lot.costFx / (lot.quantity + qty)) * qty
       }
       // El dinero entra en la moneda del movimiento, no en la del lote: abonarlo a lot.currency
       // convertiría 1,800 pesos en 1,800 dólares sin avisar. validateTransaction rechaza la mezcla
@@ -353,7 +355,7 @@ function positionsFrom(book, detailed) {
     if (detailed) {
       position.realizedPnl = lot.realized
       position.firstBuyDate = lot.firstBuyDate
-      position.avgFx = lot.fxKnown && lot.fxQty > 0 ? lot.fxSum / lot.fxQty : null
+      position.avgFx = lot.cost !== null && lot.costFx !== null && lot.cost > EPSILON ? lot.costFx / lot.cost : null
     }
     out.push(position)
   }
