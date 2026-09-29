@@ -113,7 +113,13 @@ export default function Risk() {
                     loading={loading || quotes.isLoading}
                     label="Número efectivo de sectores"
                     value={sectors ? fmtNumber(sectors.effectiveN, { decimals: 1 }) : undefined}
-                    sublabel={sectors && sectors.effectiveN != null ? `Sobre el ${fmtPct(sectors.coverage, { decimals: 0 })} de tus posiciones que tiene sector` : 'Ninguna posición trae sector'}
+                    sublabel={
+                      !sectors
+                        ? undefined
+                        : sectors.effectiveN != null
+                          ? `Sobre el ${fmtPct(sectors.coverage, { decimals: 0 })} de tus posiciones que tiene sector`
+                          : 'Ninguna de tus posiciones trae sector; los fondos no cuentan'
+                    }
                     info={{ termKey: 'numero-efectivo-de-activos', term: 'Número efectivo de activos' }}
                   />
                   <Stat loading={loading || quotes.isLoading} label="HHI por sector" value={sectors ? fmtNumber(sectors.hhi, { decimals: 2 }) : undefined} sublabel="De 1 entre el número de sectores (parejo) a 1 (todo en uno)" />
