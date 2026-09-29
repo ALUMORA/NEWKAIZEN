@@ -227,44 +227,9 @@
 .kz-picker__form > :first-child {
   width: 100%;
 }
-.kz-picker__results {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: var(--space-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-.kz-picker__result {
-  display: flex;
-  gap: var(--space-3);
-  align-items: baseline;
-  width: 100%;
-  min-height: 44px;
-  padding: var(--space-2) var(--space-3);
-  border: 0;
-  background: var(--surface);
-  color: var(--ink);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.kz-picker__result:hover {
-  background: var(--surface-2);
-}
-.kz-picker__result:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: -2px;
-}
-.kz-picker__name {
-  color: var(--muted);
-  font-size: var(--text-sm);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  min-width: 0;
+/* El error de la clave va dentro de la ayuda del SearchCombobox (aria-describedby), en su renglón. */
+.kz-picker__error {
+  margin-top: var(--space-1);
 }
 .kz-picker__selected {
   display: grid;

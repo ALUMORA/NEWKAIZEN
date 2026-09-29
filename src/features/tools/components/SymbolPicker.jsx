@@ -1,24 +1,15 @@
 // Elegir emisoras: del portafolio activo, por búsqueda en /v2/search o escribiendo la clave.
-// Las elegidas quedan como lista con botón para quitar cada una; nada vive solo en un hover.
-import { useEffect, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { Plus, X } from 'lucide-react'
-import { Button, IconButton, Input, SrOnly } from '../../../components/ui/index.js'
-import { searchQuery } from '../../../lib/api/queries.js'
-import { useCapabilities } from '../../../lib/api/capabilities.js'
+// La búsqueda es el SearchCombobox compartido (el de la paleta ⌘K): flechas y Enter eligen una
+// opción. Sin opciones (búsqueda caída, servidor viejo o todavía buscando), Enter manda la clave
+// escrita al formulario, igual que el botón "Agregar". Las elegidas quedan como lista con botón
+// para quitar cada una; nada vive solo en un hover.
+import { useState } from 'react'
+import { CircleAlert, Plus, X } from 'lucide-react'
+import { Button, IconButton, SearchCombobox } from '../../../components/ui/index.js'
 import { addSymbol } from '../selection.js'
 
 const SEARCH_LIMIT = 6
-
-/** @param {string} value @param {number} ms */
-function useDebounced(value, ms) {
-  const [out, setOut] = useState(value)
-  useEffect(() => {
-    const t = setTimeout(() => setOut(value), ms)
-    return () => clearTimeout(t)
-  }, [value, ms])
-  return out
-}
+const HINT = 'Busca por nombre o escribe la clave, por ejemplo WALMEX.MX o AAPL.'
 
 /**
  * @param {{ id: string, selected: string[], onChange: (next: string[]) => void, max: number,
@@ -27,11 +18,8 @@ function useDebounced(value, ms) {
 export function SymbolPicker({ id, selected, onChange, max, portfolioSymbols = null, portfolioLabel = 'Usar las de mi portafolio', children }) {
   const [q, setQ] = useState('')
   const [error, setError] = useState(/** @type {string | null} */ (null))
-  const { status } = useCapabilities()
-  const debounced = useDebounced(q.trim(), 200)
-  const search = useQuery({ ...searchQuery(debounced, SEARCH_LIMIT), enabled: status === 'ready' && debounced.length > 0 })
-  const results = debounced && search.data ? search.data.results.filter((r) => !selected.includes(r.symbol)) : []
 
+  // Si no se puede agregar (repetida, inválida o sin lugar), el texto se queda para corregirlo.
   const add = (/** @type {string} */ symbol) => {
     const out = addSymbol(selected, symbol, max)
     setError(out.error)
@@ -40,8 +28,6 @@ export function SymbolPicker({ id, selected, onChange, max, portfolioSymbols = n
       setQ('')
     }
   }
-
-  const announce = !debounced ? '' : search.isFetching ? 'Buscando' : results.length ? `${results.length} resultados` : 'Sin resultados en la búsqueda'
 
   return (
     <div className="kz-picker">
@@ -52,37 +38,36 @@ export function SymbolPicker({ id, selected, onChange, max, portfolioSymbols = n
           add(q)
         }}
       >
-        <Input
+        <SearchCombobox
           id={`${id}-search`}
           label="Agregar emisora"
-          hint="Busca por nombre o escribe la clave, por ejemplo WALMEX.MX o AAPL."
-          error={error ?? undefined}
+          // El error va dentro de la ayuda, que el campo ya anuncia con aria-describedby.
+          hint={
+            <>
+              {HINT}
+              {error && (
+                <span className="kz-error-text kz-picker__error" role="alert">
+                  <CircleAlert size={14} aria-hidden="true" />
+                  {error}
+                </span>
+              )}
+            </>
+          }
           value={q}
-          autoComplete="off"
-          spellCheck={false}
-          onChange={(e) => {
-            setQ(e.target.value)
+          onValueChange={(v) => {
+            setQ(v)
             setError(null)
           }}
+          onSelect={(option) => add(option.symbol ?? option.label)}
+          exclude={selected}
+          limit={SEARCH_LIMIT}
+          clearOnSelect={false}
+          className="kz-picker__search"
         />
         <Button type="submit" variant="secondary" icon={<Plus size={16} />} disabled={!q.trim()}>
           Agregar
         </Button>
       </form>
-      <SrOnly as="p" aria-live="polite">{announce}</SrOnly>
-      {results.length > 0 && (
-        <ul className="kz-picker__results" aria-label="Resultados de la búsqueda">
-          {results.map((r) => (
-            <li key={r.symbol}>
-              <button type="button" className="kz-picker__result" onClick={() => add(r.symbol)}>
-                <span className="mono">{r.symbol}</span>
-                <span className="kz-picker__name">{r.name}</span>
-                <SrOnly>, agregar</SrOnly>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
       <div className="kz-picker__selected">
         <p className="kz-picker__count" id={`${id}-count`}>
           {selected.length === 0 ? 'Todavía no eliges emisoras.' : `${selected.length} de ${max} emisoras elegidas`}
