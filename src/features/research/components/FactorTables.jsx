@@ -6,8 +6,6 @@ import { Link } from 'react-router'
 import { Badge, DataTable } from '../../../components/ui/index.js'
 import { pathInstrument } from '../../../app/paths.js'
 import {
-  COMPOSITE_TEXT,
-  COVERAGE_TEXT,
   FACTORS,
   METRICS,
   checkValueText,
@@ -100,7 +98,6 @@ export function ScoresTable({ rows, caption }) {
       header: 'Compuesto',
       numeric: true,
       sortable: true,
-      info: { termKey: 'puntaje-compuesto', term: 'Compuesto', text: COMPOSITE_TEXT },
       sortValue: (/** @type {FactorRow} */ row) => row.scores?.composite,
       format: (_v, /** @type {FactorRow} */ row) => (
         <span className="kz-screener-composite">
@@ -124,7 +121,6 @@ export function ScoresTable({ rows, caption }) {
       header: 'Cobertura',
       numeric: true,
       sortable: true,
-      info: { termKey: 'cobertura-de-datos', term: 'Cobertura', text: COVERAGE_TEXT },
       format: (_v, /** @type {FactorRow} */ row) => {
         const c = coverageOf(row)
         return `${c.have} de ${c.total}`
