@@ -60,10 +60,11 @@ const FX_HISTORY = ({ url }) => {
 
 const quote = (symbol, name, price) => ({ symbol, name, price, previousClose: price, change: 0, changePct: 0, currency: 'MXN', exchange: 'BMV', type: 'equity', marketState: 'REGULAR', asOf: '2026-09-22T14:40:00Z' })
 const QUOTE_TABLE = {
-  'WALMEX.MX': { ...quote('WALMEX.MX', 'Walmex', 65), previousClose: 64, change: 1, changePct: 1 / 64 },
-  'NAFTRAC.MX': { ...quote('NAFTRAC.MX', 'Naftrac', 55.2), previousClose: 55.5, change: -0.3, changePct: -0.3 / 55.5 },
-  'AMXB.MX': quote('AMXB.MX', 'América Móvil', 18.5),
-  AAPL: { ...quote('AAPL', 'Apple', 240), previousClose: 238, change: 2, changePct: 2 / 238, currency: 'USD', exchange: 'NASDAQ' },
+  'WALMEX.MX': { ...quote('WALMEX.MX', 'Walmex', 65), previousClose: 64, change: 1, changePct: 1 / 64, sector: 'Consumo básico', sectorKey: 'Consumer Defensive' },
+  // Los fondos y ETF llegan sin sector, como los manda Yahoo.
+  'NAFTRAC.MX': { ...quote('NAFTRAC.MX', 'Naftrac', 55.2), previousClose: 55.5, change: -0.3, changePct: -0.3 / 55.5, type: 'fund', sector: null, sectorKey: null },
+  'AMXB.MX': { ...quote('AMXB.MX', 'América Móvil', 18.5), sector: 'Comunicaciones', sectorKey: 'Communication Services' },
+  AAPL: { ...quote('AAPL', 'Apple', 240), previousClose: 238, change: 2, changePct: 2 / 238, currency: 'USD', exchange: 'NASDAQ', sector: 'Tecnología', sectorKey: 'Technology' },
 }
 /** QuotesResponse con lo que se pidió: lo que no está en la tabla sale en `missing`. */
 const QUOTES = ({ url }) => {
@@ -79,8 +80,8 @@ const PANEL_PRICES = {
   MXN: {
     'WALMEX.MX': walk(62, weeks),
     'NAFTRAC.MX': walk(55, weeks).map((v, i) => Math.round((v * (1 + 0.004 * Math.cos(i))) * 100) / 100),
-    '^MXX': walk(60000, weeks),
-    '^GSPC': walk(120000, weeks).map((v, i) => Math.round(v * (1 + 0.006 * Math.cos(i * 0.7)))),
+    // Referencias de Riesgo (docs/metodologia/riesgo.md): NAFTRAC.MX, arriba, y SPY en pesos.
+    SPY: walk(12000, weeks).map((v, i) => Math.round(v * (1 + 0.006 * Math.cos(i * 0.7)) * 100) / 100),
     // En pesos, con el FIX vigente de cada fecha (el mismo que usa el servidor).
     AAPL: USD_PRICES.AAPL.map((v, i) => Math.round(v * (FIX[weeks[i]] ?? 18.4125) * 100) / 100),
   },
@@ -606,10 +607,34 @@ test.describe('portafolio: riesgo', () => {
   for (const theme of THEMES) {
     test(`carga con su h1, medidas, correlaciones y sin violaciones (${theme})`, async ({ page, baseURL }) => {
       await open(page, baseURL, { theme, state: RISK_STATE })
+      /** @type {string[][]} */
+      const panels = []
+      page.on('request', (r) => {
+        const u = new URL(r.url())
+        if (u.pathname === '/v2/panel') panels.push(String(u.searchParams.get('symbols')).split(','))
+      })
       await page.goto('/portafolio/riesgo')
       await expect(page.getByRole('heading', { level: 1, name: 'Riesgo' })).toBeVisible()
       await expect(page.locator('h1')).toHaveCount(1)
       await expect(page.getByText('11 semanas de datos')).toBeVisible()
+      // Referencias con dividendos y en pesos: NAFTRAC.MX (una sola vez, aunque también es posición) y SPY.
+      expect(panels).toHaveLength(1)
+      expect([...panels[0]].sort()).toEqual(['NAFTRAC.MX', 'SPY', 'WALMEX.MX'])
+      expect(panels[0]).not.toContain('^MXX')
+      expect(panels[0]).not.toContain('^GSPC')
+      const measures = page.getByRole('region', { name: 'Medidas de riesgo' })
+      await expect(measures).toContainText('Beta contra el IPC (NAFTRAC)')
+      await expect(measures).toContainText('Beta contra el S&P 500 (SPY, en pesos)')
+      // Concentración por sector: WALMEX en Consumo básico y NAFTRAC como fondo, no como s/d.
+      const sectors = page.getByRole('region', { name: 'Concentración por sector' })
+      await expect(sectors).toBeVisible()
+      const table = sectors.getByRole('table', { name: 'Peso por sector' })
+      await expect(table.getByRole('row', { name: /Consumo básico/ })).toContainText('WALMEX.MX')
+      await expect(table.getByRole('row', { name: /Fondos y ETF/ })).toContainText('NAFTRAC.MX')
+      await expect(table.getByRole('row', { name: /s\/d/ })).toHaveCount(0)
+      // Un solo sector con nombre: N efectiva 1, sobre la parte de WALMEX.
+      await expect(sectors).toContainText('Número efectivo de sectores')
+      await expect(sectors.locator('.kz-stat__value').first()).toHaveText('1.0')
       await expect(page.getByRole('figure', { name: 'Correlaciones entre tus emisoras' })).toBeVisible()
       await noHorizontalScroll(page)
       await expectNoAxeViolations(page, `riesgo ${theme}`)
@@ -621,6 +646,25 @@ test.describe('portafolio: riesgo', () => {
     await page.goto('/portafolio/riesgo')
     await expect(page.getByRole('link', { name: 'Ir a Movimientos' })).toHaveAttribute('href', '/portafolio/movimientos')
   })
+})
+
+// Sin la fixture automática: las cotizaciones caen a propósito y solo la tarjeta de sectores lo resiente.
+plainTest('portafolio: riesgo con las cotizaciones caídas deja las medidas y avisa en sectores', async ({ page, baseURL }) => {
+  const guards = attachGuards(page, { allow: expectedHttpError(404, 'GET', '/v2/quotes', 'la prueba tumba las cotizaciones a propósito') })
+  await open(page, /** @type {string} */ (baseURL), { state: RISK_STATE })
+  await page.route(/\/v2\/quotes/, (route, request) =>
+    route.fulfill({
+      status: 404,
+      headers: { 'access-control-allow-origin': request.headers().origin ?? '*', vary: 'Origin' },
+      contentType: 'application/json',
+      body: JSON.stringify({ error: { code: 'NOT_FOUND', message: 'Sin cotizaciones.' } }),
+    }),
+  )
+  await page.goto('/portafolio/riesgo')
+  await expect(page.getByRole('region', { name: 'Concentración por sector' }).getByRole('alert')).toContainText('No pudimos traer los sectores')
+  await expect(page.getByText('11 semanas de datos')).toBeVisible()
+  await expect(page.getByRole('figure', { name: 'Correlaciones entre tus emisoras' })).toBeVisible()
+  guards.assertClean()
 })
 
 // Capturas para revisión: con F1_CAPTURE_DIR=/ruta guarda cada página nueva; sin la variable se salta.
