@@ -58,5 +58,6 @@ coverage/
 .pytest_cache/
 .ruff_cache/
 
-# El archivo de entorno de e2e sí se versiona
+# Los archivos de entorno de e2e y de ejemplo sí se versionan
 !.env.e2e
+!.env.example
