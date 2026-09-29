@@ -710,6 +710,7 @@ test('capturas', async ({ page, baseURL }, testInfo) => {
     ['/portafolio/rendimiento', 'Rendimiento', PERF_STATE, 'rendimiento'],
     ['/portafolio/movimientos', 'Movimientos', OVERSELL_STATE, 'movimientos'],
     ['/portafolio/rebalanceo', 'Rebalanceo', REBALANCE_STATE, 'rebalanceo'],
+    ['/portafolio/riesgo', 'Riesgo', RISK_STATE, 'riesgo'],
   ]
   await open(page, baseURL, { theme, state: null })
   for (const [route, h1, state, name] of pages) {

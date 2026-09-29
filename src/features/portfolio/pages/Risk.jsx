@@ -26,10 +26,11 @@ const WINDOW_YEARS = 3
 const selectActive = (s) => s.portfolios.find((/** @type {any} */ p) => p.id === s.activePortfolioId) ?? null
 
 const SECTOR_COLUMNS = [
+  // El peso va junto al sector: a 390 px es lo que se alcanza a ver sin desplazar la tabla.
   { key: 'label', header: 'Sector' },
-  { key: 'symbols', header: 'Emisoras', format: (/** @type {string[]} */ v) => v.join(', ') },
-  { key: 'value', header: 'Valor en pesos', numeric: true, format: (/** @type {any} */ v) => fmtMoney(v) },
   { key: 'weight', header: 'Peso', numeric: true, format: (/** @type {any} */ v) => fmtPct(v) },
+  { key: 'value', header: 'Valor en pesos', numeric: true, format: (/** @type {any} */ v) => fmtMoney(v) },
+  { key: 'symbols', header: 'Emisoras', format: (/** @type {string[]} */ v) => v.join(', ') },
 ]
 
 export default function Risk() {
