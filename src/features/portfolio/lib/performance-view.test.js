@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { twr, valueSeries } from '../../../lib/finance/performance-ledger.js'
-import { computePerformance, impliedFx, inpcStart, isrView, lastKnown, panelAdjustment, nativePriceTable, pickWindow, pnlByPosition, splitAdjusted, tradeGapFlows, twrIndex } from './performance-view.js'
+import { computePerformance, impliedFx, mergeFx, needsDailyFix, inpcStart, isrView, lastKnown, panelAdjustment, nativePriceTable, pickWindow, pnlByPosition, splitAdjusted, tradeGapFlows, twrIndex } from './performance-view.js'
 
 const base = { fees: 0, currency: 'MXN', fxRate: null, amount: null, ratio: null, price: null, quantity: null, symbol: null, note: '' }
 const tx = (/** @type {any} */ over) => ({ ...base, ...over })
@@ -269,5 +269,28 @@ describe('isrView', () => {
     expect(res.estimate?.years).toEqual([{ year: '2026', gain: 100, taxableGain: 100, tax: 10, lossUsed: 0, lossCarry: 0 }])
     expect(res.usdSales).toBe(0)
     expect(res.dividendsMxn).toBe(50)
+  })
+})
+
+describe('mergeFx', () => {
+  it('el implícito manda en las fechas del panel y el FIX diario llena los días de en medio', () => {
+    const implied = { '2026-09-07': 18.2, '2026-09-14': 18.4 }
+    const daily = { '2026-09-07': 18.21, '2026-09-09': 18.3, '2026-09-14': 18.39 }
+    const fx = mergeFx(implied, daily)
+    expect(fx).toEqual({ '2026-09-07': 18.2, '2026-09-09': 18.3, '2026-09-14': 18.4 })
+    // Un movimiento del 9 sin tipo de cambio toma el FIX de su día, no el del lunes.
+    expect(lastKnown(fx, '2026-09-09')).toBe(18.3)
+  })
+})
+
+describe('needsDailyFix', () => {
+  it('pide el FIX diario sin emisoras en dólares, o si algún movimiento en dólares no trae tipo de cambio', () => {
+    const cashUsd = tx({ type: 'deposit', date: '2026-09-01', amount: 100, currency: 'USD', fxRate: 18 })
+    const buyUsd = tx({ type: 'buy', date: '2026-09-09', symbol: 'AAPL', quantity: 1, price: 200, currency: 'USD', fxRate: 18.3 })
+    const bareUsd = tx({ type: 'deposit', date: '2026-09-10', amount: 50, currency: 'USD', fxRate: null })
+    expect(needsDailyFix([cashUsd], 0)).toBe(true)
+    expect(needsDailyFix([cashUsd, buyUsd], 1)).toBe(false)
+    expect(needsDailyFix([buyUsd, bareUsd], 1)).toBe(true)
+    expect(needsDailyFix([tx({ type: 'deposit', date: '2026-09-01', amount: 100 })], 0)).toBe(false)
   })
 })

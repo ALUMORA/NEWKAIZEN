@@ -145,6 +145,33 @@ export function impliedFx(panelMxn, panelNative) {
 }
 
 /**
+ * Tipo de cambio para Rendimiento con emisoras en dólares: el implícito del panel manda en sus
+ * fechas (es con el que el servidor convirtió) y el FIX diario llena los días de en medio, para que
+ * un movimiento en dólares sin tipo de cambio propio tome el de su día y no el del cierre semanal.
+ * @param {Record<string, number>} implied
+ * @param {Record<string, number> | null | undefined} daily
+ * @returns {Record<string, number>}
+ */
+export function mergeFx(implied, daily) {
+  const out = { ...(daily ?? {}), ...implied }
+  return Object.fromEntries(Object.entries(out).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
+}
+
+/**
+ * Si Rendimiento necesita el FIX diario (/v2/fx/history): sin emisoras en dólares no hay cociente
+ * que sacar, y con ellas hace falta cuando algún movimiento en dólares no trae su tipo de cambio.
+ * @param {any[]} transactions el libro ya cortado en hoy
+ * @param {number} usdSymbols cuántas emisoras en dólares tiene el libro
+ */
+export function needsDailyFix(transactions, usdSymbols) {
+  // Un split no mueve dinero: no necesita tipo de cambio.
+  const usd = (transactions ?? []).filter((t) => t?.currency === 'USD' && t.type !== 'split')
+  if (usd.length === 0) return false
+  if (usdSymbols === 0) return true
+  return usd.some((t) => !(isNum(t.fxRate) && t.fxRate > 0))
+}
+
+/**
  * Valor vigente en una fecha: el de esa fecha o el último anterior.
  * @param {Record<string, number> | undefined} table
  * @param {string} date

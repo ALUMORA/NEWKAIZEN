@@ -452,6 +452,36 @@ test.describe('portafolio: rendimiento', () => {
     const aapl = page.getByRole('table', { name: 'Resultado por posición' }).getByRole('row', { name: /AAPL/ })
     await expect(aapl.getByRole('cell').first()).toHaveText('5')
     await expect(aapl).toContainText('18.3000')
+    await expect(page.getByText('1 movimiento con fecha futura todavía no cuenta: entra al rendimiento el día de su fecha.')).toBeVisible()
+  })
+
+  test('un libro con solo movimientos futuros no dice que no hay nada', async ({ page, baseURL }) => {
+    const only = [
+      tx({ id: 'f0', type: 'deposit', date: '2026-10-05', amount: 20000 }),
+      tx({ id: 'f1', type: 'buy', date: '2026-10-05', symbol: 'WALMEX.MX', quantity: 100, price: 60 }),
+    ]
+    await open(page, baseURL, { state: { ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: only }] } })
+    await page.goto('/portafolio/rendimiento')
+    await expect(page.getByText('Aún no hay compras en tu libro')).toBeVisible()
+    await expect(page.getByText('2 movimientos con fecha futura todavía no cuentan: entran al rendimiento el día de su fecha.')).toBeVisible()
+  })
+
+  test('un movimiento en dólares sin tipo de cambio toma el FIX de su día y no el del cierre semanal', async ({ page, baseURL }) => {
+    const bare = tx({ id: 'u1', type: 'deposit', date: '2026-09-03', amount: 100, currency: 'USD', fxRate: null })
+    await open(page, baseURL, { state: { ...PERF_STATE, portfolios: [{ ...PERF_STATE.portfolios[0], transactions: [...PERF_STATE.portfolios[0].transactions, bare] }] } })
+    /** @type {string[]} */
+    const fxHistory = []
+    page.on('request', (r) => {
+      const u = new URL(r.url())
+      if (u.pathname === '/v2/fx/history') fxHistory.push(`${u.searchParams.get('start')}|${u.searchParams.get('end')}`)
+    })
+    await page.goto('/portafolio/rendimiento')
+    const summary = page.getByRole('region', { name: 'Resumen del periodo' })
+    await expect(summary).toContainText('TWR del periodo')
+    await expect(summary.locator('.kz-stat__value').filter({ hasText: 's/d' })).toHaveCount(0)
+    // AAPL sigue con el implícito del panel (18.4125) y el FIX diario se pide para el depósito.
+    await expect(page.getByRole('table', { name: 'Resultado por posición' }).getByRole('row', { name: /AAPL/ })).toContainText('18.4125')
+    expect(fxHistory).toEqual(['2026-06-21|2026-09-22'])
   })
 
   test('si el panel en pesos convirtió con Yahoo en vez del FIX, lo dice junto al efecto cambiario', async ({ page, baseURL }) => {
