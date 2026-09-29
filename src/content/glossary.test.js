@@ -380,6 +380,19 @@ describe('ligas y tarjetas para la interfaz', () => {
     expect(tip.corto.length).toBeLessThanOrEqual(160)
   })
 
+  it('las llaves de Investigar no muestran identificadores de código y citan a Greenblatt con un solo año', () => {
+    // camelCase como returnOnAssets es nombre de campo, no texto para la persona.
+    const codigo = /\b[a-z]+[A-Z][A-Za-z]*\b/
+    const conCodigo = TERMINOS_DE_INVESTIGAR.filter((slug) => {
+      const t = glossary[slug]
+      return [t.corto, ...t.largo, t.formula, t.comoLeer, t.ejemplo, t.fuente].some((x) => codigo.test(String(x ?? '')))
+    })
+    expect(conCodigo).toEqual([])
+    const anios = new Set()
+    for (const t of glossaryTerms) for (const m of String(t.fuente ?? '').matchAll(/Greenblatt \((\d{4})\)/g)) anios.add(m[1])
+    expect([...anios]).toEqual(['2006'])
+  })
+
   it('el diferencial de FIBRAs no afirma CETES cuando la tasa es la sustituta', () => {
     const t = glossary['diferencial-contra-cetes']
     expect(t.corto).toMatch(/sustitut/)
