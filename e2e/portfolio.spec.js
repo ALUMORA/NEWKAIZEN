@@ -519,6 +519,34 @@ test.describe('portafolio: rendimiento', () => {
     expect(fxHistory).toEqual(['2026-06-21|2026-09-22'])
   })
 
+  test('si el panel en dólares no trae ninguna emisora, el efectivo en dólares se valúa con el FIX diario', async ({ page, baseURL }) => {
+    const usdCash = tx({ id: 'u1', type: 'deposit', date: '2026-09-03', amount: 100, currency: 'USD', fxRate: 18 })
+    await open(page, baseURL, { state: { ...PERF_STATE, portfolios: [{ ...PERF_STATE.portfolios[0], transactions: [...PERF_STATE.portfolios[0].transactions, usdCash] }] } })
+    await page.route(/\/v2\/panel/, (route, request) => {
+      const url = new URL(request.url())
+      if (url.searchParams.get('ccy') !== 'USD') return route.fallback()
+      const { json } = PANEL({ url })
+      return route.fulfill({
+        status: 200,
+        headers: { 'access-control-allow-origin': request.headers().origin ?? '*', vary: 'Origin' },
+        contentType: 'application/json',
+        body: JSON.stringify({ ...json, prices: {}, dropped: [{ symbol: 'AAPL', reason: 'No hay observaciones en el periodo pedido.' }] }),
+      })
+    })
+    /** @type {string[]} */
+    const fxHistory = []
+    page.on('request', (r) => {
+      const u = new URL(r.url())
+      if (u.pathname === '/v2/fx/history') fxHistory.push(`${u.searchParams.get('start')}|${u.searchParams.get('end')}`)
+    })
+    await page.goto('/portafolio/rendimiento')
+    const summary = page.getByRole('region', { name: 'Resumen del periodo' })
+    await expect(summary).toContainText('Sin historia suficiente, quedaron fuera: AAPL.')
+    await expect(summary).toContainText('TWR del periodo')
+    // Sin cociente que sacar, el tipo de cambio sale del FIX diario de respaldo.
+    await expect.poll(() => fxHistory).toEqual(['2026-06-21|2026-09-22'])
+  })
+
   test('sin compras lleva a Movimientos y sin portafolio a la bienvenida', async ({ page, baseURL }) => {
     await open(page, baseURL, { state: { ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: [STATE.portfolios[0].transactions[0]] }] } })
     await page.goto('/portafolio/rendimiento')

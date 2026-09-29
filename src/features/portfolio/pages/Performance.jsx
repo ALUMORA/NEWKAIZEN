@@ -73,10 +73,13 @@ export default function Performance() {
   })
   const dates = panelMxn.data?.dates ?? []
   // Con alguna emisora en dólares el tipo de cambio sale del cociente de los dos paneles; el FIX
-  // diario solo hace falta sin ellas o para un movimiento en dólares sin tipo de cambio propio.
-  const needsFxHist = needsFx && needsDailyFix(raw, usdList.length)
+  // diario hace falta sin ellas, para un movimiento en dólares sin tipo de cambio propio, o si el
+  // panel en dólares dejó fuera todas sus emisoras y no hay cociente que sacar.
+  const implied = useMemo(() => impliedFx(panelMxn.data, panelUsd.data), [panelMxn.data, panelUsd.data])
+  const impliedEmpty = usdList.length > 0 && Boolean(panelMxn.data) && Boolean(panelUsd.data) && Object.keys(implied).length === 0
+  const needsFxHist = needsFx && (needsDailyFix(raw, usdList.length) || impliedEmpty)
   // Con el cociente del panel a la mano, un FIX diario caído no tumba la página.
-  const fxHistOptional = usdList.length > 0
+  const fxHistOptional = usdList.length > 0 && !impliedEmpty
   const fxHist = useQuery({
     ...fxHistoryQuery({ start: dates[0] ? minusDays(dates[0], 10) : undefined, end: dates[dates.length - 1] }),
     enabled: needsFxHist && dates.length > 0,
@@ -97,13 +100,13 @@ export default function Performance() {
     const adjustment = panelAdjustment(panelMxn.data, usdList.length > 0 ? panelUsd.data : null)
     const prices = nativePriceTable(panelMxn.data, panelUsd.data, usdSymbols)
     const daily = fxHist.data ? zipTable(fxHist.data.dates, fxHist.data.values) : null
-    const fx = usdList.length > 0 ? mergeFx(impliedFx(panelMxn.data, panelUsd.data), daily) : daily ?? {}
+    const fx = usdList.length > 0 ? mergeFx(implied, daily) : daily ?? {}
     const benchPanel = panelBench.data?.prices[benchmark] ? panelBench.data : panelMxn.data
     const bench = benchPanel.prices[benchmark] ? zipTable(benchPanel.dates, benchPanel.prices[benchmark]) : null
     const perf = computePerformance({ transactions: txs, prices, fx, dates: panelMxn.data.dates, benchmark: bench, adjustment })
     const at = perf.ok ? perf.windowDates[perf.windowDates.length - 1] : panelMxn.data.dates[panelMxn.data.dates.length - 1]
     return { perf, pnl: at ? pnlByPosition(txs, prices, fx, at) : null }
-  }, [ready, panelMxn.data, panelUsd.data, panelBench.data, fxHist.data, usdSymbols, usdList.length, benchmark, txs])
+  }, [ready, panelMxn.data, panelUsd.data, panelBench.data, fxHist.data, implied, usdSymbols, usdList.length, benchmark, txs])
 
   const header = (
     <PageHeader
