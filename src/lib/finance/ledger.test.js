@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { pnlDecomposition } from './fx.js'
 import {
   cashBalances,
   derivePositions,
@@ -285,6 +286,11 @@ describe('validateTransaction', () => {
 })
 
 describe('positionPnl: efecto precio contra efecto tipo de cambio', () => {
+  it('es la misma cuenta que fx.pnlDecomposition, no una copia', () => {
+    const input = { quantity: 7, price0: 123.45, price1: 150.1, fx0: 17.3, fx1: 18.9 }
+    expect(positionPnl(input)).toEqual(pnlDecomposition(input))
+  })
+
   it('10 títulos de 150 a 180 dólares con el peso de 17 a 19: 8,700 = 5,100 + 3,600', () => {
     const out = positionPnl({ quantity: 10, price0: 150, price1: 180, fx0: 17, fx1: 19 })
     expect(out.total).toBeCloseTo(8700, 9)

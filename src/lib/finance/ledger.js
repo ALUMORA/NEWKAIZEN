@@ -9,6 +9,8 @@
 // `derivePositions` devuelve las ocho llaves del spec A4 (docs/requests/A4.md, opción A).
 // `derivePositionsDetailed` se queda como alias para no romper a quien ya la importa.
 
+import { pnlDecomposition } from './fx.js'
+
 /** @typedef {import('../storage.js').Transaction} Transaction */
 /** @typedef {'MXN' | 'USD'} Currency */
 
@@ -521,20 +523,19 @@ export function validateTransaction(tx, existing = []) {
  * moneda base (pesos si el tipo de cambio va en pesos por dólar).
  *   efecto precio = q (P1 − P0) X0
  *   efecto tipo de cambio = q P1 (X1 − X0)
- * El cruce queda dentro del efecto tipo de cambio porque se valúa al precio final, así que
- * `cross` siempre es 0 y la suma cuadra exacto con el total.
+ * Es un envoltorio de `fx.js::pnlDecomposition`, que es la única implementación de la cuenta; se
+ * conserva aquí porque el libro es quien tiene las entradas (avgCost y avgFx).
  * Devuelve null si falta cualquiera de los cinco datos o si alguno no es un número finito.
  * @param {{ quantity: number, price0: number | null, price1: number | null, fx0: number | null, fx1: number | null }} input
  * @returns {{ total: number, priceEffect: number, fxEffect: number, cross: number } | null}
  */
 export function positionPnl({ quantity, price0, price1, fx0, fx1 }) {
   if (![quantity, price0, price1, fx0, fx1].every(isNum)) return null
-  const q = /** @type {number} */ (quantity)
-  const p0 = /** @type {number} */ (price0)
-  const p1 = /** @type {number} */ (price1)
-  const x0 = /** @type {number} */ (fx0)
-  const x1 = /** @type {number} */ (fx1)
-  const priceEffect = q * (p1 - p0) * x0
-  const fxEffect = q * p1 * (x1 - x0)
-  return { total: q * (p1 * x1 - p0 * x0), priceEffect, fxEffect, cross: 0 }
+  return pnlDecomposition({
+    quantity,
+    price0: /** @type {number} */ (price0),
+    price1: /** @type {number} */ (price1),
+    fx0: /** @type {number} */ (fx0),
+    fx1: /** @type {number} */ (fx1),
+  })
 }
