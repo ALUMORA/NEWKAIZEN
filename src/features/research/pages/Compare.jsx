@@ -5,10 +5,11 @@ import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { instrumentQuery, panelQuery } from '../../../lib/api/queries.js'
 import { fmtMoney, fmtMultiple, fmtPct } from '../../../lib/format.js'
-import { Button, Card, DataStatus, DataTable, Delta, EmptyState, InfoTip, Input, PageHeader, Skeleton } from '../../../components/ui/index.js'
+import { Button, Card, DataStatus, DataTable, Delta, EmptyState, InfoTip, PageHeader, Skeleton } from '../../../components/ui/index.js'
 import { PATHS, pathCompare, pathInstrument } from '../../../app/paths.js'
 import { QueryBlock } from '../components/QueryBlock.jsx'
 import { parseSymbols } from '../symbols.js'
+import { SymbolPicker } from '../components/SymbolPicker.jsx'
 import { TimeSeries } from '../components/charts.js'
 import '../research.css'
 
@@ -126,24 +127,45 @@ function Performance({ symbols }) {
   )
 }
 
-export default function Compare() {
-  const [params] = useSearchParams()
+/** Emisoras del comparador: se eligen con el buscador y se mandan a la URL con "Comparar". */
+function CompareForm({ initial }) {
   const navigate = useNavigate()
-  const symbols = parseSymbols(params.get('symbols')).slice(0, MAX)
-  const [text, setText] = useState(symbols.join(', '))
+  const [picked, setPicked] = useState(/** @type {string[]} */ (initial))
   const [error, setError] = useState('')
-  const valid = symbols.length >= MIN
 
+  /** @param {import('react').FormEvent} event */
   const submit = (event) => {
     event.preventDefault()
-    const next = parseSymbols(text)
-    if (next.length < MIN || next.length > MAX) {
-      setError(`Escribe de ${MIN} a ${MAX} claves separadas por coma, por ejemplo WALMEX.MX, AAPL.`)
+    if (picked.length < MIN || picked.length > MAX) {
+      setError(`Elige de ${MIN} a ${MAX} emisoras: búscalas por nombre o escribe sus claves separadas por coma, por ejemplo WALMEX.MX, AAPL.`)
       return
     }
     setError('')
-    navigate(pathCompare(next))
+    navigate(pathCompare(picked))
   }
+
+  return (
+    <form onSubmit={submit} className="kz-row kz-research-compare-form" data-gap="3" data-align="start">
+      <SymbolPicker
+        label="Agregar emisora"
+        listLabel="Emisoras a comparar"
+        symbols={picked}
+        max={MAX}
+        error={error}
+        onChange={(next) => {
+          setPicked(next)
+          setError('')
+        }}
+      />
+      <Button type="submit">Comparar</Button>
+    </form>
+  )
+}
+
+export default function Compare() {
+  const [params] = useSearchParams()
+  const symbols = parseSymbols(params.get('symbols')).slice(0, MAX)
+  const valid = symbols.length >= MIN
 
   return (
     <div className="kz-container kz-col kz-research-page" data-gap="6">
@@ -154,29 +176,18 @@ export default function Compare() {
       />
       <Card title="Emisoras">
         <div className="kz-col" data-gap="3">
-        <form onSubmit={submit} className="kz-row kz-research-compare-form" data-gap="3" data-align="start">
-          <Input
-            label="Claves de las emisoras"
-            hint="Separadas por coma. Por ejemplo: WALMEX.MX, FEMSAUBD.MX, AAPL"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            error={error || undefined}
-            autoComplete="off"
-            spellCheck={false}
-          />
-          <Button type="submit">Comparar</Button>
-        </form>
-        {symbols.length ? (
-          <p className="kz-research-muted">
-            Fichas:{' '}
-            {symbols.map((s, i) => (
-              <span key={s}>
-                {i ? ', ' : ''}
-                <Link to={pathInstrument(s)}>{s}</Link>
-              </span>
-            ))}
-          </p>
-        ) : null}
+          <CompareForm key={symbols.join(',')} initial={symbols} />
+          {symbols.length ? (
+            <p className="kz-research-muted">
+              Fichas:{' '}
+              {symbols.map((s, i) => (
+                <span key={s}>
+                  {i ? ', ' : ''}
+                  <Link to={pathInstrument(s)}>{s}</Link>
+                </span>
+              ))}
+            </p>
+          ) : null}
         </div>
       </Card>
       {valid ? (
@@ -188,7 +199,7 @@ export default function Compare() {
         <EmptyState
           headingAs="h2"
           title="Elige al menos dos emisoras"
-          text="Escribe sus claves arriba para verlas lado a lado."
+          text="Búscalas arriba por nombre o clave para verlas lado a lado."
         />
       )}
     </div>
