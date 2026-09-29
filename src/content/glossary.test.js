@@ -380,6 +380,12 @@ describe('ligas y tarjetas para la interfaz', () => {
     expect(tip.corto.length).toBeLessThanOrEqual(160)
   })
 
+  it('el diferencial de FIBRAs no afirma CETES cuando la tasa es la sustituta', () => {
+    const t = glossary['diferencial-contra-cetes']
+    expect(t.corto).toMatch(/sustitut/)
+    expect(t.formula).toMatch(/sustitut/)
+  })
+
   it('glossaryTip devuelve null cuando el término no existe, para que el componente use su texto', () => {
     expect(glossaryTip('metrica-que-no-existe')).toBeNull()
   })

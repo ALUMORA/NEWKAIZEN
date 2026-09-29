@@ -1468,13 +1468,13 @@ const TERMS = {
 
   'diferencial-contra-cetes': {
     titulo: 'Diferencial contra CETES',
-    corto: 'Rendimiento por distribución de una FIBRA en 12 meses menos la tasa de CETES a 28 días, en puntos porcentuales.',
+    corto: 'Distribución de 12 meses de una FIBRA menos la tasa de corto plazo: CETES a 28 días o, sin dato de Banxico, una tasa sustituta marcada. En puntos porcentuales.',
     largo: [
       'Mide cuánto paga una FIBRA por encima de la deuda de corto plazo del gobierno. Se calcula con la distribución pagada en los últimos doce meses entre el precio, menos la tasa de CETES a 28 días del mismo momento, y se publica en puntos porcentuales.',
       'Ese margen es lo que el mercado pide a cambio de aceptar riesgo de ocupación, de crédito de los inquilinos y de falta de liquidez. Cuando se comprime a casi nada, la FIBRA cotiza como si sus rentas fueran tan seguras como un CETE; cuando se abre mucho, el mercado está descontando algo.',
       'Si la tasa de Banxico no está disponible, Kaizen usa un sustituto y lo dice: la tasa interbancaria a 91 días que publica la OCDE. En ese caso el dato se marca como respaldo y no es CETES a 28 días.',
     ],
-    formula: 'Diferencial = rendimiento por distribución de 12 meses − tasa de CETES a 28 días',
+    formula: 'Diferencial = rendimiento por distribución de 12 meses − tasa de corto plazo (CETES a 28 días, o su sustituta marcada cuando no hay dato de Banxico)',
     comoLeer: 'Un diferencial de 3.5 puntos quiere decir que la FIBRA distribuyó 3.5 puntos porcentuales más que CETES. Es una distribución pasada, no una promesa de la siguiente.',
     ejemplo: 'Con un rendimiento por distribución de 10.2 por ciento y CETES a 28 días en 7.25 por ciento, el diferencial es de 2.95 puntos porcentuales.',
     fuente: 'Metodología de FIBRAs de Kaizen (docs/metodologia/fibras.md). CETES a 28 días del SIE de Banxico, serie SF43936.',
