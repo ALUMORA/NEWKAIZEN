@@ -52,8 +52,8 @@ function TrendMeta({ symbol }) {
 
 /**
  * Buscador de la lista: el SearchCombobox compartido (el de la paleta ⌘K). Las que ya están en la
- * lista no se ofrecen. Sin opciones (búsqueda caída, servidor viejo o todavía buscando), Enter o
- * "Agregar" agregan la clave escrita.
+ * lista no se ofrecen. Sin opciones (búsqueda caída o servidor viejo) o mientras la búsqueda no
+ * alcanza al texto, Enter o "Agregar" agregan la clave escrita.
  * @param {{ onAdd: (symbol: string) => void, symbols: string[] }} props
  */
 function SearchBox({ onAdd, symbols }) {
@@ -95,6 +95,13 @@ function SearchBox({ onAdd, symbols }) {
           setError(null)
         }}
         onSelect={(option) => tryAdd(option.symbol ?? option.label)}
+        // En los 200 ms del debounce las opciones todavía son del texto anterior: Enter agrega lo
+        // escrito, no la primera de esa búsqueda vieja.
+        onEnter={({ q: typed, searching }) => {
+          if (!searching) return false
+          tryAdd(typed)
+          return true
+        }}
         exclude={symbols}
         limit={6}
         clearOnSelect={false}

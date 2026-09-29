@@ -221,6 +221,21 @@ test.describe('F5: lista de seguimiento', () => {
   }
 })
 
+// Durante los 200 ms del debounce la lista todavía muestra lo del texto anterior: Enter justo después
+// de teclear agrega lo escrito, no la primera opción de la búsqueda vieja.
+test('/watchlist: Enter justo después de teclear agrega la clave escrita, no una opción de la búsqueda anterior', async ({ page, baseURL }) => {
+  await open(page, baseURL, '/watchlist', { session: true })
+  const search = page.getByRole('combobox', { name: /Agregar una emisora/ })
+  await search.fill('w')
+  await expect(page.getByRole('option', { name: /WALMEX\.MX/ })).toBeVisible()
+  await search.pressSequentially('mt')
+  await search.press('Enter')
+  const table = page.getByRole('table', { name: 'Emisoras en seguimiento' })
+  await expect(table.getByRole('row')).toHaveCount(2)
+  await expect(table).toContainText('WMT')
+  await expect(table).not.toContainText('WALMEX.MX')
+})
+
 // Con la búsqueda caída la lista de seguimiento sigue aceptando la clave escrita con Enter.
 plainTest('/watchlist: con la búsqueda caída, escribir la clave y dar Enter la agrega', async ({ page, baseURL }) => {
   const guards = attachGuards(page, { allow: expectedHttpError(503, 'GET', '/v2/search', 'la prueba tumba la búsqueda a propósito') })
