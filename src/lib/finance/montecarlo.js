@@ -14,6 +14,7 @@
 // Nada de Date.now() ni de fetch: la función es pura y determinista dada la semilla.
 
 import { createRng } from '../rng.js'
+import { quantile } from './stats.js'
 
 /** Cuantiles que se reportan por paso. */
 const QUANTILES = /** @type {const} */ ([0.05, 0.25, 0.5, 0.75, 0.95])
@@ -380,9 +381,9 @@ export function handleWorkerRequest(data) {
  *
  * Mínimo: 1 valor. Con un solo valor los cinco percentiles son ese valor.
  *
- * Nota para el orquestador: A1 tiene `quantile(sorted, q)` en stats.js. Esta versión existe
- * porque el motor de la simulación necesita los cinco a la vez sin ordenar, y se expone porque
- * las gráficas de F4 la piden con la misma forma. Se puede unificar en el merge.
+ * Ordena una copia y usa `stats.js::quantile`, la única implementación del cuantil tipo 7. El
+ * motor de la simulación no pasa por aquí: por cada paso necesita los cinco sin ordenar la
+ * columna entera y usa su propia selección parcial, que da los mismos estadísticos de orden.
  *
  * @param {number[] | Float64Array} values
  * @returns {{ p5: number, p25: number, p50: number, p75: number, p95: number } | null}
@@ -392,17 +393,13 @@ export function quantilesOf(values) {
   const source = values == null ? [] : values
   const n = source.length
   if (n === 0) return null
-  const copy = new Float64Array(n)
-  for (let i = 0; i < n; i += 1) copy[i] = finite(source[i], `values[${i}]`)
-  const plan = quantilePlan(n)
-  multiselect(copy, plan.needed, 0, n - 1, 0, plan.needed.length - 1)
+  /** @type {number[]} */
+  const sorted = new Array(n)
+  for (let i = 0; i < n; i += 1) sorted[i] = finite(source[i], `values[${i}]`)
+  sorted.sort((a, b) => a - b)
   /** @type {any} */
   const out = {}
-  for (let q = 0; q < QUANTILES.length; q += 1) {
-    const a = copy[plan.lo[q]]
-    const b = copy[plan.hi[q]]
-    out[QUANTILE_KEYS[q]] = a + plan.frac[q] * (b - a)
-  }
+  for (let q = 0; q < QUANTILES.length; q += 1) out[QUANTILE_KEYS[q]] = quantile(sorted, QUANTILES[q])
   return out
 }
 
