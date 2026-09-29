@@ -162,7 +162,7 @@ export default function Summary() {
             )}
             {view.futureCount > 0 && (
               <p className="kz-portfolio-hint">
-                {`${fmtNumber(view.futureCount, { decimals: 0 })} ${view.futureCount === 1 ? 'movimiento con fecha futura todavía no cuenta' : 'movimientos con fecha futura todavía no cuentan'}: entran al resumen el día de su fecha.`}
+                {`${fmtNumber(view.futureCount, { decimals: 0 })} ${view.futureCount === 1 ? 'movimiento con fecha futura todavía no cuenta: entra' : 'movimientos con fecha futura todavía no cuentan: entran'} al resumen el día de su fecha.`}
               </p>
             )}
             {!failed && !loading && view.dayFxFallback && (

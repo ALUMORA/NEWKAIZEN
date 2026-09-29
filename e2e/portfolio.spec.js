@@ -626,7 +626,7 @@ test.describe('portafolio: resumen', () => {
     await open(page, baseURL, { state: { ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: [...STATE.portfolios[0].transactions, future] }] } })
     await page.goto('/portafolio')
     const summary = page.getByRole('region', { name: 'Resumen' })
-    await expect(summary).toContainText('1 movimiento con fecha futura todavía no cuenta')
+    await expect(summary).toContainText('1 movimiento con fecha futura todavía no cuenta: entra al resumen el día de su fecha.')
     // 200 WALMEX a 65 más 7,000 de efectivo: la compra del 5 de octubre no entra ni en uno ni en otro.
     await expect(summary).toContainText('$20,000.00 MXN')
     await expect(page.getByRole('table', { name: 'Posiciones a precio de hoy' }).getByRole('row', { name: /WALMEX\.MX/ })).toContainText('200')
