@@ -15,6 +15,13 @@
    "soft_failure": false,
    "recorded_at": "2026-09-25T22:43:25+00:00"
   },
+  "yf:FEMSAUBD.MX:history?interval=1wk&period=5y": {
+   "file": "yf-FEMSAUBD.MX-history-687d6bf5c3e4b43e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-09-29T23:12:46+00:00"
+  },
   "yf:FEMSAUBD.MX:history?period=1y": {
    "file": "yf-FEMSAUBD.MX-history-ce98aeb2efef8183.json",
    "provider": "yfinance",
@@ -104,14 +111,14 @@
   "2026-09-22-recorrido"
  ],
  "summary": {
-  "keys_total": 13,
+  "keys_total": 14,
   "keys_by_provider": {
-   "yf": 12,
+   "yf": 13,
    "yf.download": 1
   },
   "exceptions_by_provider": {},
   "empty_by_provider": {},
   "symbols_with_failed_or_empty_calls": {}
  },
- "updated_at": "2026-09-25T22:43:29+00:00"
+ "updated_at": "2026-09-29T23:12:46+00:00"
 }
