@@ -1,17 +1,19 @@
 // /portafolio: resumen del portafolio activo a precios de hoy. Valor total en pesos, ganancia no
 // realizada, cambio del día, posiciones con su peso y resultado, asignación y ligas al resto de
-// Mi portafolio. Las cotizaciones son de /v2/quotes y el tipo de cambio de /v2/fx.
+// Mi portafolio. Las cotizaciones son de /v2/quotes y el tipo de cambio de /v2/fx; con posiciones en
+// dólares, el FIX de los últimos días (/v2/fx/history) da el tipo de cambio de ayer para la
+// variación del día. Los movimientos con fecha futura todavía no cuentan.
 import { lazy, Suspense, useMemo } from 'react'
 import { Link } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Card, DataTable, Delta, EmptyState, ErrorState, PageHeader, Select, Skeleton, Stat } from '../../../components/ui/index.js'
 import { fmtMoney, fmtNumber, fmtPct } from '../../../lib/format.js'
-import { fxQuery, quotesQuery } from '../../../lib/api/queries.js'
+import { fxHistoryQuery, fxQuery, quotesQuery } from '../../../lib/api/queries.js'
 import { derivePositions } from '../../../lib/finance/index.js'
 import { usePortfolios } from '../../../lib/portfolio/usePortfolios.js'
 import { PATHS } from '../../../app/paths.js'
-import { todayMx } from '../tx-labels.js'
-import { summarize } from '../lib/summary-view.js'
+import { minusDays, todayMx } from '../tx-labels.js'
+import { previousFix, summarize } from '../lib/summary-view.js'
 import DataSources from '../components/DataSources.jsx'
 import PortfolioLinks from '../components/PortfolioLinks.jsx'
 import '../portfolio.css'
@@ -45,14 +47,18 @@ const COLUMNS = [
 export default function Summary() {
   const { portfolios, active, actions } = usePortfolios()
   const transactions = useMemo(() => /** @type {any[]} */ (active?.transactions ?? []), [active])
-  const symbols = useMemo(() => derivePositions(transactions).map((p) => p.symbol).sort(), [transactions])
-  const quotes = useQuery({ ...quotesQuery(symbols), enabled: symbols.length > 0 })
-  const needsFx = transactions.some((t) => t.currency === 'USD') || (quotes.data?.quotes ?? []).some((/** @type {any} */ q) => q.currency === 'USD')
-  const fx = useQuery({ ...fxQuery(), enabled: needsFx })
   const today = todayMx()
+  const symbols = useMemo(() => derivePositions(transactions, { asOf: today }).map((p) => p.symbol).sort(), [transactions, today])
+  const quotes = useQuery({ ...quotesQuery(symbols), enabled: symbols.length > 0 })
+  const usdRows = (quotes.data?.quotes ?? []).some((/** @type {any} */ q) => q.currency === 'USD')
+  const needsFx = transactions.some((t) => t.currency === 'USD') || usdRows
+  const fx = useQuery({ ...fxQuery(), enabled: needsFx })
+  // Diez días naturales alcanzan para el FIX anterior aun con un puente de cuatro días.
+  const fxHist = useQuery({ ...fxHistoryQuery({ start: minusDays(today, 10), end: today }), enabled: usdRows })
+  const usdmxnPrev = useMemo(() => previousFix(fxHist.data, fx.data?.asOf ?? fx.data?.meta?.asOf), [fxHist.data, fx.data])
   const view = useMemo(
-    () => summarize({ transactions, quotes: quotes.data?.quotes, usdmxn: fx.data?.rate ?? null, today }),
-    [transactions, quotes.data, fx.data, today],
+    () => summarize({ transactions, quotes: quotes.data?.quotes, usdmxn: fx.data?.rate ?? null, usdmxnPrev, today }),
+    [transactions, quotes.data, fx.data, usdmxnPrev, today],
   )
 
   const selector =
@@ -87,7 +93,8 @@ export default function Summary() {
     )
   }
 
-  const loading = symbols.length > 0 && (quotes.isLoading || (needsFx && fx.isLoading))
+  // Si el FIX de ayer falla no se tumba nada: la variación del día se queda con el de hoy y lo dice.
+  const loading = symbols.length > 0 && (quotes.isLoading || (needsFx && fx.isLoading) || (usdRows && fxHist.isLoading))
   const failed = quotes.isError || fx.isError
   const retry = () => {
     if (quotes.isError) quotes.refetch()
@@ -99,6 +106,7 @@ export default function Summary() {
       items={[
         { label: 'Cotizaciones', meta: quotes.data?.meta },
         { label: 'Tipo de cambio', meta: fx.data?.meta },
+        { label: 'FIX de ayer', meta: fxHist.data?.meta },
       ]}
     />
   )
@@ -138,8 +146,29 @@ export default function Summary() {
                   value={<Delta value={view.dayChange} kind="money" currency="MXN" />}
                   sublabel={view.dayChangePct != null ? `${fmtPct(view.dayChangePct, { sign: true })} en tus posiciones` : undefined}
                 />
-                <Stat loading={loading} label="Efectivo" value={fmtMoney(view.cashMxn)} sublabel={view.cashUsd ? `Incluye ${fmtMoney(view.cashUsd, 'USD')} convertidos a pesos` : 'Lo que no está invertido'} />
+                <Stat
+                  loading={loading}
+                  label="Efectivo"
+                  value={fmtMoney(view.cashMxn)}
+                  sublabel={
+                    view.cashUsdUnconverted
+                      ? `Sin tipo de cambio: tus ${fmtMoney(view.cashUsd, 'USD')} no están sumados`
+                      : view.cashUsd
+                        ? `Incluye ${fmtMoney(view.cashUsd, 'USD')} convertidos a pesos`
+                        : 'Lo que no está invertido'
+                  }
+                />
               </div>
+            )}
+            {view.futureCount > 0 && (
+              <p className="kz-portfolio-hint">
+                {`${fmtNumber(view.futureCount, { decimals: 0 })} ${view.futureCount === 1 ? 'movimiento con fecha futura todavía no cuenta' : 'movimientos con fecha futura todavía no cuentan'}: entran al resumen el día de su fecha.`}
+              </p>
+            )}
+            {!failed && !loading && view.dayFxFallback && (
+              <p className="kz-portfolio-hint">
+                Sin el FIX de ayer, el cambio del día de lo que cotiza en dólares usa el tipo de cambio de hoy también para el cierre de ayer: deja fuera lo que se movió el peso.
+              </p>
             )}
             {!failed && !loading && view.unrealizedExcluded > 0 && (
               <p className="kz-portfolio-hint">

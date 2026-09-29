@@ -513,6 +513,12 @@ test.describe('portafolio: resumen', () => {
   for (const theme of THEMES) {
     test(`carga con su h1, valor en pesos, posiciones, asignación y ligas sin violaciones (${theme})`, async ({ page, baseURL }) => {
       await open(page, baseURL, { theme, state: PERF_STATE })
+      /** @type {URL[]} */
+      const fxHistory = []
+      page.on('request', (r) => {
+        const u = new URL(r.url())
+        if (u.pathname === '/v2/fx/history') fxHistory.push(u)
+      })
       await page.goto('/portafolio')
       await expect(page.getByRole('heading', { level: 1, name: 'Mi portafolio' })).toBeVisible()
       await expect(page.locator('h1')).toHaveCount(1)
@@ -523,7 +529,12 @@ test.describe('portafolio: resumen', () => {
       await expect(summary).toContainText('$42,168.52 MXN')
       // AAPL: 5 × (240 × 18.4321 − 225 × 18.3); WALMEX a su costo promedio.
       await expect(summary).toContainText('+$1,531.02 MXN')
-      await expect(summary).toContainText('+$334.32 MXN')
+      // Cambio del día: 150 WALMEX × 1 y AAPL con el tipo de cambio de cada día,
+      // 5 × (240 × 18.4321 − 238 × 18.4125), con el FIX del 21 como el de ayer.
+      await expect(summary).toContainText('+$357.64 MXN')
+      await expect(summary).not.toContainText('Sin el FIX de ayer')
+      // Con AAPL en dólares pide los últimos diez días del FIX, una vez.
+      expect(fxHistory.map((u) => `${u.searchParams.get('start')}|${u.searchParams.get('end')}`)).toEqual(['2026-09-12|2026-09-22'])
       const positions = page.getByRole('table', { name: 'Posiciones a precio de hoy' })
       await expect(positions.getByRole('row', { name: /AAPL/ })).toContainText('$240.00 USD')
       await expect(positions.getByRole('row', { name: /WALMEX\.MX/ })).toContainText('150')
@@ -536,6 +547,17 @@ test.describe('portafolio: resumen', () => {
       await expectNoAxeViolations(page, `resumen ${theme}`)
     })
   }
+
+  test('un movimiento con fecha futura no cuenta todavía y se avisa', async ({ page, baseURL }) => {
+    const future = tx({ id: 'f1', type: 'buy', date: '2026-10-05', symbol: 'WALMEX.MX', quantity: 100, price: 70 })
+    await open(page, baseURL, { state: { ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: [...STATE.portfolios[0].transactions, future] }] } })
+    await page.goto('/portafolio')
+    const summary = page.getByRole('region', { name: 'Resumen' })
+    await expect(summary).toContainText('1 movimiento con fecha futura todavía no cuenta')
+    // 200 WALMEX a 65 más 7,000 de efectivo: la compra del 5 de octubre no entra ni en uno ni en otro.
+    await expect(summary).toContainText('$20,000.00 MXN')
+    await expect(page.getByRole('table', { name: 'Posiciones a precio de hoy' }).getByRole('row', { name: /WALMEX\.MX/ })).toContainText('200')
+  })
 
   test('cambia de portafolio activo con el selector', async ({ page, baseURL }) => {
     const second = { ...STATE.portfolios[0], id: 'p2', name: 'Retiro', transactions: [tx({ id: 'r1', type: 'deposit', date: '2026-09-01', amount: 5000 })] }
