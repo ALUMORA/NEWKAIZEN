@@ -227,7 +227,7 @@ export default function Performance() {
             </Suspense>
           )}
 
-          <PnlCard pnl={view?.pnl ?? null} loading={loading} status={meta} footer={sources} />
+          <PnlCard pnl={view?.pnl ?? null} loading={loading} status={meta} footer={sources} fxFallback={usdList.length > 0 && Boolean(meta?.fallback)} />
         </>
       )}
 

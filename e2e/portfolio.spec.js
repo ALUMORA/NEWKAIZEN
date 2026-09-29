@@ -430,6 +430,25 @@ test.describe('portafolio: rendimiento', () => {
     expect(fxHistoryCalls).toBe(0)
   })
 
+  test('si el panel en pesos convirtió con Yahoo en vez del FIX, lo dice junto al efecto cambiario', async ({ page, baseURL }) => {
+    await open(page, baseURL, { state: PERF_STATE })
+    await page.route(/\/v2\/panel/, (route, request) => {
+      const url = new URL(request.url())
+      const { json } = PANEL({ url })
+      if (url.searchParams.get('ccy') !== 'USD') json.meta = meta({ ...json.meta, fallback: true })
+      return route.fulfill({
+        status: 200,
+        headers: { 'access-control-allow-origin': request.headers().origin ?? '*', vary: 'Origin' },
+        contentType: 'application/json',
+        body: JSON.stringify(json),
+      })
+    })
+    await page.goto('/portafolio/rendimiento')
+    const pnl = page.getByRole('region', { name: 'Resultado por posición: precio y tipo de cambio' })
+    await expect(pnl.getByRole('row', { name: /AAPL/ })).toContainText('18.4125')
+    await expect(pnl).toContainText('El tipo de cambio salió de Yahoo, no del FIX de Banxico')
+  })
+
   test('con efectivo en dólares y ninguna emisora en dólares usa el FIX de respaldo', async ({ page, baseURL }) => {
     const usdCash = tx({ id: 'u1', type: 'deposit', date: '2026-09-03', amount: 100, currency: 'USD' })
     await open(page, baseURL, { state: { ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: [...STATE.portfolios[0].transactions, usdCash] }] } })
