@@ -8,6 +8,7 @@
 // FIX anterior (`usdmxnPrev`); sin él, usa X1 para los dos y lo marca en `dayFxFallback`.
 import { derivePositionsDetailed, ledgerSnapshots } from '../../../lib/finance/ledger.js'
 import { costWeightedFx } from './cost-fx.js'
+import { cutAt } from './book-cut.js'
 
 /** @param {unknown} v @returns {v is number} */
 const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
@@ -29,9 +30,7 @@ export function summarize({ transactions, quotes, usdmxn, usdmxnPrev = null, tod
   const toMxn = (/** @type {string} */ ccy) => (ccy === 'USD' ? rate : 1)
   const toMxnPrev = (/** @type {string} */ ccy) => (ccy === 'USD' ? prevRate : 1)
 
-  const all = Array.isArray(transactions) ? transactions : []
-  const isFuture = (/** @type {any} */ t) => typeof t?.date === 'string' && t.date > today
-  const current = all.filter((t) => !isFuture(t))
+  const { current, future } = cutAt(transactions, today)
   const buyFx = costWeightedFx(current)
   let dayFxFallback = false
   const rows = derivePositionsDetailed(current, { asOf: today }).map((p) => {
@@ -118,7 +117,7 @@ export function summarize({ transactions, quotes, usdmxn, usdmxnPrev = null, tod
     dayChange,
     dayChangePct: dayChange !== null && dayBase > 0 ? dayChange / dayBase : null,
     dayFxFallback,
-    futureCount: all.length - current.length,
+    futureCount: future,
     unquoted: rows.filter((r) => !r.quoted).map((r) => r.symbol),
     mismatched: rows.filter((r) => r.mismatch).map((r) => r.symbol),
   }

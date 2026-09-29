@@ -17,6 +17,7 @@ import { DEFAULT_BENCHMARK, useStore } from '../../../lib/storage.js'
 import { PATHS } from '../../../app/paths.js'
 import { minusDays, todayMx } from '../tx-labels.js'
 import { computePerformance, impliedFx, inpcStart, isrView, nativePriceTable, panelAdjustment, pickWindow, pnlByPosition, splitAdjusted, zipTable } from '../lib/performance-view.js'
+import { cutAt } from '../lib/book-cut.js'
 import DataSources from '../components/DataSources.jsx'
 import PnlCard from '../components/PnlCard.jsx'
 import IsrCard from '../components/IsrCard.jsx'
@@ -36,7 +37,8 @@ export default function Performance() {
   const portfolio = useStore(selectActive)
   const benchmark = useStore(selectBenchmark)
   const today = todayMx()
-  const raw = useMemo(() => /** @type {any[]} */ (portfolio?.transactions ?? []), [portfolio])
+  // Corte en hoy: un movimiento con fecha futura todavía no cuenta, tampoco en el ISR.
+  const raw = useMemo(() => cutAt(/** @type {any[]} */ (portfolio?.transactions ?? []), today).current, [portfolio, today])
   const txs = useMemo(() => splitAdjusted(raw), [raw])
   const win = useMemo(() => pickWindow(raw, today), [raw, today])
 

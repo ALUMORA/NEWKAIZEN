@@ -37,8 +37,9 @@ export default function Rebalance() {
 
   const transactions = useMemo(() => portfolio?.transactions ?? [], [portfolio])
   const targets = useMemo(() => /** @type {Record<string, number>} */ (portfolio?.targets ?? {}), [portfolio])
-  const positions = useMemo(() => derivePositions(transactions), [transactions])
   const today = todayMx()
+  // Corte en hoy, igual que el efectivo: una compra con fecha futura todavía no cuenta.
+  const positions = useMemo(() => derivePositions(transactions, { asOf: today }), [transactions, today])
   const cash = useMemo(() => rebalanceCash(transactions, today), [transactions, today])
   const symbols = useMemo(
     () => [...new Set([...positions.map((p) => p.symbol), ...Object.keys(targets)])].sort(),

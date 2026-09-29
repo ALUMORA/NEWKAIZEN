@@ -364,6 +364,19 @@ test.describe('portafolio: rebalanceo', () => {
     await expect(planTable(page).getByRole('row', { name: /NAFTRAC\.MX/ })).toContainText('94')
   })
 
+  test('una compra con fecha futura no cambia el plan de hoy', async ({ page, baseURL }) => {
+    await open(page, baseURL, { state: REBALANCE_STATE })
+    await page.goto('/portafolio/rebalanceo')
+    const walmex = planTable(page).getByRole('row', { name: /WALMEX\.MX/ })
+    await expect(walmex).toContainText('Reducir')
+    const today = String(await walmex.textContent())
+    const future = tx({ id: 'f1', type: 'buy', date: '2026-10-05', symbol: 'WALMEX.MX', quantity: 100, price: 70 })
+    const withFuture = { ...REBALANCE_STATE, portfolios: [{ ...REBALANCE_STATE.portfolios[0], transactions: [...REBALANCE_STATE.portfolios[0].transactions, future] }] }
+    await page.addInitScript((st) => window.localStorage.setItem('kaizen:v2', st), JSON.stringify(withFuture))
+    await page.goto('/portafolio/rebalanceo')
+    await expect(planTable(page).getByRole('row', { name: /WALMEX\.MX/ })).toHaveText(today)
+  })
+
   test('metas que no suman 100% no calculan plan', async ({ page, baseURL }) => {
     await open(page, baseURL)
     await page.goto('/portafolio/rebalanceo')
@@ -428,6 +441,15 @@ test.describe('portafolio: rendimiento', () => {
     await expect(aapl).toContainText('18.4125')
     await expect(page.getByRole('region', { name: 'Resumen del periodo' }).locator('.kz-stat__value').filter({ hasText: 's/d' })).toHaveCount(0)
     expect(fxHistoryCalls).toBe(0)
+  })
+
+  test('una compra con fecha futura no entra al resultado por posición', async ({ page, baseURL }) => {
+    const future = tx({ id: 'f1', type: 'buy', date: '2026-10-05', symbol: 'AAPL', quantity: 10, price: 250, currency: 'USD', fxRate: 18.5 })
+    await open(page, baseURL, { state: { ...PERF_STATE, portfolios: [{ ...PERF_STATE.portfolios[0], transactions: [...PERF_STATE.portfolios[0].transactions, future] }] } })
+    await page.goto('/portafolio/rendimiento')
+    const aapl = page.getByRole('table', { name: 'Resultado por posición' }).getByRole('row', { name: /AAPL/ })
+    await expect(aapl.getByRole('cell').first()).toHaveText('5')
+    await expect(aapl).toContainText('18.3000')
   })
 
   test('si el panel en pesos convirtió con Yahoo en vez del FIX, lo dice junto al efecto cambiario', async ({ page, baseURL }) => {
