@@ -5,7 +5,10 @@
 // El libro se corta en `today`: un movimiento con fecha futura no cuenta todavía ni en posiciones
 // ni en efectivo (antes contaba en unas y no en el otro), y se reporta en `futureCount`. La
 // variación del día de lo que cotiza en dólares compara q × P1 × X1 contra q × P0 × X0, con X0 el
-// FIX anterior (`usdmxnPrev`); sin él, usa X1 para los dos y lo marca en `dayFxFallback`.
+// último FIX antes del día de negociación de cada cotización (`fxHistory`, o `usdmxnPrev` fijo);
+// sin él, usa X1 para los dos y lo marca en `dayFxFallback`. Anclarlo al día de la cotización y no
+// al del tipo de cambio evita volver a contar, antes de que salga el FIX del día, lo que el peso se
+// movió ayer: entonces X0 y X1 son el mismo FIX y el efecto cambiario del día es cero.
 import { derivePositionsDetailed, ledgerSnapshots } from '../../../lib/finance/ledger.js'
 import { costWeightedFx } from './cost-fx.js'
 import { cutAt } from './book-cut.js'
@@ -19,16 +22,23 @@ const isNum = (v) => typeof v === 'number' && Number.isFinite(v)
  *   quotes: any[] | undefined,
  *   usdmxn: number | null | undefined,
  *   usdmxnPrev?: number | null,
+ *   fxHistory?: { dates?: string[], values?: (number | null)[] } | null,
  *   today: string,
- * }} input `usdmxnPrev`: último FIX con fecha anterior al del tipo de cambio de hoy
+ * }} input `fxHistory`: /v2/fx/history de los últimos días, de donde sale X0 por cotización;
+ *   `usdmxnPrev`: un X0 fijo para todas, si no hay historial
  */
-export function summarize({ transactions, quotes, usdmxn, usdmxnPrev = null, today }) {
+export function summarize({ transactions, quotes, usdmxn, usdmxnPrev = null, fxHistory = null, today }) {
   /** @type {Map<string, any>} */
   const bySymbol = new Map((quotes ?? []).map((q) => [q.symbol, q]))
   const rate = isNum(usdmxn) && usdmxn > 0 ? usdmxn : null
   const prevRate = isNum(usdmxnPrev) && usdmxnPrev > 0 ? usdmxnPrev : null
   const toMxn = (/** @type {string} */ ccy) => (ccy === 'USD' ? rate : 1)
-  const toMxnPrev = (/** @type {string} */ ccy) => (ccy === 'USD' ? prevRate : 1)
+  /** @param {string} ccy @param {any} q */
+  const toMxnPrev = (ccy, q) => {
+    if (ccy !== 'USD') return 1
+    if (!fxHistory) return prevRate
+    return previousFix(fxHistory, typeof q?.asOf === 'string' && q.asOf ? q.asOf : today)
+  }
 
   const { current, future } = cutAt(transactions, today)
   const buyFx = costWeightedFx(current)
@@ -55,7 +65,7 @@ export function summarize({ transactions, quotes, usdmxn, usdmxnPrev = null, tod
     // P0 es el cierre anterior; si la fuente no lo manda, sale de P1 − cambio.
     let changeMxn = null
     if (change !== null && factor !== null && price !== null) {
-      const factor0 = toMxnPrev(ccy)
+      const factor0 = toMxnPrev(ccy, q)
       const p0 = isNum(q?.previousClose) ? q.previousClose : price - change
       if (factor0 !== null) {
         changeMxn = p.quantity * (price * factor - p0 * factor0)
@@ -126,8 +136,8 @@ export function summarize({ transactions, quotes, usdmxn, usdmxnPrev = null, tod
 const MX_DATE = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Mexico_City' })
 
 /**
- * Último FIX publicado antes del día del tipo de cambio de hoy (`asOf` de /v2/fx), que es el X0 de
- * la variación del día. El día se toma en la Ciudad de México: a las 20:00 del 21 ya es 22 en UTC.
+ * Último FIX publicado antes de un día (el de negociación de la cotización), que es el X0 de la
+ * variación del día. El día se toma en la Ciudad de México: a las 20:00 del 21 ya es 22 en UTC.
  * @param {{ dates?: string[], values?: (number | null)[] } | null | undefined} history /v2/fx/history
  * @param {string | null | undefined} asOf instante ISO o fecha AAAA-MM-DD
  * @returns {number | null}

@@ -638,6 +638,8 @@ test.describe('portafolio: resumen', () => {
       // 5 × (240 × 18.4321 − 238 × 18.4125), con el FIX del 21 como el de ayer.
       await expect(summary).toContainText('+$357.64 MXN')
       await expect(summary).not.toContainText('Sin el FIX de ayer')
+      await expect(summary.getByRole('list', { name: 'Fuentes de los datos' })).toContainText('Tipo de cambio de días anteriores')
+      await expect(summary.getByRole('list', { name: 'Fuentes de los datos' })).not.toContainText('FIX de ayer')
       // Con AAPL en dólares pide los últimos diez días del FIX, una vez.
       expect(fxHistory.map((u) => `${u.searchParams.get('start')}|${u.searchParams.get('end')}`)).toEqual(['2026-09-12|2026-09-22'])
       const positions = page.getByRole('table', { name: 'Posiciones a precio de hoy' })
@@ -662,6 +664,41 @@ test.describe('portafolio: resumen', () => {
     // 200 WALMEX a 65 más 7,000 de efectivo: la compra del 5 de octubre no entra ni en uno ni en otro.
     await expect(summary).toContainText('$20,000.00 MXN')
     await expect(page.getByRole('table', { name: 'Posiciones a precio de hoy' }).getByRole('row', { name: /WALMEX\.MX/ })).toContainText('200')
+  })
+
+  test('un libro con solo movimientos futuros no dice que no hay nada', async ({ page, baseURL }) => {
+    const only = [
+      tx({ id: 'f0', type: 'deposit', date: '2026-10-05', amount: 20000 }),
+      tx({ id: 'f1', type: 'buy', date: '2026-10-05', symbol: 'WALMEX.MX', quantity: 100, price: 60 }),
+    ]
+    await open(page, baseURL, { state: { ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: only }] } })
+    await page.goto('/portafolio')
+    await expect(page.getByText('Aún no hay posiciones')).toBeVisible()
+    await expect(page.getByText('2 movimientos con fecha futura todavía no cuentan: entran al resumen el día de su fecha.')).toBeVisible()
+  })
+
+  test('el FIX de días anteriores se pide junto con las cotizaciones y solo detiene el cambio del día', async ({ page, baseURL }) => {
+    await open(page, baseURL, { state: PERF_STATE })
+    /** @type {() => void} */
+    let releaseQuotes = () => {}
+    /** @type {() => void} */
+    let releaseHist = () => {}
+    const quotesGate = new Promise((r) => { releaseQuotes = () => r(undefined) })
+    const histGate = new Promise((r) => { releaseHist = () => r(undefined) })
+    await page.route(/\/v2\/quotes/, async (route) => { await quotesGate; return route.fallback() })
+    await page.route(/\/v2\/fx\/history/, async (route) => { await histGate; return route.fallback() })
+    const histRequested = page.waitForRequest((r) => new URL(r.url()).pathname === '/v2/fx/history')
+    await page.goto('/portafolio')
+    // AAPL se compró en dólares: el FIX se pide sin esperar a las cotizaciones.
+    await histRequested
+    releaseQuotes()
+    const summary = page.getByRole('region', { name: 'Resumen' })
+    // Con el FIX de días anteriores todavía en camino, el valor total y la ganancia ya se ven.
+    await expect(summary).toContainText('$42,168.52 MXN')
+    await expect(summary).toContainText('+$1,531.02 MXN')
+    await expect(summary).not.toContainText('Sin el FIX de ayer')
+    releaseHist()
+    await expect(summary).toContainText('+$357.64 MXN')
   })
 
   test('cambia de portafolio activo con el selector', async ({ page, baseURL }) => {
@@ -699,6 +736,28 @@ plainTest('portafolio: resumen con las cotizaciones caídas avisa y deja reinten
   await page.goto('/portafolio')
   await expect(page.getByRole('region', { name: 'Resumen' }).getByRole('alert')).toContainText('No pudimos traer las cotizaciones')
   await expect(page.getByRole('region', { name: 'Resumen' }).getByRole('button', { name: 'Reintentar' })).toBeVisible()
+  guards.assertClean()
+})
+
+plainTest('portafolio: resumen con el tipo de cambio caído deja lo que está en pesos y avisa', async ({ page, baseURL }) => {
+  const guards = attachGuards(page, { allow: expectedHttpError(404, 'GET', '/v2/fx', 'la prueba tumba el tipo de cambio a propósito') })
+  const usdCash = tx({ id: 'u1', type: 'deposit', date: '2026-09-03', amount: 100, currency: 'USD', fxRate: 18 })
+  await open(page, /** @type {string} */ (baseURL), { state: { ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: [...STATE.portfolios[0].transactions, usdCash] }] } })
+  await page.route((url) => url.pathname === '/v2/fx', (route, request) =>
+    route.fulfill({
+      status: 404,
+      headers: { 'access-control-allow-origin': request.headers().origin ?? '*', vary: 'Origin' },
+      contentType: 'application/json',
+      body: JSON.stringify({ error: { code: 'NOT_FOUND', message: 'Sin tipo de cambio.' } }),
+    }),
+  )
+  await page.goto('/portafolio')
+  const summary = page.getByRole('region', { name: 'Resumen' })
+  // 200 WALMEX a 65 más 7,000 pesos de efectivo: lo que está en pesos sigue a la vista.
+  await expect(summary).toContainText('$20,000.00 MXN')
+  await expect(summary).toContainText('Sin tipo de cambio: tus $100.00 USD no están sumados')
+  await expect(summary.getByRole('alert')).toContainText('No pudimos traer el tipo de cambio de hoy')
+  await expect(summary.getByRole('button', { name: 'Reintentar' })).toBeVisible()
   guards.assertClean()
 })
 

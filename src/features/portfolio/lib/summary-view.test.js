@@ -120,3 +120,23 @@ describe('summarize', () => {
     expect(previousFix({ dates: ['2026-09-18', '2026-09-21'], values: [18.39, null] }, '2026-09-22')).toBe(18.39)
   })
 })
+
+describe('summarize con el historial del FIX', () => {
+  it('el tipo de cambio de ayer es el último FIX antes del día de la cotización, no del día del tipo de cambio', () => {
+    // A las 09:00 del 22 el FIX del 22 todavía no sale: /v2/fx dice 21 y la cotización ya es del 22.
+    // X0 es el FIX del 21, no el del 18; si X1 también es el del 21, el peso no se movió hoy.
+    const hist = { dates: ['2026-09-18', '2026-09-21'], values: [18.3, 18.5] }
+    const aapl = { ...quote('AAPL', 180, 3, 'USD'), previousClose: 177, asOf: '2026-09-22T15:00:00Z' }
+    const res = summarize({ transactions: TXS, quotes: [aapl], usdmxn: 18.6, fxHistory: hist, today: '2026-09-22' })
+    // 10 × (180 × 18.6 − 177 × 18.5) = 735
+    expect(res.dayChange).toBeCloseTo(735, 6)
+    expect(res.dayFxFallback).toBe(false)
+  })
+
+  it('sin fecha en la cotización toma el día de hoy', () => {
+    const hist = { dates: ['2026-09-18', '2026-09-21', '2026-09-22'], values: [18.3, 18.5, 18.6] }
+    const aapl = { ...quote('AAPL', 180, 3, 'USD'), previousClose: 177 }
+    const res = summarize({ transactions: TXS, quotes: [aapl], usdmxn: 18.6, fxHistory: hist, today: '2026-09-22' })
+    expect(res.dayChange).toBeCloseTo(10 * (180 * 18.6 - 177 * 18.5), 6)
+  })
+})
