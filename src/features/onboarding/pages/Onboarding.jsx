@@ -5,10 +5,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Badge, Button, Card, PageHeader, useToast } from '../../../components/ui/index.js'
-import { detectDelimiter, parseCSV, rowsToObjects } from '../../../lib/csv.js'
 import { newId, update, validateTransaction } from '../../../lib/storage.js'
 import { PATHS } from '../../../app/paths.js'
-import { SAMPLE_NAME, SAMPLE_NOTE, SAMPLE_TRANSACTIONS, csvColumns, rowsToRawTransactions } from '../sample.js'
+import { SAMPLE_NAME, SAMPLE_NOTE, SAMPLE_TRANSACTIONS, readOnboardingCsv } from '../sample.js'
 import '../onboarding.css'
 
 function createPortfolio({ name, notes = '', transactions = [] }) {
@@ -36,19 +35,7 @@ export default function Onboarding() {
     const file = event.target.files?.[0]
     if (!file) return
     const text = await file.text()
-    const delimiter = detectDelimiter(text)
-    const rows = parseCSV(text, { delimiter })
-    // Separado por punto y coma es el CSV de Excel en español: ahí la coma es el decimal.
-    const raw = rowsToRawTransactions(rowsToObjects(rows), { decimalComma: delimiter === ';' })
-    const { unknown } = csvColumns(rows[0] ?? [])
-    const ok = []
-    const bad = []
-    raw.forEach((r, i) => {
-      const res = validateTransaction(r)
-      if (res.tx) ok.push(res.tx)
-      else bad.push({ row: i + 2, reason: res.reason })
-    })
-    setCsv({ name: file.name, ok, bad, unknown })
+    setCsv({ name: file.name, ...readOnboardingCsv(text) })
   }
 
   return (
