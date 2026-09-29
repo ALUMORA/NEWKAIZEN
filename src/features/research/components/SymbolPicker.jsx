@@ -52,9 +52,12 @@ export function SymbolPicker({ label, listLabel, symbols, onChange, max, error }
     onChange(next)
   }
 
+  const connecting = status === 'probing' || status === 'waking'
   const hint = available
     ? `Busca por nombre o clave y elige de la lista, hasta ${max}. También puedes escribir claves separadas por coma y presionar Enter.`
-    : `La búsqueda por nombre no está disponible ahora: escribe las claves separadas por coma (hasta ${max}) y presiona Enter.`
+    : connecting
+      ? `Conectando con el servidor para buscar por nombre. Mientras, escribe las claves separadas por coma (hasta ${max}) y presiona Enter.`
+      : `La búsqueda por nombre no está disponible ahora: escribe las claves separadas por coma (hasta ${max}) y presiona Enter.`
   const shown = error || message
 
   return (
