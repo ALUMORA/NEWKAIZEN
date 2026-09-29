@@ -95,15 +95,29 @@ const TERMINOS_DE_INVESTIGAR = [
   'diferencial-contra-cetes',
 ]
 
-/** Todo `termKey` literal que usa src/features: 'x' en `termKey: 'x'`, `termKey="x"` o `termKey={'x'}`. */
+/**
+ * Llaves del glosario que usa un archivo: los `termKey` literales ('x' en `termKey: 'x'`,
+ * `termKey="x"` o `termKey={'x'}`) y el segundo elemento de las tablas `[fragmento, llave]` de una
+ * constante TERMS, que llegan a InfoTip por una función como `termFor(id)` de Mercados.
+ * @param {string} fuente
+ */
+function termKeysEn(fuente) {
+  const slugs = []
+  for (const m of fuente.matchAll(/termKey\s*[:=]\s*\{?\s*(['"`])([^'"`]+)\1(?!\s+in\b)/g)) slugs.push(m[2])
+  for (const tabla of fuente.matchAll(/const\s+\w*TERMS\w*\s*=\s*\[([\s\S]*?)\n\]/g)) {
+    for (const par of tabla[1].matchAll(/\[\s*(['"])[^'"]+\1\s*,\s*(['"])([^'"]+)\2\s*\]/g)) slugs.push(par[3])
+  }
+  return slugs
+}
+
+/** Todas las llaves del glosario que usa src/features, con su archivo. */
 function termKeysDeFeatures() {
   const raiz = new URL('../features/', import.meta.url)
   const usos = []
   for (const archivo of readdirSync(raiz, { recursive: true })) {
     const nombre = String(archivo)
     if (!/\.(js|jsx)$/.test(nombre) || /\.test\.(js|jsx)$/.test(nombre)) continue
-    const fuente = readFileSync(new URL(nombre, raiz), 'utf8')
-    for (const m of fuente.matchAll(/termKey\s*[:=]\s*\{?\s*(['"`])([^'"`]+)\1(?!\s+in\b)/g)) usos.push({ archivo: nombre, slug: m[2] })
+    for (const slug of termKeysEn(readFileSync(new URL(nombre, raiz), 'utf8'))) usos.push({ archivo: nombre, slug })
   }
   return usos
 }
@@ -113,7 +127,15 @@ describe('llaves que usan las pantallas', () => {
     expect(TERMINOS_DE_INVESTIGAR.filter((slug) => !(slug in glossary))).toEqual([])
   })
 
-  it('todo termKey usado bajo src/features existe en el glosario', () => {
+  it('la guarda también lee las tablas TERMS de fragmento y llave, no solo los termKey literales', () => {
+    const fuente = "const TERMS = [\n  ['tiie', 'tiie'],\n  [\"spread10y2y\", \"spread-10a-2a\"],\n]\nconst x = { termKey: 'p-u' }\n"
+    expect(termKeysEn(fuente)).toEqual(['p-u', 'tiie', 'spread-10a-2a'])
+    // Y las de Mercados de verdad entran a la cuenta.
+    const mercados = termKeysDeFeatures().filter((u) => u.archivo.endsWith('shared.js')).map((u) => u.slug)
+    expect(mercados).toContain('spread-10a-2a')
+  })
+
+  it('todo termKey usado bajo src/features existe en el glosario, literal o en una tabla TERMS', () => {
     const usos = termKeysDeFeatures()
     expect(usos.length).toBeGreaterThan(30)
     const rotos = usos.filter((u) => !(u.slug in glossary)).map((u) => `${u.archivo}: ${u.slug}`)
