@@ -375,6 +375,8 @@ test.describe('portafolio: rebalanceo', () => {
     await page.addInitScript((st) => window.localStorage.setItem('kaizen:v2', st), JSON.stringify(withFuture))
     await page.goto('/portafolio/rebalanceo')
     await expect(planTable(page).getByRole('row', { name: /WALMEX\.MX/ })).toHaveText(today)
+    // El plan no cambia, pero no en silencio: dice por qué la compra no cuenta todavía.
+    await expect(page.getByText('1 movimiento con fecha futura todavía no cuenta: entra al plan el día de su fecha.')).toBeVisible()
   })
 
   test('metas que no suman 100% no calculan plan', async ({ page, baseURL }) => {
@@ -707,6 +709,7 @@ test.describe('portafolio: riesgo', () => {
       // Un solo sector con nombre: N efectiva 1, sobre la parte de WALMEX.
       await expect(sectors).toContainText('Número efectivo de sectores')
       await expect(sectors.locator('.kz-stat__value').first()).toHaveText('1.0')
+      await expect(sectors).toContainText('del valor de tus posiciones, la parte que tiene sector')
       await expect(page.getByRole('figure', { name: 'Correlaciones entre tus emisoras' })).toBeVisible()
       await noHorizontalScroll(page)
       await expectNoAxeViolations(page, `riesgo ${theme}`)
@@ -717,6 +720,18 @@ test.describe('portafolio: riesgo', () => {
     await open(page, baseURL, { state: { ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: [] }] } })
     await page.goto('/portafolio/riesgo')
     await expect(page.getByRole('link', { name: 'Ir a Movimientos' })).toHaveAttribute('href', '/portafolio/movimientos')
+  })
+
+  test('una compra con fecha futura no cuenta y se avisa, también si es lo único del libro', async ({ page, baseURL }) => {
+    const future = tx({ id: 'f1', type: 'buy', date: '2026-10-05', symbol: 'AMXB.MX', quantity: 10, price: 15 })
+    await open(page, baseURL, { state: { ...RISK_STATE, portfolios: [{ ...RISK_STATE.portfolios[0], transactions: [...RISK_STATE.portfolios[0].transactions, future] }] } })
+    await page.goto('/portafolio/riesgo')
+    await expect(page.getByText('11 semanas de datos')).toBeVisible()
+    await expect(page.getByText('1 movimiento con fecha futura todavía no cuenta: entra al riesgo el día de su fecha.')).toBeVisible()
+    await page.addInitScript((st) => window.localStorage.setItem('kaizen:v2', st), JSON.stringify({ ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: [future] }] }))
+    await page.goto('/portafolio/riesgo')
+    await expect(page.getByText('Aún no hay posiciones')).toBeVisible()
+    await expect(page.getByText('1 movimiento con fecha futura todavía no cuenta: entra al riesgo el día de su fecha.')).toBeVisible()
   })
 })
 

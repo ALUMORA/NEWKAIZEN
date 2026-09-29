@@ -15,6 +15,8 @@ import '../portfolio.css'
 import { lastYears } from '../lib/panel-window.js'
 import { computeRisk, panelSymbols, sectorExposure } from '../lib/risk-view.js'
 import { todayMx } from '../tx-labels.js'
+import { cutAt, futureNotice } from '../lib/book-cut.js'
+import FutureNotice from '../components/FutureNotice.jsx'
 
 const Heatmap = lazy(() => import('../../../components/charts/Heatmap.jsx').then((m) => ({ default: m.Heatmap })))
 
@@ -37,8 +39,9 @@ export default function Risk() {
   const portfolio = useStore(selectActive)
   const transactions = useMemo(() => portfolio?.transactions ?? [], [portfolio])
   const today = todayMx()
-  // Corte en hoy: un movimiento con fecha futura todavía no cuenta, igual que en el resumen.
-  const positions = useMemo(() => derivePositions(transactions, { asOf: today }), [transactions, today])
+  // Corte en hoy: un movimiento con fecha futura todavía no cuenta, igual que en el resumen, y se dice.
+  const { current: book, future: futureCount } = useMemo(() => cutAt(transactions, today), [transactions, today])
+  const positions = useMemo(() => derivePositions(book, { asOf: today }), [book, today])
   const symbols = useMemo(() => panelSymbols(positions), [positions])
   const panel = useQuery({ ...panelQuery(symbols, PANEL_PARAMS), enabled: positions.length > 0 })
   const risk = useMemo(() => computeRisk(positions, lastYears(panel.data, WINDOW_YEARS)), [positions, panel.data])
@@ -61,7 +64,7 @@ export default function Risk() {
         {header}
         <EmptyState
           title={portfolio ? 'Aún no hay posiciones' : 'Todavía no tienes un portafolio'}
-          text={portfolio ? 'Registra tus compras en Movimientos para medir el riesgo.' : 'Crea uno en la bienvenida para empezar.'}
+          text={portfolio ? (futureNotice(futureCount, 'al riesgo') ?? 'Registra tus compras en Movimientos para medir el riesgo.') : 'Crea uno en la bienvenida para empezar.'}
           action={
             <Link className="kz-button" data-variant="primary" data-size="md" to={portfolio ? PATHS.portfolioTransactions : PATHS.onboarding}>
               {portfolio ? 'Ir a Movimientos' : 'Ir a la bienvenida'}
@@ -79,6 +82,7 @@ export default function Risk() {
   return (
     <div className="kz-container kz-col kz-portfolio-page" data-gap="6">
       {header}
+      <FutureNotice count={futureCount} where="al riesgo" />
       {panel.isError ? (
         <ErrorState message="No pudimos traer los precios históricos para medir el riesgo." onRetry={() => panel.refetch()} retrying={panel.isFetching} />
       ) : (
@@ -117,7 +121,7 @@ export default function Risk() {
                       !sectors
                         ? undefined
                         : sectors.effectiveN != null
-                          ? `Sobre el ${fmtPct(sectors.coverage, { decimals: 0 })} de tus posiciones que tiene sector`
+                          ? `Sobre el ${fmtPct(sectors.coverage, { decimals: 0 })} del valor de tus posiciones, la parte que tiene sector`
                           : 'Ninguna de tus posiciones trae sector; los fondos no cuentan'
                     }
                     info={{ termKey: 'numero-efectivo-de-activos', term: 'Número efectivo de activos' }}
