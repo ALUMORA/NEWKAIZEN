@@ -318,12 +318,16 @@ test('/mercados: bolsas abiertas con retraso, resumen factual, USD/MXN neutral y
   await expect(page.getByText(/sentimiento|codicia|cauteloso|optimista|pesimista/i)).toHaveCount(0)
 
   // USD/MXN en la tabla: cambio en neutral con pista de texto, nunca verde o rojo.
-  const fx = page.getByRole('table', { name: 'Panorama: Divisas' })
+  // "Panorama" sale una sola vez: el eyebrow del h1 (igual que en la navegación); la sección de las
+  // tablas se llama por lo que muestra.
+  await expect(page.locator('.markets-page').getByText(/^Panorama$/i).filter({ visible: true })).toHaveCount(1)
+  await expect(page.getByRole('heading', { level: 2, name: 'Precios por mercado' })).toBeVisible()
+  const fx = page.getByRole('table', { name: 'Precios por mercado: Divisas' })
   const usd = fx.getByRole('row', { name: /Dólar frente al peso/ })
   await expect(usd.getByText('peso más débil')).toBeVisible()
   await expect(usd.locator('.kz-delta').first()).toHaveAttribute('data-dir', 'neutral')
   await expect(fx.getByRole('row', { name: /Índice del dólar/ }).getByText('dólar más débil')).toBeVisible()
-  const hsi = page.getByRole('table', { name: 'Panorama: Resto del mundo' }).getByRole('row', { name: /Hang Seng/ })
+  const hsi = page.getByRole('table', { name: 'Precios por mercado: Resto del mundo' }).getByRole('row', { name: /Hang Seng/ })
   await expect(hsi.getByText('s/d').first()).toBeVisible()
 
   for (const [name, href] of [
