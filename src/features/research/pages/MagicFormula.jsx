@@ -86,7 +86,7 @@ function Ranking({ rows, notes, status, loading = false }) {
       header: 'Rendimiento sobre capital',
       numeric: true,
       sortable: true,
-      info: { term: 'Rendimiento sobre capital', text: ROC_TEXT },
+      info: { termKey: 'roc-greenblatt', term: 'Rendimiento sobre capital', text: ROC_TEXT },
       format: (v, row) => (
         <>
           {fmtPct(v, { decimals: 1 })}

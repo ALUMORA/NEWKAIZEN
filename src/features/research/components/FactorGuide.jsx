@@ -9,8 +9,8 @@ const METHODOLOGY = '/aprender/metodologia/screener-de-factores'
 const ITEMS = [
   { id: 'z', label: 'Puntaje z relativo al sector', termKey: 'z-score-sectorial', text: Z_TEXT },
   ...FACTORS.map((f) => ({ id: f.key, label: f.label, termKey: 'termKey' in f ? f.termKey : undefined, text: f.text })),
-  { id: 'composite', label: 'Compuesto', termKey: undefined, text: COMPOSITE_TEXT },
-  { id: 'coverage', label: 'Cobertura', termKey: undefined, text: COVERAGE_TEXT },
+  { id: 'composite', label: 'Compuesto', termKey: 'puntaje-compuesto', text: COMPOSITE_TEXT },
+  { id: 'coverage', label: 'Cobertura', termKey: 'cobertura-de-datos', text: COVERAGE_TEXT },
 ]
 
 /** @param {{ method?: string | null }} props */

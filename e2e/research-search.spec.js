@@ -436,6 +436,17 @@ test.describe('screener de factores', () => {
     await expect(page.getByText('La tendencia histórica de las acciones baratas')).toBeVisible()
     await expect(page.getByRole('link', { name: /Ver más sobre Valor/ })).toHaveAttribute('href', '/aprender/factor-valor')
     await page.keyboard.press('Escape')
+    // Crecimiento, compuesto y cobertura ya tienen llave en el glosario.
+    for (const [term, slug] of [['Crecimiento', 'factor-crecimiento'], ['Compuesto', 'puntaje-compuesto'], ['Cobertura', 'cobertura-de-datos']]) {
+      await guide.getByRole('button', { name: `Qué es ${term}` }).click()
+      await expect(page.getByRole('link', { name: `Ver más sobre ${term}` })).toHaveAttribute('href', `/aprender/${slug}`)
+      await page.keyboard.press('Escape')
+    }
+    // Y las métricas que antes explicaban con texto propio el inverso de un múltiplo.
+    await page.getByRole('tab', { name: 'Métricas' }).click()
+    await page.getByRole('button', { name: 'Qué es ROA' }).first().click()
+    await expect(page.getByRole('link', { name: 'Ver más sobre ROA' })).toHaveAttribute('href', '/aprender/roa')
+    await page.keyboard.press('Escape')
     await expect(guide.getByRole('link', { name: 'Metodología completa del screener' })).toHaveAttribute('href', '/aprender/metodologia/screener-de-factores')
     await expect(guide).toContainText('Cómo lo calcula el servidor')
   })

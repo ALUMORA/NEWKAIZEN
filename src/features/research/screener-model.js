@@ -21,10 +21,10 @@ export const CUSTOM_MAX = 50
 export const METRICS = /** @type {const} */ ([
   { key: 'earningsYield', label: 'Rendimiento de utilidades', kind: 'pct', termKey: 'earnings-yield' },
   { key: 'fcfYield', label: 'Flujo libre / capitalización', kind: 'pct', termKey: 'fcf-yield' },
-  { key: 'ebitdaToEv', label: 'EBITDA / valor empresa', kind: 'pct', text: 'EBITDA entre valor empresa: el inverso de VE/EBITDA. Más alto quiere decir que pagas menos por cada peso de EBITDA.' },
-  { key: 'bookToPrice', label: 'Libros / precio', kind: 'pct', text: 'Valor en libros por acción entre precio: el inverso de P/VL. Más alto quiere decir que pagas menos por cada peso de capital contable.' },
+  { key: 'ebitdaToEv', label: 'EBITDA / valor empresa', kind: 'pct', termKey: 'ebitda-a-valor-empresa', text: 'EBITDA entre valor empresa: el inverso de VE/EBITDA. Más alto quiere decir que pagas menos por cada peso de EBITDA.' },
+  { key: 'bookToPrice', label: 'Libros / precio', kind: 'pct', termKey: 'libros-a-precio', text: 'Valor en libros por acción entre precio: el inverso de P/VL. Más alto quiere decir que pagas menos por cada peso de capital contable.' },
   { key: 'returnOnEquity', label: 'ROE', kind: 'pct', termKey: 'roe' },
-  { key: 'returnOnAssets', label: 'ROA', kind: 'pct', text: 'Utilidad neta entre activos totales: cuánto gana la empresa por cada peso de activos.' },
+  { key: 'returnOnAssets', label: 'ROA', kind: 'pct', termKey: 'roa', text: 'Utilidad neta entre activos totales: cuánto gana la empresa por cada peso de activos.' },
   { key: 'operatingMargin', label: 'Margen operativo', kind: 'pct', termKey: 'margen-operativo' },
   { key: 'debtToEquity', label: 'Deuda / capital', kind: 'ratio', termKey: 'deuda-capital' },
   { key: 'momentum12m1', label: 'Momentum 12-1', kind: 'pct', termKey: 'momentum-12-1' },
@@ -77,6 +77,7 @@ export const FACTORS = /** @type {const} */ ([
     label: 'Crecimiento',
     raw: 'revenueGrowth',
     rawLabel: 'ingresos',
+    termKey: 'factor-crecimiento',
     text: 'Crecimiento de ingresos y de utilidades contra el mismo periodo del año anterior, comparado con su sector.',
   },
 ])

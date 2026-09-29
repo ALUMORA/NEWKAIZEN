@@ -479,6 +479,30 @@ plainTest('screener: FIBRAs caídas muestran el error con reintento', async ({ p
   guards.assertClean()
 })
 
+test.describe('screeners: las columnas con texto propio ligan al glosario', () => {
+  /** Abre el InfoTip de un encabezado y revisa su liga a /aprender. */
+  async function expectGlossaryLink(page, button, term, href) {
+    await page.getByRole('button', { name: button }).first().click()
+    await expect(page.getByRole('link', { name: `Ver más sobre ${term}` })).toHaveAttribute('href', href)
+    await page.keyboard.press('Escape')
+  }
+
+  test('fórmula mágica: el rendimiento sobre capital de Greenblatt', async ({ page, baseURL }) => {
+    await open(page, /** @type {string} */ (baseURL))
+    await page.goto('/screener/formula-magica')
+    await magicReady(page)
+    await expectGlossaryLink(page, 'Qué es Rendimiento sobre capital', 'Rendimiento sobre capital', '/aprender/roc-greenblatt')
+  })
+
+  test('FIBRAs: diferencial contra CETES y deuda entre capitalización', async ({ page, baseURL }) => {
+    await open(page, /** @type {string} */ (baseURL))
+    await page.goto('/screener/fibras')
+    await fibrasReady(page)
+    await expectGlossaryLink(page, 'Qué es Diferencial contra la tasa', 'Diferencial contra la tasa', '/aprender/diferencial-contra-cetes')
+    await expectGlossaryLink(page, 'Qué es Deuda entre capitalización', 'Deuda entre capitalización', '/aprender/deuda-capitalizacion')
+  })
+})
+
 test('desde la barra lateral: título de la pestaña y foco en el h1 de cada screener', async ({ page, baseURL }, testInfo) => {
   test.skip(testInfo.project.name === 'mobile', 'En móvil la navegación va por la barra inferior.')
   await open(page, /** @type {string} */ (baseURL))
