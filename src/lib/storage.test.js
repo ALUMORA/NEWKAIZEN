@@ -282,6 +282,15 @@ describe('validateTransaction', () => {
     expect(Boolean(validateTransaction(raw).tx)).toBe(ok)
   })
 
+  it('un número ilegible se reporta con el nombre del campo en español', () => {
+    const buy = { type: 'buy', symbol: 'AAPL', quantity: 1, price: 1 }
+    expect(validateTransaction({ ...buy, quantity: Number.NaN }).reason).toBe('la cantidad no es un número')
+    expect(validateTransaction({ ...buy, price: Number.NaN }).reason).toBe('el precio no es un número')
+    expect(validateTransaction({ ...buy, fxRate: Number.NaN }).reason).toBe('el tipo de cambio no es un número')
+    expect(validateTransaction({ type: 'deposit', amount: 'diez' }).reason).toBe('el monto no es un número')
+    expect(validateTransaction({ type: 'split', symbol: 'NVDA', ratio: Number.NaN }).reason).toBe('la proporción no es un número')
+  })
+
   it('completa valores por defecto', () => {
     const { tx } = validateTransaction({ type: 'deposit', amount: 10 })
     expect(tx).toMatchObject({ currency: 'MXN', fees: 0, date: null, note: '', symbol: null })

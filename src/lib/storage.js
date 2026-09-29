@@ -225,8 +225,14 @@ export function validateTransaction(raw) {
   const amount = numOrNull(raw.amount)
   const ratio = numOrNull(raw.ratio)
   const fees = raw.fees == null ? 0 : raw.fees
-  for (const [name, v] of Object.entries({ quantity, price, fxRate, amount, ratio })) {
-    if (Number.isNaN(v)) return { reason: `${name} no es un número` }
+  for (const [label, v] of /** @type {[string, number | null][]} */ ([
+    ['la cantidad', quantity],
+    ['el precio', price],
+    ['el tipo de cambio', fxRate],
+    ['el monto', amount],
+    ['la proporción', ratio],
+  ])) {
+    if (Number.isNaN(v)) return { reason: `${label} no es un número` }
   }
   if (!isFiniteNum(fees) || fees < 0) return { reason: 'comisión inválida' }
   if (fxRate !== null && fxRate <= 0) return { reason: 'tipo de cambio inválido' }
