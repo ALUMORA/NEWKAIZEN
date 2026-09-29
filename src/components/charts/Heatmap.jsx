@@ -1,10 +1,12 @@
 // Mapa de calor divergente (azul y naranja), pensado para correlaciones. Imprime el valor en la
-// celda cuando cabe; si no, la tabla y el resumen lo dicen.
+// celda cuando cabe, con respaldo compacto a 10 px (heatmap-fit.js); si ni así cabe, la tabla y el
+// resumen lo dicen.
 import { useMemo } from 'react'
-import { MISSING, isNum } from '../../lib/format.js'
+import { isNum } from '../../lib/format.js'
 import { ChartFrame } from './ChartFrame.jsx'
 import { useWidth } from './hooks.js'
 import { fitText, textWidth } from './measure.js'
+import { heatmapCellText, heatmapHeaders } from './heatmap-fit.js'
 import { valueFormatter } from './scale.js'
 import { CUTS, DIVERGING, divergingIndex, maxAbs } from './diverging.js'
 
@@ -39,34 +41,40 @@ export function Heatmap({
   const autoSummary = summary ?? (empty ? undefined : describeExtremes(rows, columns, values, fmt))
 
   const labelW = empty ? 0 : Math.min(Math.max(...rows.map(textWidth)) + 10, width * 0.3)
-  const headH = 24
   const cellW = empty ? 0 : Math.max(1, (width - labelW) / columns.length)
+  const heads = empty ? null : heatmapHeaders(columns, cellW)
+  const headH = heads?.height ?? 24
   const h = empty ? 160 : headH + rows.length * cellHeight
-  const fits = (s) => (showValues === true || (showValues === 'auto' && textWidth(s) + 8 <= cellW && cellHeight >= 20))
   return (
     <ChartFrame title={title} titleAs={titleAs} description={description} summary={autoSummary} legend={legend} table={table}
       status={status} source={source} actions={actions} className={className}>
       <div ref={ref} className="kz-chart__plot" style={{ height: h }}>
         {empty ? <div className="kz-chart__empty">{emptyText}</div> : width > 0 && (
           <svg className="kz-chart__svg" width={width} height={h} aria-hidden="true" focusable="false">
-            {columns.map((c, j) => (
-              <text key={`h${j}`} className="kz-chart__tick" x={labelW + cellW * j + cellW / 2} y={headH - 8} textAnchor="middle">{fitText(c, cellW - 2)}</text>
-            ))}
+            {heads.labels.map((c, j) => {
+              const cx = labelW + cellW * j + cellW / 2
+              const cls = `kz-chart__tick kz-heatmap__head${heads.compact ? ' kz-heatmap__compact' : ''}`
+              // Verticales: de abajo hacia arriba, pegados a la primera fila y centrados en su columna.
+              return heads.vertical
+                ? <text key={`h${j}`} className={cls} x={cx} y={headH - 6} dy="0.32em" textAnchor="start" transform={`rotate(-90 ${cx} ${headH - 6})`}>{c}</text>
+                : <text key={`h${j}`} className={cls} x={cx} y={headH - 8} textAnchor="middle">{c}</text>
+            })}
             {rows.map((r, i) => (
               <g key={`r${i}`}>
                 <text className="kz-chart__label" x={0} y={headH + cellHeight * i + cellHeight / 2} dy="0.32em">{fitText(r, labelW - 8)}</text>
                 {columns.map((c, j) => {
                   const v = values?.[i]?.[j]
                   const k = divergingIndex(v, m)
-                  const text = isNum(v) ? fmt(v) : MISSING
+                  const label = heatmapCellText(v, { cellW, cellHeight, showValues, format, decimals })
                   const x = labelW + cellW * j
                   const y = headH + cellHeight * i
                   return (
                     <g key={`c${j}`}>
                       <rect className="kz-heatmap__cell" x={x + 1} y={y + 1} width={Math.max(0, cellW - 2)} height={cellHeight - 2} rx={2}
                         fill={k < 0 ? 'var(--surface-2)' : DIVERGING[k]} />
-                      {fits(text) && (
-                        <text className={k < 0 ? 'kz-chart__tick' : 'kz-heatmap__value'} x={x + cellW / 2} y={y + cellHeight / 2} dy="0.32em" textAnchor="middle">{text}</text>
+                      {label && (
+                        <text className={`${k < 0 ? 'kz-chart__tick' : 'kz-heatmap__value'} kz-heatmap__text${label.compact ? ' kz-heatmap__compact' : ''}`}
+                          x={x + cellW / 2} y={y + cellHeight / 2} dy="0.32em" textAnchor="middle">{label.text}</text>
                       )}
                     </g>
                   )

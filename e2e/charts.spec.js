@@ -133,3 +133,48 @@ test.describe('interacción', () => {
     expect(overflow).toBeLessThanOrEqual(0)
   })
 })
+
+test.describe('mapa de calor a 390 px', () => {
+  test('con 8 claves las celdas muestran cifras y los encabezados no se quedan en cuatro letras', async ({ page, baseURL }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    const section = await openCharts(page, baseURL)
+    const heat = section.getByRole('figure', { name: 'Correlaciones a un año' })
+    await heat.scrollIntoViewIfNeeded()
+    const cells = heat.locator('.kz-heatmap__cell')
+    await expect(cells).toHaveCount(64)
+    // Cada celda lleva su cifra (compacta si hace falta: ".53", "−.12") o s/d; ninguna queda en blanco.
+    const texts = heat.locator('.kz-heatmap__text')
+    await expect(texts).toHaveCount(64)
+    const values = await texts.allTextContents()
+    for (const v of values) expect(v).toMatch(/^(−?\d?\.\d{1,2}|s\/d)$/)
+    // El texto no se sale de su celda.
+    const overflow = await heat.locator('svg.kz-chart__svg').evaluate((svg) => {
+      const rects = [...svg.querySelectorAll('.kz-heatmap__cell')]
+      const labels = [...svg.querySelectorAll('.kz-heatmap__text')]
+      return labels.filter((t, i) => {
+        const a = t.getBoundingClientRect()
+        const b = rects[i].getBoundingClientRect()
+        return a.left < b.left - 0.5 || a.right > b.right + 0.5
+      }).length
+    })
+    expect(overflow).toBe(0)
+    // Encabezados completos (verticales si no caben): antes "GFNORTE" quedaba en "GFN…".
+    const heads = await heat.locator('.kz-heatmap__head').allTextContents()
+    expect(heads).toHaveLength(8)
+    expect(heads).toEqual(['WALMEX', 'GFNORTE', 'AMX', 'FEMSA', 'GMEXICO', 'CEMEX', 'CETES', 'USD/MXN'])
+    const headsOutside = await heat.locator('svg.kz-chart__svg').evaluate((svg) => {
+      const box = svg.getBoundingClientRect()
+      return [...svg.querySelectorAll('.kz-heatmap__head')].filter((t) => {
+        const r = t.getBoundingClientRect()
+        return r.top < box.top - 0.5 || r.left < box.left - 0.5 || r.right > box.right + 0.5
+      }).length
+    })
+    expect(headsOutside).toBe(0)
+    await heat.screenshot({ path: test.info().outputPath('heatmap-390.png') })
+    // Las cifras completas siguen en "Ver tabla".
+    await heat.getByRole('button', { name: 'Ver tabla' }).click()
+    const table = heat.getByRole('table', { name: 'Datos de Correlaciones a un año' })
+    await expect(table).toBeVisible()
+    await expect(table.getByRole('cell').filter({ hasText: /^1\.00$/ }).first()).toBeVisible()
+  })
+})
