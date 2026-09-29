@@ -5,7 +5,7 @@
 // Ojo con los guiones: este archivo no escribe los caracteres prohibidos, ni siquiera como
 // ejemplo. La expresión regular se arma con String.fromCodePoint, para que un grep de guiones
 // sobre src/content siga saliendo vacío.
-import { readFileSync } from 'node:fs'
+import { readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import {
   getTerm,
@@ -85,6 +85,44 @@ describe('cobertura del glosario', () => {
     const titulos = glossaryTerms.map((t) => t.titulo)
     const ordenados = [...titulos].sort((a, b) => a.localeCompare(b, 'es-MX'))
     expect(titulos).toEqual(ordenados)
+  })
+})
+
+/** Llaves que pidieron el screener, la fórmula mágica y FIBRAs (docs/requests/F3.md, 7 y F3c-5). */
+const TERMINOS_DE_INVESTIGAR = [
+  'rendimiento-por-dividendo', 'factor-crecimiento', 'cobertura-de-datos', 'puntaje-compuesto', 'roa',
+  'ebitda-a-valor-empresa', 'libros-a-precio', 'roc-greenblatt', 'deuda-capitalizacion',
+  'diferencial-contra-cetes',
+]
+
+/** Todo `termKey` literal que usa src/features: 'x' en `termKey: 'x'`, `termKey="x"` o `termKey={'x'}`. */
+function termKeysDeFeatures() {
+  const raiz = new URL('../features/', import.meta.url)
+  const usos = []
+  for (const archivo of readdirSync(raiz, { recursive: true })) {
+    const nombre = String(archivo)
+    if (!/\.(js|jsx)$/.test(nombre) || /\.test\.(js|jsx)$/.test(nombre)) continue
+    const fuente = readFileSync(new URL(nombre, raiz), 'utf8')
+    for (const m of fuente.matchAll(/termKey\s*[:=]\s*\{?\s*(['"`])([^'"`]+)\1(?!\s+in\b)/g)) usos.push({ archivo: nombre, slug: m[2] })
+  }
+  return usos
+}
+
+describe('llaves que usan las pantallas', () => {
+  it('existen las llaves que pidió Investigar', () => {
+    expect(TERMINOS_DE_INVESTIGAR.filter((slug) => !(slug in glossary))).toEqual([])
+  })
+
+  it('todo termKey usado bajo src/features existe en el glosario', () => {
+    const usos = termKeysDeFeatures()
+    expect(usos.length).toBeGreaterThan(30)
+    const rotos = usos.filter((u) => !(u.slug in glossary)).map((u) => `${u.archivo}: ${u.slug}`)
+    expect(rotos).toEqual([])
+  })
+
+  it('las pantallas de Investigar ya ligan las llaves nuevas', () => {
+    const usadas = new Set(termKeysDeFeatures().map((u) => u.slug))
+    expect(TERMINOS_DE_INVESTIGAR.filter((slug) => !usadas.has(slug))).toEqual([])
   })
 })
 
