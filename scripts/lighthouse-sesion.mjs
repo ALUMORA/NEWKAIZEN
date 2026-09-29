@@ -5,6 +5,11 @@
 //
 //   node scripts/lighthouse-sesion.mjs /mercados /investigar/WALMEX.MX
 //   LH_DETAIL=1 node scripts/lighthouse-sesion.mjs /mercados   # métricas y quién mueve el layout
+//   LH_EJEMPLO=1 node scripts/lighthouse-sesion.mjs /portafolio/riesgo   # con el portafolio de EJEMPLO
+//
+// Sin LH_EJEMPLO las rutas de /portafolio se auditan vacías. Con él, antes de auditar se abre
+// /bienvenida y se pulsa "Usar el ejemplo", que deja el portafolio en localStorage del perfil
+// temporal del navegador; todas las auditorías de la corrida lo ven.
 import { execSync } from 'node:child_process'
 
 const GLOBAL = execSync('npm root -g').toString().trim()
@@ -19,6 +24,20 @@ if (!routes.length) throw new Error('Uso: node scripts/lighthouse-sesion.mjs /ru
 const session = JSON.stringify({ token: 'lh-token', expiresAt: '2099-01-01T00:00:00.000Z', user: { username: 'lh', displayName: 'Auditoría' } })
 
 const browser = await puppeteer.launch({ executablePath: BROWSER, headless: 'new', args: ['--no-first-run'] })
+if (process.env.LH_EJEMPLO) {
+  const page = await browser.newPage()
+  await page.evaluateOnNewDocument((s) => sessionStorage.setItem('kaizen.session', s), session)
+  await page.goto(BASE + '/bienvenida', { waitUntil: 'networkidle0' })
+  const clicked = await page.evaluate(() => {
+    const button = [...document.querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Usar el ejemplo')
+    button?.click()
+    return Boolean(button)
+  })
+  if (!clicked) throw new Error('No encontré el botón "Usar el ejemplo" en /bienvenida')
+  await page.waitForFunction(() => (JSON.parse(localStorage.getItem('kaizen:v2') ?? '{}').portfolios ?? []).length > 0, { timeout: 10_000 })
+  console.log('portafolio de EJEMPLO sembrado')
+  await page.close()
+}
 for (const form of ['mobile', 'desktop']) {
   for (const route of routes) {
     const page = await browser.newPage()
