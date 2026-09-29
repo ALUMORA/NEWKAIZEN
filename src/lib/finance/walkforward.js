@@ -12,6 +12,8 @@
 import { ledoitWolfConstantCorrelation, sampleCov } from './covariance.js'
 import { assertMatrix, InvalidInputError } from './linalg.js'
 import { maxSharpe, minVariance, projectBoxSimplex, riskParity } from './optimize.js'
+import { drawdowns } from './performance.js'
+import { mean as meanOf, stdev } from './stats.js'
 
 /**
  * @typedef {{
@@ -41,43 +43,6 @@ import { maxSharpe, minVariance, projectBoxSimplex, riskParity } from './optimiz
  *   note: string | null,
  * }} Rebalance
  */
-
-/**
- * Media y desviación estándar muestral (n − 1) de un arreglo.
- * @param {number[]} xs
- * @returns {{ mean: number, sd: number | null }}
- */
-function meanAndSd(xs) {
-  const n = xs.length
-  let mean = 0
-  for (const x of xs) mean += x
-  mean /= n
-  if (n < 2) return { mean, sd: null }
-  let acc = 0
-  for (const x of xs) acc += (x - mean) * (x - mean)
-  return { mean, sd: Math.sqrt(acc / (n - 1)) }
-}
-
-/**
- * Caída máxima de una trayectoria de valor (fracción negativa).
- *
- * `values` NO trae el arranque: es la riqueza DESPUÉS de cada periodo. Por eso el pico inicial es
- * 1, la riqueza con la que se entra, y no `values[0]`; si no, una pérdida en el primer periodo
- * fuera de muestra no se contaría. Si esto se cambia por `performance.js::drawdowns`, hay que
- * pasarle `[1, ...values]`.
- * @param {number[]} values
- * @returns {number}
- */
-function maxDrawdownOf(values) {
-  let peak = 1
-  let worst = 0
-  for (const v of values) {
-    if (v > peak) peak = v
-    const dd = peak > 0 ? v / peak - 1 : 0
-    if (dd < worst) worst = dd
-  }
-  return worst
-}
 
 const NOT_CONVERGED = 'El optimizador no convergió en este corte, los pesos son aproximados.'
 
@@ -219,7 +184,7 @@ function strategyWeights(windowReturns, context, cfg) {
  *     annualizedReturn: number | null,
  *     annualizedVol: number | null,
  *     cumulative: number,
- *     maxDrawdown: number,
+ *     maxDrawdown: number | null,
  *     k: number,
  *   },
  * } | null}
@@ -342,7 +307,13 @@ export function walkForward(returnMatrix, dates, options = {}) {
     values.push(wealth)
   }
 
-  const { mean, sd } = meanAndSd(oosReturns)
+  const mean = /** @type {number} */ (meanOf(oosReturns))
+  const sd = stdev(oosReturns)
+  // `values` es la riqueza DESPUÉS de cada periodo; se entra con 1, así que el pico arranca en 1
+  // y una pérdida en el primer periodo fuera de muestra sí cuenta como caída.
+  // null solo si la riqueza queda negativa (una caja con pesos negativos), donde no hay caída
+  // definida contra la cual medir.
+  const maxDrawdown = drawdowns([1, ...values])?.maxDrawdown ?? null
   const periods = oosReturns.length
   return {
     dates: oosDates,
@@ -357,7 +328,7 @@ export function walkForward(returnMatrix, dates, options = {}) {
       annualizedReturn: wealth > 0 ? Math.pow(wealth, k / periods) - 1 : null,
       annualizedVol: sd == null ? null : sd * Math.sqrt(k),
       cumulative: wealth - 1,
-      maxDrawdown: maxDrawdownOf(values),
+      maxDrawdown,
       k,
     },
   }
