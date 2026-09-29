@@ -1,5 +1,13 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import { INTEREST_WITHHOLDING_RATE, interestWithholding } from '../../../lib/finance/tax-mx.js'
+import * as calc from './cetes-calc.js'
 import { cetesResult, cetesRows, tenorOf } from './cetes-calc.js'
+
+// Se espía la retención de tax-mx para fijar que la calculadora no tiene su propia fórmula.
+vi.mock('../../../lib/finance/tax-mx.js', async (importOriginal) => {
+  const mod = /** @type {any} */ (await importOriginal())
+  return { ...mod, interestWithholding: vi.fn(mod.interestWithholding) }
+})
 
 describe('cetesResult', () => {
   it('11 % a 28 días: efectiva anual .117455 del spec', () => {
@@ -17,6 +25,20 @@ describe('cetesResult', () => {
     expect(tenorOf({ id: 'cetes91', label: '' })).toBe(91)
     expect(tenorOf({ id: 'x', label: 'CETES 364 días' })).toBe(364)
     expect(tenorOf({ id: 'x', label: 'y' })).toBeNull()
+  })
+})
+
+describe('retención de ISR de la calculadora', () => {
+  it('usa interestWithholding de tax-mx, sin constante ni fórmula propias', () => {
+    expect(calc).not.toHaveProperty('ISR_RETENTION_2026')
+    vi.mocked(interestWithholding).mockClear()
+    const r = cetesResult({ amount: 10000, tenorDays: 91, annualYield: 0.11, retentionRate: INTEREST_WITHHOLDING_RATE })
+    expect(interestWithholding).toHaveBeenCalledWith(10000, 91, { rate: INTEREST_WITHHOLDING_RATE })
+    expect(r?.retention).toBeCloseTo((10000 * 0.009 * 91) / 365, 8)
+  })
+  it('una tasa editada sigue mandando sobre la de la ley', () => {
+    const r = cetesResult({ amount: 10000, tenorDays: 28, annualYield: 0.11, retentionRate: 0.005 })
+    expect(r?.retention).toBeCloseTo((10000 * 0.005 * 28) / 365, 8)
   })
 })
 
