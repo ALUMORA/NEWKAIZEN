@@ -12,7 +12,7 @@ describe('usePortfolios', () => {
     )
     const { result } = renderHook(() => usePortfolios())
     expect(result.current.active.name).toBe('Principal')
-    expect(result.current.positions).toEqual([{ symbol: 'AAPL', quantity: 2, avgCost: 100, currency: 'USD', costBasis: 200 }])
+    expect(result.current.positions).toMatchObject([{ symbol: 'AAPL', quantity: 2, avgCost: 100, currency: 'USD', costBasis: 200 }])
 
     act(() => {
       result.current.actions.addTransaction('p1', { type: 'buy', symbol: 'AAPL', quantity: 2, price: 200, currency: 'USD', date: '2026-09-22' })

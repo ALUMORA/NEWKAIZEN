@@ -6,26 +6,11 @@
 // (LISR art. 129). Las comisiones suman al costo en las compras y restan al producto en las
 // ventas. Un split multiplica la cantidad y divide el costo promedio, sin mover el costo total.
 //
-// COMPATIBILIDAD CON EL CONTRATO DE S2: `src/lib/portfolio/ledger.contract.test.js` compara la
-// salida de `derivePositions` con `toEqual` contra objetos de exactamente cinco llaves, así que
-// esta función conserva esa forma al pie de la letra. Lo que el spec pide de más (P&L realizado,
-// primera compra, tipo de cambio promedio) vive en `derivePositionsDetailed`, que devuelve la
-// misma posición con tres llaves extra. Está anotado en docs/requests/A4.md para que el
-// orquestador decida si relaja esa prueba después del merge.
+// `derivePositions` devuelve las ocho llaves del spec A4 (docs/requests/A4.md, opción A).
+// `derivePositionsDetailed` se queda como alias para no romper a quien ya la importa.
 
 /** @typedef {import('../storage.js').Transaction} Transaction */
 /** @typedef {'MXN' | 'USD'} Currency */
-
-/**
- * Posición abierta, forma mínima del contrato de S2.
- * @typedef {{
- *   symbol: string,
- *   quantity: number,
- *   avgCost: number | null,
- *   currency: Currency,
- *   costBasis: number | null,
- * }} Position
- */
 
 /**
  * Posición abierta con el detalle que pide el spec de finanzas.
@@ -39,12 +24,19 @@
  *     saca costo a promedio en las dos monedas a la par y un split no lo mueve. null si alguna
  *     compra del lote no trae tipo de cambio, no trae precio o va en otra moneda. En posiciones en
  *     MXN suele ser null y no hace falta.
- * @typedef {Position & {
+ * @typedef {{
+ *   symbol: string,
+ *   quantity: number,
+ *   avgCost: number | null,
+ *   currency: Currency,
+ *   costBasis: number | null,
  *   realizedPnl: number | null,
  *   firstBuyDate: string | null,
  *   avgFx: number | null,
- * }} PositionDetail
+ * }} Position
  */
+
+/** Alias de `Position`, de cuando la forma corta y la detallada eran dos. @typedef {Position} PositionDetail */
 
 /**
  * Venta realizada, con el costo promedio vigente al momento de venderla.
@@ -194,7 +186,7 @@ function runLedger(transactions, { asOf = null, dates = null } = {}) {
   function snapshotAt(date) {
     snapshots.push({
       date,
-      positions: positionsFrom(book, true),
+      positions: positionsFrom(book),
       cash: { ...cash },
       fundedCash: { MXN: cash.MXN + funded.MXN, USD: cash.USD + funded.USD },
       external: external.slice(flowMark),
@@ -337,35 +329,31 @@ function runLedger(transactions, { asOf = null, dates = null } = {}) {
 
 /**
  * @param {Map<string, Lot>} book
- * @param {boolean} detailed
- * @returns {PositionDetail[]}
+ * @returns {Position[]}
  */
-function positionsFrom(book, detailed) {
+function positionsFrom(book) {
+  /** @type {Position[]} */
   const out = []
   for (const [symbol, lot] of book.entries()) {
     if (lot.quantity <= EPSILON) continue
-    /** @type {any} */
-    const position = {
+    out.push({
       symbol,
       quantity: lot.quantity,
       avgCost: lot.cost === null ? null : lot.cost / lot.quantity,
       currency: lot.currency,
       costBasis: lot.cost,
-    }
-    if (detailed) {
-      position.realizedPnl = lot.realized
-      position.firstBuyDate = lot.firstBuyDate
-      position.avgFx = lot.cost !== null && lot.costFx !== null && lot.cost > EPSILON ? lot.costFx / lot.cost : null
-    }
-    out.push(position)
+      realizedPnl: lot.realized,
+      firstBuyDate: lot.firstBuyDate,
+      avgFx: lot.cost !== null && lot.costFx !== null && lot.cost > EPSILON ? lot.costFx / lot.cost : null,
+    })
   }
   return out.sort((a, b) => (a.symbol < b.symbol ? -1 : a.symbol > b.symbol ? 1 : 0))
 }
 
 /**
- * Posiciones abiertas por símbolo con el método de costo promedio.
- * Forma del contrato de S2 (cinco llaves). Para el P&L realizado, la primera compra y el tipo de
- * cambio promedio usa `derivePositionsDetailed`.
+ * Posiciones abiertas por símbolo con el método de costo promedio, con las ocho llaves del spec:
+ * símbolo, cantidad, costo promedio, moneda, costo total, P&L realizado del lote abierto, primera
+ * compra y tipo de cambio promedio ponderado por costo.
  * Mínimo: con cero movimientos devuelve un arreglo vacío, nunca null.
  * @param {Transaction[] | undefined | null} transactions
  * @param {{ asOf?: string | null }} [options] fecha de corte AAAA-MM-DD (inclusive)
@@ -373,18 +361,18 @@ function positionsFrom(book, detailed) {
  */
 export function derivePositions(transactions, { asOf = null } = {}) {
   const { book } = runLedger(transactions, { asOf })
-  return positionsFrom(book, false)
+  return positionsFrom(book)
 }
 
 /**
- * Igual que `derivePositions`, más `realizedPnl`, `firstBuyDate` y `avgFx`.
+ * Alias de `derivePositions`, que ya devuelve el detalle completo. Se conserva para no romper a
+ * quien lo importa.
  * @param {Transaction[] | undefined | null} transactions
  * @param {{ asOf?: string | null }} [options]
  * @returns {PositionDetail[]}
  */
 export function derivePositionsDetailed(transactions, { asOf = null } = {}) {
-  const { book } = runLedger(transactions, { asOf })
-  return positionsFrom(book, true)
+  return derivePositions(transactions, { asOf })
 }
 
 /**

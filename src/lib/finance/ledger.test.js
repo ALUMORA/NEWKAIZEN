@@ -318,7 +318,7 @@ describe('casos de borde', () => {
 
   it('un solo movimiento', () => {
     expect(derivePositions([buy('AAPL', 1, 10)])).toEqual([
-      { symbol: 'AAPL', quantity: 1, avgCost: 10, currency: 'MXN', costBasis: 10 },
+      { symbol: 'AAPL', quantity: 1, avgCost: 10, currency: 'MXN', costBasis: 10, realizedPnl: 0, firstBuyDate: null, avgFx: null },
     ])
   })
 

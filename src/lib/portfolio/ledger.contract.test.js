@@ -1,6 +1,6 @@
 // Contrato de derivePositions (src/lib/finance/ledger.js). S2 dejó un stub con costo promedio;
 // el stream A reemplaza el interior y estas pruebas tienen que seguir pasando.
-import { derivePositions } from '../finance/ledger.js'
+import { derivePositions, derivePositionsDetailed } from '../finance/ledger.js'
 
 const buy = (symbol, quantity, price, extra = {}) => ({
   id: `b-${symbol}-${quantity}-${price}`, type: 'buy', symbol, quantity, price,
@@ -15,7 +15,7 @@ describe('derivePositions (contrato)', () => {
   })
 
   it('una compra: costo promedio = precio y costo total = precio × cantidad + comisión', () => {
-    expect(derivePositions([buy('AAPL', 10, 150, { fees: 5 })])).toEqual([
+    expect(derivePositions([buy('AAPL', 10, 150, { fees: 5 })])).toMatchObject([
       { symbol: 'AAPL', quantity: 10, avgCost: 150.5, currency: 'USD', costBasis: 1505 },
     ])
   })
@@ -55,7 +55,7 @@ describe('derivePositions (contrato)', () => {
       { id: 'w', type: 'withdrawal', amount: 10, currency: 'MXN', fees: 0, date: null },
       { id: 'f', type: 'fee', amount: 5, currency: 'MXN', fees: 0, date: null },
     ])
-    expect(out).toEqual([{ symbol: 'FUNO11.MX', quantity: 100, avgCost: 20, currency: 'MXN', costBasis: 2000 }])
+    expect(out).toMatchObject([{ symbol: 'FUNO11.MX', quantity: 100, avgCost: 20, currency: 'MXN', costBasis: 2000 }])
   })
 
   it('asOf ignora lo posterior y los saldos sin fecha van primero', () => {
@@ -78,6 +78,21 @@ describe('derivePositions (contrato)', () => {
   it('una compra sin precio deja el costo como desconocido', () => {
     const [p] = derivePositions([buy('MSFT', 2, null), buy('MSFT', 1, 300)])
     expect(p).toMatchObject({ quantity: 3, avgCost: null, costBasis: null })
+  })
+
+  it('devuelve las ocho llaves del spec A4, con null donde no hay dato', () => {
+    const [p] = derivePositions([buy('AAPL', 10, 150, { fees: 5, date: '2026-01-05', fxRate: 18 })])
+    expect(Object.keys(p).sort()).toEqual(
+      ['avgCost', 'avgFx', 'costBasis', 'currency', 'firstBuyDate', 'quantity', 'realizedPnl', 'symbol'],
+    )
+    expect(p).toMatchObject({ realizedPnl: 0, firstBuyDate: '2026-01-05', avgFx: 18 })
+    const [sinFx] = derivePositions([buy('WALMEX.MX', 1, 60)])
+    expect(sinFx).toMatchObject({ firstBuyDate: null, avgFx: null })
+  })
+
+  it('derivePositionsDetailed queda como alias de derivePositions', () => {
+    const txs = [buy('AAPL', 10, 100, { fxRate: 17 }), sell('AAPL', 4, 120)]
+    expect(derivePositionsDetailed(txs)).toEqual(derivePositions(txs))
   })
 
   it('ordena por símbolo', () => {
