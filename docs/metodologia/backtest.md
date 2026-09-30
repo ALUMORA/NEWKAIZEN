@@ -24,8 +24,9 @@ Tres defectos concretos de la versión vieja quedaron corregidos:
 se van moviendo solos con los precios, que es lo que de verdad pasa si uno no hace nada.
 
 **Mezcla constante**, opcional. Se regresa a los pesos objetivo con la frecuencia que elijas: cada
-periodo, mensual, trimestral, anual o nunca. Reporta también la rotación acumulada, para que el
-costo de operar sea visible.
+semana (el periodo del panel), cada mes, cada trimestre o cada año. No rebalancear nunca es comprar
+y mantener, la otra estrategia. Reporta también la rotación acumulada, para que el costo de operar
+sea visible.
 
 La diferencia entre las dos no es cosmética. Con `A = [+10%, −10%]`, `B = [0, 0]` y 50 y 50 desde
 1, la mezcla constante termina en 0.9975 y comprar y mantener en 0.995. La mezcla constante gana en
@@ -38,6 +39,10 @@ Se elige entre tres, y todos quedan en pesos:
 - IPC como rendimiento total, con NAFTRAC.MX.
 - S&P 500 en pesos, con SPY de cierre ajustado convertido por el FIX de cada fecha.
 - Una mezcla de los dos con el porcentaje que tú pongas.
+
+Un índice solo se compra y se mantiene. La mezcla se regresa cada mes a los porcentajes que pusiste,
+sin importar qué estrategia elegiste para tu cartera: si no se rebalanceara, con los años se iría
+cargando al índice que más subió y dejaría de ser la mezcla que pediste.
 
 El referente se alinea por fecha con la cartera. Un día festivo en México con mercado abierto en
 Nueva York se cae de la comparación, en los dos lados.

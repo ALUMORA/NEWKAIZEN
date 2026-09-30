@@ -14,6 +14,8 @@ import { twr } from '../lib/finance/performance-ledger.js'
 import { derivePositions, externalFlows } from '../lib/finance/ledger.js'
 import { impliedFx } from '../features/portfolio/lib/performance-view.js'
 import { cutAt } from '../features/portfolio/lib/book-cut.js'
+import { REBALANCE } from '../features/tools/backtester.js'
+import { DEFAULT_ERP, MU_METHODS } from '../features/tools/optimizer.js'
 import { isrOnGains } from '../lib/finance/tax-mx.js'
 import { alignPanel } from '../lib/finance/returns.js'
 import { meanVariance, riskParity } from '../lib/finance/optimize.js'
@@ -303,6 +305,25 @@ describe('riesgo y backtest: lo que la librería supone y lo que no', () => {
   it('riesgo.md ya no dice que no hay ningún 52 escondido: walkForward lo supone', () => {
     expect(plano('riesgo.md')).not.toMatch(/No hay ningún 52 escondido/)
     expect(plano('riesgo.md')).toMatch(/toma 52 si no se le indica otro/)
+  })
+
+  it('riesgo no promete una beta de Blume ni un HHI por país que la pantalla no muestra', () => {
+    expect(plano('riesgo.md')).not.toMatch(/se muestra junto a la beta cruda/)
+    expect(plano('riesgo.md')).not.toMatch(/por sector, país y moneda/)
+    expect(plano('riesgo.md')).toMatch(/Los fondos y ETF van juntos/)
+  })
+
+  it('backtest lista las frecuencias que ofrece la pantalla y cómo se mueve la mezcla de referentes', () => {
+    expect(REBALANCE.map((r) => r.value)).toEqual(['weekly', 'monthly', 'quarterly', 'annual'])
+    expect(plano('backtest.md')).not.toMatch(/anual o nunca/)
+    expect(plano('backtest.md')).toMatch(/La mezcla se regresa cada mes/)
+  })
+
+  it('optimizador da la prima de mercado de respaldo y no ofrece a Jorion como si estuviera en pantalla', () => {
+    expect(DEFAULT_ERP).toBe(0.0423)
+    expect(plano('optimizador.md')).toContain('4.23 por ciento')
+    expect(MU_METHODS).not.toContain('jorion')
+    expect(plano('optimizador.md')).toMatch(/la pantalla todavía no la ofrece/)
   })
 
   it('el resumen del backtest trae VaR y CVaR históricos, sin paramétrico', () => {

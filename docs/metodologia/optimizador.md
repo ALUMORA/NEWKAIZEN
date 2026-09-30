@@ -49,13 +49,18 @@ La matriz muestral cruda sigue disponible, detrás de una advertencia visible.
 Esta es la parte frágil de toda optimización, así que se maneja con cuidado:
 
 - **Por omisión, CAPM.** `μ_i = rf + β_i × prima de mercado`, con la tasa libre de riesgo de CETES
-  28 y la prima como supuesto editable con su fuente y su fecha.
+  28 y la prima de mercado que manda el servidor en `/v2/assumptions`: hoy 4.23 por ciento, la de
+  Damodaran para un mercado maduro de enero de 2026. Es editable y se muestra con su fuente y su
+  fecha. Si el servidor no la tiene, se usa esa misma cifra como respaldo y la pantalla lo dice. No
+  se le suma prima país porque CETES ya es una tasa en pesos que trae el riesgo soberano de México.
+  La valuación DCF sí la suma, porque parte de otra tasa (el bono a 10 años menos el diferencial por
+  incumplimiento); unificar los dos criterios es una decisión pendiente.
 - **Promedio histórico**, disponible pero marcado como ruidoso. Con 3 años de datos semanales, el
   error estándar del promedio es del mismo orden que el promedio.
 - **James y Stein**, como punto intermedio: contrae los promedios hacia el promedio simple de los
-  activos, `μ₀ = (1/N) Σ μ̂_i`. La variante de Jorion, que contrae hacia el rendimiento de la
-  cartera de mínima varianza, `μ₀ = (1ᵀC⁻¹μ̂) / (1ᵀC⁻¹1)`, también está disponible, pero no es la
-  opción por omisión. La contracción se calcula con medias y covarianza por periodo, así que da lo
+  activos, `μ₀ = (1/N) Σ μ̂_i`. La librería también tiene la variante de Jorion, que contrae hacia
+  el rendimiento de la cartera de mínima varianza, `μ₀ = (1ᵀC⁻¹μ̂) / (1ᵀC⁻¹1)`, pero no es la
+  opción por omisión y la pantalla todavía no la ofrece. La contracción se calcula con medias y covarianza por periodo, así que da lo
   mismo con datos semanales o anualizados.
 
 Todos los supuestos son campos editables en la pantalla. Ninguno está escondido en el código.

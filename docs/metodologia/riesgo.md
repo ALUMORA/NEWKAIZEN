@@ -76,8 +76,10 @@ Los referentes son locales y en la misma moneda:
   nivel del IPC es un índice de precio y no sirve para comparar rendimiento total.
 - S&P 500 en pesos: SPY con cierre ajustado, convertido con el FIX de cada fecha.
 
-La beta ajustada de Blume, `0.67 × β + 0.33`, se muestra junto a la beta cruda, y se usa para
-proyectar, por ejemplo dentro de un CAPM. La cruda es la que describe lo que pasó.
+La pantalla de riesgo del portafolio mide sus betas contra estos dos, en pesos, y muestra la beta
+cruda, que es la que describe lo que pasó. La librería calcula además la beta ajustada de Blume,
+`0.67 × β + 0.33`, que sirve para proyectar, por ejemplo dentro de un CAPM; hoy ninguna pantalla la
+muestra.
 
 También se reportan tracking error, que es la desviación estándar de la diferencia contra el
 referente anualizada, information ratio, que es el rendimiento activo anual entre el tracking error,
@@ -113,7 +115,11 @@ anualizado con k = 52. Excesos de 2, −1, 3, −2 y 1 por ciento dan Sortino de
 Tres lecturas que dicen cosas distintas:
 
 - **Número efectivo de activos**, `1 / Σ w²`. Pesos de 50, 30 y 20 por ciento dan 2.631579.
-- **HHI**, `Σ w²`, el recíproco del anterior, aplicado también por sector, país y moneda.
+- **HHI**, `Σ w²`, el recíproco del anterior, que también se aplica por grupo. La pantalla de
+  riesgo lo da por sector, con el nombre en español que manda el servidor y los mismos valores en
+  pesos que las demás medidas. Los fondos y ETF van juntos en su propio grupo, porque reparten su
+  dinero entre muchos sectores, y la tarjeta dice sobre qué parte del valor de tus posiciones se
+  calculó, porque no todas traen sector.
 - **Contribución al riesgo**, que reparte la volatilidad de la cartera entre las posiciones:
   la contribución marginal es `(C w)_i / σ_p` y la contribución es `w_i` por su marginal. Las
   contribuciones suman la volatilidad total, y en porcentaje suman 1.
