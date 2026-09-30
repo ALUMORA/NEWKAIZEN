@@ -53,13 +53,26 @@ responden `501 NOT_IMPLEMENTED` hasta que su stream (B2a, B2b, B3a, B3b o B3c) l
   `exp` (`TOKEN_TTL_HOURS`, 12 por omisión) y `ver` (`TOKEN_VERSION`). Subir `TOKEN_VERSION`
   revoca todos los tokens; quitar a alguien de `USERS` revoca los suyos.
 - `USERS` es JSON `{"usuario": "scrypt$16384$8$1$<sal_hex>$<hash_hex>"}`. Se genera con
-  `python scripts/hash_password.py --user <usuario>`. Fuera de producción también se aceptan
-  contraseñas en texto plano (con aviso al arrancar); en producción el servidor no arranca con ellas.
-- Límite de tasa del login (compartido con el `POST /login` v1): 5 intentos por minuto por IP
-  (primer salto de `X-Forwarded-For`, si no la IP de la conexión) y 10 por hora por usuario. Se
-  cuentan todos los intentos. Al pasarse: `429 RATE_LIMITED` con `Retry-After` en segundos.
-  El primer salto de `X-Forwarded-For` lo escribe el cliente; por eso existe también el límite
-  por usuario.
+  `python scripts/hash_password.py --user <usuario> --json`, que imprime **solo** el objeto, así
+  que `USERS="$(python scripts/hash_password.py --user ana --json)"` funciona tal cual. Sin
+  `--json` la salida trae también el hash suelto y un encabezado, y el servidor no arranca con
+  "USERS no es JSON válido". En producción cada hash se valida al arrancar: uno mal formado detiene
+  el arranque en vez de dejar a ese usuario sin poder entrar nunca. Fuera de producción también se
+  aceptan contraseñas en texto plano (con aviso al arrancar); en producción el servidor no arranca
+  con ellas.
+- Límite de tasa del login: 5 intentos por minuto por IP y 10 **fallidos** por hora por usuario
+  **y por IP**. Un login correcto devuelve sus dos fichas, así que las cubetas cuentan fallas y una
+  oficina detrás de una sola IP no se bloquea sola. Como las fallas se cuentan por usuario e IP,
+  quien manda contraseñas malas agota solo la cubeta de su red: la dueña de la cuenta sigue
+  entrando desde la suya. Desde la red que agotó la cubeta todo es 429, incluida la contraseña
+  buena, para que el 429 no sirva de oráculo. Los dos valores se configuran con
+  `LOGIN_RATE_LIMIT_IP_PER_MINUTE` y `LOGIN_RATE_LIMIT_USER_PER_HOUR`, y solo se pueden relajar
+  fuera de producción. La llave por IP es el salto de `X-Forwarded-For` que escribió la
+  infraestructura de confianza, contando desde la derecha según `TRUSTED_PROXY_HOPS` (1 por
+  omisión, que es lo de Render); si la cabecera llega repetida, se unen en orden antes de contar, y
+  con 0 se ignora y manda la IP del socket. Al pasarse: `429 RATE_LIMITED` con `Retry-After` en
+  segundos. El `POST /login` v1 comparte el limitador pero un login correcto ahí no devuelve sus
+  fichas; las rutas v1 no se montan en producción.
 - Un 401 lleva `WWW-Authenticate: Bearer` y `details.reason`: `missing_token`, `token_expired`,
   `token_invalid`, `token_revoked` o `user_unknown`. El login fallido no da `details`.
 
@@ -79,7 +92,7 @@ repite lo que mandó el cliente.
 | `FORBIDDEN` | 403 | Reservado. |
 | `NOT_FOUND` | 404 | Ruta inexistente o símbolo sin datos. |
 | `METHOD_NOT_ALLOWED` | 405 | Método no aceptado; lleva `Allow`. |
-| `RATE_LIMITED` | 429 | Límite de tasa; lleva `Retry-After`. |
+| `RATE_LIMITED` | 429 o 503 | 429 por el límite de tasa del login; 503 si el servidor está saturado (más de `MAX_CONCURRENCY` requests en vuelo, 48 por omisión). Los dos llevan `Retry-After` y CORS. El `limit_concurrency` de uvicorn (64) queda como último recurso y ese sí contesta texto plano. |
 | `UPSTREAM_UNAVAILABLE` | 502 o 503 | La fuente de datos no respondió o no hay dato real. |
 | `NOT_CONFIGURED` | 503 | Falta configurar la fuente (por ejemplo `BANXICO_TOKEN`). |
 | `NOT_IMPLEMENTED` | 501 | Ruta registrada que su stream todavía no implementa; `details.endpoint`. |
@@ -102,9 +115,13 @@ repite lo que mandó el cliente.
 mande el cliente si es `[A-Za-z0-9._-]{1,64}`). Las respuestas de 1 KB o más salen con gzip si el
 cliente lo acepta.
 
-CORS: orígenes exactos de `ALLOWED_ORIGINS` más la regex `ALLOWED_ORIGIN_REGEX` (por omisión
-`^https://newkaizen(-[a-z0-9-]+)?\.vercel\.app$`; fuera de producción se suman
-`http://localhost:*` y `http://127.0.0.1:*`). Métodos `GET, POST, OPTIONS`; cabeceras de
+CORS: orígenes exactos de `ALLOWED_ORIGINS` más la regex `ALLOWED_ORIGIN_REGEX`. En producción,
+sin configurar nada, la regex acepta solo `https://newkaizen.vercel.app`: los previews de Vercel
+(`newkaizen-<rama>-<equipo>.vercel.app`) se abren con `VERCEL_TEAM_SLUG` o con una
+`ALLOWED_ORIGIN_REGEX` explícita, porque la regex ancha `newkaizen-*.vercel.app` la podía cumplir
+un proyecto registrado por un tercero. Fuera de producción la regex por omisión es
+`^https://newkaizen(-[a-z0-9-]+)?\.vercel\.app$` y se suman `http://localhost:*` y
+`http://127.0.0.1:*`. Métodos `GET, POST, OPTIONS`; cabeceras de
 entrada `Authorization, Content-Type, X-Request-ID`; cabeceras expuestas al JS de otro origen
 `Retry-After, X-Request-ID` (`Access-Control-Expose-Headers`); `max-age` 600; sin credenciales de
 navegador (el token va en la cabecera).
@@ -119,8 +136,10 @@ están en `docs/OWNERSHIP.md`).
 ### Plataforma (B1: `routers/health.py` y `routers/auth.py`)
 
 - `GET /health` (pública) → `HealthResponse`. `capabilities` es un subconjunto de
-  `schemas.KNOWN_CAPABILITIES` y solo lista lo que ya funciona: hoy `auth` y, con las rutas v1
-  montadas, `legacy.v1`. `providers.*.configured` indica si hay token; `ok` es `null` mientras no se
+  `schemas.KNOWN_CAPABILITIES` y solo lista lo que ya funciona: con el backend v2 completo son
+  más de veinte (`auth`, `quotes`, `fx`, `history`, `panel`, `panel.splits`, `rates.mx`, ...), una
+  ruta con `@stub` no anuncia la suya y, con las rutas v1 montadas, se suma `legacy.v1`. El
+  frontend consulta esta lista antes de pedir una ruta que el servidor quizá todavía no tiene. `providers.*.configured` indica si hay token; `ok` es `null` mientras no se
   compruebe la fuente. Implementada (S1; dueño en adelante: B1).
 - `POST /auth/login` (pública) con cuerpo `LoginRequest` `{username, password}` → `LoginResponse`
   `{token, expiresAt, user: {username, displayName}}`. Errores: `401 UNAUTHORIZED`,
@@ -215,7 +234,9 @@ están en `docs/OWNERSHIP.md`).
   inflación: factor = INPC del mes anterior a la venta entre INPC del mes de la compra.
 - `GET /v2/rates/rf?start=&end=&tenorDays=28` (`tenorDays`: 28, 91, 182 o 364) →
   `RfSeriesResponse`. Rendimientos anualizados simples act/360 como fracción. El cliente convierte a
-  tasa por periodo: `rf_d = (1 + y * 28 / 360)^(d / 28) - 1`. Fuente `banxico`, o `fred_ir3tib`
+  tasa por periodo con el `tenorDays` de la RESPUESTA, no el pedido:
+  `rf_d = (1 + y * T / 360)^(d / T) - 1` con `T = tenorDays`. Con Banxico es el plazo pedido; con el
+  respaldo de FRED es 91, porque esa serie es a tres meses. Fuente `banxico`, o `fred_ir3tib`
   marcada como `fallback`.
 - `GET /v2/macro/us` → `UsMacroResponse`. Ids: `ust3m`, `ust2y`, `ust10y`, `spread10y2y`,
   `spread10y3m`, `vix`, `dxy`, `fedFunds`.
@@ -676,7 +697,7 @@ Precios alineados por fecha (INNER JOIN, sin rellenar precios).
 | `value` | number | sí | Fracción si unit=fraction; nivel si index o mxn |
 | `unit` | "fraction" \| "index" \| "mxn" | sí |  |
 | `asOf` | date | sí |  |
-| `seriesId` | string | sí | Id de la serie en el SIE de Banxico (p. ej. SF61745) |
+| `seriesId` | string | sí | Id de la serie en su fuente: el SIE de Banxico (p. ej. SF61745) o FRED cuando el renglón es un respaldo |
 | `source` | string | sí |  |
 | `previous` | number \| null | sí |  |
 | `changeBp` | number \| null | sí |  |

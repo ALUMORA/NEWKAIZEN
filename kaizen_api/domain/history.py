@@ -1,13 +1,15 @@
 """Históricos de precios: el legado (``get_chart``, ``get_returns``, ``_fetch_hist``) y la costura v2.
 
-La costura CONGELADA es ``get_series(symbol, range, interval, ccy) -> PriceSeries``. B2 la
-implementa y todo lo que necesite precios (beta, momentum, panel, valuación) la consume en vez de
-llamar a yfinance directo. Hasta entonces lanza ``NotImplementedError``.
+La costura CONGELADA es ``get_series(symbol, range, interval, ccy, adjust) -> PriceSeries``. B2a la
+implementó en la fase 2 y todo lo que necesite precios (beta, momentum, panel, valuación) la consume
+en vez de llamar a yfinance directo.
 
 Contrato de ``get_series``:
 
-* Cierres AJUSTADOS por splits y dividendos (rendimiento total), en orden cronológico, una
-  observación por fecha de mercado (``YYYY-MM-DD``, sin hora ni zona).
+* Con ``adjust="total"`` (el default), cierres AJUSTADOS por splits y dividendos (rendimiento
+  total); con ``adjust="splits"``, ajustados solo por splits, para quien cuenta el efectivo de los
+  dividendos aparte. En orden cronológico, una observación por fecha de mercado (``YYYY-MM-DD``,
+  sin hora ni zona).
 * ``range``: ``1mo 3mo 6mo 1y 2y 5y 10y max``; ``interval``: ``1d 1wk 1mo``.
 * ``ccy``: ``native`` (moneda de cotización), ``MXN`` o ``USD``. La conversión usa el tipo de
   cambio de LA MISMA fecha, con relleno hacia adelante de a lo más 3 días en huecos del FX; cada

@@ -369,7 +369,9 @@ class MxRateItem(ContractModel):
     value: float = Field(description="Fracción si unit=fraction; nivel si index o mxn")
     unit: Literal["fraction", "index", "mxn"]
     asOf: IsoDate
-    seriesId: str = Field(description="Id de la serie en el SIE de Banxico (p. ej. SF61745)")
+    seriesId: str = Field(
+        description="Id de la serie en su fuente: el SIE de Banxico (p. ej. SF61745) o FRED cuando el renglón es un respaldo"
+    )
     source: str
     previous: float | None
     changeBp: float | None

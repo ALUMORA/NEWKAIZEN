@@ -24,6 +24,9 @@ aceptar `^$|<patrón>`), porque las dos cosas juntas no se pueden.
 
 ## 2. `MxRateItem.seriesId` lleva un id de FRED cuando el renglón es de respaldo
 
+**Cerrado el 30 de septiembre de 2026**: la descripción dice "Id de la serie en su fuente" en
+`schemas.py` y en `docs/api-v2.md`.
+
 El contrato describe ese campo como "Id de la serie en el SIE de Banxico (p. ej. SF61745)". Sin
 token de Banxico, el único renglón honesto de `/v2/rates/mx` es el Bono M 10 años, que sale de
 FRED, y ahí `seriesId` vale `IRLTLT01MXM156N` con `source: "fred"`. El tipo es `str`, así que el
@@ -39,6 +42,9 @@ adelante se quiere ser exacto, el campo tendría que aceptar algo como `"unknown
 `"annualized_simple"`. Mientras tanto se construye contra el modelo de hoy.
 
 ## 4. `/v2/rates/rf` en respaldo publica `tenorDays: 91`, no el plazo pedido
+
+**Cerrado el 30 de septiembre de 2026**: `docs/api-v2.md` ya da la fórmula con el `tenorDays` de la
+respuesta, y el cliente lo usa desde la fase 3.
 
 Cuando no hay CETES de Banxico, la serie que se sirve es `IR3TIB01MXM156N`, que es a 3 meses pida el
 cliente el plazo que pida. Antes `tenorDays` repetía el plazo pedido (28, 182 o 364) sobre los mismos
