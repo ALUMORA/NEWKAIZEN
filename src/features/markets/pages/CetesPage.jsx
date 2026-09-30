@@ -3,10 +3,10 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Card, DataStatus, DataTable, Delta, NumberInput, PageHeader, Select, Stat } from '../../../components/ui/index.js'
 import { ratesMxQuery } from '../../../lib/api/queries.js'
-import { cetesEffectiveAnnual } from '../../../lib/finance/index.js'
+import { INTEREST_WITHHOLDING_RATE, cetesEffectiveAnnual } from '../../../lib/finance/index.js'
 import { fmtMoney, fmtPct } from '../../../lib/format.js'
 import { ApiNotes } from './ApiNotes.jsx'
-import { ISR_RETENTION_2026, cetesResult, cetesRows } from './cetes-calc.js'
+import { cetesResult, cetesRows, retentionHint } from './cetes-calc.js'
 import { itemStatus } from './shared.js'
 import '../markets.css'
 
@@ -57,7 +57,7 @@ function Calculator({ rows }) {
   const [amount, setAmount] = useState(/** @type {number | null} */ (10000))
   const [tenor, setTenor] = useState(28)
   const [ratePct, setRatePct] = useState(/** @type {number | null | undefined} */ (undefined))
-  const [retentionPct, setRetentionPct] = useState(/** @type {number | null} */ (ISR_RETENTION_2026 * 100))
+  const [retentionPct, setRetentionPct] = useState(/** @type {number | null} */ (INTEREST_WITHHOLDING_RATE * 100))
 
   const apiRow = rows.find((r) => r.tenorDays === tenor)
   const apiPct = apiRow?.value != null ? Math.round(apiRow.value * 1e6) / 1e4 : null
@@ -93,7 +93,7 @@ function Calculator({ rows }) {
             decimals={2}
             hint={apiRow ? 'Prellenada con la última subasta.' : 'Escríbela a mano: no hay dato del API para este plazo.'}
           />
-          <NumberInput label="Retención anual de ISR" suffix="%" value={retentionPct} onChange={setRetentionPct} decimals={2} hint="0.90 % en 2026, según la Ley de Ingresos de la Federación." />
+          <NumberInput label="Retención anual de ISR" suffix="%" value={retentionPct} onChange={setRetentionPct} decimals={2} hint={retentionHint()} />
         </div>
         {apiRow ? (
           <div>

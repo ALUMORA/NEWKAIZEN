@@ -1,11 +1,13 @@
 // /watchlist: una lista de emisoras guardada en el navegador (storage v2), con precio, cambio del
 // día y la tendencia de un mes. Agregar con el buscador y quitar con Deshacer.
-import { useDeferredValue, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Button, Card, DataStatus, DataTable, Delta, EmptyState, ErrorState, Input, Money, PageHeader, Skeleton, useToast } from '../../../components/ui/index.js'
+import { CircleAlert, Plus } from 'lucide-react'
+import { Button, Card, DataStatus, DataTable, Delta, EmptyState, Money, PageHeader, SearchCombobox, Skeleton, useToast } from '../../../components/ui/index.js'
 import { Sparkline } from '../../../components/charts/Sparkline.jsx'
-import { historyQuery, quotesQuery, searchQuery } from '../../../lib/api/queries.js'
+import { historyQuery, quotesQuery } from '../../../lib/api/queries.js'
 import { LEGACY_WATCHLIST_NAME, update, useStore } from '../../../lib/storage.js'
+import { checkNewSymbol } from '../add-symbol.js'
 import { trendSummary } from '../trend.js'
 import '../watchlist.css'
 
@@ -48,35 +50,66 @@ function TrendMeta({ symbol }) {
   )
 }
 
+/**
+ * Buscador de la lista: el SearchCombobox compartido (el de la paleta ⌘K). Las que ya están en la
+ * lista no se ofrecen. Sin opciones (búsqueda caída o servidor viejo) o mientras la búsqueda no
+ * alcanza al texto, Enter o "Agregar" agregan la clave escrita.
+ * @param {{ onAdd: (symbol: string) => void, symbols: string[] }} props
+ */
 function SearchBox({ onAdd, symbols }) {
   const [q, setQ] = useState('')
-  const deferred = useDeferredValue(q.trim())
-  const { data, isFetching, isError, refetch } = useQuery(searchQuery(deferred, 6))
-  const results = deferred ? (data?.results ?? EMPTY) : EMPTY
+  const [error, setError] = useState(/** @type {string | null} */ (null))
+  const tryAdd = (/** @type {string} */ raw) => {
+    const out = checkNewSymbol(symbols, raw)
+    setError(out.error)
+    if (out.symbol) {
+      onAdd(out.symbol)
+      setQ('')
+    }
+  }
   return (
-    <div className="wl-search">
-      <Input type="search" label="Agregar una emisora" hint="Busca por clave o nombre, por ejemplo WALMEX o FEMSA." value={q} onChange={(e) => setQ(e.target.value)} autoComplete="off" />
-      {deferred && isError && <ErrorState size="sm" message="No pudimos buscar en este momento." onRetry={() => refetch()} />}
-      {deferred && !isError && !isFetching && results.length === 0 && <p className="wl-note" role="status">No encontramos emisoras con ese nombre.</p>}
-      {results.length > 0 && (
-        <ul className="wl-results" aria-label="Resultados de búsqueda">
-          {results.map((r) => {
-            const already = symbols.includes(r.symbol)
-            return (
-              <li key={r.symbol} className="wl-result">
-                <span className="wl-result-name">
-                  <strong>{r.symbol}</strong>
-                  <span>{r.name}{r.exchange ? `, ${r.exchange}` : ''}</span>
-                </span>
-                <Button size="sm" variant={already ? 'ghost' : 'secondary'} disabled={already} onClick={() => { onAdd(r.symbol); setQ('') }}>
-                  {already ? 'Ya está en tu lista' : `Agregar ${r.symbol}`}
-                </Button>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-    </div>
+    <form
+      className="wl-search"
+      onSubmit={(e) => {
+        e.preventDefault()
+        tryAdd(q)
+      }}
+    >
+      <SearchCombobox
+        id="wl-buscar"
+        label="Agregar una emisora"
+        hint={
+          <>
+            Busca por clave o nombre, por ejemplo WALMEX o FEMSA.
+            {error && (
+              <span className="kz-error-text wl-search-error" role="alert">
+                <CircleAlert size={14} aria-hidden="true" />
+                {error}
+              </span>
+            )}
+          </>
+        }
+        value={q}
+        onValueChange={(v) => {
+          setQ(v)
+          setError(null)
+        }}
+        onSelect={(option) => tryAdd(option.symbol ?? option.label)}
+        // En los 200 ms del debounce las opciones todavía son del texto anterior: Enter agrega lo
+        // escrito, no la primera de esa búsqueda vieja.
+        onEnter={({ q: typed, searching }) => {
+          if (!searching) return false
+          tryAdd(typed)
+          return true
+        }}
+        exclude={symbols}
+        limit={6}
+        clearOnSelect={false}
+      />
+      <Button type="submit" variant="secondary" icon={<Plus size={16} />} disabled={!q.trim()}>
+        Agregar
+      </Button>
+    </form>
   )
 }
 

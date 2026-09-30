@@ -318,12 +318,16 @@ test('/mercados: bolsas abiertas con retraso, resumen factual, USD/MXN neutral y
   await expect(page.getByText(/sentimiento|codicia|cauteloso|optimista|pesimista/i)).toHaveCount(0)
 
   // USD/MXN en la tabla: cambio en neutral con pista de texto, nunca verde o rojo.
-  const fx = page.getByRole('table', { name: 'Panorama: Divisas' })
+  // "Panorama" sale una sola vez: el eyebrow del h1 (igual que en la navegación); la sección de las
+  // tablas se llama por lo que muestra.
+  await expect(page.locator('.markets-page').getByText(/^Panorama$/i).filter({ visible: true })).toHaveCount(1)
+  await expect(page.getByRole('heading', { level: 2, name: 'Precios por mercado' })).toBeVisible()
+  const fx = page.getByRole('table', { name: 'Precios por mercado: Divisas' })
   const usd = fx.getByRole('row', { name: /Dólar frente al peso/ })
   await expect(usd.getByText('peso más débil')).toBeVisible()
   await expect(usd.locator('.kz-delta').first()).toHaveAttribute('data-dir', 'neutral')
   await expect(fx.getByRole('row', { name: /Índice del dólar/ }).getByText('dólar más débil')).toBeVisible()
-  const hsi = page.getByRole('table', { name: 'Panorama: Resto del mundo' }).getByRole('row', { name: /Hang Seng/ })
+  const hsi = page.getByRole('table', { name: 'Precios por mercado: Resto del mundo' }).getByRole('row', { name: /Hang Seng/ })
   await expect(hsi.getByText('s/d').first()).toBeVisible()
 
   for (const [name, href] of [
@@ -484,4 +488,59 @@ test('/mercados: el resumen y el estado de las bolsas no empujan la página al l
   await page.waitForTimeout(500)
   const cls = await readLayoutShift(page)
   expect(cls, 'desplazamiento acumulado del layout').toBeLessThan(0.1)
+})
+
+// Noticias: antes el hueco de carga medía 100vh; con pocos titulares la tarjeta se encogía y el pie
+// subía, y cada cambio de idioma volvía a mostrar el esqueleto porque la consulta no conservaba datos.
+const manyNews = (n) => Array.from({ length: n }, (_, i) =>
+  news(`m${i}`, `Titular de mercados número ${i + 1} con texto de largo realista para medir el renglón`, i % 2 ? 'Reuters' : 'El Economista', i % 3 ? 'es' : 'en'))
+
+for (const count of [3, 30]) {
+  test(`/mercados/noticias con ${count} titulares y respuesta demorada no empuja la página al llegar (CLS < 0.1)`, async ({ page, baseURL }) => {
+    await trackLayoutShift(page)
+    const items = count === 3 ? NEWS.items : manyNews(count)
+    await setupApp(page, {
+      baseURL: /** @type {string} */ (baseURL),
+      session: true,
+      health: HEALTH,
+      routes: { ...V2_ROUTES, 'GET /v2/news': { json: { ...NEWS, items }, delayMs: 900 } },
+    })
+    await page.goto('/mercados/noticias')
+    await expect(page.locator('.markets-news__skeleton')).toBeVisible()
+    await expect(page.locator('.markets-news a').first()).toBeVisible({ timeout: 15_000 })
+    await page.waitForTimeout(500)
+    const cls = await readLayoutShift(page)
+    expect(cls, 'desplazamiento acumulado del layout').toBeLessThan(0.1)
+  })
+}
+
+test('/mercados/noticias: cambiar el idioma conserva la lista mientras llega la nueva, sin volver al esqueleto', async ({ page, baseURL }) => {
+  const api = await setupApp(page, {
+    baseURL: /** @type {string} */ (baseURL),
+    session: true,
+    health: HEALTH,
+    routes: {
+      ...V2_ROUTES,
+      'GET /v2/news': ({ url }) => {
+        const lang = url.searchParams.get('lang')
+        const items = lang && lang !== 'all' ? NEWS.items.filter((n) => n.lang === lang) : NEWS.items
+        return { json: { ...NEWS, items }, delayMs: lang === 'es' ? 1200 : 0 }
+      },
+    },
+  })
+  await page.goto('/mercados/noticias')
+  await expect(page.getByRole('link', { name: /Treasury yields/ })).toBeVisible()
+  const slot = page.locator('.markets-news-slot')
+  await page.getByRole('radio', { name: 'Español' }).check({ force: true })
+  // Mientras llega la respuesta: la lista anterior sigue, marcada como ocupada, y no hay esqueleto.
+  await expect(slot).toHaveAttribute('aria-busy', 'true')
+  await expect(page.locator('.markets-news__skeleton')).toHaveCount(0)
+  await expect(page.getByRole('link', { name: /Treasury yields/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Treasury yields/ })).toHaveCount(0, { timeout: 5_000 })
+  await expect(page.getByRole('link', { name: /La BMV cierra/ })).toBeVisible()
+  await expect(slot).not.toHaveAttribute('aria-busy', 'true')
+  await expect(page.locator('.markets-news__skeleton')).toHaveCount(0)
+  // La consulta pide de verdad el idioma y el tope de 30 (los mocks aceptan cualquier query).
+  const newsCalls = api.calls.filter((c) => c.includes('/v2/news'))
+  expect(newsCalls.some((c) => /lang=es/.test(c) && /limit=30/.test(c)), newsCalls.join('\n')).toBe(true)
 })

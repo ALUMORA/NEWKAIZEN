@@ -1,5 +1,5 @@
-// Mercados (F2). Las cuatro rutas son páginas nuevas; /mercados ya no monta la tab "Noticias" del
-// legado: es el panorama del día.
+// Mercados (F2): /mercados es el panorama del día; México, CETES y Noticias son sus subpáginas.
+// Cada página se carga aparte (lazy) para no inflar el paquete inicial.
 import { lazy } from 'react'
 import { PATHS, route } from '../../app/paths.js'
 

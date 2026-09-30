@@ -79,5 +79,7 @@
 
 /* Heatmap: el texto de celda va en --ink, que pasa AA sobre los cinco tonos en los dos temas. */
 .kz-heatmap__value { fill: var(--ink); font-size: 12px; font-variant-numeric: tabular-nums lining-nums; }
+/* Respaldo compacto de celdas y encabezados angostos (heatmap-fit.js mide a 10/12 del ancho de 12 px). */
+.kz-heatmap__compact { font-size: 10px; }
 /* Etiqueta directa con halo del color de fondo para que se lea sobre líneas y marcas. */
 .kz-chart__halo-text { paint-order: stroke; stroke: var(--chart-surface); stroke-width: 3px; stroke-linejoin: round; }

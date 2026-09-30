@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dailySummary, dedupeMarkets, exchangeTiming, fmtItemPrice, fmtSessionDay, fxHint, latestAsOf, pickVix } from './overview-model.js'
+import { dailySummary, dedupeMarkets, exchangeTiming, fmtItemPrice, fxHint, latestAsOf, pickVix } from './overview-model.js'
 
 const item = (symbol, label, price, changePct, currency = 'USD', asOf = '2026-09-18') => ({
   symbol,
@@ -36,22 +36,6 @@ const MACRO = {
   ],
   meta: { asOf: '2026-09-17', source: 'fred', delayMinutes: null, stale: false, fallback: false },
 }
-
-describe('fmtSessionDay', () => {
-  it('fecha sola y con día de la semana en español', () => {
-    expect(fmtSessionDay('2026-09-18')).toBe('vie 18 sep')
-    expect(fmtSessionDay('2025-09-19')).toBe('vie 19 sep')
-  })
-  it('un instante se lee en la zona de la bolsa', () => {
-    // 02:00 UTC del 19 es todavía el 18 en Nueva York y en la Ciudad de México.
-    expect(fmtSessionDay('2026-09-19T02:00:00Z', 'America/New_York')).toBe('vie 18 sep')
-  })
-  it('lo que no es fecha da s/d', () => {
-    expect(fmtSessionDay('2026-02-31')).toBe('s/d')
-    expect(fmtSessionDay(null)).toBe('s/d')
-    expect(fmtSessionDay('ayer')).toBe('s/d')
-  })
-})
 
 describe('exchangeTiming', () => {
   it('abierta: retraso aproximado', () => {

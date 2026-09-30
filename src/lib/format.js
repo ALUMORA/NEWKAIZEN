@@ -328,6 +328,44 @@ export function fmtDateTime(value) {
   return `${p.day} ${MONTHS[p.month - 1]} ${p.year}, ${String(p.hour).padStart(2, '0')}:${String(p.minute).padStart(2, '0')}`
 }
 
+const WEEKDAYS = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb']
+/** @type {Map<string, Intl.DateTimeFormat>} */
+const dayFormatters = new Map()
+
+/**
+ * Año, mes y día de un instante en la zona `timeZone`.
+ * @param {Date} date @param {string} timeZone
+ */
+function zonedDay(date, timeZone) {
+  let f = dayFormatters.get(timeZone)
+  if (!f) {
+    f = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })
+    dayFormatters.set(timeZone, f)
+  }
+  const parts = Object.fromEntries(f.formatToParts(date).map((p) => [p.type, p.value]))
+  return { year: Number(parts.year), month: Number(parts.month), day: Number(parts.day) }
+}
+
+/**
+ * "vie 18 sep": día de la semana, día y mes, para decir de qué sesión es un dato. Una fecha sola
+ * (YYYY-MM-DD) se toma tal cual; un instante se lee en `timeZone` (la Ciudad de México por
+ * omisión; el cierre de la NYSE se lee en America/New_York). Una fecha que no existe da "s/d".
+ * @param {unknown} value ISO, Date o epoch en ms
+ * @param {{ timeZone?: string }} [options]
+ */
+export function fmtWeekday(value, { timeZone = TIME_ZONE } = {}) {
+  const only = asDateOnly(value)
+  let cal = only ? only.cal : null
+  if (!only) {
+    const d = toDate(value)
+    if (!d) return MISSING
+    cal = zonedDay(d, timeZone)
+  }
+  if (!cal) return MISSING
+  const weekday = new Date(utcMs(cal.year, cal.month, cal.day)).getUTCDay()
+  return `${WEEKDAYS[weekday]} ${cal.day} ${MONTHS[cal.month - 1]}`
+}
+
 /**
  * "hace 5 min", "hace 3 h", "hace 2 días"; en el futuro "en 5 min". Más de 30 días: la fecha.
  *

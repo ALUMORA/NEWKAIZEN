@@ -14,6 +14,7 @@ import {
   fmtPct,
   fmtPp,
   fmtRelative,
+  fmtWeekday,
   isNum,
   signOf,
 } from './format.js'
@@ -174,6 +175,30 @@ describe('fmtMultiple', () => {
     expect(describeMultiple(-1)).toEqual({ text: 'n/s', title: NOT_MEANINGFUL_TITLE })
     expect(describeMultiple(8)).toEqual({ text: '8.0x', title: undefined })
     expect(describeMultiple(null)).toEqual({ text: 's/d', title: undefined })
+  })
+})
+
+describe('fmtWeekday: día de la semana, día y mes', () => {
+  it('una fecha sola se toma tal cual, sin moverla de zona', () => {
+    expect(fmtWeekday('2026-09-18')).toBe('vie 18 sep')
+    expect(fmtWeekday('2025-09-19')).toBe('vie 19 sep')
+    expect(fmtWeekday('2026-01-04')).toBe('dom 4 ene')
+    expect(fmtWeekday('2026-09-16')).toBe('mié 16 sep')
+  })
+  it('un instante se lee en la Ciudad de México o en la zona que se pida', () => {
+    // 02:00 UTC del 19 es todavía el 18 en CDMX y en Nueva York
+    expect(fmtWeekday('2026-09-19T02:00:00Z')).toBe('vie 18 sep')
+    expect(fmtWeekday('2026-09-19T02:00:00Z', { timeZone: 'America/New_York' })).toBe('vie 18 sep')
+    // 05:00 UTC del 19: en Nueva York ya es sábado 19, en CDMX sigue siendo viernes 18
+    expect(fmtWeekday('2026-09-19T05:00:00Z', { timeZone: 'America/New_York' })).toBe('sáb 19 sep')
+    expect(fmtWeekday('2026-09-19T05:00:00Z')).toBe('vie 18 sep')
+  })
+  it('lo que no es fecha o no existe da s/d', () => {
+    expect(fmtWeekday('2026-02-31')).toBe('s/d')
+    expect(fmtWeekday('2026-02-31T10:00:00Z')).toBe('s/d')
+    expect(fmtWeekday(null)).toBe('s/d')
+    expect(fmtWeekday('')).toBe('s/d')
+    expect(fmtWeekday('ayer')).toBe('s/d')
   })
 })
 

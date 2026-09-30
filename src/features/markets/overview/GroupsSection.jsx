@@ -3,8 +3,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { Card, DataTable, Delta, EmptyState, ErrorState, SectionHeading, Skeleton } from '../../../components/ui/index.js'
 import { marketsOverviewQuery } from '../../../lib/api/queries.js'
-import { MISSING } from '../../../lib/format.js'
-import { DXY_SYMBOL, EXCHANGES, dedupeMarkets, fmtItemPrice, fmtSessionDay, fxHint, isFxLike } from '../pages/overview-model.js'
+import { MISSING, fmtWeekday } from '../../../lib/format.js'
+import { DXY_SYMBOL, EXCHANGES, dedupeMarkets, fmtItemPrice, fxHint, isFxLike } from '../pages/overview-model.js'
 import { useFeature } from './useFeature.js'
 
 const DESCRIPTIONS = {
@@ -29,7 +29,7 @@ function columnsFor(groupId) {
           <span>{v}</span>
           <span className="markets-instrument__symbol">
             <span className="mono">{row.symbol}</span> ·{' '}
-            <span className="markets-nowrap">{row.asOf ? `dato del ${fmtSessionDay(String(row.asOf), tz)}` : `fecha ${MISSING}`}</span>
+            <span className="markets-nowrap">{row.asOf ? `dato del ${fmtWeekday(String(row.asOf), { timeZone: tz })}` : `fecha ${MISSING}`}</span>
           </span>
         </span>
       ),
@@ -63,7 +63,7 @@ export function GroupsSection() {
   const groups = q.data ? dedupeMarkets({ overview: q.data }).groups : []
   return (
     <section className="kz-col" aria-labelledby="markets-groups-title">
-      <SectionHeading id="markets-groups-title" title="Panorama" description="Último precio y cambio contra el cierre anterior, en porcentaje y en unidades. Cada instrumento aparece una sola vez." />
+      <SectionHeading id="markets-groups-title" title="Precios por mercado" description="Último precio y cambio contra el cierre anterior, en porcentaje y en unidades. Cada instrumento aparece una sola vez." />
       {loading ? (
         <div className="markets-groups" aria-busy="true">
           <span className="sr-only">Cargando</span>
@@ -78,7 +78,7 @@ export function GroupsSection() {
         <div className="markets-groups">
           {groups.map((g) => (
             <Card key={g.id} title={g.label} titleAs="h3" description={DESCRIPTIONS[g.id]} status={q.data?.meta} padding="none">
-              <DataTable columns={columnsFor(g.id)} rows={g.items} rowKey="symbol" caption={`Panorama: ${g.label}`} captionHidden density="compact" />
+              <DataTable columns={columnsFor(g.id)} rows={g.items} rowKey="symbol" caption={`Precios por mercado: ${g.label}`} captionHidden density="compact" />
             </Card>
           ))}
         </div>

@@ -298,10 +298,17 @@ test.describe('herramientas: optimizador', () => {
     await open(page, /** @type {string} */ (baseURL), { state: EMPTY_STATE })
     await page.goto('/herramientas/optimizador')
     await expect(page.getByRole('heading', { name: 'Elige al menos dos emisoras' })).toBeVisible()
-    const search = page.getByRole('textbox', { name: 'Agregar emisora' })
+    // El buscador es el SearchCombobox compartido: opciones con rol option y el foco en el campo.
+    const search = page.getByRole('combobox', { name: 'Agregar emisora' })
     await search.fill('wal')
-    await page.getByRole('button', { name: /WALMEX\.MX.*agregar/ }).click()
+    const option = page.getByRole('option', { name: /WALMEX\.MX/ })
+    await expect(option).toBeVisible()
+    await expect(search).toHaveAttribute('aria-expanded', 'true')
+    await expectNoAxeViolations(page, 'optimizador con la lista de búsqueda abierta')
+    await option.click()
     await expect(page).toHaveURL(/symbols=WALMEX\.MX$/)
+    await expect(search).toHaveValue('')
+    await expect(search).toBeFocused()
     await search.fill('aapl')
     await search.press('Enter')
     await expect(page).toHaveURL(/symbols=WALMEX\.MX(%2C|,)AAPL/)
@@ -312,6 +319,21 @@ test.describe('herramientas: optimizador', () => {
     await expect(page.getByText('AAPL ya está en la lista.')).toBeVisible()
     await page.getByRole('button', { name: 'Quitar AAPL' }).click()
     await expect(page.getByRole('heading', { name: 'Elige al menos dos emisoras' })).toBeVisible()
+  })
+
+  // Durante los 200 ms del debounce la lista todavía muestra lo del texto anterior: Enter justo
+  // después de teclear agrega lo escrito, no la primera opción de la búsqueda vieja.
+  test('Enter justo después de teclear agrega la clave escrita, no una opción de la búsqueda anterior', async ({ page, baseURL }) => {
+    await open(page, /** @type {string} */ (baseURL), { state: EMPTY_STATE })
+    await page.goto('/herramientas/optimizador')
+    const search = page.getByRole('combobox', { name: 'Agregar emisora' })
+    await search.fill('w')
+    await expect(page.getByRole('option', { name: /WALMEX\.MX/ })).toBeVisible()
+    await search.pressSequentially('mt')
+    await search.press('Enter')
+    await expect(page).toHaveURL(/symbols=WMT$/)
+    await expect(page.getByRole('button', { name: 'Quitar WMT' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Quitar WALMEX.MX' })).toHaveCount(0)
   })
 
   test('supuestos: sin prima no hay máximo Sharpe, James y Stein y una caja imposible', async ({ page, baseURL }) => {
@@ -372,7 +394,7 @@ test.describe('herramientas: backtest', () => {
     await page.getByRole('radio', { name: 'Los escribo yo' }).check()
     await expect(page.getByText('Pesos de hoy sobre historia anterior.')).toHaveCount(0)
     await expect(page.getByRole('heading', { name: 'Elige qué probar' })).toBeVisible()
-    const search = page.getByRole('textbox', { name: 'Agregar emisora' })
+    const search = page.getByRole('combobox', { name: 'Agregar emisora' })
     await search.fill('WALMEX.MX')
     await search.press('Enter')
     await search.fill('AAPL')
@@ -413,6 +435,24 @@ test.describe('herramientas: backtest', () => {
 })
 
 // Sin la fixture automática: la serie de CETES falla a propósito y la página sigue con la tasa escrita.
+// Con la búsqueda caída el SearchCombobox no ofrece opciones: Enter manda la clave escrita al
+// formulario, como antes del cambio de buscador.
+plainTest('herramientas: con la búsqueda caída, escribir la clave y dar Enter la sigue agregando', async ({ page, baseURL }) => {
+  const guards = attachGuards(page, { allow: expectedHttpError(503, 'GET', '/v2/search', 'la prueba tumba la búsqueda a propósito') })
+  const down = { status: 503, json: { error: { code: 'UPSTREAM_UNAVAILABLE', message: 'La búsqueda no responde.' } } }
+  await open(page, /** @type {string} */ (baseURL), { state: EMPTY_STATE, routes: { 'GET /v2/search': down } })
+  await page.goto('/herramientas/optimizador')
+  const search = page.getByRole('combobox', { name: 'Agregar emisora' })
+  await search.fill('walmex.mx')
+  await expect(page.getByText('No se pudo buscar ahora. Intenta de nuevo en un momento.').first()).toBeVisible({ timeout: 10_000 })
+  await search.press('Enter')
+  await expect(page).toHaveURL(/symbols=WALMEX\.MX$/)
+  await search.fill('AMXB.MX')
+  await page.getByRole('button', { name: 'Agregar', exact: true }).click()
+  await expect(page).toHaveURL(/symbols=WALMEX\.MX(%2C|,)AMXB\.MX$/)
+  guards.assertClean()
+})
+
 plainTest('herramientas: sin CETES se avisa y se puede escribir la tasa', async ({ page, baseURL }) => {
   const guards = attachGuards(page, { allow: expectedHttpError(503, 'GET', '/v2/rates/rf', 'la prueba tumba la serie de CETES') })
   const down = { status: 503, json: { error: { code: 'UPSTREAM_UNAVAILABLE', message: 'Banxico no responde. Intenta en unos minutos.' } } }

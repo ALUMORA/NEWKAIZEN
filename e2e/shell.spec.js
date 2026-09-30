@@ -202,6 +202,25 @@ test.describe('shell: estructura', () => {
       await expect(scroller).toHaveAttribute('tabindex', '0')
       const { sw, cw } = await scroller.evaluate((el) => ({ sw: el.scrollWidth, cw: el.clientWidth }))
       expect(sw).toBeGreaterThan(cw)
+      // Y como desborda, un degradado al borde avisa que hay más: al principio a la derecha, al
+      // final a la izquierda.
+      const mask = (el) => {
+        const cs = getComputedStyle(el)
+        return cs.maskImage || cs.webkitMaskImage || 'none'
+      }
+      await expect(scroller).toHaveAttribute('data-fade', 'end')
+      expect(await scroller.evaluate(mask)).not.toBe('none')
+      await scroller.evaluate((el) => { el.scrollLeft = el.scrollWidth })
+      await expect(scroller).toHaveAttribute('data-fade', 'start')
+      expect(await scroller.evaluate(mask)).not.toBe('none')
+    } else {
+      const scroller = strip.getByRole('group', { name: /Cifras del mercado/ })
+      const fits = await scroller.evaluate((el) => el.scrollWidth <= el.clientWidth + 1)
+      if (fits) {
+        // Si cabe completa, nada se desvanece.
+        await expect(scroller).not.toHaveAttribute('data-fade')
+        expect(await scroller.evaluate((el) => getComputedStyle(el).maskImage || 'none')).toBe('none')
+      }
     }
     await expectNoHorizontalScroll(page)
     api.assertAllMatched()
@@ -390,10 +409,10 @@ test.describe('shell: avisos', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Lista de seguimiento')
 
     // Dos altas y una baja: tres avisos apilados y una tabla más ancha que el teléfono.
-    const search = page.getByRole('searchbox', { name: /Agregar una emisora/ })
+    const search = page.getByRole('combobox', { name: /Agregar una emisora/ })
     for (const [q, symbol] of [['walmex', 'WALMEX.MX'], ['wmt', 'WMT']]) {
       await search.fill(q)
-      await page.getByRole('button', { name: `Agregar ${symbol}` }).click()
+      await page.getByRole('option', { name: new RegExp(`^${symbol.replace('.', '\\.')}`) }).click()
     }
     const table = page.getByRole('table', { name: 'Emisoras en seguimiento' })
     await expect(table.getByRole('row')).toHaveCount(3)

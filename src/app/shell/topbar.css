@@ -72,6 +72,24 @@
 }
 .kz-strip__scroll::-webkit-scrollbar { display: none; }
 .kz-strip__scroll:focus-visible { border-radius: var(--radius-sm); outline: 2px solid var(--focus); outline-offset: 2px; }
+/* Cuando la tira no cabe, el borde con cifras ocultas se desvanece para avisar que hay más (antes, a
+   390 px, la segunda cifra se cortaba a media palabra sin pista). La máscara solo usa el alfa: el
+   negro no es un color de la interfaz y funciona igual en los dos temas. Con foco de teclado se
+   quita, porque también recortaría el contorno de foco. */
+.kz-strip__scroll[data-fade] { --strip-fade: 28px; }
+.kz-strip__scroll[data-fade='end'] {
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - var(--strip-fade)), transparent);
+  mask-image: linear-gradient(to right, black calc(100% - var(--strip-fade)), transparent);
+}
+.kz-strip__scroll[data-fade='start'] {
+  -webkit-mask-image: linear-gradient(to left, black calc(100% - var(--strip-fade)), transparent);
+  mask-image: linear-gradient(to left, black calc(100% - var(--strip-fade)), transparent);
+}
+.kz-strip__scroll[data-fade='both'] {
+  -webkit-mask-image: linear-gradient(to right, transparent, black var(--strip-fade), black calc(100% - var(--strip-fade)), transparent);
+  mask-image: linear-gradient(to right, transparent, black var(--strip-fade), black calc(100% - var(--strip-fade)), transparent);
+}
+.kz-strip__scroll[data-fade]:focus-visible { -webkit-mask-image: none; mask-image: none; }
 .kz-strip__list {
   align-items: center;
   display: flex;

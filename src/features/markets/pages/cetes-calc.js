@@ -1,11 +1,9 @@
 // Cálculo de la calculadora de CETES. Puro, para poder probarlo sin React.
+// La retención de ISR (tasa de la ley vigente y fórmula) vive en src/lib/finance/tax-mx.js; aquí no
+// se repite.
 import { cetesEffectiveAnnual, cetesPerPeriod } from '../../../lib/finance/index.js'
-
-/**
- * Tasa anual de retención provisional de ISR sobre el capital invertido. La fija cada año la Ley de
- * Ingresos de la Federación (0.90 % en 2026); es editable en la calculadora.
- */
-export const ISR_RETENTION_2026 = 0.009
+import { INTEREST_WITHHOLDING_RATE, INTEREST_WITHHOLDING_SOURCE, interestWithholding } from '../../../lib/finance/tax-mx.js'
+import { fmtPct } from '../../../lib/format.js'
 
 /** Plazo en días a partir del identificador o la etiqueta de una serie ("cetes91" → 91). */
 export function tenorOf(item) {
@@ -34,15 +32,19 @@ export function cetesRows(items) {
 
 /**
  * @param {{ amount: number | null, tenorDays: number, annualYield: number | null, retentionRate: number | null }} input
- *   annualYield y retentionRate como fracción
+ *   annualYield y retentionRate como fracción; la retención es la de interestWithholding de tax-mx
  */
 export function cetesResult({ amount, tenorDays, annualYield, retentionRate }) {
   const ok = [amount, annualYield, retentionRate].every((v) => typeof v === 'number' && Number.isFinite(v))
   if (!ok || amount <= 0 || tenorDays <= 0) return null
+  // Fuera de 0 a 100 %, interestWithholding usaría la tasa de la ley en silencio y el resultado no
+  // correspondería a lo que dice el campo: mejor s/d.
+  if (retentionRate < 0 || retentionRate > 1) return null
   const periodYield = cetesPerPeriod(annualYield, tenorDays, tenorDays)
   if (periodYield == null) return null
   const gross = amount * periodYield
-  const retention = amount * retentionRate * (tenorDays / 365)
+  const retention = interestWithholding(amount, tenorDays, { rate: retentionRate })
+  if (retention == null) return null
   return {
     periodYield,
     gross,
@@ -50,4 +52,9 @@ export function cetesResult({ amount, tenorDays, annualYield, retentionRate }) {
     net: gross - retention,
     effectiveAnnual: cetesEffectiveAnnual(annualYield, tenorDays),
   }
+}
+
+/** Ayuda del campo de retención: la tasa y la ley salen de tax-mx, no de un texto escrito a mano. */
+export function retentionHint() {
+  return `${fmtPct(INTEREST_WITHHOLDING_RATE)} al año, según la ${INTEREST_WITHHOLDING_SOURCE.split(':')[0]}.`
 }
