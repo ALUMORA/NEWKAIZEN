@@ -29,7 +29,7 @@ if (process.env.LH_EJEMPLO) {
   await page.evaluateOnNewDocument((s) => sessionStorage.setItem('kaizen.session', s), session)
   await page.goto(BASE + '/bienvenida', { waitUntil: 'networkidle0' })
   const clicked = await page.evaluate(() => {
-    const button = [...document.querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Usar el ejemplo')
+    const button = [...globalThis.document.querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Usar el ejemplo')
     button?.click()
     return Boolean(button)
   })
