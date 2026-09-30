@@ -1,5 +1,5 @@
 import { flatNav } from '../nav.js'
-import { buildGroups, fold, isTickerLike, matchSymbol, pushRecent, readRecents } from './palette-model.js'
+import { RECENT_KEY, buildGroups, clearRecents, fold, isTickerLike, matchSymbol, pushRecent, readRecents } from './palette-model.js'
 
 const routes = flatNav()
 const walmex = { symbol: 'WALMEX.MX', name: 'Wal-Mart de México', exchange: 'BMV' }
@@ -52,5 +52,15 @@ describe('palette-model', () => {
     localStorage.clear()
     for (const s of ['A', 'B', 'C', 'D', 'E', 'F', 'B']) pushRecent({ symbol: s })
     expect(readRecents().map((r) => r.symbol)).toEqual(['B', 'F', 'E', 'D', 'C'])
+  })
+
+  it('clearRecents borra los recientes guardados y devuelve la lista vacía', () => {
+    localStorage.clear()
+    pushRecent({ symbol: 'WALMEX.MX' })
+    localStorage.setItem('otra-llave', 'se queda')
+    expect(clearRecents()).toEqual([])
+    expect(readRecents()).toEqual([])
+    expect(localStorage.getItem(RECENT_KEY)).toBeNull()
+    expect(localStorage.getItem('otra-llave')).toBe('se queda')
   })
 })

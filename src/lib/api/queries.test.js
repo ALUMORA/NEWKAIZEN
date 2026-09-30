@@ -3,7 +3,7 @@
 // la app esperaría el doble antes de ver el error.
 import { ApiError } from './http.js'
 import { COLD_START_DELAYS_MS } from './client.js'
-import { STALE_TIME, createQueryClient, queryKeys, shouldRetry } from './queries.js'
+import { STALE_TIME, createQueryClient, factorScreenerQuery, queryKeys, shouldRetry } from './queries.js'
 
 const abort = () => Object.assign(new Error('The operation was aborted.'), { name: 'AbortError' })
 
@@ -61,5 +61,20 @@ describe('createQueryClient', () => {
 describe('queryKeys', () => {
   it('normalizan símbolos: mismo conjunto, misma llave', () => {
     expect(queryKeys.quotes([' aapl ', 'AAPL', 'walmex.mx'])).toEqual(['api', 'quotes', ['AAPL', 'WALMEX.MX']])
+  })
+})
+
+describe('factorScreenerQuery', () => {
+  it('con universo propio y sin claves no sale: el API contestaría 422', () => {
+    expect(factorScreenerQuery({ universe: 'custom', symbols: [] }).enabled).toBe(false)
+    expect(factorScreenerQuery({ universe: 'custom' }).enabled).toBe(false)
+    expect(factorScreenerQuery({ universe: 'custom', symbols: ['  '] }).enabled).toBe(false)
+  })
+
+  it('con claves propias o con un universo fijo sí sale', () => {
+    expect(factorScreenerQuery({ universe: 'custom', symbols: ['AAPL', 'MSFT'] }).enabled).toBe(true)
+    expect(factorScreenerQuery({ universe: 'mx' }).enabled).toBe(true)
+    expect(factorScreenerQuery({ universe: 'us' }).enabled).toBe(true)
+    expect(factorScreenerQuery().enabled).toBe(true)
   })
 })

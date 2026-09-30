@@ -1,29 +1,31 @@
 // Comparador (/investigar/comparar?symbols=A,B): de 2 a 5 emisoras con sus múltiplos y
 // rendimientos lado a lado, y su precio en base 100 desde el panel. Cada bloque tiene sus estados.
-import { Suspense, useState } from 'react'
+import { Suspense, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { instrumentQuery, panelQuery } from '../../../lib/api/queries.js'
 import { fmtMoney, fmtMultiple, fmtPct } from '../../../lib/format.js'
-import { Button, Card, DataStatus, DataTable, Delta, EmptyState, Input, PageHeader, Skeleton } from '../../../components/ui/index.js'
+import { Button, Card, DataStatus, DataTable, Delta, EmptyState, InfoTip, PageHeader, Skeleton } from '../../../components/ui/index.js'
 import { PATHS, pathCompare, pathInstrument } from '../../../app/paths.js'
 import { QueryBlock } from '../components/QueryBlock.jsx'
 import { parseSymbols } from '../symbols.js'
+import { SymbolPicker } from '../components/SymbolPicker.jsx'
 import { TimeSeries } from '../components/charts.js'
 import '../research.css'
 
 const MIN = 2
 const MAX = 5
+/** `termKey`: llave del glosario para el InfoTip del renglón (las mismas que usa la ficha). */
 const METRICS = [
   { key: 'price', label: 'Precio', format: (i) => fmtMoney(i.quote?.price, i.priceCurrency) },
   { key: 'changePct', label: 'Cambio del día', format: (i) => <Delta value={i.quote?.changePct} /> },
-  { key: 'pe', label: 'P/U', format: (i) => fmtMultiple(i.fundamentals?.pe) },
-  { key: 'pb', label: 'P/VL', format: (i) => fmtMultiple(i.fundamentals?.pb) },
-  { key: 'evEbitda', label: 'VE/EBITDA', format: (i) => fmtMultiple(i.fundamentals?.evEbitda) },
-  { key: 'dividendYield', label: 'Rendimiento por dividendo', format: (i) => fmtPct(i.fundamentals?.dividendYield) },
-  { key: 'roe', label: 'ROE', format: (i) => fmtPct(i.fundamentals?.roe) },
+  { key: 'pe', label: 'P/U', termKey: 'p-u', format: (i) => fmtMultiple(i.fundamentals?.pe) },
+  { key: 'pb', label: 'P/VL', termKey: 'p-vl', format: (i) => fmtMultiple(i.fundamentals?.pb) },
+  { key: 'evEbitda', label: 'VE/EBITDA', termKey: 'ev-ebitda', format: (i) => fmtMultiple(i.fundamentals?.evEbitda) },
+  { key: 'dividendYield', label: 'Rendimiento por dividendo', termKey: 'rendimiento-por-dividendo', format: (i) => fmtPct(i.fundamentals?.dividendYield) },
+  { key: 'roe', label: 'ROE', termKey: 'roe', format: (i) => fmtPct(i.fundamentals?.roe) },
   { key: 'netMargin', label: 'Margen neto', format: (i) => fmtPct(i.fundamentals?.netMargin) },
-  { key: 'debtToEquity', label: 'Deuda / capital', format: (i) => fmtMultiple(i.fundamentals?.debtToEquity, { decimals: 2 }) },
+  { key: 'debtToEquity', label: 'Deuda / capital', termKey: 'deuda-capital', format: (i) => fmtMultiple(i.fundamentals?.debtToEquity, { decimals: 2 }) },
   { key: 'revenueGrowthYoY', label: 'Crecimiento de ingresos', format: (i) => <Delta value={i.fundamentals?.revenueGrowthYoY} /> },
 ]
 
@@ -32,7 +34,18 @@ function Fundamentals({ symbols }) {
   const loading = queries.some((q) => q.isPending)
   const failed = symbols.filter((_, i) => queries[i].isError)
   const columns = [
-    { key: 'label', header: 'Dato', minWidth: 160 },
+    {
+      key: 'label',
+      header: 'Dato',
+      minWidth: 160,
+      // Todas las etiquetas miden lo mismo con o sin InfoTip, para que los renglones no bailen.
+      format: (v, row) => (
+        <span className="kz-research-rowlabel">
+          {v}
+          {row.termKey ? <InfoTip termKey={row.termKey} term={v} /> : null}
+        </span>
+      ),
+    },
     ...symbols.map((s, i) => ({
       key: s,
       header: queries[i].data?.name ? `${s}` : s,
@@ -112,24 +125,50 @@ function Performance({ symbols }) {
   )
 }
 
-export default function Compare() {
-  const [params] = useSearchParams()
+/** Emisoras del comparador: se eligen con el buscador y se mandan a la URL con "Comparar". */
+function CompareForm({ initial }) {
   const navigate = useNavigate()
-  const symbols = parseSymbols(params.get('symbols')).slice(0, MAX)
-  const [text, setText] = useState(symbols.join(', '))
+  const [picked, setPicked] = useState(/** @type {string[]} */ (initial))
   const [error, setError] = useState('')
-  const valid = symbols.length >= MIN
+  const pickerRef = useRef(/** @type {import('../components/SymbolPicker.jsx').SymbolPickerHandle | null} */ (null))
 
-  const submit = (event) => {
+  /** @param {import('react').FormEvent} event */
+  const submit = async (event) => {
     event.preventDefault()
-    const next = parseSymbols(text)
-    if (next.length < MIN || next.length > MAX) {
-      setError(`Escribe de ${MIN} a ${MAX} claves separadas por coma, por ejemplo WALMEX.MX, AAPL.`)
+    // Lo escrito sin Enter también cuenta; si no se pudo tomar, el buscador ya dice por qué.
+    const list = pickerRef.current ? await pickerRef.current.commit() : picked
+    if (!list) return
+    if (list.length < MIN || list.length > MAX) {
+      setError(`Elige de ${MIN} a ${MAX} emisoras: búscalas por nombre o escribe sus claves separadas por coma, por ejemplo WALMEX.MX, AAPL.`)
       return
     }
     setError('')
-    navigate(pathCompare(next))
+    navigate(pathCompare(list))
   }
+
+  return (
+    <form onSubmit={submit} className="kz-row kz-research-compare-form" data-gap="3" data-align="start">
+      <SymbolPicker
+        label="Agregar emisora"
+        listLabel="Emisoras a comparar"
+        symbols={picked}
+        max={MAX}
+        error={error}
+        pickerRef={pickerRef}
+        onChange={(next) => {
+          setPicked(next)
+          setError('')
+        }}
+      />
+      <Button type="submit">Comparar</Button>
+    </form>
+  )
+}
+
+export default function Compare() {
+  const [params] = useSearchParams()
+  const symbols = parseSymbols(params.get('symbols')).slice(0, MAX)
+  const valid = symbols.length >= MIN
 
   return (
     <div className="kz-container kz-col kz-research-page" data-gap="6">
@@ -140,29 +179,18 @@ export default function Compare() {
       />
       <Card title="Emisoras">
         <div className="kz-col" data-gap="3">
-        <form onSubmit={submit} className="kz-row kz-research-compare-form" data-gap="3" data-align="start">
-          <Input
-            label="Claves de las emisoras"
-            hint="Separadas por coma. Por ejemplo: WALMEX.MX, FEMSAUBD.MX, AAPL"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            error={error || undefined}
-            autoComplete="off"
-            spellCheck={false}
-          />
-          <Button type="submit">Comparar</Button>
-        </form>
-        {symbols.length ? (
-          <p className="kz-research-muted">
-            Fichas:{' '}
-            {symbols.map((s, i) => (
-              <span key={s}>
-                {i ? ', ' : ''}
-                <Link to={pathInstrument(s)}>{s}</Link>
-              </span>
-            ))}
-          </p>
-        ) : null}
+          <CompareForm key={symbols.join(',')} initial={symbols} />
+          {symbols.length ? (
+            <p className="kz-research-muted">
+              Fichas:{' '}
+              {symbols.map((s, i) => (
+                <span key={s}>
+                  {i ? ', ' : ''}
+                  <Link to={pathInstrument(s)}>{s}</Link>
+                </span>
+              ))}
+            </p>
+          ) : null}
         </div>
       </Card>
       {valid ? (
@@ -174,7 +202,7 @@ export default function Compare() {
         <EmptyState
           headingAs="h2"
           title="Elige al menos dos emisoras"
-          text="Escribe sus claves arriba para verlas lado a lado."
+          text="Búscalas arriba por nombre o clave para verlas lado a lado."
         />
       )}
     </div>

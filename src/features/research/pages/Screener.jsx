@@ -2,16 +2,17 @@
 // ordenado por puntajes z relativos al sector, con la cobertura de cada emisora y pruebas
 // "cumple / no cumple" contra umbrales escritos. Nunca dice qué hacer. La URL guarda universo,
 // claves y sector (?universo=propia&symbols=A,B&sector=...).
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { factorScreenerQuery } from '../../../lib/api/queries.js'
 import { useStore } from '../../../lib/storage.js'
-import { Button, Card, EmptyState, Input, PageHeader, SegmentedControl, Select, TabPanel, Tabs } from '../../../components/ui/index.js'
+import { Button, Card, EmptyState, PageHeader, SegmentedControl, Select, TabPanel, Tabs } from '../../../components/ui/index.js'
 import { PATHS } from '../../../app/paths.js'
 import { QueryBlock } from '../components/QueryBlock.jsx'
 import { ChecksTable, ExcludedTable, MetricsTable, ScoresTable } from '../components/FactorTables.jsx'
 import { FactorGuide } from '../components/FactorGuide.jsx'
+import { SymbolPicker } from '../components/SymbolPicker.jsx'
 import { parseSymbols } from '../symbols.js'
 import { CUSTOM_MAX, CUSTOM_MIN, UNIVERSES, checkDefs, filterBySector, groupReasons, readParams, sectorsOf, writeParams } from '../screener-model.js'
 import '../research.css'
@@ -24,16 +25,17 @@ const TABS = [
   { id: 'metrics', label: 'Métricas' },
 ]
 
-/** Lista propia: claves escritas a mano o tomadas de una watchlist. */
+/** Lista propia: emisoras elegidas con el buscador (o claves escritas) o tomadas de una lista de seguimiento. */
 function CustomForm({ initial, onApply }) {
   const lists = useStore((s) => s.watchlists) ?? EMPTY
-  const [text, setText] = useState(initial.join(', '))
+  const [picked, setPicked] = useState(/** @type {string[]} */ (initial))
   const [error, setError] = useState('')
+  const pickerRef = useRef(/** @type {import('../components/SymbolPicker.jsx').SymbolPickerHandle | null} */ (null))
 
   /** @param {string[]} next */
   function apply(next) {
     if (next.length < CUSTOM_MIN || next.length > CUSTOM_MAX) {
-      setError(`Escribe de ${CUSTOM_MIN} a ${CUSTOM_MAX} claves separadas por coma, por ejemplo WALMEX.MX, AAPL, MSFT.`)
+      setError(`Elige de ${CUSTOM_MIN} a ${CUSTOM_MAX} emisoras: búscalas por nombre o escribe sus claves separadas por coma, por ejemplo WALMEX.MX, AAPL, MSFT.`)
       return
     }
     setError('')
@@ -45,22 +47,28 @@ function CustomForm({ initial, onApply }) {
     <div className="kz-col" data-gap="3">
       <form
         className="kz-screener-custom"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault()
-          apply(parseSymbols(text))
+          // Lo escrito sin Enter también cuenta; si no se pudo tomar, el buscador ya dice por qué.
+          const list = pickerRef.current ? await pickerRef.current.commit() : picked
+          if (list) apply(list)
         }}
       >
-        <Input
-          label="Claves de tu lista"
-          hint={`De ${CUSTOM_MIN} a ${CUSTOM_MAX}, separadas por coma. Con tan pocas emisoras por sector, casi todas se comparan contra toda la lista.`}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          error={error || undefined}
-          autoComplete="off"
-          spellCheck={false}
+        <SymbolPicker
+          label="Agregar emisora a tu lista"
+          listLabel="Emisoras de tu lista"
+          symbols={picked}
+          max={CUSTOM_MAX}
+          error={error}
+          pickerRef={pickerRef}
+          onChange={(next) => {
+            setPicked(next)
+            setError('')
+          }}
         />
         <Button type="submit">Calcular</Button>
       </form>
+      <p className="kz-research-muted">Con tan pocas emisoras por sector, casi todas se comparan contra toda la lista.</p>
       {usable.length ? (
         <div className="kz-row" data-gap="2">
           <span className="kz-research-muted">Usar una lista de seguimiento:</span>
@@ -70,8 +78,9 @@ function CustomForm({ initial, onApply }) {
               variant="secondary"
               size="sm"
               onClick={() => {
-                setText(l.symbols.join(', '))
-                apply(l.symbols.slice(0, CUSTOM_MAX))
+                const next = parseSymbols(l.symbols.join(',')).slice(0, CUSTOM_MAX)
+                setPicked(next)
+                apply(next)
               }}
             >
               {`${l.name} (${l.symbols.length})`}
@@ -216,7 +225,7 @@ export default function Screener() {
           </QueryBlock>
         </Card>
       ) : (
-        <EmptyState headingAs="h2" title="Arma tu lista" text={`Escribe de ${CUSTOM_MIN} a ${CUSTOM_MAX} claves arriba, o usa una de tus listas de seguimiento.`} />
+        <EmptyState headingAs="h2" title="Arma tu lista" text={`Elige de ${CUSTOM_MIN} a ${CUSTOM_MAX} emisoras arriba, o usa una de tus listas de seguimiento.`} />
       )}
       {ready && shownExcluded.length ? (
         <Card title="Fuera del tablero" description="Sin datos suficientes para compararlas. Se muestran con su motivo en vez de esconderlas." padding="none">

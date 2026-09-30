@@ -402,10 +402,33 @@ test.describe('screener de factores', () => {
     await page.getByRole('radio', { name: 'Lista propia' }).click()
     await expect(page.getByRole('radio', { name: 'Lista propia' })).toBeChecked()
     await expect(page.getByRole('heading', { level: 2, name: 'Arma tu lista' })).toBeVisible()
-    const input = page.getByRole('textbox', { name: 'Claves de tu lista' })
+    const input = page.getByRole('combobox', { name: 'Agregar emisora a tu lista' })
+    const chips = page.getByRole('list', { name: 'Emisoras de tu lista' })
     await input.fill('AAPL')
+    await input.press('Enter')
+    await expect(chips.getByRole('listitem')).toHaveText(['AAPL'])
     await page.getByRole('button', { name: 'Calcular' }).click()
-    await expect(page.getByText(/Escribe de 2 a 50 claves/).first()).toBeVisible()
+    await expect(page.getByText(/Elige de 2 a 50 emisoras/).first()).toBeVisible()
+    // Por nombre con el buscador y, en el mismo campo, claves separadas por coma.
+    await input.fill('walmart de')
+    await expect(page.getByRole('option', { name: /WALMEX\.MX/ })).toBeVisible()
+    await input.press('Enter')
+    await expect(chips.getByRole('listitem')).toHaveText(['AAPL', 'WALMEX.MX'])
+    await chips.getByRole('button', { name: 'Quitar WALMEX.MX' }).click()
+    await input.fill('msft, walmex.mx')
+    await input.press('Enter')
+    await expect(chips.getByRole('listitem')).toHaveText(['AAPL', 'MSFT', 'WALMEX.MX'])
+    await page.getByRole('button', { name: 'Calcular' }).click()
+    await expect(page).toHaveURL(/universo=propia&symbols=AAPL,MSFT,WALMEX\.MX/)
+    await expect(bodyRows(scoresTable(page))).toHaveCount(3)
+    expect(api.calls.some((c) => c.includes('universe=custom') && c.includes('symbols=AAPL%2CMSFT%2CWALMEX.MX'))).toBe(true)
+  })
+
+  test('lista propia: las claves escritas sin presionar Enter también cuentan al hacer clic en Calcular', async ({ page, baseURL }) => {
+    const api = await open(page, /** @type {string} */ (baseURL))
+    await page.goto('/screener?universo=propia')
+    await expect(page.getByRole('heading', { level: 2, name: 'Arma tu lista' })).toBeVisible()
+    const input = page.getByRole('combobox', { name: 'Agregar emisora a tu lista' })
     await input.fill('aapl, msft, walmex.mx')
     await page.getByRole('button', { name: 'Calcular' }).click()
     await expect(page).toHaveURL(/universo=propia&symbols=AAPL,MSFT,WALMEX\.MX/)
@@ -424,6 +447,17 @@ test.describe('screener de factores', () => {
     await guide.getByRole('button', { name: 'Qué es Valor' }).click()
     await expect(page.getByText('La tendencia histórica de las acciones baratas')).toBeVisible()
     await expect(page.getByRole('link', { name: /Ver más sobre Valor/ })).toHaveAttribute('href', '/aprender/factor-valor')
+    await page.keyboard.press('Escape')
+    // Crecimiento, compuesto y cobertura ya tienen llave en el glosario.
+    for (const [term, slug] of [['Crecimiento', 'factor-crecimiento'], ['Compuesto', 'puntaje-compuesto'], ['Cobertura', 'cobertura-de-datos']]) {
+      await guide.getByRole('button', { name: `Qué es ${term}` }).click()
+      await expect(page.getByRole('link', { name: `Ver más sobre ${term}` })).toHaveAttribute('href', `/aprender/${slug}`)
+      await page.keyboard.press('Escape')
+    }
+    // Y las métricas que antes explicaban con texto propio el inverso de un múltiplo.
+    await page.getByRole('tab', { name: 'Métricas' }).click()
+    await page.getByRole('button', { name: 'Qué es ROA' }).first().click()
+    await expect(page.getByRole('link', { name: 'Ver más sobre ROA' })).toHaveAttribute('href', '/aprender/roa')
     await page.keyboard.press('Escape')
     await expect(guide.getByRole('link', { name: 'Metodología completa del screener' })).toHaveAttribute('href', '/aprender/metodologia/screener-de-factores')
     await expect(guide).toContainText('Cómo lo calcula el servidor')
@@ -452,8 +486,17 @@ const onTab = (tab, table) => async (page) => {
   await expect(page.getByRole('table', { name: table })).toBeVisible()
 }
 
+/** Lista propia armada: el buscador de claves con sus fichas, arriba del tablero. */
+async function customListReady(page) {
+  await expect(page.getByRole('heading', { level: 1, name: 'Screener de factores' })).toBeVisible()
+  await expect(page.getByRole('list', { name: 'Emisoras de tu lista' }).getByRole('listitem')).toHaveCount(3)
+  await expect(page.getByRole('combobox', { name: 'Agregar emisora a tu lista' })).toBeVisible()
+  await expect(bodyRows(scoresTable(page))).toHaveCount(3)
+}
+
 const PAGES = [
   { path: '/investigar?q=walmart', ready: searchReady, name: 'buscador' },
+  { path: '/screener?universo=propia&symbols=AAPL,MSFT,WALMEX.MX', ready: customListReady, name: 'screener-lista-propia' },
   { path: '/screener', ready: screenerReady, name: 'screener' },
   { path: '/screener', ready: onTab('Pruebas', 'Pruebas cumple o no cumple'), name: 'screener-pruebas' },
   { path: '/screener', ready: onTab('Métricas', 'Métricas crudas'), name: 'screener-metricas' },

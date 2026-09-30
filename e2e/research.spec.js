@@ -20,8 +20,22 @@ import { expectNoHorizontalScroll, readLayoutShift, trackLayoutShift } from './s
 const V2_ROUTES = RESEARCH_ROUTES
 
 async function open(page, baseURL, { theme, routes = {} } = {}) {
-  await setupApp(page, { baseURL, session: true, health: HEALTH, routes: { ...V2_ROUTES, ...routes } })
+  const api = await setupApp(page, { baseURL, session: true, health: HEALTH, routes: { ...V2_ROUTES, ...routes } })
   if (theme) await page.addInitScript((t) => window.localStorage.setItem('kaizen_theme', t), theme)
+  return api
+}
+
+/** /v2/search del comparador: clave o nombre que contengan lo tecleado. */
+const SEARCH_ROWS = [
+  { symbol: 'WALMEX.MX', name: 'Wal-Mart de México', exchange: 'BMV', type: 'equity', currency: 'MXN', aliases: [] },
+  { symbol: 'AAPL', name: 'Apple Inc.', exchange: 'NASDAQ', type: 'equity', currency: 'USD', aliases: [] },
+  { symbol: 'MSFT', name: 'Microsoft Corporation', exchange: 'NASDAQ', type: 'equity', currency: 'USD', aliases: [] },
+]
+const SEARCH_ROUTE = {
+  'GET /v2/search': ({ url }) => {
+    const q = String(url.searchParams.get('q') ?? '').toLowerCase()
+    return { json: { results: SEARCH_ROWS.filter((r) => `${r.symbol} ${r.name}`.toLowerCase().includes(q)), meta: meta({ source: 'sec,curated', delayMinutes: null }) } }
+  },
 }
 
 async function settleAnimations(page) {
@@ -95,6 +109,38 @@ test.describe('investigar: ficha de la emisora', () => {
     await expect(resumen.getByText(/· México/)).toBeVisible()
     await expect(resumen.getByText('Descripción de Yahoo Finance, que solo la publica en inglés:')).toBeVisible()
     await expect(resumen.getByText(english)).toHaveAttribute('lang', 'en')
+  })
+
+  test('la industria de Yahoo sale en español y el eyebrow dice lo mismo que la pestaña', async ({ page, baseURL }) => {
+    await open(page, /** @type {string} */ (baseURL))
+    await page.goto('/investigar/WALMEX.MX')
+    await instrumentReady(page)
+    const resumen = page.getByRole('region', { name: 'Resumen' })
+    await expect(resumen.getByText(/· Tiendas de autoservicio y descuento ·/)).toBeVisible()
+    await expect(resumen.getByText(/Discount Stores/)).toHaveCount(0)
+    await expect(page).toHaveTitle('Ficha de WALMEX.MX · Kaizen')
+    await expect(page.getByText('Ficha de WALMEX.MX', { exact: true })).toBeVisible()
+    await expect(page.getByText('Ficha de la emisora', { exact: true })).toHaveCount(0)
+  })
+
+  test('una industria que no está en la tabla se queda como llegó y marcada en inglés', async ({ page, baseURL }) => {
+    await open(page, /** @type {string} */ (baseURL), {
+      routes: { 'GET /v2/instrument/:symbol': { json: { ...INSTRUMENT, industry: 'Space Mining' } } },
+    })
+    await page.goto('/investigar/WALMEX.MX')
+    await instrumentReady(page)
+    await expect(page.getByRole('region', { name: 'Resumen' }).getByText('Space Mining', { exact: true })).toHaveAttribute('lang', 'en')
+  })
+
+  test('el rendimiento por dividendo trae su InfoTip, que liga a /aprender', async ({ page, baseURL }) => {
+    await open(page, /** @type {string} */ (baseURL))
+    await page.goto('/investigar/WALMEX.MX')
+    await instrumentReady(page)
+    await page.getByRole('region', { name: 'Resumen' }).getByRole('button', { name: 'Qué es Rendimiento por dividendo' }).click()
+    const pop = page.getByRole('dialog', { name: 'Rendimiento por dividendo' })
+    await expect(pop.getByRole('link', { name: 'Ver más sobre Rendimiento por dividendo' })).toHaveAttribute('href', '/aprender/rendimiento-por-dividendo')
+    await page.keyboard.press('Escape')
+    await expect(pop).toBeHidden()
   })
 
   test('DCF que no aplica: muestra la razón y el resto de la ficha', async ({ page, baseURL }) => {
@@ -257,21 +303,102 @@ plainTest('investigar: una sección caída no tumba la ficha', async ({ page, ba
 })
 
 test.describe('investigar: comparar', () => {
-  test('dos emisoras lado a lado, base 100 y cambio de emisoras', async ({ page, baseURL }) => {
+  test('dos emisoras lado a lado, base 100 y cambio de emisoras escribiendo sus claves', async ({ page, baseURL }) => {
     await open(page, /** @type {string} */ (baseURL))
     await page.goto('/investigar/comparar?symbols=WALMEX.MX,AAPL')
     await compareReady(page)
     await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
     await expect(page.getByRole('columnheader', { name: 'AAPL' })).toBeVisible()
-    const input = page.getByRole('textbox', { name: 'Claves de las emisoras' })
-    await input.fill('WALMEX.MX')
+    const chips = page.getByRole('list', { name: 'Emisoras a comparar' })
+    await expect(chips.getByRole('listitem')).toHaveText(['WALMEX.MX', 'AAPL'])
+    await chips.getByRole('button', { name: 'Quitar AAPL' }).click()
     await page.getByRole('button', { name: 'Comparar' }).click()
-    await expect(page.getByText(/Escribe de 2 a 5 claves/).first()).toBeVisible()
-    await input.fill('walmex.mx, aapl, msft')
+    await expect(page.getByText(/Elige de 2 a 5 emisoras/).first()).toBeVisible()
+    const box = page.getByRole('combobox', { name: 'Agregar emisora' })
+    await box.fill('aapl, msft')
+    await box.press('Enter')
+    await expect(chips.getByRole('listitem')).toHaveText(['WALMEX.MX', 'AAPL', 'MSFT'])
+    await expect(box).toHaveValue('')
     await page.getByRole('button', { name: 'Comparar' }).click()
     await expect(page).toHaveURL(/symbols=WALMEX\.MX,AAPL,MSFT/)
     await expect(page.getByRole('columnheader', { name: 'MSFT' })).toBeVisible()
     await noHorizontalScroll(page)
+  })
+
+  test('agrega emisoras por nombre con el buscador y las quita con el teclado', async ({ page, baseURL }) => {
+    const api = await open(page, /** @type {string} */ (baseURL), { routes: SEARCH_ROUTE })
+    await page.goto('/investigar/comparar?symbols=WALMEX.MX,AAPL')
+    await compareReady(page)
+    const chips = page.getByRole('list', { name: 'Emisoras a comparar' })
+    const box = page.getByRole('combobox', { name: 'Agregar emisora' })
+    await box.fill('micro')
+    const option = page.getByRole('option', { name: /MSFT/ })
+    await expect(option).toBeVisible()
+    // Las que ya están no se ofrecen otra vez.
+    await box.fill('a')
+    await expect(page.getByRole('option', { name: /MSFT/ })).toBeVisible()
+    await expect(page.getByRole('option', { name: /AAPL/ })).toHaveCount(0)
+    await box.fill('micro')
+    await expect(option).toBeVisible()
+    await box.press('ArrowDown')
+    await box.press('Enter')
+    await expect(chips.getByRole('listitem')).toHaveText(['WALMEX.MX', 'AAPL', 'MSFT'])
+    await expect(box).toHaveValue('')
+    expect(api.calls.some((c) => c.startsWith('GET /v2/search?') && c.includes('q=micro'))).toBe(true)
+
+    // Quitar con el teclado: el foco pasa a la ficha siguiente y, sin fichas, al buscador.
+    const quitarAapl = chips.getByRole('button', { name: 'Quitar AAPL' })
+    await quitarAapl.focus()
+    await page.keyboard.press('Enter')
+    await expect(chips.getByRole('listitem')).toHaveText(['WALMEX.MX', 'MSFT'])
+    await expect(chips.getByRole('button', { name: 'Quitar MSFT' })).toBeFocused()
+    await page.keyboard.press('Delete')
+    await expect(chips.getByRole('listitem')).toHaveText(['WALMEX.MX'])
+    await expect(chips.getByRole('button', { name: 'Quitar WALMEX.MX' })).toBeFocused()
+    await page.keyboard.press('Backspace')
+    await expect(chips).toHaveCount(0)
+    await expect(box).toBeFocused()
+    await noHorizontalScroll(page)
+  })
+
+  test('sin búsqueda disponible todavía, las claves escritas con Enter siguen sirviendo', async ({ page, baseURL }) => {
+    // /health tarda: el buscador todavía no puede buscar por nombre y lo dice, pero acepta claves.
+    const api = await setupApp(page, { baseURL, session: true, health: HEALTH, healthDelayMs: 30_000, routes: V2_ROUTES })
+    await page.goto('/investigar/comparar')
+    await expect(page.getByRole('heading', { level: 2, name: 'Elige al menos dos emisoras' })).toBeVisible()
+    const box = page.getByRole('combobox', { name: 'Agregar emisora' })
+    await expect(page.getByText(/Conectando con el servidor para buscar por nombre/)).toBeVisible()
+    await box.fill('walmex.mx aapl')
+    await box.press('Enter')
+    await expect(page.getByRole('list', { name: 'Emisoras a comparar' }).getByRole('listitem')).toHaveText(['WALMEX.MX', 'AAPL'])
+    await box.press('Enter')
+    await expect(page).toHaveURL(/symbols=WALMEX\.MX,AAPL/)
+    expect(api.calls.some((c) => c.startsWith('GET /v2/search'))).toBe(false)
+  })
+
+  test('las claves escritas sin presionar Enter también cuentan al hacer clic en Comparar', async ({ page, baseURL }) => {
+    const api = await open(page, /** @type {string} */ (baseURL), { routes: SEARCH_ROUTE })
+    await page.goto('/investigar/comparar')
+    await expect(page.getByRole('heading', { level: 2, name: 'Elige al menos dos emisoras' })).toBeVisible()
+    const box = page.getByRole('combobox', { name: 'Agregar emisora' })
+    await box.fill('walmex.mx, aapl')
+    await page.getByRole('button', { name: 'Comparar' }).click()
+    await expect(page).toHaveURL(/symbols=WALMEX\.MX,AAPL$/)
+    await compareReady(page)
+
+    // Una clave sin sufijo se busca antes de enviarla: "walmex" entra como WALMEX.MX.
+    await page.goto('/investigar/comparar?symbols=AAPL')
+    await box.fill('walmex')
+    await page.getByRole('button', { name: 'Comparar' }).click()
+    await expect(page).toHaveURL(/symbols=AAPL,WALMEX\.MX$/)
+    expect(api.calls.some((c) => c.startsWith('GET /v2/search?') && c.includes('q=walmex'))).toBe(true)
+
+    // Un nombre que no aparece no se vuelve clave: se avisa y no se navega.
+    await page.goto('/investigar/comparar?symbols=AAPL')
+    await box.fill('empresa que no existe')
+    await page.getByRole('button', { name: 'Comparar' }).click()
+    await expect(page.getByRole('alert').filter({ hasText: /No encontramos/ })).toBeVisible()
+    await expect(page).toHaveURL(/symbols=AAPL$/)
   })
 
   test('sin emisoras pide elegir al menos dos', async ({ page, baseURL }) => {

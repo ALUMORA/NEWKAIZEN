@@ -96,6 +96,7 @@ function Table({ rows, notes, against, status, loading = false }) {
       numeric: true,
       sortable: true,
       info: {
+        termKey: 'diferencial-contra-cetes',
         term: 'Diferencial contra la tasa',
         text: `Distribución pagada en 12 meses menos ${against}. Describe cuánto paga la FIBRA por encima de la tasa de corto plazo; no es una recomendación.`,
       },
@@ -108,6 +109,7 @@ function Table({ rows, notes, against, status, loading = false }) {
       numeric: true,
       sortable: true,
       info: {
+        termKey: 'deuda-capitalizacion',
         term: 'Deuda entre capitalización',
         text: 'Deuda total entre el valor de mercado de los certificados. Se mueve con el precio; el LTV, que es sobre activos, no.',
       },

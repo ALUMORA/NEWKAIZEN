@@ -247,10 +247,16 @@ export const momentumQuery = (symbol) => ({
   enabled: Boolean(symbol),
 })
 
+/**
+ * Con `universe: 'custom'` y sin claves la consulta no sale (el API contestaría 422), igual que
+ * `searchQuery` con texto vacío.
+ * @param {{ universe?: 'mx' | 'us' | 'custom', symbols?: string[] }} [params]
+ */
 export const factorScreenerQuery = (params = {}) => ({
   queryKey: queryKeys.factorScreener(params),
   queryFn: ({ signal }) => api.getFactorScreener(params, { signal }),
   staleTime: STALE_TIME.screeners,
+  enabled: params.universe !== 'custom' || (params.symbols ?? []).some((s) => String(s ?? '').trim().length > 0),
 })
 
 /** @param {'us' | 'mx'} [universe] */

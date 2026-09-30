@@ -9,7 +9,7 @@ import { useCapabilities } from '../../../lib/api/capabilities.js'
 import { searchQuery } from '../../../lib/api/queries.js'
 import { Button, Card, EmptyState, Input, PageHeader } from '../../../components/ui/index.js'
 import { PATHS, pathInstrument } from '../../../app/paths.js'
-import { pushRecent, readRecents, RECENT_KEY } from '../../../app/shell/palette-model.js'
+import { clearRecents, pushRecent, readRecents } from '../../../app/shell/palette-model.js'
 import { QueryBlock } from '../components/QueryBlock.jsx'
 import { ResultList } from '../components/ResultList.jsx'
 import { SEARCH_DEBOUNCE_MS, SEARCH_EXAMPLES, SEARCH_LIMIT, SEARCH_MAX_LENGTH, pickSymbol, statusText } from '../search-model.js'
@@ -127,13 +127,8 @@ export default function Search() {
     }
   }
 
-  function clearRecents() {
-    try {
-      globalThis.localStorage?.removeItem(RECENT_KEY)
-    } catch {
-      /* sin almacenamiento: no había nada guardado */
-    }
-    setRecents([])
+  function onClearRecents() {
+    setRecents(clearRecents())
   }
 
   function fillExample(example) {
@@ -212,7 +207,7 @@ export default function Search() {
           )}
         </div>
         <div className="kz-col" data-gap="4">
-          <Recents recents={recents} onClear={clearRecents} onOpen={open} />
+          <Recents recents={recents} onClear={onClearRecents} onOpen={open} />
           <Card title="Otras formas de investigar">
             <ul className="kz-search-ways">
               {OTHER_WAYS.map((way) => (

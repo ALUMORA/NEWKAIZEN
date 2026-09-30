@@ -1,6 +1,6 @@
 // Ficha de la emisora (/investigar/:symbol). Cada bloque trae su consulta con su DataStatus y sus
 // estados de carga, vacío y error: si una sección falla, el resto de la ficha sigue en pie.
-import { Suspense, useState } from 'react'
+import { Fragment, Suspense, useState } from 'react'
 import { useParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { dividendsQuery, historyQuery, instrumentQuery, momentumQuery, newsQuery, statementsQuery } from '../../../lib/api/queries.js'
@@ -13,7 +13,7 @@ import { TimeSeries } from '../components/charts.js'
 import { Valuation } from '../components/Valuation.jsx'
 import { SectionNotes } from '../components/SectionNotes.jsx'
 import { safeUrl } from '../symbols.js'
-import { countryEs, looksEnglish, sectorEs } from '../yahoo-labels.js'
+import { countryEs, industryEs, looksEnglish, sectorEs } from '../yahoo-labels.js'
 import '../research.css'
 
 const RANGES = [
@@ -22,6 +22,29 @@ const RANGES = [
   { value: '5y', label: '5 años' },
   { value: 'max', label: 'Todo' },
 ]
+
+/** Título de la pestaña y eyebrow del encabezado: los dos dicen lo mismo. @param {string} symbol */
+const instrumentTitle = (symbol) => `Ficha de ${symbol}`
+
+/**
+ * Bolsa, sector, industria y país en una línea. La industria sale en español; si Yahoo manda una
+ * que la tabla no conoce, se queda como llegó y marcada con lang="en".
+ */
+function Classification({ data }) {
+  const industry = industryEs(data?.industry)
+  const parts = [
+    { key: 'bolsa', node: data?.exchange },
+    { key: 'sector', node: sectorEs(data?.sector) },
+    { key: 'industria', node: industry ? (industry.lang === 'en' ? <span lang="en">{industry.text}</span> : industry.text) : null },
+    { key: 'pais', node: countryEs(data?.country) },
+  ].filter((p) => p.node)
+  return parts.map((p, i) => (
+    <Fragment key={p.key}>
+      {i ? ' · ' : ''}
+      {p.node}
+    </Fragment>
+  ))
+}
 
 function Overview({ query }) {
   const data = query.data
@@ -47,7 +70,11 @@ function Overview({ query }) {
               <Stat label="P/VL" value={fmtMultiple(f.pb)} info={{ termKey: 'p-vl', term: 'P/VL' }} />
               <Stat label="VE/EBITDA" value={fmtMultiple(f.evEbitda)} info={{ termKey: 'ev-ebitda', term: 'VE/EBITDA' }} />
               <Stat label="ROE" value={fmtPct(f.roe)} info={{ termKey: 'roe', term: 'ROE' }} />
-              <Stat label="Rendimiento por dividendo" value={fmtPct(f.dividendYield)} />
+              <Stat
+                label="Rendimiento por dividendo"
+                value={fmtPct(f.dividendYield)}
+                info={{ termKey: 'rendimiento-por-dividendo', term: 'Rendimiento por dividendo' }}
+              />
               <Stat label="Deuda / capital" value={fmtMultiple(f.debtToEquity, { decimals: 2 })} info={{ termKey: 'deuda-capital', term: 'Deuda / capital' }} />
               <Stat
                 label="Beta"
@@ -57,7 +84,7 @@ function Overview({ query }) {
               />
             </div>
             <p className="kz-research-muted">
-              {[data?.exchange, sectorEs(data?.sector), data?.industry, countryEs(data?.country)].filter(Boolean).join(' · ')}
+              <Classification data={data} />
               {data?.coverage ? ` · ${data.coverage.available} de ${data.coverage.total} datos disponibles` : ''}
             </p>
             {data?.fxUsed ? (
@@ -271,12 +298,13 @@ export default function Instrument() {
   const symbol = String(params.symbol ?? '').toUpperCase()
   const info = useQuery(instrumentQuery(symbol))
   const name = info.data?.name
-  usePageTitle(symbol ? `Ficha de ${symbol}` : null)
+  const title = symbol ? instrumentTitle(symbol) : null
+  usePageTitle(title)
   return (
     <div className="kz-container kz-col kz-research-page" data-gap="6">
       <PageHeader
         title={name ? `${name} (${symbol})` : symbol}
-        eyebrow="Ficha de la emisora"
+        eyebrow={title ?? 'Ficha de la emisora'}
         description="Precio, fundamentales, estados financieros, valuación y noticias. Es información para entender a la emisora, no una recomendación."
         breadcrumbs={[{ label: 'Investigar', to: PATHS.research }, { label: symbol }]}
       />

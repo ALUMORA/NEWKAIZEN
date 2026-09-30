@@ -1155,7 +1155,7 @@ const TERMS = {
     comoLeer: 'Un ROE alto con deuda alta no es lo mismo que un ROE alto sin deuda. Revisa siempre las dos cifras juntas.',
     ejemplo: 'Una empresa con utilidad neta de 1,500 y capital contable de 10,000 tiene un ROE de 15 por ciento.',
     fuente: 'Descomposición DuPont, en uso desde los años veinte. Penman, Financial Statement Analysis.',
-    relacionados: ['roic', 'p-vl', 'deuda-capital', 'factor-calidad', 'margen-operativo'],
+    relacionados: ['roic', 'p-vl', 'deuda-capital', 'factor-calidad', 'margen-operativo', 'roa'],
     alias: ['return on equity', 'rentabilidad sobre capital'],
   },
 
@@ -1327,14 +1327,159 @@ const TERMS = {
     largo: [
       'Un P/U de 10 es caro en una minera y barato en una empresa de consumo. Comparar métricas crudas entre sectores ordena por sector, no por calidad. El puntaje relativo al sector arregla eso midiendo cada empresa contra la mediana de sus pares.',
       'Kaizen usa la versión robusta: resta la mediana y divide entre la desviación absoluta mediana por 1.4826, que es la constante que la hace comparable con la desviación estándar en datos normales. Luego recorta los valores a más menos 3, para que un dato extremo no domine el ranking.',
-      'Dos reglas de honestidad. Si un sector tiene menos de 5 empresas con dato, se compara contra todo el universo y la pantalla lo marca. Si menos de la mitad del universo tiene esa métrica, el factor se excluye y se dice por qué.',
+      'Dos reglas de honestidad. Si un sector tiene menos de 5 emisoras en el tablero, se compara contra todo el universo y la pantalla lo marca. Si una emisora trae menos de la mitad de las métricas, sale del tablero con el motivo escrito en vez de ordenarse con dos o tres datos.',
     ],
     formula: 'z = (x − mediana) / (1.4826 · MAD), recortado a [−3, 3]',
     comoLeer: 'Un z de 1 quiere decir una desviación arriba de la mediana de su sector. Los puntajes no son comparables entre fechas distintas sin recalcular.',
     ejemplo: 'La serie 10, 12, 14, 16 y 18 tiene mediana 14 y MAD 2, así que el puntaje de 18 es 1.349.',
     fuente: 'Rousseeuw y Croux (1993), Alternatives to the Median Absolute Deviation, JASA. Constante 1.4826 para consistencia con la normal.',
-    relacionados: ['factor-valor', 'factor-calidad', 'baja-volatilidad', 'momentum-12-1', 'multiplos'],
+    relacionados: ['factor-valor', 'factor-calidad', 'baja-volatilidad', 'momentum-12-1', 'multiplos', 'factor-crecimiento', 'puntaje-compuesto', 'cobertura-de-datos'],
     alias: ['z score', 'puntaje robusto', 'MAD'],
+  },
+
+  // ─── Screener, fórmula mágica y FIBRAs: las llaves que pidió Investigar ─────────────────────
+  'factor-crecimiento': {
+    titulo: 'Factor crecimiento',
+    corto: 'Qué tan rápido crecen los ingresos y las utilidades de una empresa contra el mismo periodo del año anterior, comparado con su sector.',
+    largo: [
+      'El factor crecimiento del screener promedia dos puntajes: el del crecimiento de ingresos y el del crecimiento de utilidades, cada uno contra el mismo periodo del año anterior. Cada puntaje se mide contra la mediana del sector, igual que los demás factores.',
+      'Comparar contra el mismo periodo del año anterior quita la estacionalidad: un supermercado vende más en diciembre que en septiembre, y comparar esos dos meses confundiría la temporada con crecimiento.',
+      'Si una de las dos métricas no tiene dato, el factor se arma con la que sí lo tiene. Si faltan las dos, el factor queda en s/d y no cuenta para el puntaje compuesto.',
+    ],
+    formula: 'Crecimiento = promedio de z(crecimiento de ingresos) y z(crecimiento de utilidades), cada uno contra el mismo periodo del año anterior',
+    comoLeer: 'Un puntaje positivo quiere decir que crece más rápido que la mediana de su sector. No dice si ese ritmo va a seguir ni si el precio ya lo refleja.',
+    ejemplo: 'Si los ingresos de una empresa crecen 12 por ciento contra el año anterior y la mediana de su sector crece 5 por ciento, su puntaje de ingresos sale positivo.',
+    fuente: 'Metodología del screener de factores de Kaizen, sección Los factores (docs/metodologia/screener-de-factores.md).',
+    relacionados: ['factor-valor', 'factor-calidad', 'puntaje-compuesto', 'z-score-sectorial'],
+    alias: ['growth', 'factor de crecimiento'],
+  },
+
+  'cobertura-de-datos': {
+    titulo: 'Cobertura de datos',
+    corto: 'Cuántas de las métricas de un cálculo tienen dato para una emisora. Con poca cobertura el resultado dice poco, y se aparta a la vista.',
+    largo: [
+      'El screener de factores usa doce métricas por emisora. La cobertura cuenta cuántas de ellas trajo la fuente pública: 12 de 12 es completa, y 7 de 12 quiere decir que cinco quedaron en s/d.',
+      'Con menos de la mitad, o sea menos de seis métricas, la emisora sale del tablero y aparece en la lista de las que quedaron fuera, con el motivo escrito. Es mejor apartarla a la vista que ordenarla con un puntaje armado con dos o tres datos.',
+      'Arriba de ese mínimo, cada factor promedia solo las métricas que sí tienen dato. Por eso la cobertura se lee junto al puntaje: un compuesto alto con 7 de 12 descansa en menos información que uno con 12 de 12.',
+    ],
+    formula: 'Cobertura = métricas con dato / métricas del cálculo; en el screener entra con 6 de 12 o más',
+    comoLeer: 'Mide cuánto sabe el cálculo sobre la emisora, no qué tan buena es. Una cobertura baja casi siempre viene de la fuente de datos, no de la empresa.',
+    ejemplo: 'Una emisora recién listada con 5 de 12 métricas queda fuera del tablero con su motivo; otra con 9 de 12 entra, y sus factores usan esas nueve.',
+    fuente: 'Metodología del screener de factores de Kaizen (docs/metodologia/screener-de-factores.md), regla de cobertura mínima del 50 por ciento.',
+    relacionados: ['puntaje-compuesto', 'z-score-sectorial', 'dato-de-respaldo', 'factor-crecimiento'],
+    alias: ['coverage', 'datos disponibles'],
+  },
+
+  'puntaje-compuesto': {
+    titulo: 'Puntaje compuesto',
+    corto: 'El promedio de los puntajes de factor que sí tienen dato. Con menos de tres factores con puntaje no se publica y sale s/d.',
+    largo: [
+      'El screener calcula cinco factores por emisora: valor, calidad, momentum, baja volatilidad y crecimiento. El compuesto es el promedio simple de los que tienen puntaje, todos con el mismo peso.',
+      'Se promedia y no se suma para no castigar a una emisora solo porque le falta un dato: con la suma, quien tiene cuatro factores siempre quedaría abajo de quien tiene cinco. A cambio hay un mínimo: con menos de tres factores con puntaje, el compuesto sale s/d.',
+      'Como cada factor ya está medido contra la mediana de su sector, el compuesto también es relativo al sector. Un compuesto de 0.8 dice que, en promedio, la emisora queda arriba de sus pares en los criterios que tienen dato.',
+    ],
+    formula: 'Compuesto = promedio de los puntajes z de los factores con dato, solo si hay 3 o más',
+    comoLeer: 'Sirve para ordenar y para empezar a investigar. Dos emisoras con el mismo compuesto pueden llegar ahí por caminos muy distintos, así que cada factor se lee por separado.',
+    ejemplo: 'Con valor 1.2, calidad 0.4, momentum −0.3, y baja volatilidad y crecimiento sin dato, el compuesto es (1.2 + 0.4 − 0.3) / 3 = 0.43.',
+    fuente: 'Metodología del screener de factores de Kaizen. Asness, Frazzini y Pedersen (2019), Quality Minus Junk, para promediar puntajes z de varias métricas.',
+    relacionados: ['z-score-sectorial', 'cobertura-de-datos', 'factor-valor', 'factor-crecimiento'],
+    alias: ['compuesto', 'composite score'],
+  },
+
+  roa: {
+    titulo: 'ROA (rentabilidad de los activos)',
+    corto: 'Utilidad neta entre activos totales: cuánto gana la empresa por cada peso de activos que tiene.',
+    largo: [
+      'El ROA mide qué tan bien convierte una empresa sus activos en utilidad. A diferencia del ROE, que divide entre el capital de los accionistas, el ROA divide entre todos los activos, se hayan pagado con capital propio o con deuda.',
+      'Por eso el ROA no se infla con apalancamiento: una empresa que se endeuda para recomprar acciones sube su ROE sin volverse más rentable, pero su ROA no mejora. Comparar los dos ayuda a ver cuánto del ROE viene de la deuda.',
+      'El screener toma el ROA de los últimos doce meses que publica la fuente y lo usa en el factor calidad, junto con el ROE, el margen operativo y la deuda entre capital. Bancos y aseguradoras tienen ROA bajos por naturaleza, y por eso cada emisora se compara contra su sector.',
+    ],
+    formula: 'ROA = utilidad neta / activos totales',
+    comoLeer: 'Se compara contra empresas del mismo sector. Un banco con 1.5 por ciento puede ser muy rentable, y una empresa de software con 5 por ciento puede quedarse corta.',
+    ejemplo: 'Una empresa con utilidad neta de 8 millones de pesos y activos por 100 millones tiene un ROA de 8 por ciento.',
+    fuente: 'Convención contable estándar; Penman, Financial Statement Analysis and Security Valuation. En el screener, el ROA de los últimos doce meses que publica Yahoo Finance.',
+    relacionados: ['roe', 'roic', 'factor-calidad', 'margen-operativo'],
+    alias: ['return on assets', 'rentabilidad sobre activos'],
+  },
+
+  'ebitda-a-valor-empresa': {
+    titulo: 'EBITDA a valor empresa',
+    corto: 'EBITDA entre valor empresa: el inverso de VE/EBITDA. Más alto quiere decir que pagas menos por cada peso de EBITDA.',
+    largo: [
+      'Es el mismo dato que el múltiplo VE/EBITDA, pero al revés. En lugar de decir cuántas veces el EBITDA cuesta la empresa completa, dice qué porcentaje del valor empresa genera la operación cada año antes de intereses, impuestos, depreciación y amortización.',
+      'El screener lo usa volteado por una razón concreta: con el múltiplo, una empresa con EBITDA negativo sale con VE/EBITDA negativo y parece la más barata. Con el rendimiento, un EBITDA negativo da un número negativo y queda hasta abajo, donde corresponde.',
+      'Es una de las cuatro métricas del factor valor, junto con el earnings yield, el flujo libre entre capitalización y libros a precio. El valor empresa suma la deuda y resta el efectivo, así que compara empresas con distinto apalancamiento mejor que el P/U.',
+    ],
+    formula: 'EBITDA / valor empresa = 1 / (VE/EBITDA)',
+    comoLeer: 'Más alto es más barato frente al EBITDA, dentro del mismo sector. El EBITDA no descuenta la inversión en activos, así que en industrias que gastan mucho en mantenerlos se ve mejor de lo que es.',
+    ejemplo: 'Una empresa con valor empresa de 110 mil millones de pesos y EBITDA de 11 mil millones tiene VE/EBITDA de 10x y EBITDA a valor empresa de 10 por ciento.',
+    fuente: 'Damodaran, Investment Valuation, para valor empresa y múltiplos de EBITDA. Metodología del screener de factores de Kaizen, múltiplos convertidos a rendimientos.',
+    relacionados: ['ev-ebitda', 'valor-empresa', 'factor-valor', 'libros-a-precio'],
+    alias: ['EBITDA/EV', 'EBITDA entre valor empresa'],
+  },
+
+  'libros-a-precio': {
+    titulo: 'Libros a precio',
+    corto: 'Valor en libros por acción entre precio: el inverso de P/VL. Más alto quiere decir que pagas menos por cada peso de capital contable.',
+    largo: [
+      'Es el P/VL volteado. En lugar de decir cuántas veces el capital contable paga el mercado, dice cuántos pesos de capital contable recibes por cada peso de precio. Una empresa que cotiza a 2 veces su valor en libros tiene libros a precio de 50 por ciento.',
+      'Fama y French usaron esta razón, book to market, para definir el factor valor en sus trabajos de 1992 y 1993. En el screener de Kaizen es una de las cuatro métricas del factor valor, y como las demás se compara contra la mediana del sector.',
+      'Si el capital contable es negativo, por pérdidas acumuladas o recompras grandes, la razón sale negativa y la emisora queda al fondo en esta métrica. No se oculta: ese lugar también es información.',
+    ],
+    formula: 'Libros a precio = valor en libros por acción / precio = 1 / (P/VL)',
+    comoLeer: 'Más alto es más barato frente al capital contable, dentro del mismo sector. En empresas cuyo valor está en marcas, software o personas, el valor en libros dice poco.',
+    ejemplo: 'Una acción de 80 pesos con valor en libros de 20 pesos por acción tiene P/VL de 4x y libros a precio de 25 por ciento.',
+    fuente: 'Fama y French (1992), The Cross-Section of Expected Stock Returns, Journal of Finance. Metodología del screener de factores de Kaizen.',
+    relacionados: ['p-vl', 'factor-valor', 'ebitda-a-valor-empresa', 'roe'],
+    alias: ['book to price', 'book to market', 'B/P'],
+  },
+
+  'roc-greenblatt': {
+    titulo: 'Rendimiento sobre capital de Greenblatt',
+    corto: 'EBIT entre el capital que el negocio necesita para operar: capital de trabajo neto sin efectivo ni deuda de corto plazo, más activo fijo neto.',
+    largo: [
+      'Es la mitad de calidad de la fórmula mágica. Greenblatt lo llama return on capital y lo define distinto al ROIC de los libros de texto: el denominador es solo el capital tangible que usa la operación, el capital de trabajo neto más el activo fijo neto.',
+      'El capital de trabajo neto excluye el efectivo y la deuda de corto plazo, para medir lo que el negocio necesita para operar y no el efectivo que trae guardado ni lo que financia con crédito bancario. Se usa EBIT y no utilidad neta, para que la deuda y los impuestos no cambien la comparación.',
+      'En Kaizen se calcula con el mismo renglón de efectivo que el valor empresa. Si el capital empleado sale cero o negativo, o si la utilidad de operación es cero o negativa, el cociente no tiene lectura y la emisora sale del ranking con el motivo escrito.',
+    ],
+    formula: 'ROC = EBIT / (capital de trabajo neto + activo fijo neto), con capital de trabajo neto = (activo circulante − efectivo) − (pasivo circulante − deuda de corto plazo)',
+    comoLeer: 'Más alto quiere decir que el negocio genera más EBIT por cada peso de capital que necesita. No es comparable contra el ROIC de otras fuentes, porque el denominador es distinto.',
+    ejemplo: 'Con EBIT de 30 millones de pesos, capital de trabajo neto de 40 millones y activo fijo neto de 60 millones, el ROC es 30 / 100 = 30 por ciento.',
+    fuente: 'Greenblatt (2006), The Little Book That Beats the Market. Metodología de la fórmula mágica de Kaizen (docs/metodologia/formula-magica.md).',
+    relacionados: ['formula-magica', 'roic', 'earnings-yield', 'valor-empresa'],
+    alias: ['ROC', 'return on capital', 'rendimiento sobre capital'],
+  },
+
+  'deuda-capitalizacion': {
+    titulo: 'Deuda entre capitalización',
+    corto: 'Deuda total entre el valor de mercado de los certificados o acciones. Se mueve con el precio; el LTV, que es sobre activos, no.',
+    largo: [
+      'Mide cuánta deuda carga una FIBRA por cada peso que el mercado le reconoce a su capital. Como el denominador es el valor de mercado, el cociente sube cuando el precio baja aunque la deuda no haya cambiado.',
+      'La versión vieja de Kaizen publicaba un cociente parecido, deuda entre deuda más capitalización, con la etiqueta LTV. No lo era: el LTV que limita la regulación de las FIBRAs es deuda sobre activos totales. Ahora el LTV se calcula sobre activos y este cociente se publica con su nombre.',
+      'Leer los dos juntos ayuda: un LTV estable con la deuda entre capitalización subiendo quiere decir que el precio cayó, no que la FIBRA se endeudó más. Si la deuda y el precio vienen en monedas distintas, el cociente sale s/d en vez de mezclarlas.',
+    ],
+    formula: 'Deuda entre capitalización = deuda total / capitalización de mercado',
+    comoLeer: 'Es una razón simple: 0.5 quiere decir 50 centavos de deuda por cada peso de capitalización. No se compara contra el límite regulatorio, que es sobre activos.',
+    ejemplo: 'Una FIBRA con deuda de 40 mil millones de pesos y capitalización de 80 mil millones tiene deuda entre capitalización de 0.50.',
+    fuente: 'Metodología de FIBRAs de Kaizen (docs/metodologia/fibras.md). Disposiciones de la CNBV para el límite de apalancamiento sobre activos.',
+    relacionados: ['ltv', 'deuda-capital', 'fibra', 'nav-p-nav'],
+    alias: ['debt to market cap', 'deuda a capitalización'],
+  },
+
+  'diferencial-contra-cetes': {
+    titulo: 'Diferencial contra CETES',
+    corto: 'Distribución de 12 meses de una FIBRA menos la tasa de corto plazo: CETES a 28 días o, sin dato de Banxico, una tasa sustituta marcada. En puntos porcentuales.',
+    largo: [
+      'Mide cuánto paga una FIBRA por encima de la deuda de corto plazo del gobierno. Se calcula con la distribución pagada en los últimos doce meses entre el precio, menos la tasa de CETES a 28 días del mismo momento, y se publica en puntos porcentuales.',
+      'Ese margen es lo que el mercado pide a cambio de aceptar riesgo de ocupación, de crédito de los inquilinos y de falta de liquidez. Cuando se comprime a casi nada, la FIBRA cotiza como si sus rentas fueran tan seguras como un CETE; cuando se abre mucho, el mercado está descontando algo.',
+      'Si la tasa de Banxico no está disponible, Kaizen usa un sustituto y lo dice: la tasa interbancaria a 91 días que publica la OCDE. En ese caso el dato se marca como respaldo y no es CETES a 28 días.',
+    ],
+    formula: 'Diferencial = rendimiento por distribución de 12 meses − tasa de corto plazo (CETES a 28 días, o su sustituta marcada cuando no hay dato de Banxico)',
+    comoLeer: 'Un diferencial de 3.5 puntos quiere decir que la FIBRA distribuyó 3.5 puntos porcentuales más que CETES. Es una distribución pasada, no una promesa de la siguiente.',
+    ejemplo: 'Con un rendimiento por distribución de 10.2 por ciento y CETES a 28 días en 7.25 por ciento, el diferencial es de 2.95 puntos porcentuales.',
+    fuente: 'Metodología de FIBRAs de Kaizen (docs/metodologia/fibras.md). CETES a 28 días del SIE de Banxico, serie SF43936.',
+    relacionados: ['rendimiento-por-distribucion', 'cetes', 'fibra', 'cap-rate'],
+    alias: ['spread contra CETES', 'diferencial vs tasa'],
   },
 
   'formula-magica': {
@@ -1349,7 +1494,7 @@ const TERMS = {
     comoLeer: 'Es un punto de partida para investigar, no un resultado. Los empates y la cobertura de datos cambian el orden más de lo que parece.',
     ejemplo: 'Con EY de 10, 8 y 12 por ciento y ROC de 50, 30 y 20 por ciento, el orden final es la primera, la tercera y la segunda.',
     fuente: 'Greenblatt (2006), The Little Book That Beats the Market.',
-    relacionados: ['earnings-yield', 'roic', 'valor-empresa', 'factor-valor', 'backtest-sesgos'],
+    relacionados: ['earnings-yield', 'roic', 'valor-empresa', 'factor-valor', 'backtest-sesgos', 'roc-greenblatt'],
     alias: ['magic formula', 'Greenblatt'],
   },
 
@@ -1381,7 +1526,7 @@ const TERMS = {
     comoLeer: 'Barato no es lo mismo que bueno. El valor se lee junto con calidad, porque muchas empresas están baratas por una razón.',
     ejemplo: 'Una empresa en el percentil 90 de earnings yield de su sector recibe un puntaje de valor alto, aunque su precio haya caído por una razón de fondo.',
     fuente: 'Fama y French (1992, 1993). Lakonishok, Shleifer y Vishny (1994) para la versión conductual.',
-    relacionados: ['earnings-yield', 'p-vl', 'z-score-sectorial', 'factor-calidad', 'multiplos'],
+    relacionados: ['earnings-yield', 'p-vl', 'z-score-sectorial', 'factor-calidad', 'multiplos', 'ebitda-a-valor-empresa', 'libros-a-precio'],
     alias: ['value', 'acciones baratas'],
   },
 
@@ -1397,7 +1542,7 @@ const TERMS = {
     comoLeer: 'Es un filtro de fragilidad más que un pronóstico de rendimiento. Sirve sobre todo para descartar.',
     ejemplo: 'Una empresa con ROIC de 18 por ciento, margen estable y deuda baja califica alto aunque su múltiplo no sea barato.',
     fuente: 'Novy-Marx (2013), The Other Side of Value, Journal of Financial Economics. Asness, Frazzini y Pedersen (2019), Quality Minus Junk.',
-    relacionados: ['roic', 'margen-operativo', 'deuda-capital', 'factor-valor', 'z-score-sectorial'],
+    relacionados: ['roic', 'margen-operativo', 'deuda-capital', 'factor-valor', 'z-score-sectorial', 'roa'],
     alias: ['quality', 'calidad'],
   },
 
@@ -1494,7 +1639,7 @@ const TERMS = {
     comoLeer: 'Compáralo contra el límite del 50 por ciento y contra el promedio de las FIBRAs comparables. Revisa también los vencimientos y la moneda de la deuda.',
     ejemplo: 'Una FIBRA con 18 mil millones de deuda y 50 mil millones en activos tiene un LTV de 36 por ciento.',
     fuente: 'Disposiciones de carácter general aplicables a las emisoras, CNBV, límites de apalancamiento para FIBRAs.',
-    relacionados: ['fibra', 'nav-p-nav', 'deuda-capital', 'cap-rate'],
+    relacionados: ['fibra', 'nav-p-nav', 'deuda-capital', 'cap-rate', 'deuda-capitalizacion'],
     alias: ['loan to value', 'apalancamiento de FIBRA'],
   },
 
@@ -1510,7 +1655,7 @@ const TERMS = {
     comoLeer: 'Es bruto: a la parte que viene del resultado fiscal se le retiene ISR a la tasa del artículo 9, 30 por ciento, como pago a cuenta de la declaración anual. Y no está garantizado: baja cuando baja el resultado fiscal.',
     ejemplo: 'Distribuciones de 2.40 pesos en doce meses con un precio de 24 pesos dan un rendimiento de 10 por ciento bruto.',
     fuente: 'Reportes trimestrales de las FIBRAs. Retención: art. 188 de la Ley del ISR, a la tasa de su art. 9.',
-    relacionados: ['fibra', 'ffo-affo', 'rendimiento-por-dividendo', 'retencion-por-dividendos', 'cap-rate', 'rendimiento-total'],
+    relacionados: ['fibra', 'ffo-affo', 'rendimiento-por-dividendo', 'retencion-por-dividendos', 'cap-rate', 'rendimiento-total', 'diferencial-contra-cetes'],
     alias: ['dividend yield de FIBRA', 'distribución'],
   },
 
