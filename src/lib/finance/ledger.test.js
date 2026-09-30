@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { pnlDecomposition } from './fx.js'
 import {
   cashBalances,
   derivePositions,
@@ -83,13 +84,71 @@ describe('derivePositions: respuestas conocidas del spec', () => {
 })
 
 describe('derivePositionsDetailed: primera compra y tipo de cambio', () => {
-  it('avgFx pondera por cantidad y firstBuyDate es la compra más vieja con fecha', () => {
+  it('avgFx pondera por lo que costó cada compra y firstBuyDate es la compra más vieja con fecha', () => {
     const [p] = derivePositionsDetailed([
       buy('AAPL', 10, 150, { date: '2026-02-10', currency: 'USD', fxRate: 17 }),
       buy('AAPL', 30, 160, { date: '2026-01-10', currency: 'USD', fxRate: 19 }),
     ])
     expect(p.firstBuyDate).toBe('2026-01-10')
-    expect(p.avgFx).toBeCloseTo((10 * 17 + 30 * 19) / 40, 12)
+    expect(p.avgFx).toBeCloseTo((1500 * 17 + 4800 * 19) / 6300, 12)
+  })
+
+  it('costo en dólares por avgFx es lo que se pagó en pesos: 57,000 y no 55,500', () => {
+    const [p] = derivePositionsDetailed([
+      buy('AAPL', 10, 100, { date: '2026-01-02', currency: 'USD', fxRate: 17 }),
+      buy('AAPL', 10, 200, { date: '2026-02-02', currency: 'USD', fxRate: 20 }),
+    ])
+    expect(p.costBasis * /** @type {number} */ (p.avgFx)).toBeCloseTo(57000, 9)
+  })
+
+  it('las comisiones de la compra entran al peso de su tipo de cambio', () => {
+    const [p] = derivePositionsDetailed([
+      buy('AAPL', 10, 100, { currency: 'USD', fxRate: 17, fees: 10 }),
+      buy('AAPL', 10, 200, { currency: 'USD', fxRate: 20 }),
+    ])
+    expect(p.avgFx).toBeCloseTo((1010 * 17 + 2000 * 20) / 3010, 12)
+  })
+
+  it('un split no le da doble peso a la compra que viene después', () => {
+    const [p] = derivePositionsDetailed([
+      buy('AAPL', 10, 100, { date: '2026-01-02', currency: 'USD', fxRate: 17 }),
+      tx({ id: 'sp', type: 'split', symbol: 'AAPL', date: '2026-02-02', ratio: 2, currency: 'USD' }),
+      buy('AAPL', 10, 50, { date: '2026-03-02', currency: 'USD', fxRate: 20 }),
+    ])
+    expect(p.quantity).toBe(30)
+    expect(p.avgFx).toBeCloseTo(18, 12)
+  })
+
+  it('una venta saca costo en las dos monedas a la par y no mueve avgFx', () => {
+    const [p] = derivePositionsDetailed([
+      buy('AAPL', 10, 100, { currency: 'USD', fxRate: 17 }),
+      buy('AAPL', 10, 200, { currency: 'USD', fxRate: 20 }),
+      sell('AAPL', 5, 210, { currency: 'USD' }),
+    ])
+    expect(p.avgFx).toBeCloseTo(57000 / 3000, 12)
+  })
+
+  it('una compra sin precio o en otra moneda deja avgFx en null', () => {
+    const [sinPrecio] = derivePositionsDetailed([
+      buy('AAPL', 10, 100, { currency: 'USD', fxRate: 17 }),
+      buy('AAPL', 10, null, { currency: 'USD', fxRate: 20 }),
+    ])
+    expect(sinPrecio.avgFx).toBeNull()
+    const [otraMoneda] = derivePositionsDetailed([
+      buy('AAPL', 10, 100, { currency: 'USD', fxRate: 17 }),
+      buy('AAPL', 10, 100, { currency: 'MXN', fxRate: 20 }),
+    ])
+    expect(otraMoneda.avgFx).toBeNull()
+  })
+
+  it('al reabrir, avgFx solo pesa las compras del lote nuevo', () => {
+    const [p] = derivePositionsDetailed([
+      buy('AAPL', 10, 100, { date: '2026-01-02', currency: 'USD', fxRate: 17 }),
+      buy('AAPL', 10, null, { date: '2026-01-03', currency: 'USD' }),
+      sell('AAPL', 20, 150, { date: '2026-02-02', currency: 'USD' }),
+      buy('AAPL', 4, 120, { date: '2026-03-02', currency: 'USD', fxRate: 18.25 }),
+    ])
+    expect(p.avgFx).toBe(18.25)
   })
 
   it('si a una compra le falta el tipo de cambio, avgFx queda en null', () => {
@@ -227,6 +286,11 @@ describe('validateTransaction', () => {
 })
 
 describe('positionPnl: efecto precio contra efecto tipo de cambio', () => {
+  it('es la misma cuenta que fx.pnlDecomposition, no una copia', () => {
+    const input = { quantity: 7, price0: 123.45, price1: 150.1, fx0: 17.3, fx1: 18.9 }
+    expect(positionPnl(input)).toEqual(pnlDecomposition(input))
+  })
+
   it('10 títulos de 150 a 180 dólares con el peso de 17 a 19: 8,700 = 5,100 + 3,600', () => {
     const out = positionPnl({ quantity: 10, price0: 150, price1: 180, fx0: 17, fx1: 19 })
     expect(out.total).toBeCloseTo(8700, 9)
@@ -260,7 +324,7 @@ describe('casos de borde', () => {
 
   it('un solo movimiento', () => {
     expect(derivePositions([buy('AAPL', 1, 10)])).toEqual([
-      { symbol: 'AAPL', quantity: 1, avgCost: 10, currency: 'MXN', costBasis: 10 },
+      { symbol: 'AAPL', quantity: 1, avgCost: 10, currency: 'MXN', costBasis: 10, realizedPnl: 0, firstBuyDate: null, avgFx: null },
     ])
   })
 
@@ -334,9 +398,10 @@ describe('golden contra la referencia en Python (Fraction exacto)', () => {
   })
 
   it('el golden trae los casos esperados', () => {
-    expect(golden.cases.length).toBeGreaterThanOrEqual(11)
+    expect(golden.cases.length).toBeGreaterThanOrEqual(12)
     expect(golden.cases.map((c) => c.name)).toContain('costo-promedio-venta-y-split')
     expect(golden.cases.map((c) => c.name)).toContain('cartera-migrada-varias-compras-sin-deposito')
+    expect(golden.cases.map((c) => c.name)).toContain('tipo-de-cambio-por-costo-con-split')
   })
 })
 

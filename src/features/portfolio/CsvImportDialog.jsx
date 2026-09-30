@@ -1,5 +1,6 @@
 // Vista previa de un CSV antes de agregarlo al libro: cuántos movimientos entran, cuáles ya
-// estaban y qué filas no se entendieron, con su número de fila y el motivo.
+// estaban, qué filas no se entendieron, con su número de fila y el motivo, y qué columnas del
+// archivo no se leen.
 import { Button, Dialog } from '../../components/ui/index.js'
 import { fmtNumber } from '../../lib/format.js'
 
@@ -7,13 +8,14 @@ const count = (/** @type {number} */ n) => fmtNumber(n, { decimals: 0 })
 
 /**
  * @param {{
- *   preview: null | { name: string, ok: any[], bad: { row: number, reason: string }[], repeated: number, empty: boolean },
+ *   preview: null | { name: string, ok: any[], bad: { row: number, reason: string }[], repeated: number, empty: boolean, ignored?: string[] },
  *   onCancel: () => void,
  *   onConfirm: () => void,
  * }} props
  */
 export default function CsvImportDialog({ preview, onCancel, onConfirm }) {
   const n = preview?.ok.length ?? 0
+  const ignored = preview?.ignored ?? []
   return (
     <Dialog
       open={preview != null}
@@ -47,6 +49,11 @@ export default function CsvImportDialog({ preview, onCancel, onConfirm }) {
               ))}
               {preview.bad.length > 6 && <li>{`Y ${count(preview.bad.length - 6)} filas más.`}</li>}
             </ul>
+          )}
+          {ignored.length > 0 && (
+            <p role="note">
+              {`${ignored.length === 1 ? 'Esta columna no la reconocimos y no se importa' : 'Estas columnas no las reconocimos y no se importan'}: ${ignored.join(', ')}.`}
+            </p>
           )}
           <p className="kz-portfolio-hint">
             Columnas que se leen: Fecha, Tipo, Clave, Títulos, Precio, Monto, Comisión, Moneda, Tipo de cambio, Proporción y Nota. También en inglés.

@@ -356,7 +356,7 @@
         "positions": [
           {
             "avgCost": 160.0,
-            "avgFx": 17.533333333333335,
+            "avgFx": 17.5875,
             "costBasis": 2400.0,
             "currency": "USD",
             "firstBuyDate": "2026-01-10",
@@ -877,6 +877,173 @@
     {
       "expected": {
         "cash": {
+          "MXN": 0.0,
+          "USD": -3050.0
+        },
+        "externalFlows": [
+          {
+            "amount": 1000.0,
+            "currency": "USD",
+            "date": "2026-01-02",
+            "kind": "funding"
+          },
+          {
+            "amount": 500.0,
+            "currency": "USD",
+            "date": "2026-03-02",
+            "kind": "funding"
+          },
+          {
+            "amount": 1000.0,
+            "currency": "USD",
+            "date": "2026-03-03",
+            "kind": "funding"
+          },
+          {
+            "amount": 2015.0,
+            "currency": "USD",
+            "date": "2026-03-04",
+            "kind": "funding"
+          }
+        ],
+        "funded": {
+          "MXN": 0.0,
+          "USD": 4515.0
+        },
+        "fundedCash": {
+          "MXN": 0.0,
+          "USD": 1465.0
+        },
+        "positions": [
+          {
+            "avgCost": 50.0,
+            "avgFx": 18.0,
+            "costBasis": 1500.0,
+            "currency": "USD",
+            "firstBuyDate": "2026-01-02",
+            "quantity": 30.0,
+            "realizedPnl": 0.0,
+            "symbol": "AAPL"
+          },
+          {
+            "avgCost": 150.75,
+            "avgFx": 19.00497512437811,
+            "costBasis": 1959.75,
+            "currency": "USD",
+            "firstBuyDate": "2026-03-03",
+            "quantity": 13.0,
+            "realizedPnl": 409.75,
+            "symbol": "MSFT"
+          }
+        ],
+        "sales": [
+          {
+            "cost": 1055.25,
+            "costDate": "2026-03-03",
+            "currency": "USD",
+            "gain": 409.75,
+            "proceeds": 1465.0,
+            "quantity": 7.0,
+            "saleDate": "2026-04-02",
+            "symbol": "MSFT"
+          }
+        ]
+      },
+      "input": {
+        "asOf": null,
+        "transactions": [
+          {
+            "amount": null,
+            "currency": "USD",
+            "date": "2026-01-02",
+            "fees": 0,
+            "fxRate": 17,
+            "id": "b1",
+            "note": "",
+            "price": 100,
+            "quantity": 10,
+            "ratio": null,
+            "symbol": "AAPL",
+            "type": "buy"
+          },
+          {
+            "amount": null,
+            "currency": "USD",
+            "date": "2026-02-02",
+            "fees": 0,
+            "fxRate": null,
+            "id": "sp1",
+            "note": "",
+            "price": null,
+            "quantity": null,
+            "ratio": 2,
+            "symbol": "AAPL",
+            "type": "split"
+          },
+          {
+            "amount": null,
+            "currency": "USD",
+            "date": "2026-03-02",
+            "fees": 0,
+            "fxRate": 20,
+            "id": "b2",
+            "note": "",
+            "price": 50,
+            "quantity": 10,
+            "ratio": null,
+            "symbol": "AAPL",
+            "type": "buy"
+          },
+          {
+            "amount": null,
+            "currency": "USD",
+            "date": "2026-03-03",
+            "fees": 0,
+            "fxRate": 17,
+            "id": "b3",
+            "note": "",
+            "price": 100,
+            "quantity": 10,
+            "ratio": null,
+            "symbol": "MSFT",
+            "type": "buy"
+          },
+          {
+            "amount": null,
+            "currency": "USD",
+            "date": "2026-03-04",
+            "fees": 15,
+            "fxRate": 20,
+            "id": "b4",
+            "note": "",
+            "price": 200,
+            "quantity": 10,
+            "ratio": null,
+            "symbol": "MSFT",
+            "type": "buy"
+          },
+          {
+            "amount": null,
+            "currency": "USD",
+            "date": "2026-04-02",
+            "fees": 5,
+            "fxRate": null,
+            "id": "s1",
+            "note": "",
+            "price": 210,
+            "quantity": 7,
+            "ratio": null,
+            "symbol": "MSFT",
+            "type": "sell"
+          }
+        ]
+      },
+      "name": "tipo-de-cambio-por-costo-con-split",
+      "tol": 1e-09
+    },
+    {
+      "expected": {
+        "cash": {
           "MXN": 526055.78,
           "USD": 22022.43
         },
@@ -923,7 +1090,7 @@
         "positions": [
           {
             "avgCost": 77.55886876530067,
-            "avgFx": 18.548992567567566,
+            "avgFx": 18.1078010610517,
             "costBasis": 9849.976333193186,
             "currency": "USD",
             "firstBuyDate": "2025-01-22",
@@ -1720,7 +1887,7 @@
         "positions": [
           {
             "avgCost": 149.28703768985233,
-            "avgFx": 18.414097101449276,
+            "avgFx": 18.81689258859934,
             "costBasis": 298.57407537970465,
             "currency": "USD",
             "firstBuyDate": "2025-01-15",
@@ -2571,7 +2738,7 @@
         "positions": [
           {
             "avgCost": 22.158726811992047,
-            "avgFx": 18.228424137931036,
+            "avgFx": 17.80446234428063,
             "costBasis": 7999.300379129129,
             "currency": "USD",
             "firstBuyDate": "2025-01-01",

@@ -61,31 +61,30 @@ export { buyAndHold, constantMix, withBenchmark, annualTurnover, weightsSum } fr
 export { toCurrency, pnlDecomposition, fxAt, convertSeries, returnInBaseCurrency, CURRENCIES, MAX_FX_STALE_DAYS } from './fx.js'
 
 // ─── A4: movimientos del portafolio ──────────────────────────────────────────────────────────
-// `derivePositions` ya existe (S2 lo dejó como stub de costo promedio y A4 reemplaza el interior
-// sin cambiar la firma), así que se reexporta desde ahora.
-export { derivePositions } from './ledger.js'
+export {
+  derivePositions,
+  derivePositionsDetailed,
+  cashBalances,
+  validateTransaction,
+  ledgerSnapshots,
+  orderTransactions,
+  externalFlows,
+  realizedSales,
+  positionPnl,
+} from './ledger.js'
+export { valueSeries, twr, twrReturns, annualizeReturn, yearsBetween } from './performance-ledger.js'
+export { xirr, signChanges } from './xirr.js'
+export { isrOnGains, interestWithholding, INTEREST_WITHHOLDING_RATE, DIVIDEND_WITHHOLDING_RATE } from './tax-mx.js'
+export { wholeShareRebalance } from './rebalance.js'
 
-// ─── PENDIENTE DE HABILITAR EN EL MERGE (A2, A3 y el resto de A4) ────────────────────────────
-// Estos módulos los escriben otros streams en paralelo y todavía no existen en este worktree, así
-// que las líneas van comentadas para que el build no truene. El orquestador las descomenta al
-// mergear, sin tener que inventar nombres: son los que fijan docs/overhaul/specs/finance-spec.md
-// y scripts/ownership.json.
-//
-// A2, álgebra lineal, covarianza y optimización:
+// ─── A2: álgebra lineal, covarianza y optimización ───────────────────────────────────────────
 export { matmul, transpose, cholesky, solveSPD, largestEigenvalue } from './linalg.js'
 export { sampleCov, ledoitWolfConstantCorrelation, annualize, corrFromCov } from './covariance.js'
 export { capmExpected, historicalMean, jamesStein } from './expected.js'
 export { projectBoxSimplex, minVariance, meanVariance, efficientFrontier, maxSharpe, riskParity, InfeasibleError } from './optimize.js'
 export { walkForward } from './walkforward.js'
-//
-// A3, aleatoriedad con semilla, Monte Carlo y metas (rng.js vive en src/lib/, no en finance/):
+
+// ─── A3: aleatoriedad con semilla, Monte Carlo y metas (rng.js vive en src/lib/, no en finance/) ─
 export { createRng } from '../rng.js'
-export { lognormalParams, simulate } from './montecarlo.js'
+export { lognormalParams, simulate, fromMessage } from './montecarlo.js'
 export { probabilityOfGoal, requiredContribution, retirementIncome } from './goals.js'
-//
-// A4, lo que falta del portafolio:
-export { cashBalances, validateTransaction } from './ledger.js'
-export { valueSeries, twr } from './performance-ledger.js'
-export { xirr } from './xirr.js'
-export { isrOnGains, interestWithholding, INTEREST_WITHHOLDING_RATE } from './tax-mx.js'
-export { wholeShareRebalance } from './rebalance.js'

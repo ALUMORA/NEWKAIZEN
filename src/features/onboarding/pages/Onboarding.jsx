@@ -1,14 +1,14 @@
 // /bienvenida: tres formas de empezar. Un portafolio de EJEMPLO, importar un CSV o empezar vacío.
-// Cualquiera de las tres guarda settings.onboardingDone y lleva a /portafolio/movimientos, que lee
-// el storage v2. No a /portafolio: mientras esa ruta monte el legado, ahí se ve el portafolio fijo
-// del código (DEFAULT_PORTFOLIOS) y no el que se acaba de crear.
+// Cualquiera de las tres guarda settings.onboardingDone y lleva a /portafolio/movimientos: ahí se
+// ve de inmediato el libro que se acaba de crear (o se captura el primer movimiento si quedó vacío),
+// que es lo que la persona quiere revisar primero. Desde M3 /portafolio ya no monta el legado, así
+// que mandar ahí también sería correcto; se queda en Movimientos por eso, no por el legado.
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Badge, Button, Card, PageHeader, useToast } from '../../../components/ui/index.js'
-import { detectDelimiter, parseCSV, rowsToObjects } from '../../../lib/csv.js'
 import { newId, update, validateTransaction } from '../../../lib/storage.js'
 import { PATHS } from '../../../app/paths.js'
-import { SAMPLE_NAME, SAMPLE_NOTE, SAMPLE_TRANSACTIONS, csvColumns, rowsToRawTransactions } from '../sample.js'
+import { SAMPLE_NAME, SAMPLE_NOTE, SAMPLE_TRANSACTIONS, readOnboardingCsv } from '../sample.js'
 import '../onboarding.css'
 
 function createPortfolio({ name, notes = '', transactions = [] }) {
@@ -36,19 +36,7 @@ export default function Onboarding() {
     const file = event.target.files?.[0]
     if (!file) return
     const text = await file.text()
-    const delimiter = detectDelimiter(text)
-    const rows = parseCSV(text, { delimiter })
-    // Separado por punto y coma es el CSV de Excel en español: ahí la coma es el decimal.
-    const raw = rowsToRawTransactions(rowsToObjects(rows), { decimalComma: delimiter === ';' })
-    const { unknown } = csvColumns(rows[0] ?? [])
-    const ok = []
-    const bad = []
-    raw.forEach((r, i) => {
-      const res = validateTransaction(r)
-      if (res.tx) ok.push(res.tx)
-      else bad.push({ row: i + 2, reason: res.reason })
-    })
-    setCsv({ name: file.name, ok, bad, unknown })
+    setCsv({ name: file.name, ...readOnboardingCsv(text) })
   }
 
   return (

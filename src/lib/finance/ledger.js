@@ -6,26 +6,13 @@
 // (LISR art. 129). Las comisiones suman al costo en las compras y restan al producto en las
 // ventas. Un split multiplica la cantidad y divide el costo promedio, sin mover el costo total.
 //
-// COMPATIBILIDAD CON EL CONTRATO DE S2: `src/lib/portfolio/ledger.contract.test.js` compara la
-// salida de `derivePositions` con `toEqual` contra objetos de exactamente cinco llaves, así que
-// esta función conserva esa forma al pie de la letra. Lo que el spec pide de más (P&L realizado,
-// primera compra, tipo de cambio promedio) vive en `derivePositionsDetailed`, que devuelve la
-// misma posición con tres llaves extra. Está anotado en docs/requests/A4.md para que el
-// orquestador decida si relaja esa prueba después del merge.
+// `derivePositions` devuelve las ocho llaves del spec A4 (docs/requests/A4.md, opción A).
+// `derivePositionsDetailed` se queda como alias para no romper a quien ya la importa.
+
+import { pnlDecomposition } from './fx.js'
 
 /** @typedef {import('../storage.js').Transaction} Transaction */
 /** @typedef {'MXN' | 'USD'} Currency */
-
-/**
- * Posición abierta, forma mínima del contrato de S2.
- * @typedef {{
- *   symbol: string,
- *   quantity: number,
- *   avgCost: number | null,
- *   currency: Currency,
- *   costBasis: number | null,
- * }} Position
- */
 
 /**
  * Posición abierta con el detalle que pide el spec de finanzas.
@@ -34,14 +21,24 @@
  *     utilidad realizada está en `realizedPnlBySymbol` y en `realizedSales`.
  *   firstBuyDate: fecha de la primera compra con fecha del lote abierto; null si ninguna la trae.
  *   avgFx: tipo de cambio de las compras (pesos por unidad de la moneda del movimiento),
- *     ponderado por cantidad; null si alguna compra no lo trae. En posiciones en MXN suele ser
- *     null y no hace falta.
- * @typedef {Position & {
+ *     ponderado por lo que costó cada compra en su moneda (cantidad × precio + comisiones), así
+ *     que costBasis × avgFx es exactamente lo que se pagó en pesos por el lote vigente. Una venta
+ *     saca costo a promedio en las dos monedas a la par y un split no lo mueve. null si alguna
+ *     compra del lote no trae tipo de cambio, no trae precio o va en otra moneda. En posiciones en
+ *     MXN suele ser null y no hace falta.
+ * @typedef {{
+ *   symbol: string,
+ *   quantity: number,
+ *   avgCost: number | null,
+ *   currency: Currency,
+ *   costBasis: number | null,
  *   realizedPnl: number | null,
  *   firstBuyDate: string | null,
  *   avgFx: number | null,
- * }} PositionDetail
+ * }} Position
  */
+
+/** Alias de `Position`, de cuando la forma corta y la detallada eran dos. @typedef {Position} PositionDetail */
 
 /**
  * Venta realizada, con el costo promedio vigente al momento de venderla.
@@ -140,8 +137,10 @@ export function orderTransactions(transactions, asOf = null) {
  * @typedef {{
  *   quantity: number, cost: number | null, currency: Currency,
  *   realized: number | null, firstBuyDate: string | null,
- *   fxQty: number, fxSum: number, fxKnown: boolean,
+ *   costFx: number | null,
  * }} Lot
+ * costFx: el mismo costo que `cost`, pero con cada compra convertida a pesos con su propio tipo
+ * de cambio. null en cuanto una compra del lote no lo trae o el costo es desconocido.
  */
 
 /** @returns {Lot} */
@@ -152,9 +151,7 @@ function emptyLot(/** @type {Currency} */ currency) {
     currency,
     realized: 0,
     firstBuyDate: null,
-    fxQty: 0,
-    fxSum: 0,
-    fxKnown: true,
+    costFx: 0,
   }
 }
 
@@ -191,7 +188,7 @@ function runLedger(transactions, { asOf = null, dates = null } = {}) {
   function snapshotAt(date) {
     snapshots.push({
       date,
-      positions: positionsFrom(book, true),
+      positions: positionsFrom(book),
       cash: { ...cash },
       fundedCash: { MXN: cash.MXN + funded.MXN, USD: cash.USD + funded.USD },
       external: external.slice(flowMark),
@@ -241,9 +238,7 @@ function runLedger(transactions, { asOf = null, dates = null } = {}) {
         lot.currency = ccy
         lot.realized = 0
         lot.firstBuyDate = null
-        lot.fxQty = 0
-        lot.fxSum = 0
-        lot.fxKnown = true
+        lot.costFx = 0
       }
       const price = isNum(tx.price) ? /** @type {number} */ (tx.price) : null
       const amount = price === null ? null : qty * price + fees
@@ -255,12 +250,10 @@ function runLedger(transactions, { asOf = null, dates = null } = {}) {
       if (isIsoDate(tx.date) && (lot.firstBuyDate === null || tx.date < lot.firstBuyDate)) {
         lot.firstBuyDate = tx.date
       }
-      if (isNum(tx.fxRate) && /** @type {number} */ (tx.fxRate) > 0) {
-        lot.fxQty += qty
-        lot.fxSum += qty * /** @type {number} */ (tx.fxRate)
-      } else {
-        lot.fxKnown = false
-      }
+      // El tipo de cambio pesa por lo que costó la compra, no por cuántos títulos trajo: así el
+      // costo en pesos cuadra y un split (que multiplica títulos sin mover costo) no lo altera.
+      const fx = rateOf(tx)
+      lot.costFx = lot.costFx === null || lot.cost === null || amount === null || fx === null ? null : lot.costFx + amount * fx
       if (amount !== null) {
         // El faltante se mide contra el efectivo YA considerando lo que se dio por aportado antes
         // (cash + funded). Medirlo solo contra cash vuelve a financiar dinero ya financiado, porque
@@ -304,8 +297,11 @@ function runLedger(transactions, { asOf = null, dates = null } = {}) {
       if (lot.quantity <= EPSILON) {
         lot.quantity = 0
         lot.cost = 0
-      } else if (avg !== null && lot.cost !== null) {
-        lot.cost -= avg * qty
+        lot.costFx = 0
+      } else {
+        if (avg !== null && lot.cost !== null) lot.cost -= avg * qty
+        // Lo que sale en pesos es la misma fracción del lote que sale en su moneda.
+        if (lot.costFx !== null) lot.costFx -= (lot.costFx / (lot.quantity + qty)) * qty
       }
       // El dinero entra en la moneda del movimiento, no en la del lote: abonarlo a lot.currency
       // convertiría 1,800 pesos en 1,800 dólares sin avisar. validateTransaction rechaza la mezcla
@@ -335,35 +331,31 @@ function runLedger(transactions, { asOf = null, dates = null } = {}) {
 
 /**
  * @param {Map<string, Lot>} book
- * @param {boolean} detailed
- * @returns {PositionDetail[]}
+ * @returns {Position[]}
  */
-function positionsFrom(book, detailed) {
+function positionsFrom(book) {
+  /** @type {Position[]} */
   const out = []
   for (const [symbol, lot] of book.entries()) {
     if (lot.quantity <= EPSILON) continue
-    /** @type {any} */
-    const position = {
+    out.push({
       symbol,
       quantity: lot.quantity,
       avgCost: lot.cost === null ? null : lot.cost / lot.quantity,
       currency: lot.currency,
       costBasis: lot.cost,
-    }
-    if (detailed) {
-      position.realizedPnl = lot.realized
-      position.firstBuyDate = lot.firstBuyDate
-      position.avgFx = lot.fxKnown && lot.fxQty > 0 ? lot.fxSum / lot.fxQty : null
-    }
-    out.push(position)
+      realizedPnl: lot.realized,
+      firstBuyDate: lot.firstBuyDate,
+      avgFx: lot.cost !== null && lot.costFx !== null && lot.cost > EPSILON ? lot.costFx / lot.cost : null,
+    })
   }
   return out.sort((a, b) => (a.symbol < b.symbol ? -1 : a.symbol > b.symbol ? 1 : 0))
 }
 
 /**
- * Posiciones abiertas por símbolo con el método de costo promedio.
- * Forma del contrato de S2 (cinco llaves). Para el P&L realizado, la primera compra y el tipo de
- * cambio promedio usa `derivePositionsDetailed`.
+ * Posiciones abiertas por símbolo con el método de costo promedio, con las ocho llaves del spec:
+ * símbolo, cantidad, costo promedio, moneda, costo total, P&L realizado del lote abierto, primera
+ * compra y tipo de cambio promedio ponderado por costo.
  * Mínimo: con cero movimientos devuelve un arreglo vacío, nunca null.
  * @param {Transaction[] | undefined | null} transactions
  * @param {{ asOf?: string | null }} [options] fecha de corte AAAA-MM-DD (inclusive)
@@ -371,18 +363,18 @@ function positionsFrom(book, detailed) {
  */
 export function derivePositions(transactions, { asOf = null } = {}) {
   const { book } = runLedger(transactions, { asOf })
-  return positionsFrom(book, false)
+  return positionsFrom(book)
 }
 
 /**
- * Igual que `derivePositions`, más `realizedPnl`, `firstBuyDate` y `avgFx`.
+ * Alias de `derivePositions`, que ya devuelve el detalle completo. Se conserva para no romper a
+ * quien lo importa.
  * @param {Transaction[] | undefined | null} transactions
  * @param {{ asOf?: string | null }} [options]
  * @returns {PositionDetail[]}
  */
 export function derivePositionsDetailed(transactions, { asOf = null } = {}) {
-  const { book } = runLedger(transactions, { asOf })
-  return positionsFrom(book, true)
+  return derivePositions(transactions, { asOf })
 }
 
 /**
@@ -531,20 +523,19 @@ export function validateTransaction(tx, existing = []) {
  * moneda base (pesos si el tipo de cambio va en pesos por dólar).
  *   efecto precio = q (P1 − P0) X0
  *   efecto tipo de cambio = q P1 (X1 − X0)
- * El cruce queda dentro del efecto tipo de cambio porque se valúa al precio final, así que
- * `cross` siempre es 0 y la suma cuadra exacto con el total.
+ * Es un envoltorio de `fx.js::pnlDecomposition`, que es la única implementación de la cuenta; se
+ * conserva aquí porque el libro es quien tiene las entradas (avgCost y avgFx).
  * Devuelve null si falta cualquiera de los cinco datos o si alguno no es un número finito.
  * @param {{ quantity: number, price0: number | null, price1: number | null, fx0: number | null, fx1: number | null }} input
  * @returns {{ total: number, priceEffect: number, fxEffect: number, cross: number } | null}
  */
 export function positionPnl({ quantity, price0, price1, fx0, fx1 }) {
   if (![quantity, price0, price1, fx0, fx1].every(isNum)) return null
-  const q = /** @type {number} */ (quantity)
-  const p0 = /** @type {number} */ (price0)
-  const p1 = /** @type {number} */ (price1)
-  const x0 = /** @type {number} */ (fx0)
-  const x1 = /** @type {number} */ (fx1)
-  const priceEffect = q * (p1 - p0) * x0
-  const fxEffect = q * p1 * (x1 - x0)
-  return { total: q * (p1 * x1 - p0 * x0), priceEffect, fxEffect, cross: 0 }
+  return pnlDecomposition({
+    quantity,
+    price0: /** @type {number} */ (price0),
+    price1: /** @type {number} */ (price1),
+    fx0: /** @type {number} */ (fx0),
+    fx1: /** @type {number} */ (fx1),
+  })
 }

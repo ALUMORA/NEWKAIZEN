@@ -233,7 +233,7 @@ describe('golden de numpy', () => {
 // El barril no tiene archivo de prueba propio en scripts/ownership.json, así que su superficie
 // pública se revisa desde aquí: es la puerta por la que entran todas las features de la fase 3.
 describe('el barril index.js', () => {
-  it('exporta por nombre todo lo público de A1 y el derivePositions de A4', async () => {
+  it('exporta por nombre lo público de la librería, incluido lo que las pantallas usan del libro', async () => {
     const api = await import('./index.js')
     const esperados = [
       // returns
@@ -267,6 +267,9 @@ describe('el barril index.js', () => {
       'valueSeries', 'twr', 'xirr', 'isrOnGains', 'wholeShareRebalance',
       // PF: retención provisional de ISR sobre intereses
       'interestWithholding', 'INTEREST_WITHHOLDING_RATE',
+      // F1-6: lo que las pantallas importaban directo de cada módulo
+      'derivePositionsDetailed', 'ledgerSnapshots', 'orderTransactions', 'externalFlows', 'realizedSales', 'positionPnl',
+      'annualizeReturn', 'twrReturns', 'yearsBetween', 'signChanges', 'DIVIDEND_WITHHOLDING_RATE', 'fromMessage',
     ]
     for (const nombre of esperados) expect(api[nombre], nombre).toBeDefined()
     expect(Object.keys(api).sort()).toEqual([...esperados].sort())

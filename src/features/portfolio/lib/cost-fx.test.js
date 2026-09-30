@@ -14,8 +14,9 @@ describe('costWeightedFx', () => {
     const [p] = derivePositionsDetailed(txs)
     const fx = /** @type {number} */ (costWeightedFx(txs).get('AAPL'))
     expect(p.costBasis * fx).toBeCloseTo(17000 + 40000, 9)
-    // Lo que da avgFx, ponderado por cantidad: 1,500 pesos menos.
-    expect(p.costBasis * /** @type {number} */ (p.avgFx)).toBeCloseTo(55500, 9)
+    // avgFx del libro ya pondera igual: no hay dos cifras distintas para lo mismo.
+    expect(p.costBasis * /** @type {number} */ (p.avgFx)).toBeCloseTo(57000, 9)
+    expect(p.avgFx).toBeCloseTo(fx, 12)
   })
 
   it('una venta saca costo a promedio en las dos monedas, un split no cambia nada y al reabrir empieza de cero', () => {
