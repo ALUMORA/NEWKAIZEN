@@ -43,6 +43,16 @@ describe('buscador de claves (comparador y lista propia del screener)', () => {
     expect(out.message).toMatch(/No encontramos/)
   })
 
+  it('Enter mientras la búsqueda sigue en camino no toma la clave cruda: pide buscarla primero', () => {
+    // Sin esto, "walmex" tecleado rápido entraba como WALMEX sin el .MX de la BMV.
+    expect(resolveEnter({ ...base, q: 'walmex', searching: true })).toEqual({ handled: true, add: [], message: '', lookup: 'walmex' })
+    expect(resolveEnter({ ...base, q: 'walmart de', searching: true }).lookup).toBe('walmart de')
+    // Con comas son claves: no hay nada que buscar.
+    expect(resolveEnter({ ...base, q: 'aapl, msft', searching: true })).toEqual({ handled: true, add: ['AAPL', 'MSFT'], message: '' })
+    // Sin búsqueda disponible tampoco.
+    expect(resolveEnter({ ...base, available: false, q: 'walmex', searching: true })).toEqual({ handled: true, add: ['WALMEX'], message: '' })
+  })
+
   it('texto que no es clave, sin búsqueda: lo dice en vez de agregar basura', () => {
     const out = resolveEnter({ ...base, available: false, q: '¿?' })
     expect(out).toEqual({ handled: true, add: [], message: expect.stringMatching(/claves/) })

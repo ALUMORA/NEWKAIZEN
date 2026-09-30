@@ -46,15 +46,18 @@ export function removeSymbolAt(list, index) {
  * - Con comas, o sin búsqueda disponible: lo escrito son claves.
  * - Con búsqueda: una clave tecleada se resuelve contra los resultados ("WALMEX" → "WALMEX.MX"); algo
  *   que parece clave se toma tal cual, y un nombre sin resultado se avisa en vez de volverse clave.
+ * - Con búsqueda todavía en camino (`searching`), los resultados son de otro texto: se pide buscar
+ *   primero (`lookup`) y volver a llamar con lo que llegue, para no tomar "WALMEX" sin su .MX.
  * @param {{ q: string, activeOption: { symbol?: unknown } | null, searching?: boolean, available: boolean,
  *   results: { symbol: string }[] }} input
- * @returns {{ handled: boolean, add: string[], message: string }}
+ * @returns {{ handled: boolean, add: string[], message: string, lookup?: string }}
  */
-export function resolveEnter({ q, activeOption, available, results }) {
+export function resolveEnter({ q, activeOption, searching = false, available, results }) {
   const text = String(q ?? '').trim()
   if (!text) return { handled: false, add: [], message: '' }
   const list = text.includes(',')
   if (activeOption && !list) return { handled: false, add: [], message: '' }
+  if (available && !list && searching) return { handled: true, add: [], message: '', lookup: text }
   if (available && !list) {
     const found = matchSymbol(text, results)
     if (found) return { handled: true, add: [found], message: '' }
