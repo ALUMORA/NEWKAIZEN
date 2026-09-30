@@ -24,6 +24,10 @@ emisora, cantidad, precio, comisión, moneda y tipo de cambio. Los tipos son sie
 Las posiciones se derivan de ahí en cada carga. Nunca se guardan posiciones calculadas: si un
 movimiento se corrige, todo el historial se recalcula solo.
 
+Un movimiento con fecha futura se guarda en el registro, pero todavía no cuenta en posiciones,
+efectivo, rendimiento, riesgo ni rebalanceo: entra el día de su fecha, y cada página dice cuántos
+dejó fuera.
+
 El tipo de cambio de cada movimiento se llena con el FIX de esa fecha, y se puede editar. Si un
 movimiento no trae tipo de cambio, la posición no puede separar efecto precio de efecto tipo de
 cambio, y esa columna sale `s/d` en vez de suponer uno.
@@ -56,6 +60,9 @@ total        = cantidad × (P₁ − P₀) × X₀   +   cantidad × P₁ × (X�
 ```
 
 con `P` el precio en la moneda original y `X` el tipo de cambio en pesos por unidad de esa moneda.
+Con varias compras, `X₀` es el promedio de sus tipos de cambio ponderado por lo que costó cada una
+(títulos por precio más comisión), así que el costo en dólares por `X₀` da exactamente los pesos que
+pagaste. Una venta no lo mueve y un split tampoco.
 
 Ejemplo probado: 10 acciones que pasan de 150 a 180 dólares con el tipo de cambio de 17 a 19 pesos
 dan 8,700 pesos, o sea 5,100 de precio y 3,600 de tipo de cambio.
@@ -78,14 +85,20 @@ Caso probado: de 100 a 110, depósito de 50, de 160 a 144, da −1 por ciento.
 Límite: con valuaciones semanales o mensuales, un depósito a media semana no queda bien con
 ninguna de las dos convenciones. Para eso haría falta Dietz modificado, que Kaizen no implementa.
 
-Los cierres históricos vienen ajustados por dividendos y splits. Para no mezclar ese precio con el
-que de verdad pagaste, el TWR toma cada compra y venta al cierre del corte en que cae (la diferencia
-entre tu precio y ese cierre cuenta como flujo, no como rendimiento) y no suma el efectivo de los
-dividendos, que ya van dentro del cierre ajustado como si se hubieran reinvertido. Sin eso, cada
-compra de una emisora que paga dividendos se anotaba como pérdida el mismo día y, con compras
-frecuentes, el TWR caía decenas de puntos. El valor, la ganancia y el XIRR sí son de dinero real:
-llevan el efectivo de los dividendos y, cuando el libro arranca dentro de la ventana, parten de lo que
-aportaste y no del primer cierre ajustado.
+Los cierres históricos del libro se piden ajustados solo por splits, sin meter los dividendos. En
+cualquier caso, el TWR toma cada compra y venta al cierre del corte en que cae: la diferencia entre
+tu precio y ese cierre cuenta como flujo, no como rendimiento. Sin eso, cada compra se anotaba como
+ganancia o pérdida el mismo día y, con compras frecuentes, el TWR se movía decenas de puntos. Como
+el cierre no trae el dividendo, su efectivo cuenta una sola vez, el día en que lo cobraste, en el
+TWR, el valor, la ganancia y el XIRR. La referencia sale de otro panel con rendimiento total, para que
+las dos comparen con dividendos.
+
+Si el servidor todavía no ofrece cierres ajustados solo por splits, se usa un solo panel con cierres
+ajustados por dividendos y splits, con la referencia adentro. En esa ruta de respaldo el TWR no suma
+el efectivo de los dividendos, que ya van dentro del cierre ajustado como si se hubieran reinvertido
+en la misma emisora, y si registraste dividendos la pantalla lo dice. El valor, la ganancia y el XIRR son de dinero real en
+las dos rutas: llevan el efectivo de los dividendos y, cuando el libro arranca dentro de la ventana,
+parten de lo que aportaste y no del primer cierre.
 
 **XIRR**, rendimiento del dinero. Es la tasa que hace cero el valor presente de todos los flujos con
 sus fechas reales, incluido el saldo final, sobre base Actual/365. Se resuelve con Newton y, si no
@@ -98,7 +111,12 @@ buenos. Ninguno de los dos es "el correcto": son dos preguntas.
 ## Valor del portafolio en el tiempo
 
 La serie de valor se arma con los precios de cierre de cada fecha más el efectivo en cada moneda,
-todo convertido a pesos con el FIX de esa misma fecha. Los depósitos y retiros son flujos externos.
+todo convertido a pesos. Cuando el libro tiene emisoras en dólares, el tipo de cambio de cada cierre
+es el implícito de los precios: el cierre en pesos entre el cierre en dólares de la misma fecha, que
+es el mismo con el que el servidor convirtió. El FIX diario de Banxico se usa cuando no hay ese
+cociente (efectivo en dólares sin ninguna emisora en dólares) y para un movimiento en dólares que no
+trae su tipo de cambio, que toma el FIX de su día y no el del cierre semanal. Los depósitos y
+retiros son flujos externos.
 Una compra sin efectivo suficiente se trata como aportación externa por el faltante, no por el
 costo completo: si depositaste 600 y compraste 1,000, la aportación implícita es de 400. Así el TWR
 no cuenta ese dinero como rendimiento.

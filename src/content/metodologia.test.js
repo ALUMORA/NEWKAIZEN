@@ -11,7 +11,9 @@ import { glossary } from './glossary.js'
 import { MAX_STALE_DAYS, rfSeriesForDates } from '../lib/finance/rates.js'
 import { drawdowns, parametricCVaR, parametricVaR, summary } from '../lib/finance/performance.js'
 import { twr } from '../lib/finance/performance-ledger.js'
-import { externalFlows } from '../lib/finance/ledger.js'
+import { derivePositions, externalFlows } from '../lib/finance/ledger.js'
+import { impliedFx } from '../features/portfolio/lib/performance-view.js'
+import { cutAt } from '../features/portfolio/lib/book-cut.js'
 import { isrOnGains } from '../lib/finance/tax-mx.js'
 import { alignPanel } from '../lib/finance/returns.js'
 import { meanVariance, riskParity } from '../lib/finance/optimize.js'
@@ -205,6 +207,40 @@ describe('portafolio: TWR, aportación implícita e ISR como los calcula la libr
     expect(r?.years.find((y) => y.year === '2026')?.tax).toBeCloseTo(10, 12)
     expect(glossary['isr-ganancia-de-capital'].formula).toMatch(/pérdidas pendientes/)
     expect(plano('portafolio.md')).toMatch(/resta las pérdidas pendientes de ejercicios anteriores/)
+  })
+
+  it('el TWR describe la ruta principal con cierres ajustados solo por splits y la de respaldo aparte', () => {
+    const texto = plano('portafolio.md')
+    expect(texto).toMatch(/ajustados solo por splits/)
+    expect(texto).toMatch(/cuenta una sola vez, el día en que lo cobraste/)
+    expect(texto).toMatch(/ruta de respaldo/)
+    // La versión vieja decía que los cierres SIEMPRE vienen ajustados por dividendos.
+    expect(texto).not.toMatch(/Los cierres históricos vienen ajustados por dividendos y splits/)
+  })
+
+  it('el tipo de cambio de cada cierre es el cociente de los dos paneles, como lo calcula impliedFx', () => {
+    const fx = impliedFx(
+      { dates: ['2026-09-18'], prices: { AAPL: [4234.875] } },
+      { dates: ['2026-09-18'], prices: { AAPL: [230] } },
+    )
+    expect(fx['2026-09-18']).toBeCloseTo(18.4125, 10)
+    expect(plano('portafolio.md')).toMatch(/el cierre en pesos entre el cierre en dólares de la misma fecha/)
+    expect(plano('portafolio.md')).not.toMatch(/todo convertido a pesos con el FIX de esa misma fecha/)
+  })
+
+  it('avgFx pondera por lo que costó cada compra: el costo en dólares por X₀ da los pesos pagados', () => {
+    const [p] = derivePositions([
+      { id: 'a', type: 'buy', date: '2026-01-02', symbol: 'AAPL', quantity: 10, price: 100, currency: 'USD', fxRate: 17 },
+      { id: 'b', type: 'buy', date: '2026-02-02', symbol: 'AAPL', quantity: 10, price: 200, currency: 'USD', fxRate: 20 },
+    ])
+    expect(p.costBasis * p.avgFx).toBeCloseTo(57000, 6)
+    expect(plano('portafolio.md')).toMatch(/ponderado por lo que costó cada una/)
+  })
+
+  it('un movimiento con fecha futura no cuenta todavía y la página lo dice', () => {
+    const { current, future } = cutAt([{ date: '2026-09-01' }, { date: '2026-10-05' }, { date: null }], '2026-09-22')
+    expect([current.length, future]).toEqual([2, 1])
+    expect(plano('portafolio.md')).toMatch(/Un movimiento con fecha futura se guarda en el registro, pero todavía no cuenta/)
   })
 
   it('el rebalanceo documenta la mejora por pares que la librería sí hace', () => {
