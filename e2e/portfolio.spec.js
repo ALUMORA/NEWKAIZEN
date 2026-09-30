@@ -60,10 +60,11 @@ const FX_HISTORY = ({ url }) => {
 
 const quote = (symbol, name, price) => ({ symbol, name, price, previousClose: price, change: 0, changePct: 0, currency: 'MXN', exchange: 'BMV', type: 'equity', marketState: 'REGULAR', asOf: '2026-09-22T14:40:00Z' })
 const QUOTE_TABLE = {
-  'WALMEX.MX': { ...quote('WALMEX.MX', 'Walmex', 65), previousClose: 64, change: 1, changePct: 1 / 64 },
-  'NAFTRAC.MX': { ...quote('NAFTRAC.MX', 'Naftrac', 55.2), previousClose: 55.5, change: -0.3, changePct: -0.3 / 55.5 },
-  'AMXB.MX': quote('AMXB.MX', 'América Móvil', 18.5),
-  AAPL: { ...quote('AAPL', 'Apple', 240), previousClose: 238, change: 2, changePct: 2 / 238, currency: 'USD', exchange: 'NASDAQ' },
+  'WALMEX.MX': { ...quote('WALMEX.MX', 'Walmex', 65), previousClose: 64, change: 1, changePct: 1 / 64, sector: 'Consumo básico', sectorKey: 'Consumer Defensive' },
+  // Los fondos y ETF llegan sin sector, como los manda Yahoo.
+  'NAFTRAC.MX': { ...quote('NAFTRAC.MX', 'Naftrac', 55.2), previousClose: 55.5, change: -0.3, changePct: -0.3 / 55.5, type: 'fund', sector: null, sectorKey: null },
+  'AMXB.MX': { ...quote('AMXB.MX', 'América Móvil', 18.5), sector: 'Comunicaciones', sectorKey: 'Communication Services' },
+  AAPL: { ...quote('AAPL', 'Apple', 240), previousClose: 238, change: 2, changePct: 2 / 238, currency: 'USD', exchange: 'NASDAQ', sector: 'Tecnología', sectorKey: 'Technology' },
 }
 /** QuotesResponse con lo que se pidió: lo que no está en la tabla sale en `missing`. */
 const QUOTES = ({ url }) => {
@@ -79,8 +80,8 @@ const PANEL_PRICES = {
   MXN: {
     'WALMEX.MX': walk(62, weeks),
     'NAFTRAC.MX': walk(55, weeks).map((v, i) => Math.round((v * (1 + 0.004 * Math.cos(i))) * 100) / 100),
-    '^MXX': walk(60000, weeks),
-    '^GSPC': walk(120000, weeks).map((v, i) => Math.round(v * (1 + 0.006 * Math.cos(i * 0.7)))),
+    // Referencias de Riesgo (docs/metodologia/riesgo.md): NAFTRAC.MX, arriba, y SPY en pesos.
+    SPY: walk(12000, weeks).map((v, i) => Math.round(v * (1 + 0.006 * Math.cos(i * 0.7)) * 100) / 100),
     // En pesos, con el FIX vigente de cada fecha (el mismo que usa el servidor).
     AAPL: USD_PRICES.AAPL.map((v, i) => Math.round(v * (FIX[weeks[i]] ?? 18.4125) * 100) / 100),
   },
@@ -363,6 +364,21 @@ test.describe('portafolio: rebalanceo', () => {
     await expect(planTable(page).getByRole('row', { name: /NAFTRAC\.MX/ })).toContainText('94')
   })
 
+  test('una compra con fecha futura no cambia el plan de hoy', async ({ page, baseURL }) => {
+    await open(page, baseURL, { state: REBALANCE_STATE })
+    await page.goto('/portafolio/rebalanceo')
+    const walmex = planTable(page).getByRole('row', { name: /WALMEX\.MX/ })
+    await expect(walmex).toContainText('Reducir')
+    const today = String(await walmex.textContent())
+    const future = tx({ id: 'f1', type: 'buy', date: '2026-10-05', symbol: 'WALMEX.MX', quantity: 100, price: 70 })
+    const withFuture = { ...REBALANCE_STATE, portfolios: [{ ...REBALANCE_STATE.portfolios[0], transactions: [...REBALANCE_STATE.portfolios[0].transactions, future] }] }
+    await page.addInitScript((st) => window.localStorage.setItem('kaizen:v2', st), JSON.stringify(withFuture))
+    await page.goto('/portafolio/rebalanceo')
+    await expect(planTable(page).getByRole('row', { name: /WALMEX\.MX/ })).toHaveText(today)
+    // El plan no cambia, pero no en silencio: dice por qué la compra no cuenta todavía.
+    await expect(page.getByText('1 movimiento con fecha futura todavía no cuenta: entra al plan el día de su fecha.')).toBeVisible()
+  })
+
   test('metas que no suman 100% no calculan plan', async ({ page, baseURL }) => {
     await open(page, baseURL)
     await page.goto('/portafolio/rebalanceo')
@@ -413,6 +429,123 @@ test.describe('portafolio: rendimiento', () => {
       await expectNoAxeViolations(page, `rendimiento ${theme}`)
     })
   }
+
+  test('con una emisora en dólares el tipo de cambio sale del panel y no pide /v2/fx/history', async ({ page, baseURL }) => {
+    await open(page, baseURL, { state: PERF_STATE })
+    let fxHistoryCalls = 0
+    await page.route(/\/v2\/fx\/history/, (route) => {
+      fxHistoryCalls += 1
+      return route.fallback()
+    })
+    await page.goto('/portafolio/rendimiento')
+    const aapl = page.getByRole('table', { name: 'Resultado por posición' }).getByRole('row', { name: /AAPL/ })
+    // El tipo de cambio de hoy es el cociente del panel: 18.4125, el mismo con que el servidor convirtió.
+    await expect(aapl).toContainText('18.4125')
+    await expect(page.getByRole('region', { name: 'Resumen del periodo' }).locator('.kz-stat__value').filter({ hasText: 's/d' })).toHaveCount(0)
+    expect(fxHistoryCalls).toBe(0)
+  })
+
+  test('una compra con fecha futura no entra al resultado por posición', async ({ page, baseURL }) => {
+    const future = tx({ id: 'f1', type: 'buy', date: '2026-10-05', symbol: 'AAPL', quantity: 10, price: 250, currency: 'USD', fxRate: 18.5 })
+    await open(page, baseURL, { state: { ...PERF_STATE, portfolios: [{ ...PERF_STATE.portfolios[0], transactions: [...PERF_STATE.portfolios[0].transactions, future] }] } })
+    await page.goto('/portafolio/rendimiento')
+    const aapl = page.getByRole('table', { name: 'Resultado por posición' }).getByRole('row', { name: /AAPL/ })
+    await expect(aapl.getByRole('cell').first()).toHaveText('5')
+    await expect(aapl).toContainText('18.3000')
+    await expect(page.getByText('1 movimiento con fecha futura todavía no cuenta: entra al rendimiento el día de su fecha.')).toBeVisible()
+  })
+
+  test('un libro con solo movimientos futuros no dice que no hay nada', async ({ page, baseURL }) => {
+    const only = [
+      tx({ id: 'f0', type: 'deposit', date: '2026-10-05', amount: 20000 }),
+      tx({ id: 'f1', type: 'buy', date: '2026-10-05', symbol: 'WALMEX.MX', quantity: 100, price: 60 }),
+    ]
+    await open(page, baseURL, { state: { ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: only }] } })
+    await page.goto('/portafolio/rendimiento')
+    await expect(page.getByText('Aún no hay compras en tu libro')).toBeVisible()
+    await expect(page.getByText('2 movimientos con fecha futura todavía no cuentan: entran al rendimiento el día de su fecha.')).toBeVisible()
+  })
+
+  test('un movimiento en dólares sin tipo de cambio toma el FIX de su día y no el del cierre semanal', async ({ page, baseURL }) => {
+    const bare = tx({ id: 'u1', type: 'deposit', date: '2026-09-03', amount: 100, currency: 'USD', fxRate: null })
+    await open(page, baseURL, { state: { ...PERF_STATE, portfolios: [{ ...PERF_STATE.portfolios[0], transactions: [...PERF_STATE.portfolios[0].transactions, bare] }] } })
+    /** @type {string[]} */
+    const fxHistory = []
+    page.on('request', (r) => {
+      const u = new URL(r.url())
+      if (u.pathname === '/v2/fx/history') fxHistory.push(`${u.searchParams.get('start')}|${u.searchParams.get('end')}`)
+    })
+    await page.goto('/portafolio/rendimiento')
+    const summary = page.getByRole('region', { name: 'Resumen del periodo' })
+    await expect(summary).toContainText('TWR del periodo')
+    await expect(summary.locator('.kz-stat__value').filter({ hasText: 's/d' })).toHaveCount(0)
+    // AAPL sigue con el implícito del panel (18.4125) y el FIX diario se pide para el depósito.
+    await expect(page.getByRole('table', { name: 'Resultado por posición' }).getByRole('row', { name: /AAPL/ })).toContainText('18.4125')
+    expect(fxHistory).toEqual(['2026-06-21|2026-09-22'])
+  })
+
+  test('si el panel en pesos convirtió con Yahoo en vez del FIX, lo dice junto al efecto cambiario', async ({ page, baseURL }) => {
+    await open(page, baseURL, { state: PERF_STATE })
+    await page.route(/\/v2\/panel/, (route, request) => {
+      const url = new URL(request.url())
+      const { json } = PANEL({ url })
+      if (url.searchParams.get('ccy') !== 'USD') json.meta = meta({ ...json.meta, fallback: true })
+      return route.fulfill({
+        status: 200,
+        headers: { 'access-control-allow-origin': request.headers().origin ?? '*', vary: 'Origin' },
+        contentType: 'application/json',
+        body: JSON.stringify(json),
+      })
+    })
+    await page.goto('/portafolio/rendimiento')
+    const pnl = page.getByRole('region', { name: 'Resultado por posición: precio y tipo de cambio' })
+    await expect(pnl.getByRole('row', { name: /AAPL/ })).toContainText('18.4125')
+    await expect(pnl).toContainText('El tipo de cambio salió de Yahoo, no del FIX de Banxico')
+  })
+
+  test('con efectivo en dólares y ninguna emisora en dólares usa el FIX de respaldo', async ({ page, baseURL }) => {
+    const usdCash = tx({ id: 'u1', type: 'deposit', date: '2026-09-03', amount: 100, currency: 'USD' })
+    await open(page, baseURL, { state: { ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: [...STATE.portfolios[0].transactions, usdCash] }] } })
+    /** @type {string[]} */
+    const fxHistory = []
+    page.on('request', (r) => {
+      const u = new URL(r.url())
+      if (u.pathname === '/v2/fx/history') fxHistory.push(`${u.searchParams.get('start')}|${u.searchParams.get('end')}`)
+    })
+    await page.goto('/portafolio/rendimiento')
+    await expect(page.getByRole('region', { name: 'Resumen del periodo' })).toContainText('TWR del periodo')
+    await expect(page.getByRole('region', { name: 'Resumen del periodo' }).locator('.kz-stat__value').filter({ hasText: 's/d' })).toHaveCount(0)
+    // Diez días antes del primer cierre del panel simulado (1 jul) y hasta el último.
+    expect(fxHistory).toEqual(['2026-06-21|2026-09-22'])
+  })
+
+  test('si el panel en dólares no trae ninguna emisora, el efectivo en dólares se valúa con el FIX diario', async ({ page, baseURL }) => {
+    const usdCash = tx({ id: 'u1', type: 'deposit', date: '2026-09-03', amount: 100, currency: 'USD', fxRate: 18 })
+    await open(page, baseURL, { state: { ...PERF_STATE, portfolios: [{ ...PERF_STATE.portfolios[0], transactions: [...PERF_STATE.portfolios[0].transactions, usdCash] }] } })
+    await page.route(/\/v2\/panel/, (route, request) => {
+      const url = new URL(request.url())
+      if (url.searchParams.get('ccy') !== 'USD') return route.fallback()
+      const { json } = PANEL({ url })
+      return route.fulfill({
+        status: 200,
+        headers: { 'access-control-allow-origin': request.headers().origin ?? '*', vary: 'Origin' },
+        contentType: 'application/json',
+        body: JSON.stringify({ ...json, prices: {}, dropped: [{ symbol: 'AAPL', reason: 'No hay observaciones en el periodo pedido.' }] }),
+      })
+    })
+    /** @type {string[]} */
+    const fxHistory = []
+    page.on('request', (r) => {
+      const u = new URL(r.url())
+      if (u.pathname === '/v2/fx/history') fxHistory.push(`${u.searchParams.get('start')}|${u.searchParams.get('end')}`)
+    })
+    await page.goto('/portafolio/rendimiento')
+    const summary = page.getByRole('region', { name: 'Resumen del periodo' })
+    await expect(summary).toContainText('Sin historia suficiente, quedaron fuera: AAPL.')
+    await expect(summary).toContainText('TWR del periodo')
+    // Sin cociente que sacar, el tipo de cambio sale del FIX diario de respaldo.
+    await expect.poll(() => fxHistory).toEqual(['2026-06-21|2026-09-22'])
+  })
 
   test('sin compras lleva a Movimientos y sin portafolio a la bienvenida', async ({ page, baseURL }) => {
     await open(page, baseURL, { state: { ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: [STATE.portfolios[0].transactions[0]] }] } })
@@ -513,6 +646,12 @@ test.describe('portafolio: resumen', () => {
   for (const theme of THEMES) {
     test(`carga con su h1, valor en pesos, posiciones, asignación y ligas sin violaciones (${theme})`, async ({ page, baseURL }) => {
       await open(page, baseURL, { theme, state: PERF_STATE })
+      /** @type {URL[]} */
+      const fxHistory = []
+      page.on('request', (r) => {
+        const u = new URL(r.url())
+        if (u.pathname === '/v2/fx/history') fxHistory.push(u)
+      })
       await page.goto('/portafolio')
       await expect(page.getByRole('heading', { level: 1, name: 'Mi portafolio' })).toBeVisible()
       await expect(page.locator('h1')).toHaveCount(1)
@@ -523,7 +662,14 @@ test.describe('portafolio: resumen', () => {
       await expect(summary).toContainText('$42,168.52 MXN')
       // AAPL: 5 × (240 × 18.4321 − 225 × 18.3); WALMEX a su costo promedio.
       await expect(summary).toContainText('+$1,531.02 MXN')
-      await expect(summary).toContainText('+$334.32 MXN')
+      // Cambio del día: 150 WALMEX × 1 y AAPL con el tipo de cambio de cada día,
+      // 5 × (240 × 18.4321 − 238 × 18.4125), con el FIX del 21 como el de ayer.
+      await expect(summary).toContainText('+$357.64 MXN')
+      await expect(summary).not.toContainText('Sin el FIX de ayer')
+      await expect(summary.getByRole('list', { name: 'Fuentes de los datos' })).toContainText('Tipo de cambio de días anteriores')
+      await expect(summary.getByRole('list', { name: 'Fuentes de los datos' })).not.toContainText('FIX de ayer')
+      // Con AAPL en dólares pide los últimos diez días del FIX, una vez.
+      expect(fxHistory.map((u) => `${u.searchParams.get('start')}|${u.searchParams.get('end')}`)).toEqual(['2026-09-12|2026-09-22'])
       const positions = page.getByRole('table', { name: 'Posiciones a precio de hoy' })
       await expect(positions.getByRole('row', { name: /AAPL/ })).toContainText('$240.00 USD')
       await expect(positions.getByRole('row', { name: /WALMEX\.MX/ })).toContainText('150')
@@ -536,6 +682,52 @@ test.describe('portafolio: resumen', () => {
       await expectNoAxeViolations(page, `resumen ${theme}`)
     })
   }
+
+  test('un movimiento con fecha futura no cuenta todavía y se avisa', async ({ page, baseURL }) => {
+    const future = tx({ id: 'f1', type: 'buy', date: '2026-10-05', symbol: 'WALMEX.MX', quantity: 100, price: 70 })
+    await open(page, baseURL, { state: { ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: [...STATE.portfolios[0].transactions, future] }] } })
+    await page.goto('/portafolio')
+    const summary = page.getByRole('region', { name: 'Resumen' })
+    await expect(summary).toContainText('1 movimiento con fecha futura todavía no cuenta: entra al resumen el día de su fecha.')
+    // 200 WALMEX a 65 más 7,000 de efectivo: la compra del 5 de octubre no entra ni en uno ni en otro.
+    await expect(summary).toContainText('$20,000.00 MXN')
+    await expect(page.getByRole('table', { name: 'Posiciones a precio de hoy' }).getByRole('row', { name: /WALMEX\.MX/ })).toContainText('200')
+  })
+
+  test('un libro con solo movimientos futuros no dice que no hay nada', async ({ page, baseURL }) => {
+    const only = [
+      tx({ id: 'f0', type: 'deposit', date: '2026-10-05', amount: 20000 }),
+      tx({ id: 'f1', type: 'buy', date: '2026-10-05', symbol: 'WALMEX.MX', quantity: 100, price: 60 }),
+    ]
+    await open(page, baseURL, { state: { ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: only }] } })
+    await page.goto('/portafolio')
+    await expect(page.getByText('Aún no hay posiciones')).toBeVisible()
+    await expect(page.getByText('2 movimientos con fecha futura todavía no cuentan: entran al resumen el día de su fecha.')).toBeVisible()
+  })
+
+  test('el FIX de días anteriores se pide junto con las cotizaciones y solo detiene el cambio del día', async ({ page, baseURL }) => {
+    await open(page, baseURL, { state: PERF_STATE })
+    /** @type {() => void} */
+    let releaseQuotes = () => {}
+    /** @type {() => void} */
+    let releaseHist = () => {}
+    const quotesGate = new Promise((r) => { releaseQuotes = () => r(undefined) })
+    const histGate = new Promise((r) => { releaseHist = () => r(undefined) })
+    await page.route(/\/v2\/quotes/, async (route) => { await quotesGate; return route.fallback() })
+    await page.route(/\/v2\/fx\/history/, async (route) => { await histGate; return route.fallback() })
+    const histRequested = page.waitForRequest((r) => new URL(r.url()).pathname === '/v2/fx/history')
+    await page.goto('/portafolio')
+    // AAPL se compró en dólares: el FIX se pide sin esperar a las cotizaciones.
+    await histRequested
+    releaseQuotes()
+    const summary = page.getByRole('region', { name: 'Resumen' })
+    // Con el FIX de días anteriores todavía en camino, el valor total y la ganancia ya se ven.
+    await expect(summary).toContainText('$42,168.52 MXN')
+    await expect(summary).toContainText('+$1,531.02 MXN')
+    await expect(summary).not.toContainText('Sin el FIX de ayer')
+    releaseHist()
+    await expect(summary).toContainText('+$357.64 MXN')
+  })
 
   test('cambia de portafolio activo con el selector', async ({ page, baseURL }) => {
     const second = { ...STATE.portfolios[0], id: 'p2', name: 'Retiro', transactions: [tx({ id: 'r1', type: 'deposit', date: '2026-09-01', amount: 5000 })] }
@@ -575,6 +767,28 @@ plainTest('portafolio: resumen con las cotizaciones caídas avisa y deja reinten
   guards.assertClean()
 })
 
+plainTest('portafolio: resumen con el tipo de cambio caído deja lo que está en pesos y avisa', async ({ page, baseURL }) => {
+  const guards = attachGuards(page, { allow: expectedHttpError(404, 'GET', '/v2/fx', 'la prueba tumba el tipo de cambio a propósito') })
+  const usdCash = tx({ id: 'u1', type: 'deposit', date: '2026-09-03', amount: 100, currency: 'USD', fxRate: 18 })
+  await open(page, /** @type {string} */ (baseURL), { state: { ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: [...STATE.portfolios[0].transactions, usdCash] }] } })
+  await page.route((url) => url.pathname === '/v2/fx', (route, request) =>
+    route.fulfill({
+      status: 404,
+      headers: { 'access-control-allow-origin': request.headers().origin ?? '*', vary: 'Origin' },
+      contentType: 'application/json',
+      body: JSON.stringify({ error: { code: 'NOT_FOUND', message: 'Sin tipo de cambio.' } }),
+    }),
+  )
+  await page.goto('/portafolio')
+  const summary = page.getByRole('region', { name: 'Resumen' })
+  // 200 WALMEX a 65 más 7,000 pesos de efectivo: lo que está en pesos sigue a la vista.
+  await expect(summary).toContainText('$20,000.00 MXN')
+  await expect(summary).toContainText('Sin tipo de cambio: tus $100.00 USD no están sumados')
+  await expect(summary.getByRole('alert')).toContainText('No pudimos traer el tipo de cambio de hoy')
+  await expect(summary.getByRole('button', { name: 'Reintentar' })).toBeVisible()
+  guards.assertClean()
+})
+
 const RISK_STATE = {
   ...STATE,
   portfolios: [{ ...STATE.portfolios[0], transactions: [...STATE.portfolios[0].transactions, tx({ id: 'tx4', type: 'buy', date: '2026-09-11', symbol: 'NAFTRAC.MX', quantity: 50, price: 55 })] }],
@@ -584,10 +798,35 @@ test.describe('portafolio: riesgo', () => {
   for (const theme of THEMES) {
     test(`carga con su h1, medidas, correlaciones y sin violaciones (${theme})`, async ({ page, baseURL }) => {
       await open(page, baseURL, { theme, state: RISK_STATE })
+      /** @type {string[][]} */
+      const panels = []
+      page.on('request', (r) => {
+        const u = new URL(r.url())
+        if (u.pathname === '/v2/panel') panels.push(String(u.searchParams.get('symbols')).split(','))
+      })
       await page.goto('/portafolio/riesgo')
       await expect(page.getByRole('heading', { level: 1, name: 'Riesgo' })).toBeVisible()
       await expect(page.locator('h1')).toHaveCount(1)
       await expect(page.getByText('11 semanas de datos')).toBeVisible()
+      // Referencias con dividendos y en pesos: NAFTRAC.MX (una sola vez, aunque también es posición) y SPY.
+      expect(panels).toHaveLength(1)
+      expect([...panels[0]].sort()).toEqual(['NAFTRAC.MX', 'SPY', 'WALMEX.MX'])
+      expect(panels[0]).not.toContain('^MXX')
+      expect(panels[0]).not.toContain('^GSPC')
+      const measures = page.getByRole('region', { name: 'Medidas de riesgo' })
+      await expect(measures).toContainText('Beta contra el IPC (NAFTRAC)')
+      await expect(measures).toContainText('Beta contra el S&P 500 (SPY, en pesos)')
+      // Concentración por sector: WALMEX en Consumo básico y NAFTRAC como fondo, no como s/d.
+      const sectors = page.getByRole('region', { name: 'Concentración por sector' })
+      await expect(sectors).toBeVisible()
+      const table = sectors.getByRole('table', { name: 'Peso por sector' })
+      await expect(table.getByRole('row', { name: /Consumo básico/ })).toContainText('WALMEX.MX')
+      await expect(table.getByRole('row', { name: /Fondos y ETF/ })).toContainText('NAFTRAC.MX')
+      await expect(table.getByRole('row', { name: /s\/d/ })).toHaveCount(0)
+      // Un solo sector con nombre: N efectiva 1, sobre la parte de WALMEX.
+      await expect(sectors).toContainText('Número efectivo de sectores')
+      await expect(sectors.locator('.kz-stat__value').first()).toHaveText('1.0')
+      await expect(sectors).toContainText('del valor de tus posiciones, la parte que tiene sector')
       await expect(page.getByRole('figure', { name: 'Correlaciones entre tus emisoras' })).toBeVisible()
       await noHorizontalScroll(page)
       await expectNoAxeViolations(page, `riesgo ${theme}`)
@@ -599,6 +838,37 @@ test.describe('portafolio: riesgo', () => {
     await page.goto('/portafolio/riesgo')
     await expect(page.getByRole('link', { name: 'Ir a Movimientos' })).toHaveAttribute('href', '/portafolio/movimientos')
   })
+
+  test('una compra con fecha futura no cuenta y se avisa, también si es lo único del libro', async ({ page, baseURL }) => {
+    const future = tx({ id: 'f1', type: 'buy', date: '2026-10-05', symbol: 'AMXB.MX', quantity: 10, price: 15 })
+    await open(page, baseURL, { state: { ...RISK_STATE, portfolios: [{ ...RISK_STATE.portfolios[0], transactions: [...RISK_STATE.portfolios[0].transactions, future] }] } })
+    await page.goto('/portafolio/riesgo')
+    await expect(page.getByText('11 semanas de datos')).toBeVisible()
+    await expect(page.getByText('1 movimiento con fecha futura todavía no cuenta: entra al riesgo el día de su fecha.')).toBeVisible()
+    await page.addInitScript((st) => window.localStorage.setItem('kaizen:v2', st), JSON.stringify({ ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: [future] }] }))
+    await page.goto('/portafolio/riesgo')
+    await expect(page.getByText('Aún no hay posiciones')).toBeVisible()
+    await expect(page.getByText('1 movimiento con fecha futura todavía no cuenta: entra al riesgo el día de su fecha.')).toBeVisible()
+  })
+})
+
+// Sin la fixture automática: las cotizaciones caen a propósito y solo la tarjeta de sectores lo resiente.
+plainTest('portafolio: riesgo con las cotizaciones caídas deja las medidas y avisa en sectores', async ({ page, baseURL }) => {
+  const guards = attachGuards(page, { allow: expectedHttpError(404, 'GET', '/v2/quotes', 'la prueba tumba las cotizaciones a propósito') })
+  await open(page, /** @type {string} */ (baseURL), { state: RISK_STATE })
+  await page.route(/\/v2\/quotes/, (route, request) =>
+    route.fulfill({
+      status: 404,
+      headers: { 'access-control-allow-origin': request.headers().origin ?? '*', vary: 'Origin' },
+      contentType: 'application/json',
+      body: JSON.stringify({ error: { code: 'NOT_FOUND', message: 'Sin cotizaciones.' } }),
+    }),
+  )
+  await page.goto('/portafolio/riesgo')
+  await expect(page.getByRole('region', { name: 'Concentración por sector' }).getByRole('alert')).toContainText('No pudimos traer los sectores')
+  await expect(page.getByText('11 semanas de datos')).toBeVisible()
+  await expect(page.getByRole('figure', { name: 'Correlaciones entre tus emisoras' })).toBeVisible()
+  guards.assertClean()
 })
 
 // Capturas para revisión: con F1_CAPTURE_DIR=/ruta guarda cada página nueva; sin la variable se salta.
@@ -613,6 +883,7 @@ test('capturas', async ({ page, baseURL }, testInfo) => {
     ['/portafolio/rendimiento', 'Rendimiento', PERF_STATE, 'rendimiento'],
     ['/portafolio/movimientos', 'Movimientos', OVERSELL_STATE, 'movimientos'],
     ['/portafolio/rebalanceo', 'Rebalanceo', REBALANCE_STATE, 'rebalanceo'],
+    ['/portafolio/riesgo', 'Riesgo', RISK_STATE, 'riesgo'],
   ]
   await open(page, baseURL, { theme, state: null })
   for (const [route, h1, state, name] of pages) {

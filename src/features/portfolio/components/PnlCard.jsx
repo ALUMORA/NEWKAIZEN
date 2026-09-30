@@ -1,5 +1,7 @@
 // Resultado no realizado de cada posición, partido en efecto precio y efecto tipo de cambio
-// (positionPnl de src/lib/finance). Todo en pesos; precio y costo en la moneda de la emisora.
+// (positionPnl de src/lib/finance). Todo en pesos; precio y costo en la moneda de la emisora. El
+// tipo de cambio al cierre es el implícito del panel en pesos: si ese panel convirtió con Yahoo
+// por falta del FIX (`meta.fallback`), se dice aquí, junto al efecto cambiario (docs/api-v2.md).
 import { Card, DataTable, Delta, Stat } from '../../../components/ui/index.js'
 import { fmtMoney, fmtNumber } from '../../../lib/format.js'
 
@@ -23,9 +25,9 @@ const COLUMNS = [
 ]
 
 /**
- * @param {{ pnl: ReturnType<typeof import('../lib/performance-view.js').pnlByPosition> | null, loading: boolean, status?: any, footer?: import('react').ReactNode }} props
+ * @param {{ pnl: ReturnType<typeof import('../lib/performance-view.js').pnlByPosition> | null, loading: boolean, status?: any, footer?: import('react').ReactNode, fxFallback?: boolean }} props
  */
-export default function PnlCard({ pnl, loading, status, footer }) {
+export default function PnlCard({ pnl, loading, status, footer, fxFallback = false }) {
   return (
     <Card
       title="Resultado por posición: precio y tipo de cambio"
@@ -50,6 +52,9 @@ export default function PnlCard({ pnl, loading, status, footer }) {
         defaultSort={{ key: 'symbol', direction: 'ascending' }}
         empty={{ title: 'Sin posiciones abiertas', text: 'Cuando tengas posiciones, aquí ves de dónde sale su resultado.' }}
       />
+      {fxFallback && (
+        <p className="kz-portfolio-note">El tipo de cambio salió de Yahoo, no del FIX de Banxico, que no estuvo disponible: el efecto cambiario puede diferir unos centavos del oficial.</p>
+      )}
       {pnl && pnl.incomplete > 0 && (
         <p className="kz-portfolio-note">
           {pnl.incomplete === 1

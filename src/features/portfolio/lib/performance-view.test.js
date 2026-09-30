@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { twr, valueSeries } from '../../../lib/finance/performance-ledger.js'
-import { computePerformance, inpcStart, isrView, lastKnown, panelAdjustment, nativePriceTable, pickWindow, pnlByPosition, splitAdjusted, tradeGapFlows, twrIndex } from './performance-view.js'
+import { computePerformance, impliedFx, mergeFx, needsDailyFix, inpcStart, isrView, lastKnown, panelAdjustment, nativePriceTable, pickWindow, pnlByPosition, splitAdjusted, tradeGapFlows, twrIndex } from './performance-view.js'
 
 const base = { fees: 0, currency: 'MXN', fxRate: null, amount: null, ratio: null, price: null, quantity: null, symbol: null, note: '' }
 const tx = (/** @type {any} */ over) => ({ ...base, ...over })
@@ -182,6 +182,38 @@ describe('pnlByPosition', () => {
   })
 })
 
+describe('impliedFx', () => {
+  it('el tipo de cambio de cada fecha común es el precio en pesos entre el precio en dólares del panel', () => {
+    const mxn = { dates: ['2026-09-01', '2026-09-08', '2026-09-15', '2026-09-22'], prices: { AAPL: [4104, 4140, null, 4419], 'WALMEX.MX': [60, 61, 62, 63] } }
+    const usd = { dates: ['2026-09-08', '2026-09-15', '2026-09-22'], prices: { AAPL: [225, 230, 240] } }
+    const fx = impliedFx(mxn, usd)
+    // El 1 no está en el panel en dólares y el 15 no trae precio en pesos: no se inventan.
+    expect(Object.keys(fx)).toEqual(['2026-09-08', '2026-09-22'])
+    expect(fx['2026-09-08']).toBeCloseTo(4140 / 225, 12)
+    expect(fx['2026-09-22']).toBeCloseTo(4419 / 240, 12)
+  })
+
+  it('un par ajustado por split (o por dividendos) no cambia el cociente', () => {
+    const mxn = { dates: ['2026-09-01', '2026-09-08'], prices: { AAPL: [4000, 4200] } }
+    const usd = { dates: ['2026-09-01', '2026-09-08'], prices: { AAPL: [200, 210] } }
+    // Split 2 por 1 el 5: el panel divide entre dos todo lo anterior, en las dos monedas.
+    const split = impliedFx({ ...mxn, prices: { AAPL: [2000, 4200] } }, { ...usd, prices: { AAPL: [100, 210] } })
+    expect(split).toEqual(impliedFx(mxn, usd))
+    expect(split['2026-09-01']).toBeCloseTo(20, 12)
+  })
+
+  it('con varias emisoras en dólares promedia sus cocientes, que solo difieren por redondeo', () => {
+    const mxn = { dates: ['2026-09-01'], prices: { AAPL: [3680.01], MSFT: [9200] } }
+    const usd = { dates: ['2026-09-01'], prices: { AAPL: [200], MSFT: [500] } }
+    expect(impliedFx(mxn, usd)['2026-09-01']).toBeCloseTo((3680.01 / 200 + 9200 / 500) / 2, 12)
+  })
+
+  it('sin panel en dólares no hay tipo de cambio implícito', () => {
+    expect(impliedFx({ dates: ['2026-09-01'], prices: { AAPL: [4000] } }, undefined)).toEqual({})
+    expect(impliedFx(undefined, { dates: ['2026-09-01'], prices: { AAPL: [200] } })).toEqual({})
+  })
+})
+
 describe('panelAdjustment', () => {
   it('splits solo si todos los paneles que llegaron lo dicen; un API viejo no trae el campo', () => {
     expect(panelAdjustment({ adjustment: 'splits' }, null)).toBe('splits')
@@ -237,5 +269,28 @@ describe('isrView', () => {
     expect(res.estimate?.years).toEqual([{ year: '2026', gain: 100, taxableGain: 100, tax: 10, lossUsed: 0, lossCarry: 0 }])
     expect(res.usdSales).toBe(0)
     expect(res.dividendsMxn).toBe(50)
+  })
+})
+
+describe('mergeFx', () => {
+  it('el implícito manda en las fechas del panel y el FIX diario llena los días de en medio', () => {
+    const implied = { '2026-09-07': 18.2, '2026-09-14': 18.4 }
+    const daily = { '2026-09-07': 18.21, '2026-09-09': 18.3, '2026-09-14': 18.39 }
+    const fx = mergeFx(implied, daily)
+    expect(fx).toEqual({ '2026-09-07': 18.2, '2026-09-09': 18.3, '2026-09-14': 18.4 })
+    // Un movimiento del 9 sin tipo de cambio toma el FIX de su día, no el del lunes.
+    expect(lastKnown(fx, '2026-09-09')).toBe(18.3)
+  })
+})
+
+describe('needsDailyFix', () => {
+  it('pide el FIX diario sin emisoras en dólares, o si algún movimiento en dólares no trae tipo de cambio', () => {
+    const cashUsd = tx({ type: 'deposit', date: '2026-09-01', amount: 100, currency: 'USD', fxRate: 18 })
+    const buyUsd = tx({ type: 'buy', date: '2026-09-09', symbol: 'AAPL', quantity: 1, price: 200, currency: 'USD', fxRate: 18.3 })
+    const bareUsd = tx({ type: 'deposit', date: '2026-09-10', amount: 50, currency: 'USD', fxRate: null })
+    expect(needsDailyFix([cashUsd], 0)).toBe(true)
+    expect(needsDailyFix([cashUsd, buyUsd], 1)).toBe(false)
+    expect(needsDailyFix([buyUsd, bareUsd], 1)).toBe(true)
+    expect(needsDailyFix([tx({ type: 'deposit', date: '2026-09-01', amount: 100 })], 0)).toBe(false)
   })
 })

@@ -1,18 +1,24 @@
 // /portafolio: resumen del portafolio activo a precios de hoy. Valor total en pesos, ganancia no
 // realizada, cambio del día, posiciones con su peso y resultado, asignación y ligas al resto de
-// Mi portafolio. Las cotizaciones son de /v2/quotes y el tipo de cambio de /v2/fx.
+// Mi portafolio. Las cotizaciones son de /v2/quotes y el tipo de cambio de /v2/fx; con posiciones en
+// dólares, el FIX de los últimos días (/v2/fx/history) da el tipo de cambio de ayer para la
+// variación del día, y se pide en paralelo desde el libro: solo esa cifra lo espera. Si /v2/fx
+// falla, lo que está en pesos sigue a la vista y lo que está en dólares queda fuera con un aviso.
+// Los movimientos con fecha futura todavía no cuentan, y se dice.
 import { lazy, Suspense, useMemo } from 'react'
 import { Link } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Card, DataTable, Delta, EmptyState, ErrorState, PageHeader, Select, Skeleton, Stat } from '../../../components/ui/index.js'
 import { fmtMoney, fmtNumber, fmtPct } from '../../../lib/format.js'
-import { fxQuery, quotesQuery } from '../../../lib/api/queries.js'
+import { fxHistoryQuery, fxQuery, quotesQuery } from '../../../lib/api/queries.js'
 import { derivePositions } from '../../../lib/finance/index.js'
 import { usePortfolios } from '../../../lib/portfolio/usePortfolios.js'
 import { PATHS } from '../../../app/paths.js'
-import { todayMx } from '../tx-labels.js'
+import { minusDays, todayMx } from '../tx-labels.js'
 import { summarize } from '../lib/summary-view.js'
+import { cutAt, futureNotice } from '../lib/book-cut.js'
 import DataSources from '../components/DataSources.jsx'
+import FutureNotice from '../components/FutureNotice.jsx'
 import PortfolioLinks from '../components/PortfolioLinks.jsx'
 import '../portfolio.css'
 
@@ -45,14 +51,22 @@ const COLUMNS = [
 export default function Summary() {
   const { portfolios, active, actions } = usePortfolios()
   const transactions = useMemo(() => /** @type {any[]} */ (active?.transactions ?? []), [active])
-  const symbols = useMemo(() => derivePositions(transactions).map((p) => p.symbol).sort(), [transactions])
-  const quotes = useQuery({ ...quotesQuery(symbols), enabled: symbols.length > 0 })
-  const needsFx = transactions.some((t) => t.currency === 'USD') || (quotes.data?.quotes ?? []).some((/** @type {any} */ q) => q.currency === 'USD')
-  const fx = useQuery({ ...fxQuery(), enabled: needsFx })
   const today = todayMx()
+  const { current: book, future: futureCount } = useMemo(() => cutAt(transactions, today), [transactions, today])
+  const positions = useMemo(() => derivePositions(book, { asOf: today }), [book, today])
+  const symbols = useMemo(() => positions.map((p) => p.symbol).sort(), [positions])
+  const quotes = useQuery({ ...quotesQuery(symbols), enabled: symbols.length > 0 })
+  const usdRows = (quotes.data?.quotes ?? []).some((/** @type {any} */ q) => q.currency === 'USD')
+  const needsFx = transactions.some((t) => t.currency === 'USD') || usdRows
+  const fx = useQuery({ ...fxQuery(), enabled: needsFx })
+  // Diez días naturales alcanzan para el FIX anterior aun con un puente de cuatro días. Se pide
+  // desde el libro (posiciones compradas en dólares) sin esperar a las cotizaciones; una emisora del
+  // SIC comprada en pesos solo se sabe en dólares cuando llegan, y entonces se pide.
+  const usdHeld = positions.some((p) => p.currency === 'USD') || usdRows
+  const fxHist = useQuery({ ...fxHistoryQuery({ start: minusDays(today, 10), end: today }), enabled: usdHeld })
   const view = useMemo(
-    () => summarize({ transactions, quotes: quotes.data?.quotes, usdmxn: fx.data?.rate ?? null, today }),
-    [transactions, quotes.data, fx.data, today],
+    () => summarize({ transactions, quotes: quotes.data?.quotes, usdmxn: fx.data?.rate ?? null, fxHistory: fxHist.data ?? null, today }),
+    [transactions, quotes.data, fx.data, fxHist.data, today],
   )
 
   const selector =
@@ -87,18 +101,24 @@ export default function Summary() {
     )
   }
 
+  // Si el FIX de días anteriores falla no se tumba nada: la variación del día se queda con el de hoy
+  // y lo dice. Mientras llega, solo el cambio del día espera.
   const loading = symbols.length > 0 && (quotes.isLoading || (needsFx && fx.isLoading))
-  const failed = quotes.isError || fx.isError
+  const dayLoading = loading || (usdRows && fxHist.isLoading)
+  // Sin cotizaciones no hay resumen; sin tipo de cambio sí: lo que está en dólares queda fuera.
+  const failed = quotes.isError
+  const fxFailed = needsFx && fx.isError
   const retry = () => {
     if (quotes.isError) quotes.refetch()
     if (fx.isError) fx.refetch()
   }
-  const empty = symbols.length === 0 && !(view.cashMxn && view.cashMxn > 0)
+  const empty = symbols.length === 0 && !(view.cashMxn && view.cashMxn > 0) && !fxFailed
   const sources = (
     <DataSources
       items={[
         { label: 'Cotizaciones', meta: quotes.data?.meta },
         { label: 'Tipo de cambio', meta: fx.data?.meta },
+        { label: 'Tipo de cambio de días anteriores', meta: fxHist.data?.meta },
       ]}
     />
   )
@@ -114,14 +134,14 @@ export default function Summary() {
       {empty ? (
         <EmptyState
           title="Aún no hay posiciones"
-          text="Registra tus compras y depósitos en Movimientos, o impórtalos de un CSV."
+          text={futureNotice(futureCount, 'al resumen') ?? 'Registra tus compras y depósitos en Movimientos, o impórtalos de un CSV.'}
           action={<Link className="kz-button" data-variant="primary" data-size="md" to={PATHS.portfolioTransactions}>Ir a Movimientos</Link>}
         />
       ) : (
         <>
           <Card title="Resumen" footer={sources}>
             {failed ? (
-              <ErrorState message="No pudimos traer las cotizaciones o el tipo de cambio de hoy." onRetry={retry} retrying={quotes.isFetching || fx.isFetching} size="sm" />
+              <ErrorState message="No pudimos traer las cotizaciones de hoy." onRetry={retry} retrying={quotes.isFetching || fx.isFetching} size="sm" />
             ) : (
               <div className="kz-metric-grid">
                 <Stat loading={loading} size="lg" label="Valor total" value={fmtMoney(view.total)} sublabel="Posiciones más efectivo, en pesos" />
@@ -133,13 +153,38 @@ export default function Summary() {
                   info={{ termKey: 'costo-promedio', term: 'Costo promedio' }}
                 />
                 <Stat
-                  loading={loading}
+                  loading={dayLoading}
                   label="Cambio del día"
                   value={<Delta value={view.dayChange} kind="money" currency="MXN" />}
                   sublabel={view.dayChangePct != null ? `${fmtPct(view.dayChangePct, { sign: true })} en tus posiciones` : undefined}
                 />
-                <Stat loading={loading} label="Efectivo" value={fmtMoney(view.cashMxn)} sublabel={view.cashUsd ? `Incluye ${fmtMoney(view.cashUsd, 'USD')} convertidos a pesos` : 'Lo que no está invertido'} />
+                <Stat
+                  loading={loading}
+                  label="Efectivo"
+                  value={fmtMoney(view.cashMxn)}
+                  sublabel={
+                    view.cashUsdUnconverted
+                      ? `Sin tipo de cambio: tus ${fmtMoney(view.cashUsd, 'USD')} no están sumados`
+                      : view.cashUsd
+                        ? `Incluye ${fmtMoney(view.cashUsd, 'USD')} convertidos a pesos`
+                        : 'Lo que no está invertido'
+                  }
+                />
               </div>
+            )}
+            {!failed && fxFailed && (
+              <ErrorState
+                message="No pudimos traer el tipo de cambio de hoy: lo que está en dólares queda fuera del valor total hasta que llegue."
+                onRetry={() => fx.refetch()}
+                retrying={fx.isFetching}
+                size="sm"
+              />
+            )}
+            <FutureNotice count={view.futureCount} where="al resumen" />
+            {!failed && !dayLoading && view.dayFxFallback && (
+              <p className="kz-portfolio-hint">
+                Sin el FIX de ayer, el cambio del día de lo que cotiza en dólares usa el tipo de cambio de hoy también para el cierre de ayer: deja fuera lo que se movió el peso.
+              </p>
             )}
             {!failed && !loading && view.unrealizedExcluded > 0 && (
               <p className="kz-portfolio-hint">

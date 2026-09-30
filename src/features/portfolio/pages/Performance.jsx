@@ -1,7 +1,12 @@
 // /portafolio/rendimiento: valor del portafolio en el tiempo desde el libro, TWR y XIRR, contra
 // la referencia de settings.benchmark, P&L en efecto precio y efecto tipo de cambio, e ISR
 // estimado. Los precios salen de /v2/panel dos veces: ccy=MXN (pesos, y la referencia) y ccy=USD
-// (lo que cotiza en dólares, en su moneda); el tipo de cambio, del FIX de /v2/fx/history.
+// (lo que cotiza en dólares, en su moneda). El tipo de cambio es el implícito de esos dos paneles,
+// precio en pesos ÷ precio en dólares por fecha común (docs/api-v2.md, paso 5), que es el mismo con
+// el que el servidor convirtió. /v2/fx/history se pide para un libro con efectivo en dólares y
+// ninguna emisora en dólares, donde no hay cociente que sacar, y cuando algún movimiento en dólares
+// no trae su tipo de cambio: el FIX diario llena los días entre cierres del panel (mergeFx), para
+// que ese movimiento no tome el tipo de cambio del cierre semanal.
 // Las fórmulas son las de src/lib/finance y las de docs/metodologia/portafolio.md.
 import { lazy, Suspense, useMemo } from 'react'
 import { Link } from 'react-router'
@@ -13,7 +18,9 @@ import { useCapabilities } from '../../../lib/api/capabilities.js'
 import { DEFAULT_BENCHMARK, useStore } from '../../../lib/storage.js'
 import { PATHS } from '../../../app/paths.js'
 import { minusDays, todayMx } from '../tx-labels.js'
-import { computePerformance, inpcStart, isrView, nativePriceTable, panelAdjustment, pickWindow, pnlByPosition, splitAdjusted, zipTable } from '../lib/performance-view.js'
+import { computePerformance, impliedFx, inpcStart, mergeFx, needsDailyFix, isrView, nativePriceTable, panelAdjustment, pickWindow, pnlByPosition, splitAdjusted, zipTable } from '../lib/performance-view.js'
+import { cutAt, futureNotice } from '../lib/book-cut.js'
+import FutureNotice from '../components/FutureNotice.jsx'
 import DataSources from '../components/DataSources.jsx'
 import PnlCard from '../components/PnlCard.jsx'
 import IsrCard from '../components/IsrCard.jsx'
@@ -33,7 +40,8 @@ export default function Performance() {
   const portfolio = useStore(selectActive)
   const benchmark = useStore(selectBenchmark)
   const today = todayMx()
-  const raw = useMemo(() => /** @type {any[]} */ (portfolio?.transactions ?? []), [portfolio])
+  // Corte en hoy: un movimiento con fecha futura todavía no cuenta, tampoco en el ISR.
+  const { current: raw, future: futureCount } = useMemo(() => cutAt(/** @type {any[]} */ (portfolio?.transactions ?? []), today), [portfolio, today])
   const txs = useMemo(() => splitAdjusted(raw), [raw])
   const win = useMemo(() => pickWindow(raw, today), [raw, today])
 
@@ -64,9 +72,17 @@ export default function Performance() {
     enabled: probed && splits && symbols.length > 0,
   })
   const dates = panelMxn.data?.dates ?? []
+  // Con alguna emisora en dólares el tipo de cambio sale del cociente de los dos paneles; el FIX
+  // diario hace falta sin ellas, para un movimiento en dólares sin tipo de cambio propio, o si el
+  // panel en dólares dejó fuera todas sus emisoras y no hay cociente que sacar.
+  const implied = useMemo(() => impliedFx(panelMxn.data, panelUsd.data), [panelMxn.data, panelUsd.data])
+  const impliedEmpty = usdList.length > 0 && Boolean(panelMxn.data) && Boolean(panelUsd.data) && Object.keys(implied).length === 0
+  const needsFxHist = needsFx && (needsDailyFix(raw, usdList.length) || impliedEmpty)
+  // Con el cociente del panel a la mano, un FIX diario caído no tumba la página.
+  const fxHistOptional = usdList.length > 0 && !impliedEmpty
   const fxHist = useQuery({
     ...fxHistoryQuery({ start: dates[0] ? minusDays(dates[0], 10) : undefined, end: dates[dates.length - 1] }),
-    enabled: needsFx && dates.length > 0,
+    enabled: needsFxHist && dates.length > 0,
   })
 
   // INPC para actualizar el costo del ISR. Sin la capacidad, o si falla (503 sin token de
@@ -77,19 +93,20 @@ export default function Performance() {
   // Si la referencia con rendimiento total falla, se usa la del panel del libro antes que tumbar
   // la página: la comparación queda sin dividendos de la referencia, pero el TWR sigue exacto.
   const benchSettled = !splits || Boolean(panelBench.data) || panelBench.isError
-  const ready = Boolean(panelMxn.data) && (usdList.length === 0 || Boolean(panelUsd.data)) && (!needsFx || Boolean(fxHist.data)) && benchSettled
-  const failed = panelMxn.isError || panelUsd.isError || fxHist.isError
+  const ready = Boolean(panelMxn.data) && (usdList.length === 0 || Boolean(panelUsd.data)) && (!needsFxHist || Boolean(fxHist.data) || (fxHistOptional && fxHist.isError)) && benchSettled
+  const failed = panelMxn.isError || panelUsd.isError || (!fxHistOptional && fxHist.isError)
   const view = useMemo(() => {
     if (!ready || !panelMxn.data) return null
     const adjustment = panelAdjustment(panelMxn.data, usdList.length > 0 ? panelUsd.data : null)
     const prices = nativePriceTable(panelMxn.data, panelUsd.data, usdSymbols)
-    const fx = zipTable(fxHist.data?.dates, fxHist.data?.values)
+    const daily = fxHist.data ? zipTable(fxHist.data.dates, fxHist.data.values) : null
+    const fx = usdList.length > 0 ? mergeFx(implied, daily) : daily ?? {}
     const benchPanel = panelBench.data?.prices[benchmark] ? panelBench.data : panelMxn.data
     const bench = benchPanel.prices[benchmark] ? zipTable(benchPanel.dates, benchPanel.prices[benchmark]) : null
     const perf = computePerformance({ transactions: txs, prices, fx, dates: panelMxn.data.dates, benchmark: bench, adjustment })
     const at = perf.ok ? perf.windowDates[perf.windowDates.length - 1] : panelMxn.data.dates[panelMxn.data.dates.length - 1]
     return { perf, pnl: at ? pnlByPosition(txs, prices, fx, at) : null }
-  }, [ready, panelMxn.data, panelUsd.data, panelBench.data, fxHist.data, usdSymbols, usdList.length, benchmark, txs])
+  }, [ready, panelMxn.data, panelUsd.data, panelBench.data, fxHist.data, implied, usdSymbols, usdList.length, benchmark, txs])
 
   const header = (
     <PageHeader
@@ -106,7 +123,7 @@ export default function Performance() {
         {header}
         <EmptyState
           title={portfolio ? 'Aún no hay compras en tu libro' : 'Todavía no tienes un portafolio'}
-          text={portfolio ? 'Registra tus compras en Movimientos para medir su rendimiento.' : 'Crea uno en la bienvenida para empezar.'}
+          text={portfolio ? (futureNotice(futureCount, 'al rendimiento') ?? 'Registra tus compras en Movimientos para medir su rendimiento.') : 'Crea uno en la bienvenida para empezar.'}
           action={
             <Link className="kz-button" data-variant="primary" data-size="md" to={portfolio ? PATHS.portfolioTransactions : PATHS.onboarding}>
               {portfolio ? 'Ir a Movimientos' : 'Ir a la bienvenida'}
@@ -142,6 +159,7 @@ export default function Performance() {
   return (
     <div className="kz-container kz-col kz-portfolio-page" data-gap="6">
       {header}
+      <FutureNotice count={futureCount} where="al rendimiento" />
 
       {failed ? (
         <ErrorState message="No pudimos traer los precios o el tipo de cambio para medir tu rendimiento." onRetry={retry} retrying={panelMxn.isFetching || panelUsd.isFetching || fxHist.isFetching} />
@@ -222,7 +240,7 @@ export default function Performance() {
             </Suspense>
           )}
 
-          <PnlCard pnl={view?.pnl ?? null} loading={loading} status={meta} footer={sources} />
+          <PnlCard pnl={view?.pnl ?? null} loading={loading} status={meta} footer={sources} fxFallback={usdList.length > 0 && Boolean(meta?.fallback)} />
         </>
       )}
 

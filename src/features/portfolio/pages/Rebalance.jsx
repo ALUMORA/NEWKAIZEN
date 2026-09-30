@@ -14,6 +14,8 @@ import { isReadOnly, newId, normalizeSymbol, update, useStore } from '../../../l
 import { PATHS } from '../../../app/paths.js'
 import { todayMx } from '../tx-labels.js'
 import { planTransactions, rebalanceCash } from '../lib/rebalance-view.js'
+import { cutAt } from '../lib/book-cut.js'
+import FutureNotice from '../components/FutureNotice.jsx'
 import '../portfolio.css'
 
 /** @param {any} s */
@@ -37,8 +39,10 @@ export default function Rebalance() {
 
   const transactions = useMemo(() => portfolio?.transactions ?? [], [portfolio])
   const targets = useMemo(() => /** @type {Record<string, number>} */ (portfolio?.targets ?? {}), [portfolio])
-  const positions = useMemo(() => derivePositions(transactions), [transactions])
   const today = todayMx()
+  // Corte en hoy, igual que el efectivo: una compra con fecha futura todavía no cuenta, y se dice.
+  const futureCount = useMemo(() => cutAt(transactions, today).future, [transactions, today])
+  const positions = useMemo(() => derivePositions(transactions, { asOf: today }), [transactions, today])
   const cash = useMemo(() => rebalanceCash(transactions, today), [transactions, today])
   const symbols = useMemo(
     () => [...new Set([...positions.map((p) => p.symbol), ...Object.keys(targets)])].sort(),
@@ -187,6 +191,7 @@ export default function Rebalance() {
         eyebrow={portfolio.name}
         description="Define qué peso quieres para cada emisora y mira qué tan lejos estás. El plan es un cálculo, no una recomendación."
       />
+      <FutureNotice count={futureCount} where="al plan" />
 
       <Card
         title="Metas por emisora"
