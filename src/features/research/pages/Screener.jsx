@@ -2,7 +2,7 @@
 // ordenado por puntajes z relativos al sector, con la cobertura de cada emisora y pruebas
 // "cumple / no cumple" contra umbrales escritos. Nunca dice qué hacer. La URL guarda universo,
 // claves y sector (?universo=propia&symbols=A,B&sector=...).
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { factorScreenerQuery } from '../../../lib/api/queries.js'
@@ -30,6 +30,7 @@ function CustomForm({ initial, onApply }) {
   const lists = useStore((s) => s.watchlists) ?? EMPTY
   const [picked, setPicked] = useState(/** @type {string[]} */ (initial))
   const [error, setError] = useState('')
+  const pickerRef = useRef(/** @type {import('../components/SymbolPicker.jsx').SymbolPickerHandle | null} */ (null))
 
   /** @param {string[]} next */
   function apply(next) {
@@ -46,9 +47,11 @@ function CustomForm({ initial, onApply }) {
     <div className="kz-col" data-gap="3">
       <form
         className="kz-screener-custom"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault()
-          apply(picked)
+          // Lo escrito sin Enter también cuenta; si no se pudo tomar, el buscador ya dice por qué.
+          const list = pickerRef.current ? await pickerRef.current.commit() : picked
+          if (list) apply(list)
         }}
       >
         <SymbolPicker
@@ -57,6 +60,7 @@ function CustomForm({ initial, onApply }) {
           symbols={picked}
           max={CUSTOM_MAX}
           error={error}
+          pickerRef={pickerRef}
           onChange={(next) => {
             setPicked(next)
             setError('')

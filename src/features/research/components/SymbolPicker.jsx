@@ -1,12 +1,17 @@
 // Buscador de claves con fichas (F3-2): el SearchCombobox de src/components/ui busca por nombre o
 // clave y cada emisora elegida queda como ficha con su botón "Quitar" (clic, Enter, Espacio, Supr o
 // Retroceso). El foco pasa a la ficha que queda en su lugar o, sin fichas, al campo. Sin búsqueda
-// disponible, escribir claves separadas por coma y presionar Enter sigue funcionando.
-import { useEffect, useRef, useState } from 'react'
+// disponible, escribir claves separadas por coma y presionar Enter sigue funcionando. Lo que quede
+// escrito sin Enter también cuenta: el formulario llama `pickerRef.current.commit()` al enviar.
+import { useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { X } from 'lucide-react'
 import { useCapabilities } from '../../../lib/api/capabilities.js'
+import { searchQuery } from '../../../lib/api/queries.js'
 import { SearchCombobox } from '../../../components/ui/index.js'
 import { addSymbols, removeSymbolAt, resolveEnter } from '../symbol-picker.js'
+
+/** @typedef {{ commit: () => Promise<string[] | null> }} SymbolPickerHandle */
 
 /**
  * @param {object} props
@@ -16,9 +21,12 @@ import { addSymbols, removeSymbolAt, resolveEnter } from '../symbol-picker.js'
  * @param {(next: string[]) => void} props.onChange
  * @param {number} props.max
  * @param {import('react').ReactNode} [props.error] error de validación de quien envía el formulario
+ * @param {import('react').Ref<SymbolPickerHandle>} [props.pickerRef] `commit()` suma lo escrito sin
+ *   Enter y devuelve la lista completa, o null si lo escrito no se pudo tomar (el aviso queda a la vista)
  */
-export function SymbolPicker({ label, listLabel, symbols, onChange, max, error }) {
+export function SymbolPicker({ label, listLabel, symbols, onChange, max, error, pickerRef }) {
   const { status } = useCapabilities()
+  const queryClient = useQueryClient()
   const available = status === 'ready'
   const [text, setText] = useState('')
   const [message, setMessage] = useState('')
@@ -42,7 +50,45 @@ export function SymbolPicker({ label, listLabel, symbols, onChange, max, error }
     if (overflow.length) notes.push(`Caben hasta ${max} emisoras; ${overflow.join(', ')} ${overflow.length === 1 ? 'quedó' : 'quedaron'} fuera.`)
     setMessage(notes.join(' '))
     if (next.length !== symbols.length) onChange(next)
+    return { next, overflow }
   }
+
+  /**
+   * Resuelve lo escrito: claves, una clave contra la búsqueda o un aviso. Si la búsqueda no ha
+   * llegado, la pide en ese momento (como la paleta) antes de decidir.
+   * @param {Parameters<typeof resolveEnter>[0]} input
+   */
+  async function resolveTyped(input) {
+    const out = resolveEnter(input)
+    if (!out.lookup) return out
+    try {
+      const data = await queryClient.fetchQuery(searchQuery(out.lookup))
+      return resolveEnter({ q: out.lookup, activeOption: null, searching: false, available: true, results: data?.results ?? [] })
+    } catch {
+      // Sin búsqueda en este momento: lo escrito se toma como claves.
+      return resolveEnter({ q: out.lookup, activeOption: null, searching: false, available: false, results: [] })
+    }
+  }
+
+  /** @param {{ add: string[], message: string }} out */
+  function applyTyped(out) {
+    if (!out.add.length) {
+      setMessage(out.message)
+      return null
+    }
+    setText('')
+    return add(out.add)
+  }
+
+  useImperativeHandle(pickerRef, () => ({
+    async commit() {
+      if (!text.trim()) return [...symbols]
+      // Al enviar no hay opción activa que valga: lo escrito se resuelve igual que con Enter.
+      const done = applyTyped(await resolveTyped({ q: text, activeOption: null, searching: true, available, results: [] }))
+      if (!done || done.overflow.length) return null
+      return done.next
+    },
+  }))
 
   /** @param {number} index */
   function remove(index) {
@@ -76,12 +122,8 @@ export function SymbolPicker({ label, listLabel, symbols, onChange, max, error }
         onEnter={({ q, activeOption, searching, results }) => {
           const out = resolveEnter({ q, activeOption, searching, available, results })
           if (!out.handled) return false
-          if (out.add.length) {
-            add(out.add)
-            setText('')
-          } else {
-            setMessage(out.message)
-          }
+          if (out.lookup) resolveTyped({ q, activeOption: null, searching, available, results }).then(applyTyped)
+          else applyTyped(out)
           return true
         }}
       />

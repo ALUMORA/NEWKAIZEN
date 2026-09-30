@@ -424,6 +424,18 @@ test.describe('screener de factores', () => {
     expect(api.calls.some((c) => c.includes('universe=custom') && c.includes('symbols=AAPL%2CMSFT%2CWALMEX.MX'))).toBe(true)
   })
 
+  test('lista propia: las claves escritas sin presionar Enter también cuentan al hacer clic en Calcular', async ({ page, baseURL }) => {
+    const api = await open(page, /** @type {string} */ (baseURL))
+    await page.goto('/screener?universo=propia')
+    await expect(page.getByRole('heading', { level: 2, name: 'Arma tu lista' })).toBeVisible()
+    const input = page.getByRole('combobox', { name: 'Agregar emisora a tu lista' })
+    await input.fill('aapl, msft, walmex.mx')
+    await page.getByRole('button', { name: 'Calcular' }).click()
+    await expect(page).toHaveURL(/universo=propia&symbols=AAPL,MSFT,WALMEX\.MX/)
+    await expect(bodyRows(scoresTable(page))).toHaveCount(3)
+    expect(api.calls.some((c) => c.includes('universe=custom') && c.includes('symbols=AAPL%2CMSFT%2CWALMEX.MX'))).toBe(true)
+  })
+
   test('explica cada factor en texto llano con InfoTip y liga a la metodología', async ({ page, baseURL }) => {
     await open(page, /** @type {string} */ (baseURL))
     await page.goto('/screener')

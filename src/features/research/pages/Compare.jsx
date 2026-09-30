@@ -1,6 +1,6 @@
 // Comparador (/investigar/comparar?symbols=A,B): de 2 a 5 emisoras con sus múltiplos y
 // rendimientos lado a lado, y su precio en base 100 desde el panel. Cada bloque tiene sus estados.
-import { Suspense, useState } from 'react'
+import { Suspense, useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import { instrumentQuery, panelQuery } from '../../../lib/api/queries.js'
@@ -130,16 +130,20 @@ function CompareForm({ initial }) {
   const navigate = useNavigate()
   const [picked, setPicked] = useState(/** @type {string[]} */ (initial))
   const [error, setError] = useState('')
+  const pickerRef = useRef(/** @type {import('../components/SymbolPicker.jsx').SymbolPickerHandle | null} */ (null))
 
   /** @param {import('react').FormEvent} event */
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault()
-    if (picked.length < MIN || picked.length > MAX) {
+    // Lo escrito sin Enter también cuenta; si no se pudo tomar, el buscador ya dice por qué.
+    const list = pickerRef.current ? await pickerRef.current.commit() : picked
+    if (!list) return
+    if (list.length < MIN || list.length > MAX) {
       setError(`Elige de ${MIN} a ${MAX} emisoras: búscalas por nombre o escribe sus claves separadas por coma, por ejemplo WALMEX.MX, AAPL.`)
       return
     }
     setError('')
-    navigate(pathCompare(picked))
+    navigate(pathCompare(list))
   }
 
   return (
@@ -150,6 +154,7 @@ function CompareForm({ initial }) {
         symbols={picked}
         max={MAX}
         error={error}
+        pickerRef={pickerRef}
         onChange={(next) => {
           setPicked(next)
           setError('')

@@ -376,6 +376,31 @@ test.describe('investigar: comparar', () => {
     expect(api.calls.some((c) => c.startsWith('GET /v2/search'))).toBe(false)
   })
 
+  test('las claves escritas sin presionar Enter también cuentan al hacer clic en Comparar', async ({ page, baseURL }) => {
+    const api = await open(page, /** @type {string} */ (baseURL), { routes: SEARCH_ROUTE })
+    await page.goto('/investigar/comparar')
+    await expect(page.getByRole('heading', { level: 2, name: 'Elige al menos dos emisoras' })).toBeVisible()
+    const box = page.getByRole('combobox', { name: 'Agregar emisora' })
+    await box.fill('walmex.mx, aapl')
+    await page.getByRole('button', { name: 'Comparar' }).click()
+    await expect(page).toHaveURL(/symbols=WALMEX\.MX,AAPL$/)
+    await compareReady(page)
+
+    // Una clave sin sufijo se busca antes de enviarla: "walmex" entra como WALMEX.MX.
+    await page.goto('/investigar/comparar?symbols=AAPL')
+    await box.fill('walmex')
+    await page.getByRole('button', { name: 'Comparar' }).click()
+    await expect(page).toHaveURL(/symbols=AAPL,WALMEX\.MX$/)
+    expect(api.calls.some((c) => c.startsWith('GET /v2/search?') && c.includes('q=walmex'))).toBe(true)
+
+    // Un nombre que no aparece no se vuelve clave: se avisa y no se navega.
+    await page.goto('/investigar/comparar?symbols=AAPL')
+    await box.fill('empresa que no existe')
+    await page.getByRole('button', { name: 'Comparar' }).click()
+    await expect(page.getByRole('alert').filter({ hasText: /No encontramos/ })).toBeVisible()
+    await expect(page).toHaveURL(/symbols=AAPL$/)
+  })
+
   test('sin emisoras pide elegir al menos dos', async ({ page, baseURL }) => {
     await open(page, /** @type {string} */ (baseURL))
     await page.goto('/investigar/comparar')
