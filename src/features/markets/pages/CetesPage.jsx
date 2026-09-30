@@ -6,7 +6,7 @@ import { ratesMxQuery } from '../../../lib/api/queries.js'
 import { INTEREST_WITHHOLDING_RATE, cetesEffectiveAnnual } from '../../../lib/finance/index.js'
 import { fmtMoney, fmtPct } from '../../../lib/format.js'
 import { ApiNotes } from './ApiNotes.jsx'
-import { cetesResult, cetesRows } from './cetes-calc.js'
+import { cetesResult, cetesRows, retentionHint } from './cetes-calc.js'
 import { itemStatus } from './shared.js'
 import '../markets.css'
 
@@ -93,7 +93,7 @@ function Calculator({ rows }) {
             decimals={2}
             hint={apiRow ? 'Prellenada con la última subasta.' : 'Escríbela a mano: no hay dato del API para este plazo.'}
           />
-          <NumberInput label="Retención anual de ISR" suffix="%" value={retentionPct} onChange={setRetentionPct} decimals={2} hint="0.90 % en 2026, según la Ley de Ingresos de la Federación." />
+          <NumberInput label="Retención anual de ISR" suffix="%" value={retentionPct} onChange={setRetentionPct} decimals={2} hint={retentionHint()} />
         </div>
         {apiRow ? (
           <div>
