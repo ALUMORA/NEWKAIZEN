@@ -17,6 +17,7 @@ construcción y, mientras tanto, la ruta abre la versión anterior.
 | Página | De qué habla |
 | --- | --- |
 | [portafolio.md](portafolio.md) | Cómo se arma tu portafolio desde movimientos, TWR, XIRR, costo promedio, efecto precio contra efecto tipo de cambio e ISR estimado |
+| [mercados.md](mercados.md) | El panorama de /mercados: estado de cada bolsa, percentil del VIX sin etiqueta de ánimo, tipos de cambio y el resumen factual del día |
 | [riesgo.md](riesgo.md) | Volatilidad, caída máxima, VaR, CVaR, beta contra referentes locales, concentración y contribución al riesgo |
 | [optimizador.md](optimizador.md) | Covarianza con contracción, mínima varianza, portafolio tangente, paridad de riesgo, frontera y validación walk forward |
 | [backtest.md](backtest.md) | Comprar y mantener contra mezcla constante, elección de referente, CAGR, y los sesgos que un backtest no puede quitar |

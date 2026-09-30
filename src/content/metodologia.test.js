@@ -16,6 +16,8 @@ import { impliedFx } from '../features/portfolio/lib/performance-view.js'
 import { cutAt } from '../features/portfolio/lib/book-cut.js'
 import { REBALANCE } from '../features/tools/backtester.js'
 import { DEFAULT_ERP, MU_METHODS } from '../features/tools/optimizer.js'
+import { VIX_WINDOW, percentRank, percentileNumber, quartileText } from '../features/markets/pages/vix-percentile.js'
+import { dailySummary } from '../features/markets/pages/overview-model.js'
 import { isrOnGains } from '../lib/finance/tax-mx.js'
 import { alignPanel } from '../lib/finance/returns.js'
 import { meanVariance, riskParity } from '../lib/finance/optimize.js'
@@ -331,6 +333,32 @@ describe('riesgo y backtest: lo que la librería supone y lo que no', () => {
     expect(Object.keys(s ?? {})).toContain('var95')
     expect(Object.keys(s ?? {}).some((k) => /param/i.test(k))).toBe(false)
     expect(plano('backtest.md')).not.toMatch(/Histórico y paramétrico, los dos etiquetados/)
+  })
+})
+
+describe('mercados: el percentil del VIX y el resumen del día como los calcula el panorama', () => {
+  it('el caso de la página sale de percentRank y quartileText', () => {
+    const cierres = [10, 12, 14, 16, 18, 20, 22, 24]
+    const rank = percentRank(cierres, 15)
+    expect(rank).toBe(3 / 8)
+    expect(percentileNumber(rank)).toBe(38)
+    expect(quartileText(rank)).toBe('debajo de su mediana, en la segunda cuarta parte')
+    expect(plano('mercados.md')).toContain('su percentil es 38 y queda debajo de su mediana, en la segunda cuarta parte')
+    expect(VIX_WINDOW.years).toBe(5)
+    expect(plano('mercados.md')).toMatch(/los últimos cinco años/)
+  })
+
+  it('los tipos de cambio no cuentan en la amplitud del resumen, como dice la página', () => {
+    const lineas = dailySummary({
+      groups: [
+        { id: 'indices', items: [{ symbol: '^MXX', label: 'S&P/BMV IPC', price: 60000, changePct: 0.01 }] },
+        { id: 'fx', items: [{ symbol: 'USDMXN=X', label: 'USD/MXN', price: 18.4, changePct: 0.02 }] },
+      ],
+      marketStatus: { bmv: { open: false } },
+    })
+    expect(lineas.find((l) => l.id === 'breadth')?.text).toMatch(/de 1 índices/)
+    expect(plano('mercados.md')).toMatch(/tipos de cambio no entran a esta cuenta/)
+    expect(plano('mercados.md')).not.toMatch(/miedo y codicia/i)
   })
 })
 

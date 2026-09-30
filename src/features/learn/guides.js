@@ -14,6 +14,7 @@ export const GUIDE_NAMES = {
   fibras: 'FIBRAs',
   'formula-magica': 'Fórmula mágica',
   'fuentes-de-datos': 'Fuentes de datos',
+  mercados: 'Mercados',
   optimizador: 'Optimizador',
   portafolio: 'Portafolio',
   riesgo: 'Riesgo',

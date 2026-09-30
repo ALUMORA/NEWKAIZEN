@@ -272,7 +272,7 @@ describe('páginas de metodología', () => {
   const PAGINAS = [
     'README.md', 'portafolio.md', 'riesgo.md', 'optimizador.md', 'backtest.md', 'simulador.md',
     'screener-de-factores.md', 'formula-magica.md', 'fibras.md', 'valuacion-dcf.md',
-    'fuentes-de-datos.md',
+    'fuentes-de-datos.md', 'mercados.md',
   ]
   const leer = (nombre) => readFileSync(new URL(`../../docs/metodologia/${nombre}`, import.meta.url), 'utf8')
 
