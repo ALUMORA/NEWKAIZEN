@@ -13,6 +13,7 @@ import TransactionDialog from '../TransactionDialog.jsx'
 import CsvImportDialog from '../CsvImportDialog.jsx'
 import { parseTransactionsCSV, transactionsToCSV } from '../lib/tx-csv.js'
 import { findOversells } from '../lib/oversells.js'
+import { cutAt, futureNotice } from '../lib/book-cut.js'
 import '../portfolio.css'
 import { TX_LABELS, todayMx } from '../tx-labels.js'
 
@@ -50,7 +51,9 @@ export default function Transactions() {
   const readOnly = isReadOnly()
 
   const transactions = useMemo(() => portfolio?.transactions ?? [], [portfolio])
-  const positions = useMemo(() => derivePositions(transactions), [transactions])
+  // Las posiciones se cortan en hoy, como en el resto de Mi portafolio; la lista de movimientos no.
+  const { current: book, future: futureCount } = useMemo(() => cutAt(transactions, todayMx()), [transactions])
+  const positions = useMemo(() => derivePositions(book), [book])
   const oversells = useMemo(() => findOversells(transactions), [transactions])
   const oversold = useMemo(() => new Set(oversells.map((o) => o.id)), [oversells])
 
@@ -243,7 +246,7 @@ export default function Transactions() {
       <Card
         title="Posiciones que resultan"
         padding="none"
-        description="Si compraste la misma emisora varias veces, se integra a costo promedio."
+        description={['Si compraste la misma emisora varias veces, se integra a costo promedio.', futureNotice(futureCount, 'a las posiciones')].filter(Boolean).join(' ')}
       >
         <DataTable
           caption="Posiciones abiertas según el libro"

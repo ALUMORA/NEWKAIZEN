@@ -271,6 +271,15 @@ test.describe('portafolio: movimientos, huecos de la primera tanda', () => {
     await expectNoAxeViolations(page, 'movimientos con venta de más')
   })
 
+  test('una compra con fecha futura sale en el libro pero todavía no en las posiciones', async ({ page, baseURL }) => {
+    const future = tx({ id: 'f1', type: 'buy', date: '2026-10-05', symbol: 'AMXB.MX', quantity: 10, price: 15 })
+    await open(page, baseURL, { state: { ...STATE, portfolios: [{ ...STATE.portfolios[0], transactions: [...STATE.portfolios[0].transactions, future] }] } })
+    await page.goto('/portafolio/movimientos')
+    await expect(txTable(page).getByRole('row', { name: /AMXB\.MX/ })).toBeVisible()
+    await expect(posTable(page).getByRole('row', { name: /AMXB\.MX/ })).toHaveCount(0)
+    await expect(page.getByText('1 movimiento con fecha futura todavía no cuenta: entra a las posiciones el día de su fecha.')).toBeVisible()
+  })
+
   test('exportar CSV y volver a importarlo con filas nuevas, repetidas y malas', async ({ page, baseURL }) => {
     await open(page, baseURL)
     await page.goto('/portafolio/movimientos')
