@@ -456,5 +456,24 @@
     "e2e/tools.spec.js",
     "e2e/learn.spec.js",
     "docs/requests/F2.md"
+  ],
+  "T2SW": [
+    "src/features/**",
+    "src/lib/**",
+    "src/app/paths.js",
+    "src/app/paths.test.js",
+    "src/components/charts/FrontierChart.jsx",
+    "src/components/charts/FrontierChart.test.jsx",
+    "src/test/**",
+    "src/content/**",
+    "e2e/**",
+    "kaizen_api/domain/**",
+    "kaizen_api/routers/**",
+    "!kaizen_api/routers/legacy_v1.py",
+    "tests/unit/**",
+    "docs/requests/F4.md",
+    "!src/features/research/components/SymbolPicker.jsx",
+    "!src/features/tools/components/SymbolPicker.jsx",
+    "!src/features/watchlist/pages/Watchlist.jsx"
   ]
 }
