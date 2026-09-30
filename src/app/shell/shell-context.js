@@ -1,5 +1,6 @@
-// Contexto del marco de la app. Lo lee el legado (src/legacy/App.legacy.jsx) para saber que va
-// incrustado dentro del shell nuevo y esconder su propia barra lateral y encabezado.
+// Contexto del marco de la app: `embedded` es true dentro de AppShell. Hoy nadie lo lee (lo leía el
+// legado, retirado en M3). Se conserva para cuando Aprender y los legales se monten dentro del shell
+// con sesión: PublicPage lo leería para no pintar su propio encabezado ni un segundo <main>.
 import { createContext, useContext } from 'react'
 
 /** @type {import('react').Context<{ embedded: boolean }>} */

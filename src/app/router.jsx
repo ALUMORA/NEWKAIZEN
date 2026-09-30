@@ -8,7 +8,6 @@
 // - `path` es relativo a la raíz (sin "/" inicial): usa route(PATHS.x).
 // - handle.title da el título de la pestaña ("Riesgo · Kaizen").
 // - handle.public: true la deja fuera de RequireAuth (login, aprender, legales).
-// - handle.legacy: true marca rutas que montan la app legada (LegacyPage).
 // - Las páginas se cargan con lazy() dentro de la feature, en un objeto para que la regla de
 //   Fast Refresh no se queje: const Pages = { Risk: lazy(() => import('./pages/RiskPage.jsx')) }
 //   y luego element: <Pages.Risk />. RootLayout pone el Suspense.

@@ -1,5 +1,5 @@
 // Cerrar sesión desde el shell (menú de usuario, hoja "Más" y paleta): borra la sesión y va a
-// /login, igual que el botón del legado (src/app/LegacyPage.jsx).
+// /login.
 import { useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { logout } from '../../lib/auth/session.js'

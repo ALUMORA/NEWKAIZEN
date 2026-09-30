@@ -18,12 +18,9 @@ function systemPrefersDark() {
 }
 
 // ─── Estado compartido ──────────────────────────────────────────────────────
-// Antes cada useTheme() tenía su propio useState, así que el ThemeSync de
-// AppRoot y el botón del Workspace legado no se enteraban uno del otro: el
-// botón cambiaba <html data-theme> pero el otro seguía creyendo lo contrario.
-// Ahora hay un solo estado en el módulo y todos los componentes se suscriben,
-// que es lo que pedía la nota de cierre de S2 ("UiProvider debería ser el dueño
-// único"). La firma del hook no cambia, así que el legado sigue igual.
+// Un solo estado en el módulo al que se suscriben todos los useTheme(), para que
+// el botón de tema y el ThemeSync de AppRoot nunca discrepen sobre el tema que
+// tiene <html data-theme>.
 
 let mode = readStoredTheme();
 let systemDark = systemPrefersDark();

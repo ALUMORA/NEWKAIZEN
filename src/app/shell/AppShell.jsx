@@ -3,8 +3,7 @@
 // (PrivateLayout) y la página va en su <Outlet />.
 //
 // Landmarks: header (barra superior), nav "Principal" (barra lateral), main#contenido, footer.
-// El legado (LegacyPage) se entera por ShellContext de que va incrustado y esconde su propio
-// cromo.
+// ShellContext dice a lo que va dentro que ya está incrustado en el marco (ver shell-context.js).
 import { useCallback, useRef, useState } from 'react'
 import { Outlet } from 'react-router'
 import BottomNav from './BottomNav.jsx'

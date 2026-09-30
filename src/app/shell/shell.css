@@ -19,7 +19,7 @@
 .kz-shell__main {
   flex: 1;
   min-width: 0;
-  /* Lo que se salga de lado (tablas anchas del legado) no ensancha la página. */
+  /* Lo que se salga de lado (una tabla ancha) no ensancha la página. */
   overflow-x: clip;
 }
 .kz-shell__main:focus { outline: none; }
