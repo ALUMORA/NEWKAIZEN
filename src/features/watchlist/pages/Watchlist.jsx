@@ -2,7 +2,7 @@
 // día y la tendencia de un mes. Agregar con el buscador y quitar con Deshacer.
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { CircleAlert, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Button, Card, DataStatus, DataTable, Delta, EmptyState, Money, PageHeader, SearchCombobox, Skeleton, useToast } from '../../../components/ui/index.js'
 import { Sparkline } from '../../../components/charts/Sparkline.jsx'
 import { historyQuery, quotesQuery } from '../../../lib/api/queries.js'
@@ -78,17 +78,9 @@ function SearchBox({ onAdd, symbols }) {
       <SearchCombobox
         id="wl-buscar"
         label="Agregar una emisora"
-        hint={
-          <>
-            Busca por clave o nombre, por ejemplo WALMEX o FEMSA.
-            {error && (
-              <span className="kz-error-text wl-search-error" role="alert">
-                <CircleAlert size={14} aria-hidden="true" />
-                {error}
-              </span>
-            )}
-          </>
-        }
+        hint="Busca por clave o nombre, por ejemplo WALMEX o FEMSA."
+        // El combobox marca aria-invalid, anuncia el error y cierra su panel para no taparlo.
+        error={error ?? undefined}
         value={q}
         onValueChange={(v) => {
           setQ(v)

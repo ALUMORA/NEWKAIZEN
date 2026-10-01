@@ -227,10 +227,6 @@
 .kz-picker__form > :first-child {
   width: 100%;
 }
-/* El error de la clave va dentro de la ayuda del SearchCombobox (aria-describedby), en su renglón. */
-.kz-picker__error {
-  margin-top: var(--space-1);
-}
 .kz-picker__selected {
   display: grid;
   gap: var(--space-2);

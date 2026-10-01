@@ -357,6 +357,7 @@ buscador de la paleta ⌘K del shell, que lo usa en modo `inline` con sus grupos
 | `label` | string | | obligatorio; nombre del campo |
 | `hideLabel` | boolean | false | true: sin `<label>` visible, el nombre va en `aria-label` |
 | `hint` | nodo | | ayuda debajo, conectada con `aria-describedby` |
+| `error` | nodo | | error del campo: `aria-invalid`, alerta conectada con `aria-describedby` junto a la ayuda; al aparecer cierra el panel |
 | `value`, `defaultValue`, `onValueChange` | string, string, `(v) => void` | `''` | texto controlado o no |
 | `onSelect` | `(option, { q, results }) => void` | | opción elegida; `option.symbol` y `option.result` (el resultado de `/v2/search`) en las de emisora |
 | `exclude` | `string[]` | | símbolos que no se ofrecen (sin importar mayúsculas), p. ej. los ya agregados |

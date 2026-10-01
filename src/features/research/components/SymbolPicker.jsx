@@ -116,6 +116,7 @@ export function SymbolPicker({ label, listLabel, symbols, onChange, max, error, 
           setText(v)
           if (message) setMessage('')
         }}
+        error={shown || undefined}
         exclude={symbols}
         inputRef={inputRef}
         onSelect={(option) => add([String(option.symbol ?? option.label)])}
@@ -127,11 +128,6 @@ export function SymbolPicker({ label, listLabel, symbols, onChange, max, error, 
           return true
         }}
       />
-      {shown ? (
-        <p className="kz-error-text" role="alert">
-          {shown}
-        </p>
-      ) : null}
       {symbols.length ? (
         <ul className="kz-symbol-chips" aria-label={listLabel}>
           {symbols.map((s, i) => (

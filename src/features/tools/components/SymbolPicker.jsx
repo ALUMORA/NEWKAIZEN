@@ -4,7 +4,7 @@
 // Enter agrega la clave escrita, igual que el botón "Agregar". Las elegidas quedan como lista con botón
 // para quitar cada una; nada vive solo en un hover.
 import { useState } from 'react'
-import { CircleAlert, Plus, X } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { Button, IconButton, SearchCombobox } from '../../../components/ui/index.js'
 import { addSymbol } from '../selection.js'
 
@@ -41,18 +41,9 @@ export function SymbolPicker({ id, selected, onChange, max, portfolioSymbols = n
         <SearchCombobox
           id={`${id}-search`}
           label="Agregar emisora"
-          // El error va dentro de la ayuda, que el campo ya anuncia con aria-describedby.
-          hint={
-            <>
-              {HINT}
-              {error && (
-                <span className="kz-error-text kz-picker__error" role="alert">
-                  <CircleAlert size={14} aria-hidden="true" />
-                  {error}
-                </span>
-              )}
-            </>
-          }
+          hint={HINT}
+          // El combobox marca aria-invalid, anuncia el error y cierra su panel para no taparlo.
+          error={error ?? undefined}
           value={q}
           onValueChange={(v) => {
             setQ(v)

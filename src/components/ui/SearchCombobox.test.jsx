@@ -53,6 +53,35 @@ describe('SearchCombobox', () => {
     expect(document.getElementById(/** @type {string} */ (input.getAttribute('aria-controls')))).toHaveAttribute('role', 'listbox')
   })
 
+  it('error: marca aria-invalid, se anuncia, entra a la descripción junto a la ayuda y cierra el panel', async () => {
+    searchApi()
+    const user = userEvent.setup()
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const view = (/** @type {string | undefined} */ error) => (
+      <QueryClientProvider client={client}>
+        <SearchCombobox label="Agregar emisora" hint="Nombre o clave" error={error} />
+      </QueryClientProvider>
+    )
+    const { rerender } = render(view(undefined))
+    const input = screen.getByRole('combobox', { name: 'Agregar emisora' })
+    expect(input).not.toHaveAttribute('aria-invalid')
+    await user.type(input, 'wal')
+    await screen.findAllByRole('option')
+    expect(input).toHaveAttribute('aria-expanded', 'true')
+
+    rerender(view('WALMEX.MX ya está en tu lista.'))
+    expect(input).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByRole('alert')).toHaveTextContent('WALMEX.MX ya está en tu lista.')
+    expect(input).toHaveAccessibleDescription('Nombre o clave WALMEX.MX ya está en tu lista.')
+    // El panel se cierra para no tapar el mensaje; el texto se queda para corregirlo.
+    expect(input).toHaveAttribute('aria-expanded', 'false')
+    expect(input).toHaveValue('wal')
+
+    rerender(view(undefined))
+    expect(input).not.toHaveAttribute('aria-invalid')
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
   it('espera a que dejes de teclear: una sola búsqueda por pausa, en /v2/search con el límite', async () => {
     const api = searchApi()
     const user = userEvent.setup()

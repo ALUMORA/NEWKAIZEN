@@ -3,6 +3,7 @@
 // la última tecla, solo si el servidor ya dijo que es v2. Lo usa la paleta ⌘K del shell (en modo
 // `inline`, con sus grupos de rutas y acciones) y cualquier página que necesite elegir emisoras.
 import { useQuery } from '@tanstack/react-query'
+import { CircleAlert } from 'lucide-react'
 import { useEffect, useId, useMemo, useState } from 'react'
 import { cn } from '../../cn.js'
 import { useCapabilities } from '../../lib/api/capabilities.js'
@@ -30,6 +31,8 @@ function useDebounced(value, ms) {
  * @param {string} props.label nombre del campo (visible, o solo accesible con hideLabel)
  * @param {boolean} [props.hideLabel]
  * @param {import('react').ReactNode} [props.hint]
+ * @param {import('react').ReactNode} [props.error] mensaje de error del campo: marca aria-invalid, se
+ *   anuncia como alerta, entra al aria-describedby y cierra el panel para que no lo tape
  * @param {string} [props.value] texto controlado
  * @param {string} [props.defaultValue]
  * @param {(value: string) => void} [props.onValueChange]
@@ -52,6 +55,7 @@ export function SearchCombobox({
   label,
   hideLabel = false,
   hint,
+  error,
   value,
   defaultValue = '',
   onValueChange,
@@ -74,6 +78,8 @@ export function SearchCombobox({
   const inputId = id ?? autoId
   const listId = `${inputId}-lista`
   const hintId = hint ? `${inputId}-ayuda` : undefined
+  const errorId = error ? `${inputId}-error` : undefined
+  const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined
   const [inner, setInner] = useState(defaultValue)
   const q = value ?? inner
   const [open, setOpen] = useState(false)
@@ -83,6 +89,12 @@ export function SearchCombobox({
     // La opción activa regresa a la primera cada vez que cambia el texto.
     setLastQ(q)
     setActive(0)
+  }
+  const [lastError, setLastError] = useState(error)
+  if (lastError !== error) {
+    // Un error nuevo cierra el panel: si no, la lista abierta tapa el mensaje recién escrito.
+    setLastError(error)
+    if (error) setOpen(false)
   }
 
   const debounced = useDebounced(q.trim(), SEARCH_DEBOUNCE_MS)
@@ -201,8 +213,9 @@ export function SearchCombobox({
           aria-activedescendant={activeDomId}
           aria-autocomplete="list"
           aria-controls={listId}
-          aria-describedby={hintId}
+          aria-describedby={describedBy}
           aria-expanded={expanded}
+          aria-invalid={error ? true : undefined}
           aria-label={hideLabel ? label : undefined}
           autoComplete="off"
           className={cn('kz-input kz-combobox__input', inputClassName)}
@@ -236,6 +249,12 @@ export function SearchCombobox({
       {hint && (
         <p className="kz-hint" id={hintId}>
           {hint}
+        </p>
+      )}
+      {error && (
+        <p className="kz-error-text" id={errorId} role="alert">
+          <CircleAlert size={14} aria-hidden="true" />
+          {error}
         </p>
       )}
       <p aria-live="polite" className={inline ? 'kz-combobox__status' : 'sr-only'} role="status">
