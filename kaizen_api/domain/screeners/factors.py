@@ -100,11 +100,11 @@ METRIC_IDS = tuple(m.id for m in METRICS)
 
 CHECKS: tuple[tuple[str, str, str, str, float], ...] = (
     # (id, etiqueta, métrica, comparación, umbral)
-    ("valor", "Rendimiento de utilidades de 6 % o más", "earningsYield", ">=", 0.06),
-    ("calidad", "Rendimiento sobre capital de 15 % o más", "returnOnEquity", ">=", 0.15),
-    ("margen", "Margen operativo de 10 % o más", "operatingMargin", ">=", 0.10),
+    ("valor", "Rendimiento de utilidades de 6% o más", "earningsYield", ">=", 0.06),
+    ("calidad", "Rendimiento sobre capital de 15% o más", "returnOnEquity", ">=", 0.15),
+    ("margen", "Margen operativo de 10% o más", "operatingMargin", ">=", 0.10),
     ("deuda", "Deuda entre capital de 1.0 o menos", "debtToEquity", "<=", 1.0),
-    ("crecimiento", "Ingresos creciendo 5 % o más", "revenueGrowth", ">=", 0.05),
+    ("crecimiento", "Ingresos creciendo 5% o más", "revenueGrowth", ">=", 0.05),
     ("momento", "Momento 12-1 positivo", "momentum12m1", ">=", 0.0),
 )
 
@@ -335,8 +335,8 @@ def _build_rows(
             reason = "El proveedor no respondió para esta emisora."
         elif excluded:
             reason = (
-                f"Cobertura de {round(coverage * 100)} %: hacen falta al menos "
-                f"{round(MIN_COVERAGE * 100)} % de las métricas para compararla."
+                f"Cobertura de {round(coverage * 100)}%: hacen falta al menos "
+                f"{round(MIN_COVERAGE * 100)}% de las métricas para compararla."
             )
         elif not data.same_currency:
             reason = (

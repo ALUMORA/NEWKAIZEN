@@ -42,7 +42,7 @@ def test_when_it_disagrees_with_yahoo_the_response_says_so(replay_b3a):
     published = mod.div_yield_fraction(info)
     assert data["yield"] == pytest.approx(0.037539, rel=1e-3)
     assert published == pytest.approx(0.0445, abs=1e-6)
-    assert any("Yahoo publica 4.45 %" in note for note in data["notes"])
+    assert any("Yahoo publica 4.45%" in note for note in data["notes"])
 
 
 def test_when_it_agrees_with_yahoo_it_keeps_quiet(replay_b3a):
