@@ -9,7 +9,7 @@ import { test as plainTest } from '@playwright/test'
 import { test, expect, attachGuards } from './support/guards.js'
 import { HEALTH_V2, expectedHttpError, setupApp } from './support/app.js'
 import { RESEARCH_ROUTES, meta } from './support/research-data.js'
-import { expectNoHorizontalScroll } from './support/layout.js'
+import { expectNoHorizontalScroll, readLayoutShift, trackLayoutShift } from './support/layout.js'
 
 // ─── Datos simulados ─────────────────────────────────────────────────────────
 
@@ -303,6 +303,19 @@ async function screenerReady(page) {
 }
 
 test.describe('screener de factores', () => {
+  test('el tablero no empuja la página al llegar (CLS < 0.1)', async ({ page, baseURL }) => {
+    // Con el tablero tardando, el esqueleto medía la mitad que la tabla y la descripción de la tarjeta
+    // aparecía hasta tener datos: Lighthouse medía CLS de 0.40 en escritorio y la guía de abajo brincaba.
+    await trackLayoutShift(page)
+    await open(page, /** @type {string} */ (baseURL), {
+      routes: { 'GET /v2/screeners/factors': ({ url }) => ({ json: factorsFor(url.searchParams.get('universe'), url.searchParams.get('symbols')), delayMs: 900 }) },
+    })
+    await page.goto('/screener')
+    await screenerReady(page)
+    await page.waitForTimeout(500)
+    expect(await readLayoutShift(page), 'desplazamiento acumulado del layout').toBeLessThan(0.1)
+  })
+
   test('tablero de México: compuesto, factores con su dato crudo, cobertura, avisos y excluidas', async ({ page, baseURL }, testInfo) => {
     const api = await open(page, /** @type {string} */ (baseURL))
     await page.goto('/screener')

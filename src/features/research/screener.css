@@ -54,3 +54,7 @@
 .kz-screener-guide dt { align-items: center; color: var(--ink); display: flex; font-weight: var(--weight-semibold); gap: var(--space-1); }
 .kz-screener-guide dd { color: var(--ink-soft); font-size: var(--text-sm); margin: var(--space-1) 0 0; max-width: 70ch; }
 .kz-screener-more { color: var(--ink); font-weight: var(--weight-semibold); text-decoration: underline; text-underline-offset: 3px; }
+
+/* Mientras carga, el tablero aparta hasta el borde de la pantalla: la tabla de un universo completo mide
+   más de 2,000 px y el esqueleto solo 200, así que la guía de abajo brincaba (CLS 0.40 a 1440). */
+.kz-research-reserve[data-reserve="board"] { min-height: 25rem; }

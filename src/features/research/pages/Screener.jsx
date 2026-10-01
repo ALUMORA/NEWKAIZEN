@@ -152,9 +152,10 @@ export default function Screener() {
   }
 
   const where = activeSector ? ` en ${activeSector}` : ''
+  // Mientras llega el tablero la descripción ya ocupa su renglón, para que el cuerpo no baje al llegar.
   const summary = data
     ? `${data.universe.name}: ${comparable.length} de ${data.universe.size} emisoras comparables${activeSector ? `, ${shown.length}${where}` : ''}.`
-    : undefined
+    : 'Contando cuántas emisoras de este universo se pueden comparar.'
 
   return (
     <div className="kz-container kz-col kz-research-page" data-gap="6">
@@ -192,6 +193,9 @@ export default function Screener() {
             emptyTitle="Este universo no trajo emisoras"
             emptyText="Prueba con otro universo o revisa las claves de tu lista."
             lines={8}
+            // La lista propia puede traer dos o tres renglones; apartar la altura de un universo completo
+            // haría que la guía de abajo subiera al llegar.
+            reserve={universe === 'custom' ? undefined : 'board'}
           >
             {() => (
               <div className="kz-col" data-gap="4">
