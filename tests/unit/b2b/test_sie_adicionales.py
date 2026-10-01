@@ -326,3 +326,54 @@ def test_verified_ids_conoce_las_adicionales(con_token):
     assert verificadas == dict.fromkeys(sorted(PEDIDAS), True)
     assert all(banxico.reviewed(sid) for sid in PEDIDAS)
     assert len(pedidas) == 2
+
+
+# ─── tandas en las fronteras: 20, 21 y 40 ids ───────────────────────────────
+
+
+def _ids_falsos(n: int) -> list[str]:
+    return [f"SF{90000 + i}" for i in range(n)]
+
+
+@pytest.mark.parametrize(("n", "tamanos"), [(1, [1]), (20, [20]), (21, [20, 1]), (40, [20, 20]), (41, [20, 20, 1])])
+def test_batches_parte_justo_en_20(n, tamanos):
+    ids = _ids_falsos(n)
+    tandas = banxico._batches(ids)
+    assert [len(t.split(",")) for t in tandas] == tamanos
+    assert ",".join(tandas).split(",") == ids, "las tandas conservan el orden y no pierden ni repiten ids"
+
+
+def test_batches_cuenta_los_repetidos_una_vez():
+    """21 ids con uno repetido (y en minúsculas) son 20 distintos: una sola consulta, no dos."""
+    ids = _ids_falsos(20) + [_ids_falsos(1)[0].lower()]
+    assert banxico._batches(ids) == [",".join(_ids_falsos(20))]
+
+
+@responses.activate
+@pytest.mark.parametrize(("n", "tamanos"), [(20, [20]), (21, [20, 1]), (40, [20, 20])])
+def test_fetch_metadata_en_las_fronteras(con_token, n, tamanos):
+    ids = _ids_falsos(n)
+    cuerpo = {i: {"idSerie": i, "titulo": f"serie {i}", "periodicidad": "Diaria", "unidad": "Porcentajes"} for i in ids}
+    pedidas = _sie_que_rechaza_mas_de_20(cuerpo)
+    meta = banxico.fetch_metadata(ids)
+    assert [len(p) for p in pedidas] == tamanos
+    assert list(meta) == ids
+
+
+@responses.activate
+@pytest.mark.parametrize(("n", "tamanos"), [(20, [20]), (21, [20, 1]), (40, [20, 20])])
+def test_fetch_series_en_las_fronteras_y_n_e_nunca_es_cero(con_token, n, tamanos):
+    """Cada tanda se une a las demás, y un ``N/E`` a media serie se salta: ni 0 ni el dato vecino."""
+    ids = _ids_falsos(n)
+    datos = [{"fecha": "29/09/2026", "dato": "9.35"}, {"fecha": "30/09/2026", "dato": "N/E"},
+             {"fecha": "01/10/2026", "dato": "1,234.50"}]
+    cuerpo = {i: {"idSerie": i, "titulo": f"serie {i}", "datos": datos} for i in ids}
+    pedidas = _sie_que_rechaza_mas_de_20(cuerpo)
+    series = banxico.fetch_series(ids, "2026-09-29", "2026-10-01")
+    assert [len(p) for p in pedidas] == tamanos
+    assert set(series) == set(ids)
+    for sid in (ids[0], ids[-1]):
+        assert series[sid]["dates"] == ["2026-09-29", "2026-10-01"]
+        assert series[sid]["values"] == [9.35, 1234.5]
+        assert 0 not in series[sid]["values"]
+    assert banxico.parse_amount("N/E") is None and banxico.parse_amount("N/D") is None
