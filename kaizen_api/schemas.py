@@ -49,6 +49,11 @@ SOURCE_TOKENS = (
     "curated",
     "damodaran",
     "replay",
+    "treasury",
+    "frankfurter",
+    "cftc",
+    "bls",
+    "worldbank",
 )
 """Fuentes válidas para ``meta.source`` (una o varias separadas por coma, sin espacios)."""
 
@@ -67,12 +72,21 @@ HttpUrl = Annotated[str, Field(pattern=r"^https?://", examples=["https://example
 """Liga que se le puede dar al navegador. El patrón deja fuera javascript: y data:, que llegan en
 algunos RSS; el proveedor descarta el elemento en vez de publicarlo."""
 Fraction = Annotated[float, Field(description="Fracción decimal: 0.0123 = 1.23 %")]
+Bp = Annotated[float, Field(description="Puntos base: 0.0001 = 1 pb")]
+SourceToken = Annotated[str, Field(pattern=SOURCE_PATTERN, description="Fuente o lista separada por comas")]
+HttpsUrl = Annotated[str, Field(pattern=r"^https://", examples=["https://www.sec.gov/Archives/edgar/data/320193/x.htm"])]
+YearMonth = Annotated[str, Field(pattern=r"^\d{4}-(0[1-9]|1[0-2])$", examples=["2026-09"])]
 Money = Annotated[float, Field(description="Monto en la moneda del campo currency más cercano")]
 Ratio = Annotated[float, Field(description="Razón simple (múltiplo), no porcentaje")]
 
 InstrumentType = Literal["equity", "etf", "fibra", "index", "fx", "crypto", "commodity", "fund"]
 Range = Literal["1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "max"]
 Interval = Literal["1d", "1wk", "1mo"]
+OhlcRange = Literal["1d", "5d", "1mo", "6mo", "1y", "5y", "max"]
+"""Rangos de ``/v2/ohlc`` (solo ahí; ``Range`` sigue siendo el de history y panel)."""
+OhlcInterval = Literal["5m", "1h", "1d", "1wk", "1mo"]
+"""Intervalos de ``/v2/ohlc``: 5m y 1h son intradía (``t`` con zona), los demás por fecha."""
+OHLC_INTRADAY: frozenset[str] = frozenset({"5m", "1h"})
 CcyParam = Literal["native", "MXN", "USD"]
 
 ErrorCode = Literal[
@@ -88,6 +102,7 @@ ErrorCode = Literal[
     "NOT_CONFIGURED",
     "NOT_IMPLEMENTED",
     "INTERNAL",
+    "INVALID_PARAM",
 ]
 
 KNOWN_CAPABILITIES = (
@@ -121,6 +136,32 @@ KNOWN_CAPABILITIES = (
     "screeners.fibras",
     "insiders",
     "assumptions",
+    # fase 5 (M5): ninguna se anuncia hasta que su ruta deje de ser stub
+    "curves",
+    "moneyMarket",
+    "expectations",
+    "fxdesk",
+    "fxdesk.crosses",
+    "fxdesk.fix",
+    "fxdesk.forward",
+    "calendar.economic",
+    "macro.indicators",
+    "macro.world",
+    "events.season",
+    "events.dividends",
+    "earnings",
+    "holders",
+    "shares",
+    "filings",
+    "ohlc",
+    "ohlc.intraday",
+    "movers",
+    "breadth",
+    "sectors",
+    "funds",
+    "reference.mx",
+    "business.industries",
+    "creditHealth",
 )
 """Valores posibles de ``/health.capabilities``. Solo se anuncia lo que ya funciona."""
 
@@ -546,10 +587,33 @@ class EventItem(ContractModel):
     estimate: float | None
     amount: Money | None
     currency: Currency | None
+    estimateLow: float | None = Field(
+        default=None,
+        description="Estimado más bajo de UPA de los analistas (solo earnings); null o ausente si no viene",
+    )
+    estimateHigh: float | None = Field(
+        default=None,
+        description="Estimado más alto de UPA de los analistas (solo earnings); null o ausente si no viene",
+    )
+
+
+class DividendSummaryItem(ContractModel):
+    """Lo último que pagó la emisora. El monto futuro no se conoce: la UI lo etiqueta "último pagado"."""
+
+    symbol: Symbol
+    currency: Currency | None
+    lastPaidAmount: Money | None = Field(description="Monto por acción del último dividendo pagado")
+    lastPaidDate: IsoDate | None
+    frequency: Literal["mensual", "trimestral", "semestral", "anual", "irregular"] | None
+    paidMonths: list[Annotated[int, Field(ge=1, le=12)]] = Field(description="Meses (1 a 12) en que suele pagar")
 
 
 class EventsResponse(ContractModel):
     items: list[EventItem]
+    dividendSummary: list[DividendSummaryItem] | None = Field(
+        default=None,
+        description="Resumen de dividendos por símbolo (fase 5); null o ausente en un API anterior",
+    )
     meta: Meta
 
 
@@ -1042,6 +1106,876 @@ class InsidersResponse(ContractModel):
     meta: Meta
 
 
+# ─── fase 5: piezas comunes ──────────────────────────────────────────────────
+
+
+class DatedSeries(ContractModel):
+    """Serie por fecha: ``dates`` y ``values`` con la misma longitud; un hueco va como null."""
+
+    dates: list[IsoDate]
+    values: list[float | None]
+
+    @model_validator(mode="after")
+    def _lengths(self) -> DatedSeries:
+        _same_length("serie", self.dates, values=self.values)
+        return self
+
+
+class PeriodChanges(ContractModel):
+    """Cambios como fracción en día, semana, mes, año corrido y 12 meses; null si no hay base."""
+
+    d1: Fraction | None
+    w1: Fraction | None
+    m1: Fraction | None
+    ytd: Fraction | None
+    y1: Fraction | None
+
+
+# ─── fase 5: centro de tasas (V5TS) ──────────────────────────────────────────
+
+CurveInstrument = Literal["cetes", "bonoM", "udibono", "ust"]
+CurveCompare = Literal["1w", "1m", "1y"]
+
+
+class CurveNode(ContractModel):
+    """Un plazo de la curva. En México cada plazo cambia solo en su subasta: por eso trae su fecha."""
+
+    tenorDays: int = Field(ge=1, description="Plazo en días al vencimiento")
+    label: str = Field(description="Plazo legible: '28 días', '10 años'")
+    value: Fraction | None = Field(description="Rendimiento; null si la fuente no publicó (N/E), la UI dice s/d")
+    asOf: IsoDate | None
+    seriesId: str
+    instrument: CurveInstrument
+
+
+class CurvePoint(ContractModel):
+    tenorDays: int = Field(ge=1)
+    value: Fraction | None
+    asOf: IsoDate | None
+
+
+class RealCurveNode(ContractModel):
+    tenorDays: int = Field(ge=1)
+    value: Fraction | None = Field(description="Rendimiento real (Udibono o curva real del Tesoro)")
+    asOf: IsoDate | None
+    seriesId: str
+
+
+class BreakevenNode(ContractModel):
+    tenorDays: int = Field(ge=1)
+    value: Fraction | None = Field(description="Inflación implícita de Fisher: (1 + nominal)/(1 + real) - 1")
+    simpleBp: Bp | None = Field(description="Diferencia simple nominal menos real, en pb")
+    nominalAsOf: IsoDate | None
+    realAsOf: IsoDate | None
+    dateGapDays: int | None = Field(ge=0, description="Días entre la fecha del nominal y la del real")
+
+
+class CurvesResponse(ContractModel):
+    country: Literal["mx", "us"]
+    nodes: list[CurveNode]
+    compare: dict[CurveCompare, list[CurvePoint]] = Field(description="La curva de hace 1 semana, 1 mes o 1 año, si se pidió")
+    real: list[RealCurveNode]
+    breakeven: list[BreakevenNode]
+    meta: Meta
+
+
+class CurveSpreadRow(ContractModel):
+    tenorYears: int = Field(ge=1)
+    mxSeriesId: str
+    usSeriesId: str
+    mx: Fraction | None
+    us: Fraction | None
+    spreadBp: Bp | None = Field(description="México menos EE. UU. en pb")
+    mxAsOf: IsoDate | None
+    usAsOf: IsoDate | None
+    dateGapDays: int | None = Field(ge=0)
+    asOfMismatch: bool = Field(description="true si dateGapDays > 7: las dos tasas no son del mismo día")
+
+
+class SpreadHistory(ContractModel):
+    dates: list[IsoDate]
+    valuesBp: list[float | None] = Field(description="Diferencial a 10 años en pb; null si falta un lado")
+
+    @model_validator(mode="after")
+    def _lengths(self) -> SpreadHistory:
+        _same_length("curves/spreads.history10y", self.dates, valuesBp=self.valuesBp)
+        return self
+
+
+class CurveSpreadsResponse(ContractModel):
+    rows: list[CurveSpreadRow]
+    history10y: SpreadHistory
+    meta: Meta
+
+
+MoneyMarketId = Literal["tiie91", "tiie182", "dff", "sofr", "ust1m", "ust3m", "ust6m", "ust1y"]
+
+
+class MoneyMarketRow(ContractModel):
+    id: MoneyMarketId
+    label: str
+    country: CountryId
+    value: Fraction | None
+    convention: Literal["act/360 simple", "overnight", "cmt base bono"]
+    asOf: IsoDate | None
+    change1dBp: Bp | None
+    change1wBp: Bp | None
+    change1mBp: Bp | None
+    seriesId: str
+    source: SourceToken
+    stale: bool
+
+
+class MxRateChange(ContractModel):
+    """Cambios semanal y mensual de una serie que ya publica /v2/rates/mx (la UI une por id)."""
+
+    id: MxRateId
+    change1wBp: Bp | None
+    change1mBp: Bp | None
+
+
+class MoneyMarketResponse(ContractModel):
+    """Solo las series que /v2/rates/mx no trae, más los cambios semanal y mensual de las que sí."""
+
+    rows: list[MoneyMarketRow]
+    mxChanges: list[MxRateChange]
+    meta: Meta
+
+
+class SurveyItem(ContractModel):
+    id: Literal["inflationT", "inflationT1", "gdpT", "fxT", "fxT1"]
+    label: str
+    year: int | None = Field(description="Año al que se refiere la expectativa")
+    mean: float | None = Field(description="Fracción si unit=fraction; pesos por dólar si unit=mxnPerUsd")
+    median: float | None = Field(description="null si su serie no está verificada (la UI dice s/d)")
+    unit: Literal["fraction", "mxnPerUsd"]
+    seriesIdMean: str | None
+    seriesIdMedian: str | None
+    verified: bool
+
+
+class ExpectationsSurvey(ContractModel):
+    surveyDate: IsoDate | None = Field(description="Fecha del periodo en el SIE, siempre día 01")
+    yearT: int | None = Field(description="Año de surveyDate")
+    items: list[SurveyItem]
+
+    @model_validator(mode="after")
+    def _first_day(self) -> ExpectationsSurvey:
+        if self.surveyDate is not None and not self.surveyDate.endswith("-01"):
+            raise ValueError("expectations.survey.surveyDate tiene que ser día 01")
+        return self
+
+
+class RealRates(ContractModel):
+    cetes28: Fraction | None
+    observedInflation: Fraction | None = Field(description="Inflación anual observada (SIE SP30578)")
+    exPost: Fraction | None = Field(description="(1 + cetes28)/(1 + observedInflation) - 1")
+    expectedInflation: Fraction | None = Field(description="Mediana de la encuesta para el año en curso")
+    exAnte: Fraction | None
+
+
+class MxForward(ContractModel):
+    fromDays: int = Field(ge=0)
+    toDays: int = Field(ge=1)
+    rate: Fraction | None = Field(description="Forward implícito act/360 simple")
+    vsTargetBp: Bp | None = Field(description="Contra la tasa objetivo de Banxico, en pb")
+
+
+class UsForward(ContractModel):
+    fromDays: int = Field(ge=0)
+    toDays: int = Field(ge=1)
+    rate: Fraction | None
+    vsDffBp: Bp | None = Field(description="Contra la tasa de fondos federales efectiva, en pb")
+    note: str
+
+
+class ImpliedForwards(ContractModel):
+    mx: list[MxForward]
+    us: list[UsForward]
+
+
+class ExpectationsResponse(ContractModel):
+    survey: ExpectationsSurvey
+    realRates: RealRates
+    impliedForwards: ImpliedForwards
+    meta: Meta
+
+
+# ─── fase 5: tipo de cambio (V5FX) ───────────────────────────────────────────
+
+
+class FxSpot(ContractModel):
+    value: float = Field(description="Pesos por dólar")
+    asOf: IsoDate
+    source: Literal["banxico", "yahoo"] = Field(description="yahoo solo como respaldo, con meta.fallback")
+
+
+class FxRange52w(ContractModel):
+    low: float | None
+    high: float | None
+    percentile: Fraction | None = Field(description="Fracción de observaciones menores o iguales al actual")
+
+
+class FxChangesCents(ContractModel):
+    """Los mismos cambios que ``PeriodChanges`` pero en centavos de peso."""
+
+    d1: float | None
+    w1: float | None
+    m1: float | None
+    ytd: float | None
+    y1: float | None
+
+
+class RealizedVol(ContractModel):
+    """Volatilidad realizada anualizada (raíz de 252) como fracción."""
+
+    d20: Fraction | None
+    d60: Fraction | None
+    d250: Fraction | None
+
+
+class FxMonthly(ContractModel):
+    month: YearMonth
+    average: float | None
+    min: float | None
+    max: float | None
+    last: float | None
+
+
+class HistogramBin(ContractModel):
+    low: Fraction
+    high: Fraction
+    count: int = Field(ge=0)
+
+
+class CotPosition(ContractModel):
+    """Posicionamiento CFTC del peso en CME (contrato 095741), en contratos."""
+
+    reportDate: IsoDate
+    openInterest: float | None
+    nonCommercialNet: float | None
+    nonCommercialNetChange: float | None
+    leveragedNet: float | None
+    assetManagerNet: float | None
+
+
+class FxMonitorResponse(ContractModel):
+    pair: Literal["USDMXN"]
+    spot: FxSpot
+    range52w: FxRange52w
+    changes: PeriodChanges
+    changesCents: FxChangesCents
+    realizedVol: RealizedVol
+    monthly: list[FxMonthly]
+    histogram: list[HistogramBin]
+    series: DatedSeries
+    cot: CotPosition | None
+    meta: Meta
+
+
+CrossPair = Literal[
+    "EURMXN", "JPYMXN", "GBPMXN", "CNYMXN", "CADMXN", "BRLMXN", "COPMXN", "CLPMXN", "ARSMXN", "PENMXN"
+]
+
+
+class FxCrossRow(ContractModel):
+    pair: CrossPair
+    value: float | None = Field(description="Pesos por unidad de la otra moneda")
+    asOf: IsoDate | None
+    change1d: Fraction | None
+    change1y: Fraction | None
+    source: Literal["banxico", "frankfurter"]
+    provider: Literal["banxico", "ecb", "mezcla"] = Field(description="Quién publica el dato: Banxico, el BCE o una mezcla de bancos centrales")
+    fallback: bool
+
+
+class FxCrossesResponse(ContractModel):
+    rows: list[FxCrossRow]
+    meta: Meta
+
+
+FixRule = Literal["fecha", "dof"]
+
+
+class FixLookupResponse(ContractModel):
+    date: IsoDate = Field(description="La fecha pedida")
+    rule: FixRule
+    fixDate: IsoDate | None = Field(description="Fecha en que se determinó el FIX usado; null si aún no hay FIX")
+    value: float | None
+    dofPublicationDate: IsoDate | None = Field(description="Solo con rule=dof: fecha del DOF que lo publicó")
+    explanation: str = Field(description="Qué FIX se usó y por qué, en español")
+    meta: Meta
+
+
+class FixRow(ContractModel):
+    date: IsoDate
+    fixDate: IsoDate | None
+    value: float | None
+
+
+class FixMonthEnd(ContractModel):
+    month: YearMonth
+    fixDate: IsoDate | None
+    value: float | None
+    average: float | None = Field(description="Promedio del FIX del mes")
+
+
+class FixTableResponse(ContractModel):
+    rule: FixRule
+    rows: list[FixRow]
+    monthEnds: list[FixMonthEnd]
+    meta: Meta
+
+
+class ForwardSpot(ContractModel):
+    value: float
+    asOf: IsoDate
+
+
+class ForwardRow(ContractModel):
+    days: int = Field(ge=1, le=365)
+    date: IsoDate
+    iMxn: Fraction | None
+    iUsd: Fraction | None
+    iMxnSeries: str
+    iUsdSeries: str
+    iMxnConvention: Literal["act/360 simple", "overnight plano"]
+    iUsdConvention: Literal["cmt convertida x360/365", "overnight plano"]
+    forward: float | None = Field(description="Precio teórico por paridad de tasas, sin margen bancario")
+    pointsPips: float | None
+    carryAnnual: Fraction | None = Field(description="(forward/spot - 1) x 360/días")
+
+
+class FxForwardResponse(ContractModel):
+    spot: ForwardSpot
+    rows: list[ForwardRow]
+    meta: Meta
+
+
+# ─── fase 5: calendario y tablero de economía (V5EC) ─────────────────────────
+
+
+class EconomicEvent(ContractModel):
+    id: str
+    country: CountryId
+    kind: Literal["decision", "minutes", "release", "report"]
+    title: str
+    period: str | None = Field(description="Periodo que reporta: 'sep 2026'")
+    date: IsoDate
+    timeLocal: str | None = Field(pattern=r"^\d{2}:\d{2}$", description="HH:MM en America/Mexico_City")
+    datetimeUtc: Instant | None
+    source: Literal["curated", "bls"]
+    seriesId: str | None
+    unit: Literal["fraction", "index", "thousandsPersons"] | None
+    previous: float | None
+    actual: float | None
+    consensus: None = Field(description="Siempre null: las fuentes de consenso son de pago")
+
+
+class CalendarCoverage(ContractModel):
+    """Hasta qué fecha cubre cada calendario; nada se inventa después de ella."""
+
+    banxicoUntil: IsoDate | None
+    fomcUntil: IsoDate | None
+    inegiUntil: IsoDate | None
+    blsUntil: IsoDate | None
+
+
+class NextDecision(ContractModel):
+    date: IsoDate
+    daysLeft: int = Field(ge=0)
+
+
+class NextDecisions(ContractModel):
+    banxico: NextDecision | None
+    fed: NextDecision | None
+
+
+class EconomicCalendarResponse(ContractModel):
+    events: list[EconomicEvent]
+    coverage: CalendarCoverage
+    nextDecisions: NextDecisions
+    meta: Meta
+
+
+MacroIndicatorId = Literal[
+    "inflation",
+    "coreInflation",
+    "pceCore",
+    "unemployment",
+    "payrolls",
+    "gdpReal",
+    "gdpGrowth",
+    "remittances",
+    "reserves",
+    "wti",
+]
+MacroUnit = Literal[
+    "fraction",
+    "index",
+    "thousandsPersons",
+    "usdMillions",
+    "mxnMillions2018",
+    "usdBillionsChained2017",
+    "usdPerBarrel",
+]
+
+
+class MacroObservation(ContractModel):
+    date: IsoDate
+    value: float
+
+
+class MacroIndicator(ContractModel):
+    """Un indicador. ``kind`` rate cambia en pb (``changeYoYBp``); level cambia en fracción (``changeYoY``)."""
+
+    id: MacroIndicatorId
+    label: str
+    kind: Literal["rate", "level"]
+    unit: MacroUnit
+    frequency: Literal["monthly", "quarterly", "weekly", "daily"]
+    last: MacroObservation | None
+    previous: MacroObservation | None
+    changeYoY: Fraction | None = Field(description="Solo kind level: cambio anual como fracción")
+    changeYoYBp: Bp | None = Field(description="Solo kind rate: cambio anual en pb")
+    history: DatedSeries
+    seriesId: str
+    source: SourceToken
+    fallback: bool
+    stale: bool
+    nextRelease: IsoDate | None
+
+    @model_validator(mode="after")
+    def _change_by_kind(self) -> MacroIndicator:
+        if self.kind == "rate" and self.changeYoY is not None:
+            raise ValueError(f"macro.{self.id}: kind rate lleva changeYoYBp, no changeYoY")
+        if self.kind == "level" and self.changeYoYBp is not None:
+            raise ValueError(f"macro.{self.id}: kind level lleva changeYoY, no changeYoYBp")
+        return self
+
+
+class MacroIndicatorsResponse(ContractModel):
+    country: Literal["mx", "us"]
+    indicators: list[MacroIndicator]
+    meta: Meta
+
+
+class MacroWorldRow(ContractModel):
+    country: str = Field(pattern=r"^[A-Z]{3}$", description="ISO 3166-1 alfa-3 (MEX, USA, BRA)")
+    name: str
+    indicator: Literal["gdpUsd", "gdpGrowth", "inflation", "debt"]
+    unit: Literal["usd", "fraction"]
+    year: int | None
+    value: float | None
+
+
+class MacroWorldResponse(ContractModel):
+    rows: list[MacroWorldRow]
+    meta: Meta
+
+
+# ─── fase 5: temporada de reportes (V5PF) ────────────────────────────────────
+
+
+class SeasonEvent(ContractModel):
+    symbol: Symbol
+    name: str | None
+    date: IsoDate
+    kind: Literal["earnings"]
+    estimateAvg: float | None
+    estimateLow: float | None
+    estimateHigh: float | None
+    currency: Currency | None
+
+
+class EventsSeasonResponse(ContractModel):
+    universe: Literal["mx", "us"]
+    events: list[SeasonEvent]
+    missing: list[DroppedSymbol] = Field(description="Emisoras de la muestra que no respondieron, con su motivo")
+    universeSize: int = Field(ge=0)
+    meta: Meta
+
+
+# ─── fase 5: ficha de la emisora (V5FI) ──────────────────────────────────────
+
+EstimatePeriod = Literal["0q", "+1q", "0y", "+1y"]
+
+
+class EarningsQuarter(ContractModel):
+    quarterEnd: IsoDate
+    reportDate: IsoDate | None
+    epsActual: float | None
+    epsEstimate: float | None
+    surprise: Fraction | None = Field(description="(real - estimado)/|estimado|")
+    reactionNextDay: Fraction | None = Field(description="Cierre del día hábil siguiente contra el previo al reporte")
+
+
+class EarningsEstimate(ContractModel):
+    period: EstimatePeriod
+    epsAvg: float | None
+    epsLow: float | None
+    epsHigh: float | None
+    analysts: int | None = Field(ge=0)
+    revenueAvg: float | None
+    growth: Fraction | None
+
+
+class EpsTrend(ContractModel):
+    period: EstimatePeriod
+    current: float | None
+    d7: float | None
+    d30: float | None
+    d60: float | None
+    d90: float | None
+
+
+class EpsRevisions(ContractModel):
+    period: EstimatePeriod
+    up7: int | None = Field(ge=0)
+    down7: int | None = Field(ge=0)
+    up30: int | None = Field(ge=0)
+    down30: int | None = Field(ge=0)
+
+
+class NextReport(ContractModel):
+    date: IsoDate
+    epsAvg: float | None
+    analysts: int | None = Field(ge=0)
+
+
+class EarningsResponse(ContractModel):
+    """Resultados contra estimado. Sin precios objetivo ni calificaciones de analistas."""
+
+    symbol: Symbol
+    currency: Currency | None
+    history: list[EarningsQuarter]
+    estimates: list[EarningsEstimate]
+    trend: list[EpsTrend]
+    revisions: list[EpsRevisions]
+    nextReport: NextReport | None
+    meta: Meta
+
+
+class Holder(ContractModel):
+    holder: str
+    pct: Fraction | None
+    shares: float | None
+    value: Money | None
+    currency: Currency | None
+    dateReported: IsoDate | None
+    pctChange: Fraction | None
+
+
+class HoldersResponse(ContractModel):
+    insidersPct: Fraction | None
+    institutionsPct: Fraction | None
+    institutionsFloatPct: Fraction | None
+    institutionsCount: int | None = Field(ge=0)
+    institutions: list[Holder]
+    funds: list[Holder]
+    coverageNote: str | None = Field(description="Qué cuenta y qué no la tenencia (p. ej. emisoras de la BMV)")
+    meta: Meta
+
+
+class SplitEvent(ContractModel):
+    date: IsoDate
+    ratio: float = Field(gt=0, description="Acciones nuevas por cada vieja: 4.0 es un split de 4 a 1")
+
+
+class SharesResponse(ContractModel):
+    symbol: Symbol
+    sharesOutstanding: DatedSeries
+    change: Fraction | None = Field(description="Último contra primero de la serie")
+    splits: list[SplitEvent]
+    meta: Meta
+
+
+class FilingItem(ContractModel):
+    code: str = Field(description="Código del evento del 8-K, por ejemplo 2.02")
+    label: str = Field(description="Su nombre en español; s/d si el código no se conoce")
+
+
+class Filing(ContractModel):
+    form: str
+    formLabel: str = Field(description="Qué es ese documento, en español")
+    filedAt: IsoDate
+    reportDate: IsoDate | None
+    items: list[FilingItem]
+    url: HttpsUrl
+
+
+class FilingsResponse(ContractModel):
+    symbol: Symbol
+    cik: str = Field(pattern=r"^\d{10}$", description="CIK de la SEC con 10 dígitos")
+    viaAdr: str | None = Field(description="Ticker del ADR por el que se encontró a la emisora mexicana")
+    filings: list[Filing]
+    meta: Meta
+
+
+# ─── fase 5: gráfica técnica (V5TC) ──────────────────────────────────────────
+
+
+class OhlcBar(ContractModel):
+    """Una vela. ``t`` es fecha en 1d, 1wk y 1mo, e instante con zona en 5m y 1h."""
+
+    t: DateOrInstant
+    o: float
+    h: float
+    l: float  # noqa: E741 - nombre del contrato
+    c: float
+    v: float | None = Field(description="Volumen; null si la fuente no lo trae (índices)")
+
+
+class OhlcPoint(ContractModel):
+    t: DateOrInstant
+    c: float
+
+
+class OhlcCompare(ContractModel):
+    symbol: Literal["^MXX", "^GSPC", "SPY"]
+    points: list[OhlcPoint]
+
+
+class OhlcResponse(ContractModel):
+    """Velas ajustadas solo por splits (como ``PanelResponse`` con adjustment=splits)."""
+
+    symbol: Symbol
+    currency: Currency | None
+    interval: OhlcInterval
+    timezone: str | None = Field(description="Zona de la bolsa, por ejemplo America/Mexico_City")
+    adjustment: Literal["splits"] = Field(description="Siempre splits: las velas no se ajustan por dividendos")
+    bars: list[OhlcBar]
+    compare: OhlcCompare | None
+    high52w: float | None
+    low52w: float | None
+    meta: Meta
+
+    @model_validator(mode="after")
+    def _t_by_interval(self) -> OhlcResponse:
+        intraday = self.interval in OHLC_INTRADAY
+        pattern = INSTANT_PATTERN if intraday else ISO_DATE_PATTERN
+        stamps = [bar.t for bar in self.bars] + ([p.t for p in self.compare.points] if self.compare else [])
+        bad = [t for t in stamps if not re.fullmatch(pattern, t)]
+        if bad:
+            what = "instante con zona" if intraday else "fecha YYYY-MM-DD"
+            raise ValueError(f"ohlc {self.interval}: t tiene que ser {what}: {bad[:3]}")
+        return self
+
+
+# ─── fase 5: movimientos, amplitud y sectores (V5MK) ─────────────────────────
+
+MarketId = Literal["us", "mx"]
+
+
+class MoverRow(ContractModel):
+    symbol: Symbol
+    name: str | None
+    price: Money | None
+    currency: Currency | None
+    change: Money | None
+    changePct: Fraction | None
+    volume: float | None
+    avgVolume3m: float | None
+    relVolume: float | None = Field(description="Volumen del día entre el promedio de 3 meses")
+    marketCap: Money | None
+    high52w: Money | None
+    low52w: Money | None
+    note: str | None = Field(description="Aviso descriptivo, por ejemplo un cambio atípico")
+
+
+class MoversResponse(ContractModel):
+    market: MarketId
+    kind: Literal["gainers", "losers", "active"]
+    rows: list[MoverRow]
+    excluded: list[ExcludedSymbol]
+    meta: Meta
+
+
+class BreadthResponse(ContractModel):
+    """Amplitud de una muestra curada de emisoras, no de todo el mercado."""
+
+    market: MarketId
+    universe: Literal["curado"]
+    universeSize: int = Field(ge=0)
+    up: int = Field(ge=0)
+    down: int = Field(ge=0)
+    unchanged: int = Field(ge=0)
+    upDownRatio: float | None
+    pctAbove200d: Fraction | None
+    newHighs52w: int = Field(ge=0)
+    newLows52w: int = Field(ge=0)
+    meta: Meta
+
+
+class SectorMember(ContractModel):
+    symbol: Symbol
+    name: str | None
+    changes: PeriodChanges
+
+
+class SectorRow(ContractModel):
+    sector: str = Field(description="Nombre del sector en español")
+    etf: Symbol | None = Field(description="ETF sectorial SPDR en EE. UU.; null en México")
+    changes: PeriodChanges
+    members: list[SectorMember] | None = Field(description="En México, las emisoras que promedia el sector")
+
+
+class SectorsResponse(ContractModel):
+    market: MarketId
+    rows: list[SectorRow]
+    meta: Meta
+
+
+# ─── fase 5: ETF por dentro (V5PF) ───────────────────────────────────────────
+
+
+class FundAssetClasses(ContractModel):
+    stock: Fraction | None
+    bond: Fraction | None
+    cash: Fraction | None
+    other: Fraction | None
+
+
+class FundSector(ContractModel):
+    sector: str = Field(description="Sector en español")
+    weight: Fraction
+
+
+class FundHolding(ContractModel):
+    symbol: str | None
+    name: str | None
+    weight: Fraction
+
+
+class FundCoverage(ContractModel):
+    topHoldingsWeight: Fraction | None = Field(description="Cuánto del fondo suman las posiciones publicadas")
+
+
+class FundResponse(ContractModel):
+    symbol: Symbol
+    mappedFrom: str | None = Field(description="Clave del SIC que se mapeó a este fondo (IVVPESO.MX a IVV)")
+    name: str | None
+    family: str | None
+    category: str | None
+    legalType: str | None
+    expenseRatio: Fraction | None
+    totalNetAssets: float | None
+    totalNetAssetsUnit: Literal["usdMillions"] | None
+    turnover: Fraction | None
+    assetClasses: FundAssetClasses
+    sectors: list[FundSector]
+    topHoldings: list[FundHolding]
+    coverage: FundCoverage
+    meta: Meta
+
+
+# ─── fase 5: empresas (V5EM) ─────────────────────────────────────────────────
+
+
+class UmaValue(ContractModel):
+    year: int
+    daily: Money
+    monthly: Money
+    annual: Money
+    validFrom: IsoDate
+    sourceUrl: HttpUrl
+
+
+class MinimumWage(ContractModel):
+    year: int
+    general: Money
+    border: Money = Field(description="Zona Libre de la Frontera Norte")
+    validFrom: IsoDate
+    sourceUrl: HttpUrl
+
+
+class SurchargeRate(ContractModel):
+    year: int
+    rate: Fraction = Field(description="Tasa mensual de recargos")
+    law: str = Field(description="Ley de Ingresos que la fija")
+    sourceUrl: HttpUrl
+
+
+class UdiValue(ContractModel):
+    value: float
+    asOf: IsoDate
+
+
+class ReferenceMxResponse(ContractModel):
+    uma: list[UmaValue]
+    minimumWage: list[MinimumWage]
+    surchargeMonthly: list[SurchargeRate]
+    udi: UdiValue | None
+    meta: Meta
+
+
+class InpcPoint(ContractModel):
+    month: YearMonth
+    value: float
+
+
+class UpdateFactorResponse(ContractModel):
+    inpcFrom: InpcPoint
+    inpcTo: InpcPoint
+    factorRaw: float = Field(description="INPC final entre INPC inicial, sin truncar")
+    factor: float = Field(ge=1, description="Truncado al diezmilésimo y nunca menor a 1")
+    floorApplied: bool = Field(description="true si factorRaw era menor a 1 y se publicó 1")
+    meta: Meta
+
+
+class Industry(ContractModel):
+    sector: str | None
+    industry: str
+    betaU: float | None = Field(description="Beta desapalancada")
+    evEbitda: Ratio | None
+    roic: Fraction | None
+    costOfDebtUsd: Fraction | None
+    waccUsd: Fraction | None
+    de: Ratio | None = Field(description="Deuda entre capital")
+
+
+class IndustriesResponse(ContractModel):
+    market: Literal["US", "EM"]
+    vintage: str = Field(description="Vintage del archivo de Damodaran")
+    statutoryTaxRate: dict[CountryId, Fraction]
+    industries: list[Industry]
+    meta: Meta
+
+
+class CreditHealthYear(ContractModel):
+    fiscalYear: int
+    altmanZEm: float | None = Field(description="Z de Altman para emergentes; null si falta un insumo")
+    netDebtToEbitda: Ratio | None
+    interestCoverage: Ratio | None
+    currentRatio: Ratio | None
+    quickRatio: Ratio | None
+    dso: float | None = Field(description="Días de cobro")
+    dpo: float | None = Field(description="Días de pago")
+
+
+class MissingInput(ContractModel):
+    fiscalYear: int
+    field: str
+
+
+class CreditHealthResponse(ContractModel):
+    """Razones de salud financiera, sin letras de calificación."""
+
+    symbol: Symbol
+    currency: Currency | None
+    applicable: bool
+    reason: str | None = Field(description="Por qué no aplica (bancos y aseguradoras)")
+    years: list[CreditHealthYear]
+    inputsMissing: list[MissingInput]
+    meta: Meta
+
+    @model_validator(mode="after")
+    def _not_applicable_is_empty(self) -> CreditHealthResponse:
+        if not self.applicable and (self.years or not self.reason):
+            raise ValueError("credit-health: applicable=false lleva reason y years vacío")
+        return self
+
+
 RESPONSE_MODELS: tuple[type[ContractModel], ...] = (
     HealthResponse,
     LoginResponse,
@@ -1070,5 +2004,31 @@ RESPONSE_MODELS: tuple[type[ContractModel], ...] = (
     InsidersResponse,
     AssumptionsResponse,
     InpcResponse,
+    CurvesResponse,
+    CurveSpreadsResponse,
+    MoneyMarketResponse,
+    ExpectationsResponse,
+    FxMonitorResponse,
+    FxCrossesResponse,
+    FixLookupResponse,
+    FixTableResponse,
+    FxForwardResponse,
+    EconomicCalendarResponse,
+    MacroIndicatorsResponse,
+    MacroWorldResponse,
+    EventsSeasonResponse,
+    EarningsResponse,
+    HoldersResponse,
+    SharesResponse,
+    FilingsResponse,
+    OhlcResponse,
+    MoversResponse,
+    BreadthResponse,
+    SectorsResponse,
+    FundResponse,
+    ReferenceMxResponse,
+    UpdateFactorResponse,
+    IndustriesResponse,
+    CreditHealthResponse,
 )
 """Un modelo por endpoint v2 (además de ErrorBody y Meta)."""

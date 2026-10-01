@@ -12,7 +12,7 @@ from fastapi import FastAPI
 from fastapi.routing import iter_route_contexts
 from fastapi.testclient import TestClient
 
-from kaizen_api.http_cache import CACHE_SECONDS, cache_control, no_store
+from kaizen_api.http_cache import CACHE_SECONDS, cache_control, cache_control_by, no_store
 from kaizen_api.main import create_app
 from kaizen_api.settings import Settings
 
@@ -24,6 +24,10 @@ SPEC_SECONDS = {
     "macro": 3600,
     "news": 600,
     "screeners": 43200,
+    # fase 5 (M5): calendarios y curados, velas intradía y curvas
+    "reference": 86400,
+    "intraday": 60,
+    "curves": 3600,
 }
 
 # Cada ruta v2 con la clase que le toca. Los criterios, para que B2/B3 no tengan que adivinar:
@@ -55,6 +59,34 @@ EXPECTED = {
     ("GET", "/v2/screeners/factors"): "screeners",
     ("GET", "/v2/screeners/magic"): "screeners",
     ("GET", "/v2/screeners/fibras"): "screeners",
+    # fase 5 (M5): reference = calendarios y datos curados; intraday = velas de 5m y 1h; curves =
+    # curvas de rendimiento. /v2/ohlc declara las dos clases que puede usar según ?interval=.
+    ("GET", "/v2/curves"): "curves",
+    ("GET", "/v2/curves/spreads"): "curves",
+    ("GET", "/v2/money-market"): "macro",
+    ("GET", "/v2/expectations"): "macro",
+    ("GET", "/v2/fxdesk/monitor"): "macro",
+    ("GET", "/v2/fxdesk/crosses"): "macro",
+    ("GET", "/v2/fxdesk/fix"): "macro",
+    ("GET", "/v2/fxdesk/fix-table"): "macro",
+    ("GET", "/v2/fxdesk/forward"): "macro",
+    ("GET", "/v2/calendar/economic"): "reference",
+    ("GET", "/v2/macro/indicators"): "macro",
+    ("GET", "/v2/macro/world"): "reference",
+    ("GET", "/v2/events/season"): "fundamentals",
+    ("GET", "/v2/earnings/{symbol}"): "fundamentals",
+    ("GET", "/v2/holders/{symbol}"): "fundamentals",
+    ("GET", "/v2/shares/{symbol}"): "fundamentals",
+    ("GET", "/v2/filings/{symbol}"): "fundamentals",
+    ("GET", "/v2/ohlc/{symbol}"): "history|intraday",
+    ("GET", "/v2/movers"): "quotes",
+    ("GET", "/v2/breadth"): "quotes",
+    ("GET", "/v2/sectors"): "quotes",
+    ("GET", "/v2/funds/{symbol}"): "fundamentals",
+    ("GET", "/v2/reference/mx"): "reference",
+    ("GET", "/v2/reference/mx/update-factor"): "macro",
+    ("GET", "/v2/business/industries"): "reference",
+    ("GET", "/v2/credit-health/{symbol}"): "fundamentals",
 }
 
 NO_STORE = {("GET", "/health"), ("POST", "/auth/login"), ("GET", "/auth/me")}
@@ -123,6 +155,23 @@ def test_the_dependency_really_sets_the_header():
         r = client.get(f"/{data_class}")
         assert r.headers["cache-control"] == f"private, max-age={seconds}"
         assert "public" not in r.headers["cache-control"]  # nunca en una caché compartida
+
+
+def test_the_class_can_depend_on_a_query_param():
+    """``/v2/ohlc`` cachea 60 s las velas intradía y una hora las diarias, en la misma ruta."""
+    app = FastAPI()
+
+    @app.get("/ohlc", dependencies=[cache_control_by("interval", {"5m": "intraday", "1h": "intraday"}, default="history")])
+    def ok() -> dict:
+        return {"ok": True}
+
+    client = TestClient(app)
+    assert client.get("/ohlc?interval=5m").headers["cache-control"] == "private, max-age=60"
+    assert client.get("/ohlc?interval=1h").headers["cache-control"] == "private, max-age=60"
+    assert client.get("/ohlc?interval=1d").headers["cache-control"] == "private, max-age=3600"
+    assert client.get("/ohlc").headers["cache-control"] == "private, max-age=3600"
+    with pytest.raises(KeyError):
+        cache_control_by("interval", {"5m": "inventada"}, default="history")
 
 
 def test_unknown_data_class_fails_loudly():

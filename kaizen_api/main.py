@@ -28,14 +28,22 @@ from kaizen_api import __version__
 from kaizen_api.errors import error_body, install_exception_handlers, log_safe
 from kaizen_api.routers import (
     auth,
+    business,
+    company,
+    curves,
+    economy,
     events,
+    funds,
+    fxdesk,
     health,
     history,
     insiders,
     legacy_v1,
     macro,
     markets,
+    movers,
     news,
+    ohlc,
     quotes,
     rates,
     research,
@@ -55,7 +63,29 @@ from kaizen_api.settings import (
 
 logger = logging.getLogger("kaizen_api")
 
-V2_ROUTERS = (quotes, history, rates, macro, markets, events, news, search, research, valuation, screeners, insiders)
+V2_ROUTERS = (
+    quotes,
+    history,
+    rates,
+    macro,
+    markets,
+    events,
+    news,
+    search,
+    research,
+    valuation,
+    screeners,
+    insiders,
+    # fase 5 (M5): routers nuevos, todas sus rutas en @stub hasta que su stream las implemente
+    curves,
+    fxdesk,
+    economy,
+    company,
+    ohlc,
+    movers,
+    funds,
+    business,
+)
 """Routers de datos v2: con AUTH_REQUIRED exigen sesión.
 
 Un archivo por stream de fase 2 (ver ``docs/OWNERSHIP.md``): B2a quotes, history, markets y search;
