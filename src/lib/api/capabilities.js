@@ -71,7 +71,7 @@ export function subscribeCapabilities(fn) {
   return () => listeners.delete(fn)
 }
 
-/** @param {string} name p. ej. "history.dates" */
+/** @param {string} name p. ej. "rates.mx" */
 export function hasCapability(name) {
   return state.capabilities.has(name)
 }

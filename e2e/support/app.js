@@ -22,7 +22,7 @@ export const HEALTH_V2 = Object.freeze({
   version: '2.0.0-e2e',
   commit: null,
   authRequired: true,
-  capabilities: ['history.dates', 'fx.fix', 'rates.mx', 'rf.series', 'search'],
+  capabilities: ['rates.mx', 'rf.series', 'search'],
   providers: { yahoo: { ok: true }, banxico: { configured: true }, fred: { configured: true }, sec: { ok: true }, eodhd: { configured: false } },
   serverTime: '2026-09-22T14:52:19Z',
 })
