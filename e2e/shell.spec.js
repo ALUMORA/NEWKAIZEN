@@ -292,7 +292,7 @@ test.describe('shell: navegación', () => {
       await expect(sub).toBeHidden()
       return
     }
-    await expect(sub.getByRole('link')).toHaveText(['Resumen', 'Movimientos', 'Rendimiento', 'Riesgo', 'Rebalanceo'])
+    await expect(sub.getByRole('link')).toHaveText(['Resumen', 'Movimientos', 'Rendimiento', 'Riesgo', 'Rebalanceo', 'Agenda', 'Rayos X'])
     const active = sub.getByRole('link', { name: 'Rebalanceo' })
     await expect(active).toHaveAttribute('aria-current', 'page')
     await expect(active).toBeInViewport({ ratio: 1 })
