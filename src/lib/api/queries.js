@@ -8,7 +8,8 @@
 // Frescura (staleTime) según qué tan rápido cambia el dato en la fuente:
 //   cotizaciones 30 s (y se refrescan cada 60 s solo con la pestaña visible), historia 1 h,
 //   emisora y fundamentales 6 h, macro y tasas 1 h, noticias 10 min, screeners 12 h,
-//   búsqueda 24 h.
+//   búsqueda 24 h. Fase 5: curvas 1 h, velas intradía 1 min (movimientos, amplitud y sectores con
+//   las cotizaciones) y referencias y calendarios curados 24 h, igual que http_cache del API.
 // Reintentos: apiFetch ya reintenta el arranque en frío (~67 s), así que aquí NO se vuelve a
 // reintentar eso ni los errores de red; a lo más uno más para un 5xx del API despierto, y nunca
 // para 4xx ni cancelaciones.
@@ -33,6 +34,10 @@ export const STALE_TIME = Object.freeze({
   events: 6 * HOUR,
   screeners: 12 * HOUR,
   search: 24 * HOUR,
+  // Fase 5
+  curves: HOUR,
+  intraday: MINUTE,
+  reference: 24 * HOUR,
 })
 
 export const QUOTES_REFETCH_MS = 60 * SECOND
@@ -76,6 +81,21 @@ export function createQueryClient() {
   })
 }
 
+/**
+ * Parámetros de una llave: sin undefined y con las listas ordenadas y sin repetidos, para que
+ * { compare: ['1y', '1w'] } y { compare: ['1w', '1y'] } compartan caché.
+ * @param {Record<string, unknown>} params
+ */
+function normParams(params) {
+  /** @type {Record<string, unknown>} */
+  const out = {}
+  for (const [k, v] of Object.entries(params ?? {})) {
+    if (v === undefined) continue
+    out[k] = Array.isArray(v) ? [...new Set(v.map((x) => (typeof x === 'string' ? x.trim() : x)))].sort() : v
+  }
+  return out
+}
+
 const sortedUpper = (symbols) => [...new Set((symbols ?? []).map((s) => String(s).trim().toUpperCase()))].sort()
 
 /** Llaves de caché. Cada una empieza con la clase de dato para poder invalidar por familia. */
@@ -107,6 +127,33 @@ export const queryKeys = {
   magicScreener: (universe = 'us') => ['api', 'screeners', 'magic', universe],
   fibrasScreener: (extra = []) => ['api', 'screeners', 'fibras', sortedUpper(extra)],
   insiders: (symbol) => ['api', 'insiders', String(symbol).toUpperCase()],
+  // Fase 5: una llave por ruta nueva; los parámetros van en un objeto al final.
+  curves: (params = {}) => ['api', 'curves', normParams(params)],
+  curveSpreads: (params = {}) => ['api', 'curves', 'spreads', normParams(params)],
+  moneyMarket: () => /** @type {const} */ (['api', 'rates', 'moneyMarket']),
+  expectations: () => /** @type {const} */ (['api', 'rates', 'expectations']),
+  fxMonitor: (params = {}) => ['api', 'fxdesk', 'monitor', { years: 1, ...normParams(params) }],
+  fxCrosses: () => /** @type {const} */ (['api', 'fxdesk', 'crosses']),
+  fix: (params = {}) => ['api', 'fxdesk', 'fix', { rule: 'fecha', ...normParams(params) }],
+  fixTable: (params = {}) => ['api', 'fxdesk', 'fixTable', normParams(params)],
+  fxForward: (params = {}) => ['api', 'fxdesk', 'forward', normParams(params)],
+  economicCalendar: (params = {}) => ['api', 'calendar', 'economic', normParams(params)],
+  macroIndicators: (params = {}) => ['api', 'macro', 'indicators', normParams(params)],
+  macroWorld: (params = {}) => ['api', 'macro', 'world', normParams(params)],
+  eventsSeason: (params = {}) => ['api', 'events', 'season', normParams(params)],
+  earnings: (symbol) => ['api', 'earnings', String(symbol).toUpperCase()],
+  holders: (symbol) => ['api', 'holders', String(symbol).toUpperCase()],
+  shares: (symbol, params = {}) => ['api', 'shares', String(symbol).toUpperCase(), normParams(params)],
+  filings: (symbol, params = {}) => ['api', 'filings', String(symbol).toUpperCase(), normParams(params)],
+  ohlc: (symbol, params = {}) => ['api', 'ohlc', String(symbol).toUpperCase(), { range: '6mo', interval: '1d', ...normParams(params) }],
+  movers: (params = {}) => ['api', 'movers', normParams(params)],
+  breadth: (params = {}) => ['api', 'breadth', normParams(params)],
+  sectors: (params = {}) => ['api', 'sectors', normParams(params)],
+  fund: (symbol) => ['api', 'funds', String(symbol).toUpperCase()],
+  referenceMx: () => /** @type {const} */ (['api', 'reference', 'mx']),
+  updateFactor: (params = {}) => ['api', 'reference', 'mx', 'updateFactor', normParams(params)],
+  industries: (params = {}) => ['api', 'business', 'industries', normParams(params)],
+  creditHealth: (symbol, params = {}) => ['api', 'creditHealth', String(symbol).toUpperCase(), normParams(params)],
 }
 
 // ─── Opciones por endpoint (para useQuery / prefetchQuery) ──────────────────
@@ -275,6 +322,210 @@ export const fibrasScreenerQuery = (extra = []) => ({
 export const insidersQuery = (symbol) => ({
   queryKey: queryKeys.insiders(symbol),
   queryFn: ({ signal }) => api.getInsiders(symbol, { signal }),
+  staleTime: STALE_TIME.fundamentals,
+  enabled: Boolean(symbol),
+})
+
+// ─── Fase 5 ─────────────────────────────────────────────────────────────────
+// Cada xQuery usa su función de endpoints.js (que valida los parámetros antes de salir a la red) y
+// la frescura de su clase. Las features les suman `enabled: feature.enabled` con useFeature.
+
+/** @param {{ country: 'mx' | 'us', compare?: ('1w' | '1m' | '1y')[] }} params */
+export const curvesQuery = (params) => ({
+  queryKey: queryKeys.curves(params),
+  queryFn: ({ signal }) => api.getCurves(params, { signal }),
+  staleTime: STALE_TIME.curves,
+})
+
+/** @param {{ history?: '1y' | '5y' }} [params] */
+export const curveSpreadsQuery = (params = {}) => ({
+  queryKey: queryKeys.curveSpreads(params),
+  queryFn: ({ signal }) => api.getCurveSpreads(params, { signal }),
+  staleTime: STALE_TIME.curves,
+})
+
+export const moneyMarketQuery = () => ({
+  queryKey: queryKeys.moneyMarket(),
+  queryFn: ({ signal }) => api.getMoneyMarket({ signal }),
+  staleTime: STALE_TIME.rates,
+})
+
+/** Encuesta de Banxico, tasa real y forwards implícitos: cambian con las tasas. */
+export const expectationsQuery = () => ({
+  queryKey: queryKeys.expectations(),
+  queryFn: ({ signal }) => api.getExpectations({ signal }),
+  staleTime: STALE_TIME.rates,
+})
+
+/** @param {{ years?: 1 | 3 | 5 | 10 }} [params] */
+export const fxMonitorQuery = (params = {}) => ({
+  queryKey: queryKeys.fxMonitor(params),
+  queryFn: ({ signal }) => api.getFxMonitor(params, { signal }),
+  staleTime: STALE_TIME.macro,
+})
+
+export const fxCrossesQuery = () => ({
+  queryKey: queryKeys.fxCrosses(),
+  queryFn: ({ signal }) => api.getFxCrosses({ signal }),
+  staleTime: STALE_TIME.macro,
+})
+
+/** FIX de una fecha con su regla (fecha o DOF). @param {{ date: string, rule?: 'fecha' | 'dof' }} params */
+export const fixQuery = (params) => ({
+  queryKey: queryKeys.fix(params),
+  queryFn: ({ signal }) => api.getFix(params, { signal }),
+  staleTime: STALE_TIME.macro,
+  enabled: Boolean(params?.date),
+})
+
+/** @param {{ start: string, end: string, rule?: 'fecha' | 'dof', monthEnd?: boolean }} params */
+export const fixTableQuery = (params) => ({
+  queryKey: queryKeys.fixTable(params),
+  queryFn: ({ signal }) => api.getFixTable(params, { signal }),
+  staleTime: STALE_TIME.macro,
+  enabled: Boolean(params?.start && params?.end),
+})
+
+/** @param {{ days?: number[], date?: string, mxn?: 'tiie' | 'cetes' | 'fondeo', usd?: 'ust' | 'sofr' }} [params] */
+export const fxForwardQuery = (params = {}) => ({
+  queryKey: queryKeys.fxForward(params),
+  queryFn: ({ signal }) => api.getFxForward(params, { signal }),
+  staleTime: STALE_TIME.macro,
+})
+
+/** @param {{ start: string, end: string, country?: ('mx' | 'us')[] }} params */
+export const economicCalendarQuery = (params) => ({
+  queryKey: queryKeys.economicCalendar(params),
+  queryFn: ({ signal }) => api.getEconomicCalendar(params, { signal }),
+  staleTime: STALE_TIME.reference,
+  enabled: Boolean(params?.start && params?.end),
+})
+
+/** @param {{ country: 'mx' | 'us', years?: 5 | 10 | 'max' }} params */
+export const macroIndicatorsQuery = (params) => ({
+  queryKey: queryKeys.macroIndicators(params),
+  queryFn: ({ signal }) => api.getMacroIndicators(params, { signal }),
+  staleTime: STALE_TIME.macro,
+})
+
+/** Datos anuales del Banco Mundial. @param {{ countries?: string[], indicators?: string[] }} [params] */
+export const macroWorldQuery = (params = {}) => ({
+  queryKey: queryKeys.macroWorld(params),
+  queryFn: ({ signal }) => api.getMacroWorld(/** @type {any} */ (params), { signal }),
+  staleTime: STALE_TIME.reference,
+})
+
+/** @param {{ universe: 'mx' | 'us', days?: 30 | 60 | 90 }} params */
+export const eventsSeasonQuery = (params) => ({
+  queryKey: queryKeys.eventsSeason(params),
+  queryFn: ({ signal }) => api.getEventsSeason(params, { signal }),
+  staleTime: STALE_TIME.events,
+})
+
+/** @param {string} symbol */
+export const earningsQuery = (symbol) => ({
+  queryKey: queryKeys.earnings(symbol),
+  queryFn: ({ signal }) => api.getEarnings(symbol, { signal }),
+  staleTime: STALE_TIME.fundamentals,
+  enabled: Boolean(symbol),
+})
+
+/** @param {string} symbol */
+export const holdersQuery = (symbol) => ({
+  queryKey: queryKeys.holders(symbol),
+  queryFn: ({ signal }) => api.getHolders(symbol, { signal }),
+  staleTime: STALE_TIME.fundamentals,
+  enabled: Boolean(symbol),
+})
+
+/** @param {string} symbol @param {{ start?: string }} [params] */
+export const sharesQuery = (symbol, params = {}) => ({
+  queryKey: queryKeys.shares(symbol, params),
+  queryFn: ({ signal }) => api.getShares(symbol, params, { signal }),
+  staleTime: STALE_TIME.fundamentals,
+  enabled: Boolean(symbol),
+})
+
+/** @param {string} symbol @param {{ forms?: string[], limit?: number }} [params] */
+export const filingsQuery = (symbol, params = {}) => ({
+  queryKey: queryKeys.filings(symbol, params),
+  queryFn: ({ signal }) => api.getFilings(symbol, params, { signal }),
+  staleTime: STALE_TIME.fundamentals,
+  enabled: Boolean(symbol),
+})
+
+/**
+ * Velas: las intradía (5m y 1h) se refrescan cada minuto con la pestaña visible; las demás tienen
+ * la frescura de la historia.
+ * @param {string} symbol
+ * @param {{ range?: '1d' | '5d' | '1mo' | '6mo' | '1y' | '5y' | 'max', interval?: '5m' | '1h' | '1d' | '1wk' | '1mo', compare?: '^MXX' | '^GSPC' | 'SPY' }} [params]
+ */
+export const ohlcQuery = (symbol, params = {}) => {
+  const intraday = params.interval === '5m' || params.interval === '1h'
+  return {
+    queryKey: queryKeys.ohlc(symbol, params),
+    queryFn: ({ signal }) => api.getOhlc(symbol, params, { signal }),
+    staleTime: intraday ? STALE_TIME.intraday : STALE_TIME.history,
+    refetchInterval: intraday ? visibleInterval(STALE_TIME.intraday) : false,
+    refetchIntervalInBackground: false,
+    enabled: Boolean(symbol),
+  }
+}
+
+/** @param {{ market: 'mx' | 'us', kind: 'gainers' | 'losers' | 'active', limit?: number }} params */
+export const moversQuery = (params) => ({
+  queryKey: queryKeys.movers(params),
+  queryFn: ({ signal }) => api.getMovers(params, { signal }),
+  staleTime: STALE_TIME.quotes,
+})
+
+/** @param {{ market: 'mx' | 'us' }} params */
+export const breadthQuery = (params) => ({
+  queryKey: queryKeys.breadth(params),
+  queryFn: ({ signal }) => api.getBreadth(params, { signal }),
+  staleTime: STALE_TIME.quotes,
+})
+
+/** @param {{ market: 'mx' | 'us' }} params */
+export const sectorsQuery = (params) => ({
+  queryKey: queryKeys.sectors(params),
+  queryFn: ({ signal }) => api.getSectors(params, { signal }),
+  staleTime: STALE_TIME.quotes,
+})
+
+/** @param {string} symbol */
+export const fundQuery = (symbol) => ({
+  queryKey: queryKeys.fund(symbol),
+  queryFn: ({ signal }) => api.getFund(symbol, { signal }),
+  staleTime: STALE_TIME.fundamentals,
+  enabled: Boolean(symbol),
+})
+
+export const referenceMxQuery = () => ({
+  queryKey: queryKeys.referenceMx(),
+  queryFn: ({ signal }) => api.getReferenceMx({ signal }),
+  staleTime: STALE_TIME.reference,
+})
+
+/** @param {{ from: string, to: string }} params AAAA-MM */
+export const updateFactorQuery = (params) => ({
+  queryKey: queryKeys.updateFactor(params),
+  queryFn: ({ signal }) => api.getUpdateFactor(params, { signal }),
+  staleTime: STALE_TIME.macro,
+  enabled: Boolean(params?.from && params?.to),
+})
+
+/** @param {{ market: 'US' | 'EM' }} params */
+export const industriesQuery = (params) => ({
+  queryKey: queryKeys.industries(params),
+  queryFn: ({ signal }) => api.getIndustries(params, { signal }),
+  staleTime: STALE_TIME.reference,
+})
+
+/** @param {string} symbol @param {{ years?: 3 | 5 }} [params] */
+export const creditHealthQuery = (symbol, params = {}) => ({
+  queryKey: queryKeys.creditHealth(symbol, params),
+  queryFn: ({ signal }) => api.getCreditHealth(symbol, params, { signal }),
   staleTime: STALE_TIME.fundamentals,
   enabled: Boolean(symbol),
 })

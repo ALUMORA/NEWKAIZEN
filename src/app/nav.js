@@ -2,23 +2,40 @@
 // árbol de navegación: la barra lateral, la barra inferior de móvil, el menú "Más" y el grupo
 // "Ir a" de la paleta de comandos salen de aquí. Toda ruta viene de PATHS (src/app/paths.js).
 import {
+  Activity,
   ArrowLeftRight,
+  Banknote,
+  Bell,
+  BookMarked,
   BookOpen,
   Briefcase,
   Building2,
+  Calculator,
+  CalendarClock,
+  CalendarDays,
   ChartNoAxesCombined,
+  ChartSpline,
+  ClipboardList,
+  Coins,
   Columns3,
   Eye,
+  Factory,
   Gauge,
+  Globe,
+  HandCoins,
+  Handshake,
   History,
   Landmark,
   LayoutDashboard,
   ListFilter,
   Newspaper,
   Percent,
+  Receipt,
   Scale,
+  ScanSearch,
   Search,
   ShieldAlert,
+  ShieldCheck,
   Sparkles,
   Target,
   TrendingUp,
@@ -39,7 +56,13 @@ export const NAV_SECTIONS = Object.freeze([
     icon: ChartNoAxesCombined,
     items: [
       { id: 'panorama', label: 'Panorama', to: PATHS.markets, icon: LayoutDashboard, keywords: ['mercados', 'índices', 'resumen'] },
-      { id: 'mexico', label: 'México y tasas', to: PATHS.marketsMexico, icon: Landmark, keywords: ['banxico', 'inflación', 'tiie'] },
+      { id: 'resumen-dia', label: 'Resumen del día', to: PATHS.marketsBriefing, icon: ClipboardList, keywords: ['imprimir', 'terminal', 'pdf'] },
+      { id: 'mexico', label: 'México', to: PATHS.marketsMexico, icon: Landmark, keywords: ['banxico', 'inflación', 'tiie'] },
+      { id: 'tasas', label: 'Tasas y curvas', to: PATHS.marketsRates, icon: ChartSpline, keywords: ['curva', 'bonos m', 'tesoro', 'expectativas'] },
+      { id: 'tipo-de-cambio', label: 'Tipo de cambio', to: PATHS.marketsFx, icon: Banknote, keywords: ['dólar', 'peso', 'fix', 'cruces'] },
+      { id: 'economia', label: 'Economía', to: PATHS.marketsEconomy, icon: Globe, keywords: ['pib', 'inflación', 'empleo', 'países'] },
+      { id: 'calendario', label: 'Calendario', to: PATHS.marketsCalendar, icon: CalendarDays, keywords: ['publicaciones', 'banxico', 'fed', 'indicadores'] },
+      { id: 'movimientos-dia', label: 'Movimientos del día', to: PATHS.marketsMovers, icon: Activity, keywords: ['suben', 'bajan', 'más operadas', 'sectores'] },
       { id: 'cetes', label: 'CETES', to: PATHS.marketsCetes, icon: Percent, keywords: ['calculadora', 'tasa', 'bonos'] },
       { id: 'noticias', label: 'Noticias', to: PATHS.marketsNews, icon: Newspaper, keywords: ['titulares'] },
     ],
@@ -54,6 +77,8 @@ export const NAV_SECTIONS = Object.freeze([
       { id: 'rendimiento', label: 'Rendimiento', to: PATHS.portfolioPerformance, icon: TrendingUp },
       { id: 'riesgo', label: 'Riesgo', to: PATHS.portfolioRisk, icon: ShieldAlert, keywords: ['volatilidad', 'caída'] },
       { id: 'rebalanceo', label: 'Rebalanceo', to: PATHS.portfolioRebalance, icon: Scale, keywords: ['pesos objetivo'] },
+      { id: 'agenda', label: 'Agenda', to: PATHS.portfolioAgenda, icon: CalendarClock, keywords: ['reportes', 'dividendos', 'temporada'] },
+      { id: 'rayos-x', label: 'Rayos X', to: PATHS.portfolioXray, icon: ScanSearch, keywords: ['etf', 'exposición', 'sectores', 'traslape'] },
     ],
   },
   {
@@ -78,11 +103,28 @@ export const NAV_SECTIONS = Object.freeze([
       { id: 'simulador', label: 'Simulador y metas', to: PATHS.toolsSimulator, icon: Target, keywords: ['monte carlo', 'retiro'] },
     ],
   },
+  {
+    // El índice /empresas (V5EM) lee esta sección para ligar sus páginas: lo que se agregue aquí
+    // aparece allá sin tocar la página.
+    id: 'empresas',
+    label: 'Empresas',
+    icon: Factory,
+    items: [
+      { id: 'actualizacion', label: 'Actualización e INPC', to: PATHS.businessUpdate, icon: Calculator, keywords: ['inpc', 'factor', 'recargos', 'renta'] },
+      { id: 'referencias', label: 'Valores de referencia', to: PATHS.businessReference, icon: BookMarked, keywords: ['uma', 'salario mínimo', 'udi'] },
+      { id: 'fx-contable', label: 'Tipo de cambio contable', to: PATHS.businessFx, icon: Receipt, keywords: ['fix', 'dof', 'contabilidad', 'cierre de mes'] },
+      { id: 'cobertura', label: 'Forward y presupuesto', to: PATHS.businessHedge, icon: ShieldCheck, keywords: ['forward', 'dólares', 'presupuesto'] },
+      { id: 'costo-de-capital', label: 'Costo de capital', to: PATHS.businessCapital, icon: Coins, keywords: ['wacc', 'beta', 'valuación'] },
+      { id: 'credito', label: 'Crédito a TIIE', to: PATHS.businessCredit, icon: HandCoins, keywords: ['préstamo', 'amortización', 'tiie', 'sofr'] },
+      { id: 'contrapartes', label: 'Contrapartes', to: PATHS.businessCounterparties, icon: Handshake, keywords: ['clientes', 'proveedores', 'salud financiera'] },
+    ],
+  },
 ])
 
 /** Entradas sueltas al final de la barra lateral. @type {readonly NavItem[]} */
 export const NAV_EXTRA = Object.freeze([
   { id: 'watchlist', label: 'Lista de seguimiento', to: PATHS.watchlist, icon: Eye, keywords: ['watchlist', 'favoritas', 'lista'] },
+  { id: 'alertas', label: 'Alertas', to: PATHS.alerts, icon: Bell, keywords: ['avisos', 'precio', 'fix', 'dividendo'] },
   { id: 'aprender', label: 'Aprender', to: PATHS.learn, icon: BookOpen, keywords: ['glosario', 'guías'] },
 ])
 
@@ -134,8 +176,12 @@ export function activeNavItem(pathname) {
   return best
 }
 
+/** Prefijos que no tienen botón propio en la barra inferior y marcan "Más". */
+const MORE_PREFIXES = Object.freeze([PATHS.business, PATHS.alerts])
+
 /**
- * Id de la entrada de la barra inferior activa, "mas" para Watchlist y Aprender, o null.
+ * Id de la entrada de la barra inferior activa, "mas" para Empresas, Watchlist, Alertas y
+ * Aprender, o null.
  * @param {string} pathname
  */
 export function activeBottomId(pathname) {
@@ -143,6 +189,7 @@ export function activeBottomId(pathname) {
   for (const [id, prefixes] of Object.entries(BOTTOM_PREFIXES)) {
     if (prefixes.some((p) => path === p || path.startsWith(`${p}/`))) return id
   }
+  if (MORE_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`))) return 'mas'
   if (NAV_EXTRA.some((item) => path === item.to || path.startsWith(`${item.to}/`))) return 'mas'
   return null
 }

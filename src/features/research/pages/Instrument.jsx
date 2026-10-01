@@ -1,12 +1,13 @@
 // Ficha de la emisora (/investigar/:symbol). Cada bloque trae su consulta con su DataStatus y sus
 // estados de carga, vacío y error: si una sección falla, el resto de la ficha sigue en pie.
-import { Fragment, Suspense, useState } from 'react'
+import { Fragment, Suspense, lazy, useState } from 'react'
 import { useParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { dividendsQuery, historyQuery, instrumentQuery, momentumQuery, newsQuery, statementsQuery } from '../../../lib/api/queries.js'
 import { fmtDate, fmtDateTime, fmtMoney, fmtMultiple, fmtNumber, fmtPct } from '../../../lib/format.js'
 import { Card, DataTable, Delta, PageHeader, SegmentedControl, Skeleton, Stat } from '../../../components/ui/index.js'
 import { PATHS } from '../../../app/paths.js'
+import { FeatureSlot } from '../../../app/FeatureSlot.jsx'
 import { usePageTitle } from '../../../app/pageTitle.js'
 import { QueryBlock } from '../components/QueryBlock.jsx'
 import { TimeSeries } from '../components/charts.js'
@@ -15,6 +16,24 @@ import { SectionNotes } from '../components/SectionNotes.jsx'
 import { safeUrl } from '../symbols.js'
 import { countryEs, industryEs, looksEnglish, sectorEs } from '../yahoo-labels.js'
 import '../research.css'
+
+// Ranuras de la fase 5: cada sección la construye su stream en su carpeta y llega por lazy. Cada
+// una va dentro de FeatureSlot (Suspense y ErrorBoundary propios) y solo se monta si el servidor
+// anuncia su capacidad. Mientras el archivo devuelva null, la ficha se ve igual que antes.
+const Slots = {
+  Technical: lazy(() => import('../../technical/TechnicalSection.jsx')),
+  Earnings: lazy(() => import('../../company/sections/EarningsSection.jsx')),
+  Holders: lazy(() => import('../../company/sections/HoldersSection.jsx')),
+  Insiders: lazy(() => import('../../company/sections/InsidersSection.jsx')),
+  Shares: lazy(() => import('../../company/sections/SharesSection.jsx')),
+  Filings: lazy(() => import('../../company/sections/FilingsSection.jsx')),
+  Fund: lazy(() => import('../../funds/sections/FundSection.jsx')),
+  CreditHealth: lazy(() => import('../../business/sections/CreditHealthSection.jsx')),
+  AddToWatchlist: lazy(() => import('../../watchlist/AddToWatchlist.jsx')),
+}
+
+/** @param {{ type?: string } | undefined} data */
+const isEtf = (data) => String(data?.type ?? '').toLowerCase() === 'etf'
 
 const RANGES = [
   { value: '6mo', label: '6 meses' },
@@ -307,15 +326,46 @@ export default function Instrument() {
         eyebrow={title ?? 'Ficha de la emisora'}
         description="Precio, fundamentales, estados financieros, valuación y noticias. Es información para entender a la emisora, no una recomendación."
         breadcrumbs={[{ label: 'Investigar', to: PATHS.research }, { label: symbol }]}
+        actions={
+          <FeatureSlot>
+            <Slots.AddToWatchlist symbol={symbol} name={name} />
+          </FeatureSlot>
+        }
       />
       <Overview query={info} />
       <History symbol={symbol} name={name} />
+      <FeatureSlot capabilities={['ohlc']}>
+        <Slots.Technical symbol={symbol} instrument={info.data} />
+      </FeatureSlot>
       <div className="kz-research-grid" data-cols="2">
         <Momentum symbol={symbol} />
         <Dividends symbol={symbol} />
       </div>
+      {isEtf(info.data) ? (
+        <FeatureSlot capabilities={['funds']}>
+          <Slots.Fund symbol={symbol} instrument={info.data} />
+        </FeatureSlot>
+      ) : null}
+      <FeatureSlot capabilities={['earnings']}>
+        <Slots.Earnings symbol={symbol} instrument={info.data} />
+      </FeatureSlot>
       <Valuation key={symbol} symbol={symbol} />
       <Statements symbol={symbol} />
+      <FeatureSlot capabilities={['creditHealth']}>
+        <Slots.CreditHealth symbol={symbol} instrument={info.data} />
+      </FeatureSlot>
+      <FeatureSlot capabilities={['holders']}>
+        <Slots.Holders symbol={symbol} instrument={info.data} />
+      </FeatureSlot>
+      <FeatureSlot capabilities={['insiders']}>
+        <Slots.Insiders symbol={symbol} instrument={info.data} />
+      </FeatureSlot>
+      <FeatureSlot capabilities={['shares']}>
+        <Slots.Shares symbol={symbol} instrument={info.data} />
+      </FeatureSlot>
+      <FeatureSlot capabilities={['filings']}>
+        <Slots.Filings symbol={symbol} instrument={info.data} />
+      </FeatureSlot>
       <News symbol={symbol} />
     </div>
   )

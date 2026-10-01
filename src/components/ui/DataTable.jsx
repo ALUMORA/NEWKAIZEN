@@ -5,6 +5,7 @@ import { cn } from '../../cn.js'
 import { EmptyState, ErrorState, Skeleton } from './Feedback.jsx'
 import { InfoTip } from './InfoTip.jsx'
 import { isMissing, nextSort, sortRows } from './table-sort.js'
+import { DownloadButton } from './DownloadButton.jsx'
 
 /**
  * @typedef {object} DataTableColumn
@@ -48,6 +49,8 @@ import { isMissing, nextSort, sortRows } from './table-sort.js'
  * @param {boolean} [props.stickyFirstColumn] true por omisión
  * @param {number|string} [props.maxHeight] con alto máximo, el encabezado se queda fijo al hacer scroll
  * @param {string} [props.className]
+ * @param {{ filename: string, columns?: { key: string, header: string }[], meta?: any }} [props.download] botón Descargar
+ *   (DownloadButton, fase 5) con las filas en el orden que se ven; aditiva y sin cambio visual mientras sea provisional
  */
 export function DataTable({
   columns,
@@ -69,6 +72,7 @@ export function DataTable({
   stickyFirstColumn = true,
   maxHeight,
   className,
+  download,
 }) {
   const captionId = useId()
   const [innerSort, setInnerSort] = useState(defaultSort ?? null)
@@ -107,6 +111,7 @@ export function DataTable({
 
   return (
     <div className={cn('kz-table-frame', className)}>
+      {download ? <DownloadButton filename={download.filename} columns={download.columns ?? columns} rows={sorted} meta={download.meta} /> : null}
       <div
         ref={scrollRef}
         className="kz-table-scroll"

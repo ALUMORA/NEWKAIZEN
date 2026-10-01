@@ -34,13 +34,13 @@ describe('palette-model', () => {
   it('con texto filtra rutas sin acentos y pone primero las emisoras', () => {
     const groups = buildGroups({ q: 'mexico', results: [walmex], routes, dark: true })
     expect(groups[0].options[0]).toMatchObject({ kind: 'symbol', to: '/investigar/WALMEX.MX' })
-    expect(groups[1].options.map((o) => o.label)).toEqual(['México y tasas'])
+    expect(groups[1].options.map((o) => o.label)).toEqual(['México'])
     expect(groups.find((g) => g.id === 'acciones')).toBeUndefined()
   })
 
   it('las rutas cuyo nombre empieza con lo tecleado van primero', () => {
     const go = buildGroups({ q: 'resumen', routes, dark: false }).find((g) => g.id === 'ir-a')
-    expect(go?.options.map((o) => o.label)).toEqual(['Resumen', 'Panorama'])
+    expect(go?.options.map((o) => o.label)).toEqual(['Resumen del día', 'Resumen', 'Panorama'])
   })
 
   it('tema: el texto de la acción sigue al tema actual', () => {

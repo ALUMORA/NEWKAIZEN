@@ -22,10 +22,45 @@ export const HEALTH_V2 = Object.freeze({
   version: '2.0.0-e2e',
   commit: null,
   authRequired: true,
-  capabilities: ['history.dates', 'fx.fix', 'rates.mx', 'rf.series', 'search'],
+  capabilities: ['rates.mx', 'rf.series', 'search'],
   providers: { yahoo: { ok: true }, banxico: { configured: true }, fred: { configured: true }, sec: { ok: true }, eodhd: { configured: false } },
   serverTime: '2026-09-22T14:52:19Z',
 })
+
+/**
+ * Capacidades de la fase 5 por stream (schemas.KNOWN_CAPABILITIES). NO van en HEALTH_V2: cada spec
+ * anuncia solo las suyas con healthWith(...) o con `capabilities` en setupApp, y declara sus
+ * handlers en `routes`. Así una spec vieja nunca pide por accidente una ruta que no mockeó.
+ */
+export const V5_CAPABILITIES = Object.freeze({
+  V5TS: ['curves', 'moneyMarket', 'expectations'],
+  V5FX: ['fxdesk', 'fxdesk.crosses', 'fxdesk.fix', 'fxdesk.forward'],
+  V5EC: ['calendar.economic', 'macro.indicators', 'macro.world'],
+  V5FI: ['earnings', 'holders', 'shares', 'filings'],
+  V5TC: ['ohlc', 'ohlc.intraday'],
+  V5MK: ['movers', 'breadth', 'sectors'],
+  V5PF: ['events.season', 'events.dividends', 'funds'],
+  V5EM: ['reference.mx', 'business.industries', 'creditHealth'],
+})
+
+/**
+ * /health del API v2 con capacidades extra, sin repetir las que ya trae la base.
+ *   const HEALTH = healthWith(['markets.overview', ...V5_CAPABILITIES.V5TS])
+ * @param {string[]} extra
+ * @param {{ capabilities: string[] }} [base] HEALTH_V2 por omisión
+ */
+export function healthWith(extra, base = HEALTH_V2) {
+  return { ...base, capabilities: [...new Set([...base.capabilities, ...extra])] }
+}
+
+/**
+ * `meta` del contrato v2 para las respuestas mockeadas (docs/api-v2.md): sin respaldo, sin notas y
+ * con la fecha del reloj de e2e, salvo lo que se cambie.
+ * @param {Record<string, unknown>} [overrides]
+ */
+export function v2Meta(overrides = {}) {
+  return { asOf: '2026-09-22T14:51:31Z', source: 'e2e', stale: false, fallback: false, notes: [], ...overrides }
+}
 
 /** /health del backend viejo. */
 export const HEALTH_LEGACY = Object.freeze({ status: 'ok' })
@@ -54,12 +89,13 @@ export function expectedHttpError(status, method, path, reason) {
  * @param {import('@playwright/test').Page} page
  * @param {{ baseURL: string, health?: 'v2' | 'legacy' | 'down' | object | null,
  *   healthDelayMs?: number, session?: boolean | object, fixClock?: boolean,
- *   routes?: Record<string, any> }} options
+ *   routes?: Record<string, any>, capabilities?: string[] }} options
+ *   capabilities: extra sobre HEALTH_V2 cuando health es 'v2' (p. ej. V5_CAPABILITIES.V5MK).
  */
-export async function setupApp(page, { baseURL, health = 'v2', healthDelayMs = 0, session = false, fixClock = true, routes = {} }) {
+export async function setupApp(page, { baseURL, health = 'v2', healthDelayMs = 0, session = false, fixClock = true, routes = {}, capabilities = [] }) {
   await blockExternalRequests(page, [baseURL, API_BASE])
   const table = { ...routes }
-  if (health === 'v2') table['GET /health'] = { json: HEALTH_V2, delayMs: healthDelayMs }
+  if (health === 'v2') table['GET /health'] = { json: capabilities.length ? healthWith(capabilities) : HEALTH_V2, delayMs: healthDelayMs }
   else if (health === 'legacy') table['GET /health'] = { json: HEALTH_LEGACY, delayMs: healthDelayMs }
   else if (health === 'down') table['GET /health'] = { status: 503, body: 'Service Unavailable', contentType: 'text/html', delayMs: healthDelayMs }
   else if (health && typeof health === 'object') table['GET /health'] = { json: health, delayMs: healthDelayMs }

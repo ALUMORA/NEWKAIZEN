@@ -5,6 +5,8 @@
 .kz-chart__title { color: var(--ink); font-size: var(--text-md); font-weight: var(--weight-semibold); line-height: var(--leading-tight); margin: 0; }
 .kz-chart__caption { color: var(--muted); font-size: var(--text-xs); line-height: var(--leading-normal); margin: 0; max-width: 68ch; }
 .kz-chart__actions { display: flex; align-items: center; gap: var(--space-2); flex-shrink: 0; }
+/* Con solo un DownloadButton que todavía no pinta nada, el contenedor no ocupa lugar. */
+.kz-chart__actions:empty { display: none; }
 .kz-chart__legend { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-4); list-style: none; margin: 0; padding: 0; }
 .kz-chart__legend-item { align-items: center; color: var(--ink-soft); display: inline-flex; font-size: var(--text-xs); gap: var(--space-2); min-height: 20px; }
 .kz-chart__legend-value { color: var(--ink); font-weight: var(--weight-semibold); }

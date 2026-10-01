@@ -88,3 +88,6 @@ export { walkForward } from './walkforward.js'
 export { createRng } from '../rng.js'
 export { lognormalParams, simulate, fromMessage } from './montecarlo.js'
 export { probabilityOfGoal, requiredContribution, retirementIncome } from './goals.js'
+
+// ─── Fase 5 (V5TC): indicadores técnicos. Reexporte completo para que el stream no toque este barril ─
+export * from './technical.js'

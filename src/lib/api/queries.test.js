@@ -3,6 +3,7 @@
 // la app esperaría el doble antes de ver el error.
 import { ApiError } from './http.js'
 import { COLD_START_DELAYS_MS } from './client.js'
+import * as Q from './queries.js'
 import { STALE_TIME, createQueryClient, factorScreenerQuery, queryKeys, shouldRetry } from './queries.js'
 
 const abort = () => Object.assign(new Error('The operation was aborted.'), { name: 'AbortError' })
@@ -76,5 +77,90 @@ describe('factorScreenerQuery', () => {
     expect(factorScreenerQuery({ universe: 'mx' }).enabled).toBe(true)
     expect(factorScreenerQuery({ universe: 'us' }).enabled).toBe(true)
     expect(factorScreenerQuery().enabled).toBe(true)
+  })
+})
+
+describe('fase 5', () => {
+  const FACTORIES = [
+    'curvesQuery', 'curveSpreadsQuery', 'moneyMarketQuery', 'expectationsQuery', 'fxMonitorQuery', 'fxCrossesQuery', 'fixQuery', 'fixTableQuery',
+    'fxForwardQuery', 'economicCalendarQuery', 'macroIndicatorsQuery', 'macroWorldQuery', 'eventsSeasonQuery', 'earningsQuery', 'holdersQuery',
+    'sharesQuery', 'filingsQuery', 'ohlcQuery', 'moversQuery', 'breadthQuery', 'sectorsQuery', 'fundQuery', 'referenceMxQuery',
+    'updateFactorQuery', 'industriesQuery', 'creditHealthQuery',
+  ]
+
+  it('hay un xQuery por ruta nueva, con llave bajo "api" y frescura de una clase conocida', () => {
+    const classes = new Set(Object.values(STALE_TIME))
+    for (const name of FACTORIES) {
+      const factory = /** @type {any} */ (Q)[name]
+      expect(typeof factory, name).toBe('function')
+      const opts = factory('AAPL', {})
+      expect(opts.queryKey[0], name).toBe('api')
+      expect(classes.has(opts.staleTime), name).toBe(true)
+      expect(typeof opts.queryFn, name).toBe('function')
+    }
+  })
+
+  it('clases nuevas: curvas 1 h, intradía 1 min y referencia 24 h, las mismas de http_cache.CACHE_SECONDS', () => {
+    expect(STALE_TIME.curves).toBe(3_600_000)
+    expect(STALE_TIME.intraday).toBe(60_000)
+    expect(STALE_TIME.reference).toBe(86_400_000)
+    // El backend no tiene clase "movers": las rutas de movimientos van con la de cotizaciones.
+    expect(/** @type {any} */ (STALE_TIME).movers).toBeUndefined()
+  })
+
+  // Clase de caché de cada ruta en kaizen_api/routers/*.py (cache_control): la frescura del cliente
+  // es la misma que el Cache-Control que manda el servidor.
+  it.each([
+    ['curvesQuery', () => Q.curvesQuery({ country: 'mx' }), 'curves'],
+    ['curveSpreadsQuery', () => Q.curveSpreadsQuery(), 'curves'],
+    ['moneyMarketQuery', () => Q.moneyMarketQuery(), 'macro'],
+    ['expectationsQuery', () => Q.expectationsQuery(), 'macro'],
+    ['fxMonitorQuery', () => Q.fxMonitorQuery(), 'macro'],
+    ['fxCrossesQuery', () => Q.fxCrossesQuery(), 'macro'],
+    ['fixQuery', () => Q.fixQuery({ date: '2026-09-30' }), 'macro'],
+    ['fixTableQuery', () => Q.fixTableQuery({ start: '2026-01-01', end: '2026-09-30' }), 'macro'],
+    ['fxForwardQuery', () => Q.fxForwardQuery(), 'macro'],
+    ['economicCalendarQuery', () => Q.economicCalendarQuery({ start: '2026-10-01', end: '2026-10-07' }), 'reference'],
+    ['macroIndicatorsQuery', () => Q.macroIndicatorsQuery({ country: 'mx' }), 'macro'],
+    ['macroWorldQuery', () => Q.macroWorldQuery(), 'reference'],
+    ['eventsSeasonQuery', () => Q.eventsSeasonQuery({ universe: 'mx' }), 'fundamentals'],
+    ['earningsQuery', () => Q.earningsQuery('AAPL'), 'fundamentals'],
+    ['holdersQuery', () => Q.holdersQuery('AAPL'), 'fundamentals'],
+    ['sharesQuery', () => Q.sharesQuery('AAPL'), 'fundamentals'],
+    ['filingsQuery', () => Q.filingsQuery('AAPL'), 'fundamentals'],
+    ['moversQuery', () => Q.moversQuery({ market: 'mx', kind: 'gainers' }), 'quotes'],
+    ['breadthQuery', () => Q.breadthQuery({ market: 'mx' }), 'quotes'],
+    ['sectorsQuery', () => Q.sectorsQuery({ market: 'mx' }), 'quotes'],
+    ['fundQuery', () => Q.fundQuery('SPY'), 'fundamentals'],
+    ['referenceMxQuery', () => Q.referenceMxQuery(), 'reference'],
+    ['updateFactorQuery', () => Q.updateFactorQuery({ from: '2025-01', to: '2026-08' }), 'macro'],
+    ['industriesQuery', () => Q.industriesQuery({ market: 'US' }), 'reference'],
+    ['creditHealthQuery', () => Q.creditHealthQuery('AAPL'), 'fundamentals'],
+  ])('%s usa la frescura de la clase %s', (_, make, cls) => {
+    expect(make().staleTime).toBe(/** @type {any} */ (STALE_TIME)[cls])
+  })
+
+  it('velas intradía se refrescan cada minuto; las diarias no', () => {
+    const intraday = Q.ohlcQuery('AAPL', { range: '1d', interval: '5m' })
+    expect(intraday.staleTime).toBe(STALE_TIME.intraday)
+    expect(typeof intraday.refetchInterval).toBe('function')
+    const daily = Q.ohlcQuery('AAPL', { range: '1y', interval: '1d' })
+    expect(daily.staleTime).toBe(STALE_TIME.history)
+    expect(daily.refetchInterval).toBe(false)
+  })
+
+  it('las llaves no dependen del orden de las listas ni de los undefined', () => {
+    expect(queryKeys.curves({ country: 'mx', compare: ['1y', '1w'] })).toEqual(queryKeys.curves({ country: 'mx', compare: ['1w', '1y'], extra: undefined }))
+    expect(queryKeys.earnings(' aapl'.trim())).toEqual(['api', 'earnings', 'AAPL'])
+    expect(queryKeys.ohlc('aapl')).toEqual(['api', 'ohlc', 'AAPL', { range: '6mo', interval: '1d' }])
+  })
+
+  it('las que piden fechas o meses no salen sin ellas', () => {
+    expect(Q.fixQuery(/** @type {any} */ ({})).enabled).toBe(false)
+    expect(Q.fixTableQuery(/** @type {any} */ ({ start: '2026-01-01' })).enabled).toBe(false)
+    expect(Q.economicCalendarQuery(/** @type {any} */ ({ end: '2026-10-01' })).enabled).toBe(false)
+    expect(Q.updateFactorQuery(/** @type {any} */ ({ from: '2026-01' })).enabled).toBe(false)
+    expect(Q.earningsQuery('').enabled).toBe(false)
+    expect(Q.fixQuery({ date: '2026-09-30' }).enabled).toBe(true)
   })
 })

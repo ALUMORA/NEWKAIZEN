@@ -2,7 +2,12 @@ import { installFetch, json } from '../../test/fetchMock.js'
 import { resetSessionForTests } from '../auth/session.js'
 import { resetCapabilitiesForTests } from './capabilities.js'
 import { API_BASE } from './config.js'
-import { MAX_SYMBOLS, getAssumptions, getHistory, getInpc, getInstrument, getPanel, getQuotes, getValuation, normalizeSymbol, normalizeSymbols } from './endpoints.js'
+import {
+  MAX_SYMBOLS, getAssumptions, getBreadth, getCreditHealth, getCurveSpreads, getCurves, getEarnings, getEconomicCalendar, getEventsSeason,
+  getExpectations, getFilings, getFix, getFixTable, getFund, getFxCrosses, getFxForward, getFxMonitor, getHistory, getHolders, getIndustries,
+  getInpc, getInstrument, getMacroIndicators, getMacroWorld, getMoneyMarket, getMovers, getOhlc, getPanel, getQuotes, getReferenceMx,
+  getSectors, getShares, getUpdateFactor, getValuation, isValidOhlc, normalizeSymbol, normalizeSymbols,
+} from './endpoints.js'
 import { legacyFx, legacyHistory, legacyQuotes, legacyRiskFree } from './legacy.js'
 
 beforeEach(() => {
@@ -125,5 +130,187 @@ describe('adaptadores del API viejo', () => {
     expect(rf.meta.fallback).toBe(true)
     expect(rf.meta.notes.join(' ')).toMatch(/Bono M 10Y .*en lugar de CETES 28/)
     await expect(legacyRiskFree()).rejects.toMatchObject({ status: 503 })
+  })
+})
+
+describe('fase 5: rutas y validación antes de salir a la red', () => {
+  it('arma rutas y query exactos del contrato', async () => {
+    const f = installFetch(Array.from({ length: 26 }, () => json(200, { meta: {} })))
+    await getCurves({ country: 'mx', compare: ['1w', '1y'] })
+    await getCurveSpreads({ history: '5y' })
+    await getMoneyMarket()
+    await getExpectations()
+    await getFxMonitor({ years: 5 })
+    await getFxCrosses()
+    await getFix({ date: '2026-09-30', rule: 'dof' })
+    await getFixTable({ start: '2026-01-01', end: '2026-09-30', rule: 'dof', monthEnd: true })
+    await getFxForward({ days: [30, 91], mxn: 'tiie', usd: 'sofr' })
+    await getEconomicCalendar({ start: '2026-10-01', end: '2026-10-31', country: ['mx', 'us'] })
+    await getMacroIndicators({ country: 'us', years: 'max' })
+    await getMacroWorld({ countries: ['mex', 'USA', 'BRA'], indicators: ['gdpGrowth', 'inflation'] })
+    await getEventsSeason({ universe: 'mx', days: 60 })
+    await getEarnings('aapl')
+    await getHolders('AAPL')
+    await getShares('AAPL', { start: '2023-10-01' })
+    await getFilings('AAPL', { forms: ['10-K', '8-K', 'SC 13G'], limit: 20 })
+    await getOhlc('walmex.mx', { range: '1mo', interval: '5m', compare: '^MXX' })
+    await getMovers({ market: 'us', kind: 'losers', limit: 25 })
+    await getBreadth({ market: 'mx' })
+    await getSectors({ market: 'us' })
+    await getFund('spy')
+    await getReferenceMx()
+    await getUpdateFactor({ from: '2025-01', to: '2026-08' })
+    await getIndustries({ market: 'EM' })
+    await getCreditHealth('WALMEX.MX', { years: 5 })
+    expect(f.calls.map((c) => c.url.replace(API_BASE, ''))).toEqual([
+      '/v2/curves?country=mx&compare=1w%2C1y',
+      '/v2/curves/spreads?history=5y',
+      '/v2/money-market',
+      '/v2/expectations',
+      '/v2/fxdesk/monitor?years=5',
+      '/v2/fxdesk/crosses',
+      '/v2/fxdesk/fix?date=2026-09-30&rule=dof',
+      '/v2/fxdesk/fix-table?start=2026-01-01&end=2026-09-30&rule=dof&monthEnd=true',
+      '/v2/fxdesk/forward?days=30%2C91&mxn=tiie&usd=sofr',
+      '/v2/calendar/economic?start=2026-10-01&end=2026-10-31&country=mx%2Cus',
+      '/v2/macro/indicators?country=us&years=max',
+      '/v2/macro/world?countries=MEX%2CUSA%2CBRA&indicators=gdpGrowth%2Cinflation',
+      '/v2/events/season?universe=mx&days=60',
+      '/v2/earnings/AAPL',
+      '/v2/holders/AAPL',
+      '/v2/shares/AAPL?start=2023-10-01',
+      '/v2/filings/AAPL?forms=10-K%2C8-K%2CSC+13G&limit=20',
+      '/v2/ohlc/WALMEX.MX?range=1mo&interval=5m&compare=%5EMXX',
+      '/v2/movers?market=us&kind=losers&limit=25',
+      '/v2/breadth?market=mx',
+      '/v2/sectors?market=us',
+      '/v2/funds/SPY',
+      '/v2/reference/mx',
+      '/v2/reference/mx/update-factor?from=2025-01&to=2026-08',
+      '/v2/business/industries?market=EM',
+      '/v2/credit-health/WALMEX.MX?years=5',
+    ])
+  })
+
+  it('los opcionales sin dar no viajan', async () => {
+    const f = installFetch(Array.from({ length: 6 }, () => json(200, { meta: {} })))
+    await getCurves({ country: 'us' })
+    await getCurveSpreads()
+    await getFxMonitor()
+    await getFix({ date: '2026-09-30' })
+    await getFxForward()
+    await getOhlc('AAPL')
+    expect(f.calls.map((c) => c.url.replace(API_BASE, ''))).toEqual([
+      '/v2/curves?country=us',
+      '/v2/curves/spreads',
+      '/v2/fxdesk/monitor?years=1',
+      '/v2/fxdesk/fix?date=2026-09-30&rule=fecha',
+      '/v2/fxdesk/forward',
+      '/v2/ohlc/AAPL?range=6mo&interval=1d',
+    ])
+  })
+
+  it.each([
+    ['país fuera del contrato', () => getCurves({ country: /** @type {any} */ ('br') })],
+    ['país faltante', () => getCurves(/** @type {any} */ ({}))],
+    ['comparación desconocida', () => getCurves({ country: 'mx', compare: /** @type {any} */ (['2y']) })],
+    ['historia de diferenciales', () => getCurveSpreads({ history: /** @type {any} */ ('10y') })],
+    ['años del monitor', () => getFxMonitor({ years: /** @type {any} */ (2) })],
+    ['fecha del FIX mal formada', () => getFix({ date: '30/09/2026' })],
+    ['fecha del FIX imposible', () => getFix({ date: '2026-02-30' })],
+    ['regla del FIX', () => getFix({ date: '2026-09-30', rule: /** @type {any} */ ('sat') })],
+    ['tabla de FIX de más de 3 × 366 días', () => getFixTable({ start: '2020-01-01', end: '2023-01-04' })],
+    ['tabla de FIX antes del primer FIX', () => getFixTable({ start: '1991-11-11', end: '1992-01-31' })],
+    ['FIX antes del primer FIX', () => getFix({ date: '1991-11-11' })],
+    ['más de 12 plazos en forward', () => getFxForward({ days: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] })],
+    ['tabla de FIX al revés', () => getFixTable({ start: '2026-09-30', end: '2026-01-01' })],
+    ['plazo 0 en forward', () => getFxForward({ days: [0] })],
+    ['plazo mayor a 365 en forward', () => getFxForward({ days: [366] })],
+    ['plazos y fecha a la vez', () => getFxForward({ days: [30], date: '2026-12-31' })],
+    ['referencia en pesos', () => getFxForward({ mxn: /** @type {any} */ ('libor') })],
+    ['calendario de más de 90 días', () => getEconomicCalendar({ start: '2026-01-01', end: '2026-06-01' })],
+    ['país del calendario', () => getEconomicCalendar({ start: '2026-10-01', end: '2026-10-02', country: /** @type {any} */ (['ca']) })],
+    ['años de indicadores', () => getMacroIndicators({ country: 'mx', years: /** @type {any} */ (3) })],
+    ['país del comparador', () => getMacroWorld({ countries: ['MX'] })],
+    ['más de 10 países', () => getMacroWorld({ countries: ['MEX', 'USA', 'BRA', 'ARG', 'CHL', 'COL', 'PER', 'CAN', 'DEU', 'FRA', 'JPN'] })],
+    ['indicador del comparador', () => getMacroWorld({ indicators: /** @type {any} */ (['pib']) })],
+    ['ventana de la temporada', () => getEventsSeason({ universe: 'us', days: /** @type {any} */ (45) })],
+    ['símbolo mal formado', () => getEarnings('no válido')],
+    ['inicio de acciones', () => getShares('AAPL', { start: '2023-13-01' })],
+    ['tipo de documento', () => getFilings('AAPL', { forms: ['S-1'] })],
+    ['límite de documentos', () => getFilings('AAPL', { limit: 51 })],
+    ['intradía de 5 minutos a un año', () => getOhlc('AAPL', { range: '1y', interval: '5m' })],
+    ['intradía de 1 hora a 5 años', () => getOhlc('AAPL', { range: '5y', interval: '1h' })],
+    ['velas semanales de 5 días', () => getOhlc('AAPL', { range: '5d', interval: '1wk' })],
+    ['velas mensuales de un mes', () => getOhlc('AAPL', { range: '1mo', interval: '1mo' })],
+    ['periodo de velas', () => getOhlc('AAPL', { range: /** @type {any} */ ('3mo') })],
+    ['referencia de velas', () => getOhlc('AAPL', { compare: /** @type {any} */ ('QQQ') })],
+    ['tipo de movimientos', () => getMovers({ market: 'mx', kind: /** @type {any} */ ('up') })],
+    ['límite de movimientos', () => getMovers({ market: 'mx', kind: 'active', limit: 5 })],
+    ['mercado de amplitud', () => getBreadth({ market: /** @type {any} */ ('eu') })],
+    ['mercado de sectores', () => getSectors(/** @type {any} */ ({}))],
+    ['mes del INPC', () => getUpdateFactor({ from: '2025-1', to: '2026-08' })],
+    ['meses al revés', () => getUpdateFactor({ from: '2026-08', to: '2025-01' })],
+    ['mercado de industrias en minúsculas', () => getIndustries({ market: /** @type {any} */ ('us') })],
+    ['años de salud financiera', () => getCreditHealth('AAPL', { years: /** @type {any} */ (10) })],
+  ])('%s: 400 sin salir a la red', async (_, call) => {
+    const f = installFetch([])
+    await expect(call()).rejects.toMatchObject({ status: 400 })
+    expect(f.calls).toHaveLength(0)
+  })
+
+  it('isValidOhlc adelanta las combinaciones que el API contesta con 400', () => {
+    expect(isValidOhlc('1mo', '5m')).toBe(true)
+    expect(isValidOhlc('6mo', '5m')).toBe(false)
+    expect(isValidOhlc('1y', '1h')).toBe(true)
+    expect(isValidOhlc('max', '1h')).toBe(false)
+    expect(isValidOhlc('max', '1mo')).toBe(true)
+    expect(isValidOhlc('2y', '1d')).toBe(false)
+    // La tabla completa de ohlc.VALID_RANGES del backend, no solo la del intradía.
+    expect(isValidOhlc('1d', '1wk')).toBe(false)
+    expect(isValidOhlc('5d', '1wk')).toBe(false)
+    expect(isValidOhlc('1mo', '1wk')).toBe(true)
+    expect(isValidOhlc('1d', '1mo')).toBe(false)
+    expect(isValidOhlc('5d', '1mo')).toBe(false)
+    expect(isValidOhlc('1mo', '1mo')).toBe(false)
+    expect(isValidOhlc('6mo', '1mo')).toBe(true)
+  })
+
+  it('la tabla de FIX admite hasta 3 × 366 días y desde el 12 de noviembre de 1991, como el API', async () => {
+    const f = installFetch([json(200, { meta: {} }), json(200, { meta: {} }), json(200, { meta: {} })])
+    await getFixTable({ start: '2020-01-01', end: '2023-01-03' })
+    await getFixTable({ start: '1991-11-12', end: '1992-01-31' })
+    await getFix({ date: '1991-11-12' })
+    expect(f.calls).toHaveLength(3)
+  })
+
+  describe('fechas contra hoy en la Ciudad de México', () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'] })
+      // 1 de octubre de 2026, 23:30 en la Ciudad de México (ya es 2 de octubre en UTC).
+      vi.setSystemTime(new Date('2026-10-02T05:30:00Z'))
+    })
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it.each([
+      ['forward a hoy', () => getFxForward({ date: '2026-10-01' })],
+      ['forward a ayer', () => getFxForward({ date: '2026-09-30' })],
+      ['forward a más de 365 días', () => getFxForward({ date: '2027-10-02' })],
+      ['inicio de acciones futuro', () => getShares('AAPL', { start: '2026-10-02' })],
+    ])('%s: 400 sin salir a la red', async (_, call) => {
+      const f = installFetch([])
+      await expect(call()).rejects.toMatchObject({ status: 400 })
+      expect(f.calls).toHaveLength(0)
+    })
+
+    it('forward de mañana a 365 días y acciones desde hoy sí salen', async () => {
+      const f = installFetch([json(200, { meta: {} }), json(200, { meta: {} }), json(200, { meta: {} })])
+      await getFxForward({ date: '2026-10-02' })
+      await getFxForward({ date: '2027-10-01' })
+      await getShares('AAPL', { start: '2026-10-01' })
+      expect(f.calls).toHaveLength(3)
+    })
   })
 })

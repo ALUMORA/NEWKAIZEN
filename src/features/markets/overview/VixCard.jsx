@@ -96,7 +96,7 @@ function Percentile({ ctx, history }) {
 export function VixCard() {
   const overviewFeature = useFeature(['markets.overview'])
   const macroFeature = useFeature(['macro.us'])
-  const historyFeature = useFeature(['history', 'history.dates'])
+  const historyFeature = useFeature(['history'])
   const overview = useQuery({ ...marketsOverviewQuery(), enabled: overviewFeature.enabled })
   const macro = useQuery({ ...macroUsQuery(), enabled: macroFeature.enabled })
   const vix = pickVix(overview.data, macro.data)

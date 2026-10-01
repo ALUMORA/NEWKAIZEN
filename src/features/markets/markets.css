@@ -11,21 +11,6 @@
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 140px), 1fr));
   gap: var(--space-4);
 }
-.markets-notes {
-  border: 1px solid var(--stale);
-  background: var(--stale-soft);
-  border-radius: var(--radius-md, 8px);
-  padding: var(--space-3) var(--space-4);
-  font-size: var(--text-sm);
-}
-.markets-notes__title {
-  margin: 0 0 var(--space-1);
-  font-weight: var(--weight-semibold);
-}
-.markets-notes ul {
-  margin: 0;
-  padding-left: var(--space-5);
-}
 .markets-calc {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));

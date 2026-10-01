@@ -62,6 +62,21 @@ export function isFxLike(item, groupId) {
 }
 
 /**
+ * ¿El renglón tiene una ficha útil en /investigar? Sí las emisoras, los ETF y los índices (precio,
+ * historia y gráfica técnica); no los tipos de cambio (=X y el DXY), los futuros de materias primas
+ * (=F) ni la cripto (-USD), cuya ficha no trae más que el precio que ya se ve aquí.
+ * @param {{ symbol?: string } | null | undefined} item
+ */
+export function hasInstrumentPage(item) {
+  const symbol = String(item?.symbol ?? '')
+  if (!symbol) return false
+  if (/=X$/.test(symbol) || symbol === DXY_SYMBOL) return false
+  if (/=F$/.test(symbol)) return false
+  if (/-USD$/.test(symbol)) return false
+  return true
+}
+
+/**
  * Precio de un renglón del panorama: índices en puntos, divisas con 4 decimales (el DXY con 2),
  * materias primas y cripto con su moneda. Sin precio: "s/d".
  */

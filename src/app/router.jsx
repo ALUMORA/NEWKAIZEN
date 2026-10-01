@@ -30,6 +30,16 @@ import { routes as portfolioRoutes } from '../features/portfolio/routes.jsx'
 import { routes as researchRoutes } from '../features/research/routes.jsx'
 import { routes as toolsRoutes } from '../features/tools/routes.jsx'
 import { routes as watchlistRoutes } from '../features/watchlist/routes.jsx'
+// Fase 5: cada feature trae sus rutas; el orquestador las dejó con páginas provisionales.
+import { routes as agendaRoutes } from '../features/agenda/routes.jsx'
+import { routes as alertsRoutes } from '../features/alerts/routes.jsx'
+import { routes as briefingRoutes } from '../features/briefing/routes.jsx'
+import { routes as businessRoutes } from '../features/business/routes.jsx'
+import { routes as economyRoutes } from '../features/economy/routes.jsx'
+import { routes as fundsRoutes } from '../features/funds/routes.jsx'
+import { routes as fxRoutes } from '../features/fx/routes.jsx'
+import { routes as moversRoutes } from '../features/movers/routes.jsx'
+import { routes as ratesRoutes } from '../features/rates/routes.jsx'
 import NotFound from './NotFound.jsx'
 import PrivateLayout from './PrivateLayout.jsx'
 import RootLayout from './RootLayout.jsx'
@@ -42,6 +52,15 @@ const featureRoutes = [
   ...researchRoutes,
   ...toolsRoutes,
   ...watchlistRoutes,
+  ...briefingRoutes,
+  ...ratesRoutes,
+  ...fxRoutes,
+  ...economyRoutes,
+  ...moversRoutes,
+  ...agendaRoutes,
+  ...fundsRoutes,
+  ...businessRoutes,
+  ...alertsRoutes,
   ...learnRoutes,
   ...onboardingRoutes,
   ...authRoutes,

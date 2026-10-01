@@ -6,14 +6,14 @@
 // falla, lo que está en pesos sigue a la vista y lo que está en dólares queda fuera con un aviso.
 // Los movimientos con fecha futura todavía no cuentan, y se dice.
 import { lazy, Suspense, useMemo } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Card, DataTable, Delta, EmptyState, ErrorState, PageHeader, Select, Skeleton, Stat } from '../../../components/ui/index.js'
 import { fmtMoney, fmtNumber, fmtPct } from '../../../lib/format.js'
 import { fxHistoryQuery, fxQuery, quotesQuery } from '../../../lib/api/queries.js'
 import { derivePositions } from '../../../lib/finance/index.js'
 import { usePortfolios } from '../../../lib/portfolio/usePortfolios.js'
-import { PATHS } from '../../../app/paths.js'
+import { PATHS, pathInstrument } from '../../../app/paths.js'
 import { minusDays, todayMx } from '../tx-labels.js'
 import { summarize } from '../lib/summary-view.js'
 import { cutAt, futureNotice } from '../lib/book-cut.js'
@@ -49,6 +49,7 @@ const COLUMNS = [
 ]
 
 export default function Summary() {
+  const navigate = useNavigate()
   const { portfolios, active, actions } = usePortfolios()
   const transactions = useMemo(() => /** @type {any[]} */ (active?.transactions ?? []), [active])
   const today = todayMx()
@@ -205,6 +206,8 @@ export default function Summary() {
                 error={failed || undefined}
                 onRetry={retry}
                 defaultSort={{ key: 'value', direction: 'descending' }}
+                onRowClick={(row) => navigate(pathInstrument(row.symbol))}
+                rowLabel={(row) => `Abrir la ficha de ${row.symbol}`}
                 empty={{ title: 'Sin posiciones abiertas', text: 'Tu efectivo sigue aquí; registra una compra en Movimientos.' }}
               />
               {view.unquoted.length > 0 && !loading && !failed && (

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dailySummary, dedupeMarkets, exchangeTiming, fmtItemPrice, fxHint, latestAsOf, pickVix } from './overview-model.js'
+import { dailySummary, dedupeMarkets, exchangeTiming, fmtItemPrice, fxHint, hasInstrumentPage, latestAsOf, pickVix } from './overview-model.js'
 
 const item = (symbol, label, price, changePct, currency = 'USD', asOf = '2026-09-18') => ({
   symbol,
@@ -130,5 +130,13 @@ describe('dailySummary', () => {
   })
   it('sin datos no inventa nada', () => {
     expect(dailySummary({ groups: [] })).toEqual([])
+  })
+})
+
+describe('hasInstrumentPage', () => {
+  it('liga emisoras, ETF e índices; no divisas, futuros ni cripto', () => {
+    for (const symbol of ['WALMEX.MX', 'NAFTRAC.MX', 'SPY', '^MXX', '^GSPC']) expect(hasInstrumentPage({ symbol }), symbol).toBe(true)
+    for (const symbol of ['USDMXN=X', 'DX-Y.NYB', 'CL=F', 'GC=F', 'BTC-USD', '']) expect(hasInstrumentPage({ symbol }), symbol).toBe(false)
+    expect(hasInstrumentPage(null)).toBe(false)
   })
 })

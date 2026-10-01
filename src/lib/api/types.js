@@ -307,4 +307,19 @@
  * @typedef {{ items: InsiderItem[], summary: { openMarketBuys: number, openMarketSells: number }, meta: Meta }} InsidersResponse
  */
 
+// ─── Fase 5 ──────────────────────────────────────────────────────────────────
+// Tipos de retorno genéricos de las funciones de la fase 5 en endpoints.js. Cada stream escribe
+// el typedef fino de su respuesta en su carpeta (src/features/<x>/types.js) y lo usa en su código;
+// aquí solo se garantiza lo común a todo el contrato v2: `meta`.
+
+/**
+ * Respuesta v2 de la fase 5: el cuerpo del contrato (docs/api-v2.md) más `meta`.
+ * @typedef {{ meta: Meta } & Record<string, any>} V5Response
+ */
+
+/** @typedef {'mx' | 'us'} Country */
+/** @typedef {'1d' | '5d' | '1mo' | '6mo' | '1y' | '5y' | 'max'} OhlcRange */
+/** @typedef {'5m' | '1h' | '1d' | '1wk' | '1mo'} OhlcInterval */
+/** @typedef {'fecha' | 'dof'} FixRule */
+
 export {}

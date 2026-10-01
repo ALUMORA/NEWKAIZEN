@@ -1,4 +1,4 @@
-import { BOM, csvCell, detectDelimiter, objectsToCSV, parseCSV, parseLocaleNumber, rowsToObjects, toCSV } from './csv.js'
+import { BOM, csvCell, detectDelimiter, downloadBlob, downloadCSV, objectsToCSV, parseCSV, parseLocaleNumber, rowsToObjects, toCSV } from './csv.js'
 
 describe('csvCell', () => {
   it.each([
@@ -174,5 +174,55 @@ describe('detectDelimiter y parseLocaleNumber (revisión RT)', () => {
     expect(parseLocaleNumber('1,2,3')).toBeNaN()
     expect(parseLocaleNumber('1,5', { decimalComma: true })).toBe(1.5)
     expect(parseLocaleNumber('1,2,3', { decimalComma: true })).toBeNaN()
+  })
+})
+
+describe('downloadBlob', () => {
+  /** DOM mínimo: el enlace temporal y el body donde se cuelga. */
+  function fakeDom() {
+    const anchors = []
+    const body = { appendChild: vi.fn() }
+    const doc = {
+      body,
+      createElement: vi.fn(() => {
+        const a = { href: '', download: '', rel: '', click: vi.fn(), remove: vi.fn() }
+        anchors.push(a)
+        return a
+      }),
+    }
+    vi.stubGlobal('document', doc)
+    const created = []
+    vi.spyOn(URL, 'createObjectURL').mockImplementation((blob) => {
+      created.push(blob)
+      return `blob:kaizen/${created.length}`
+    })
+    const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {})
+    return { anchors, body, created, revoke }
+  }
+
+  it('baja el texto con el nombre y el tipo pedidos, y suelta la URL después', async () => {
+    vi.useFakeTimers()
+    const dom = fakeDom()
+    downloadBlob('banxico.ics', 'BEGIN:VCALENDAR', 'text/calendar;charset=utf-8')
+    expect(dom.anchors).toHaveLength(1)
+    const [a] = dom.anchors
+    expect(a).toMatchObject({ href: 'blob:kaizen/1', download: 'banxico.ics', rel: 'noopener' })
+    expect(a.click).toHaveBeenCalledOnce()
+    expect(a.remove).toHaveBeenCalledOnce()
+    expect(dom.body.appendChild).toHaveBeenCalledWith(a)
+    expect(dom.created[0].type).toBe('text/calendar;charset=utf-8')
+    expect(await dom.created[0].text()).toBe('BEGIN:VCALENDAR')
+    expect(dom.revoke).not.toHaveBeenCalled()
+    vi.runAllTimers()
+    expect(dom.revoke).toHaveBeenCalledWith('blob:kaizen/1')
+    vi.useRealTimers()
+  })
+
+  it('sin tipo usa texto plano, y downloadCSV es downloadBlob con text/csv', () => {
+    const dom = fakeDom()
+    downloadBlob('notas.txt', 'hola')
+    downloadCSV('datos.csv', toCSV([['a'], [1]]))
+    expect(dom.created.map((b) => b.type)).toEqual(['text/plain;charset=utf-8', 'text/csv;charset=utf-8'])
+    expect(dom.anchors.map((a) => a.download)).toEqual(['notas.txt', 'datos.csv'])
   })
 })

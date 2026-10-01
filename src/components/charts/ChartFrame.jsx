@@ -2,7 +2,7 @@
 // leyenda, botón "Ver tabla" (la alternativa de texto, con el DataTable de C1) y pie con la fuente
 // y el DataStatus del dato.
 import { useId, useState } from 'react'
-import { Button, DataStatus, DataTable } from '../ui/index.js'
+import { Button, DataStatus, DataTable, DownloadButton } from '../ui/index.js'
 import { markerPath } from './series.js'
 import './charts.css'
 
@@ -54,12 +54,15 @@ export function Legend({ items }) {
  *   actions?: import('react').ReactNode,
  *   className?: string,
  *   children?: import('react').ReactNode,
+ *   download?: { filename: string, columns?: { key: string, header: string }[], meta?: any, rows?: any[] },
  * }} props
+ *   download (fase 5): botón Descargar con las filas de `download.rows` o, si no vienen, las de
+ *   `table`; aditiva y sin cambio visual mientras DownloadButton sea provisional.
  *   description: pie visible bajo el título; summary: texto solo para lector de pantalla con lo que
  *   la gráfica muestra (tendencia, extremos); table: filas para "Ver tabla".
  */
 export function ChartFrame({
-  title, titleAs = 'h3', description, summary, legend, table, tableCaption, status, source, actions, className, children,
+  title, titleAs = 'h3', description, summary, legend, table, tableCaption, status, source, actions, className, children, download,
 }) {
   const id = useId()
   const [open, setOpen] = useState(false)
@@ -79,9 +82,17 @@ export function ChartFrame({
           {description && <p id={descId} className="kz-chart__caption">{description}</p>}
           {summary && <p id={sumId} className="sr-only">{summary}</p>}
         </div>
-        {(actions || hasTable) && (
+        {(actions || hasTable || download) && (
           <div className="kz-chart__actions">
             {actions}
+            {download ? (
+              <DownloadButton
+                filename={download.filename}
+                columns={download.columns ?? table?.columns ?? []}
+                rows={download.rows ?? table?.rows ?? []}
+                meta={download.meta ?? status}
+              />
+            ) : null}
             {hasTable && (
               <Button variant="ghost" size="sm" aria-expanded={open} aria-controls={tableId} onClick={() => setOpen((v) => !v)}>
                 {open ? 'Ocultar tabla' : 'Ver tabla'}

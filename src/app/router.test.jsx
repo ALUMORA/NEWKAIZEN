@@ -1,5 +1,5 @@
 // Árbol de rutas en memoria: guardas, NotFound y títulos.
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import { RouterProvider, createMemoryRouter } from 'react-router'
 import { resetCapabilitiesForTests } from '../lib/api/capabilities.js'
 import { SESSION_KEY, resetSessionForTests } from '../lib/auth/session.js'
@@ -46,6 +46,41 @@ describe('router', () => {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
     const router = renderAt('/herramientas')
     await waitFor(() => expect(router.state.location.pathname).toBe('/herramientas/optimizador'))
+  })
+
+  it.each([
+    ['/mercados/tasas', 'Tasas y curvas'],
+    ['/mercados/tipo-de-cambio', 'Tipo de cambio'],
+    ['/mercados/economia', 'Economía de México y Estados Unidos'],
+    ['/mercados/calendario', 'Calendario económico'],
+    ['/mercados/movimientos', 'Movimientos del día'],
+    ['/mercados/resumen', 'Resumen del día'],
+    ['/portafolio/agenda', 'Agenda de reportes y dividendos'],
+    ['/portafolio/rayos-x', 'Rayos X del portafolio'],
+    ['/empresas/actualizacion', 'Actualización por INPC'],
+    ['/empresas/referencias', 'Valores de referencia'],
+    ['/empresas/tipo-de-cambio', 'Tipo de cambio contable'],
+    ['/empresas/cobertura', 'Forward y presupuesto en dólares'],
+    ['/empresas/costo-de-capital', 'Costo de capital'],
+    ['/empresas/credito', 'Crédito a TIIE'],
+    ['/empresas/contrapartes', 'Salud financiera de contrapartes'],
+    ['/alertas', 'Alertas'],
+  ])('fase 5: %s existe y pide sesión (%s)', async (path, title) => {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
+    renderAt(path)
+    expect(await screen.findByRole('heading', { level: 1, name: title })).toBeInTheDocument()
+    await waitFor(() => expect(document.title).toBe(`${title} · Kaizen`))
+  })
+
+  it('/empresas es un índice que liga las páginas de la sección Empresas de la navegación', async () => {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session))
+    renderAt('/empresas')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Empresas' })).toBeInTheDocument()
+    const main = within(screen.getByRole('main'))
+    expect(main.getByRole('link', { name: 'Tipo de cambio contable' })).toHaveAttribute('href', '/empresas/tipo-de-cambio')
+    expect(main.getByRole('link', { name: 'Forward y presupuesto' })).toHaveAttribute('href', '/empresas/cobertura')
+    expect(main.getByRole('link', { name: 'Contrapartes' })).toHaveAttribute('href', '/empresas/contrapartes')
+    expect(main.getAllByRole('link')).toHaveLength(7)
   })
 
   it('servidor viejo: aviso en rutas nuevas', async () => {

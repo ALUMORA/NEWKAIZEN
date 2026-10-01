@@ -2,13 +2,14 @@
 // ordenado por puntajes z relativos al sector, con la cobertura de cada emisora y pruebas
 // "cumple / no cumple" contra umbrales escritos. Nunca dice qué hacer. La URL guarda universo,
 // claves y sector (?universo=propia&symbols=A,B&sector=...).
-import { useRef, useState } from 'react'
+import { lazy, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { factorScreenerQuery } from '../../../lib/api/queries.js'
 import { useStore } from '../../../lib/storage.js'
 import { Button, Card, EmptyState, PageHeader, SegmentedControl, Select, TabPanel, Tabs } from '../../../components/ui/index.js'
 import { PATHS } from '../../../app/paths.js'
+import { FeatureSlot } from '../../../app/FeatureSlot.jsx'
 import { QueryBlock } from '../components/QueryBlock.jsx'
 import { ChecksTable, ExcludedTable, MetricsTable, ScoresTable } from '../components/FactorTables.jsx'
 import { FactorGuide } from '../components/FactorGuide.jsx'
@@ -17,6 +18,9 @@ import { parseSymbols } from '../symbols.js'
 import { CUSTOM_MAX, CUSTOM_MIN, UNIVERSES, checkDefs, filterBySector, groupReasons, readParams, sectorsOf, writeParams } from '../screener-model.js'
 import '../research.css'
 import '../screener.css'
+
+// Ranura de la fase 5 (V5TM): agregar las emisoras del tablero a una lista de seguimiento.
+const Slots = { AddToWatchlist: lazy(() => import('../../watchlist/AddToWatchlist.jsx')) }
 
 const EMPTY = /** @type {never[]} */ ([])
 const TABS = [
@@ -164,6 +168,11 @@ export default function Screener() {
         eyebrow="Investigar"
         description="Ordena un universo de emisoras por valor, calidad, momentum, baja volatilidad y crecimiento, cada una contra la mediana de su sector. Son criterios que puedes leer y revisar, no recomendaciones."
         breadcrumbs={[{ label: 'Investigar', to: PATHS.research }, { label: 'Screener de factores' }]}
+        actions={
+          <FeatureSlot>
+            <Slots.AddToWatchlist symbols={shown.map((r) => r.symbol)} />
+          </FeatureSlot>
+        }
       />
       <Card title="Universo y filtros">
         <div className="kz-col" data-gap="4">

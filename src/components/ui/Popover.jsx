@@ -1,8 +1,9 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { cn } from '../../cn.js'
 
-// Popover chico anclado a un botón. Interno del sistema (no sale en el barril):
-// lo usan InfoTip y DataStatus.
+// Popover chico anclado a un botón. Lo usan InfoTip y DataStatus, y desde la fase 5 sale en el
+// barril para las features (selector de indicadores de la gráfica técnica, columnas de la lista de
+// seguimiento).
 //
 // Va sobre la API nativa de popover, con el botón como invocador
 // (popovertarget), por tres razones concretas:

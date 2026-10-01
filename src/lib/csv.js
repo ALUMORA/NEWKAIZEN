@@ -192,12 +192,18 @@ export function rowsToObjects(rows) {
 }
 
 /**
- * Descarga un CSV en el navegador.
+ * Descarga cualquier texto como archivo en el navegador (CSV, .ics de calendario, JSON...). Es la
+ * única función que toca el DOM en este módulo; las features la usan en vez de armar su propio
+ * enlace temporal.
+ *
+ *   downloadBlob('banxico-2026.ics', ics, 'text/calendar;charset=utf-8')
+ *
  * @param {string} filename
- * @param {string} text resultado de toCSV
+ * @param {string} text
+ * @param {string} [mime] tipo MIME; 'text/plain;charset=utf-8' por omisión
  */
-export function downloadCSV(filename, text) {
-  const blob = new Blob([text], { type: 'text/csv;charset=utf-8' })
+export function downloadBlob(filename, text, mime = 'text/plain;charset=utf-8') {
+  const blob = new Blob([text], { type: mime })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
@@ -207,4 +213,13 @@ export function downloadCSV(filename, text) {
   a.click()
   a.remove()
   setTimeout(() => URL.revokeObjectURL(url), 0)
+}
+
+/**
+ * Descarga un CSV en el navegador.
+ * @param {string} filename
+ * @param {string} text resultado de toCSV
+ */
+export function downloadCSV(filename, text) {
+  downloadBlob(filename, text, 'text/csv;charset=utf-8')
 }

@@ -16,7 +16,7 @@ const v2Health = {
   version: '2.0.0',
   commit: 'abc123',
   authRequired: true,
-  capabilities: ['history.dates', 'fx.fix', 7],
+  capabilities: ['history', 'rates.mx', 7],
   providers: { yahoo: { ok: true }, banxico: { configured: false } },
   serverTime: '2026-09-22T14:00:00Z',
 }
@@ -29,7 +29,7 @@ describe('parseHealth', () => {
   it('API v2: ready, capacidades como Set y authRequired', () => {
     const s = parseHealth(v2Health)
     expect(s).toMatchObject({ status: 'ready', apiVersion: 2, authRequired: true, version: '2.0.0', commit: 'abc123' })
-    expect([...s.capabilities]).toEqual(['history.dates', 'fx.fix'])
+    expect([...s.capabilities]).toEqual(['history', 'rates.mx'])
     expect(s.providers.banxico).toEqual({ configured: false })
   })
 
@@ -64,7 +64,7 @@ describe('startCapabilitiesProbe', () => {
     const s = await a
     expect(s.status).toBe('ready')
     expect(f.calls).toHaveLength(1)
-    expect(hasCapability('fx.fix')).toBe(true)
+    expect(hasCapability('rates.mx')).toBe(true)
     expect(hasCapability('valuation.dcf')).toBe(false)
     await startCapabilitiesProbe()
     expect(f.calls).toHaveLength(1)

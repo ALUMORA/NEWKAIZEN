@@ -7,6 +7,10 @@
 //     'POST /auth/login': { status: 401, json: { error: 'credenciales' } },
 //   })
 //   api.on('GET /news', { json: { news: [] } })   // se pueden agregar después
+//
+// Fase 5: cada spec declara los handlers de SUS rutas nuevas (p. ej. 'GET /v2/curves') y anuncia
+// sus capacidades con healthWith o `capabilities` de setupApp (e2e/support/app.js). Por omisión
+// ninguna ruta nueva tiene mock ni capacidad: si una página la pide sin querer, sale el 501.
 //   ...
 //   api.assertAllMatched()
 //
