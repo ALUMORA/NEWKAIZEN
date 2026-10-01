@@ -21,6 +21,13 @@ export const PATHS = Object.freeze({
   marketsMexico: '/mercados/mexico',
   marketsCetes: '/mercados/cetes',
   marketsNews: '/mercados/noticias',
+  // Fase 5
+  marketsBriefing: '/mercados/resumen',
+  marketsRates: '/mercados/tasas',
+  marketsFx: '/mercados/tipo-de-cambio',
+  marketsEconomy: '/mercados/economia',
+  marketsCalendar: '/mercados/calendario',
+  marketsMovers: '/mercados/movimientos',
 
   // Mi portafolio (F1)
   portfolio: '/portafolio',
@@ -28,6 +35,9 @@ export const PATHS = Object.freeze({
   portfolioPerformance: '/portafolio/rendimiento',
   portfolioRisk: '/portafolio/riesgo',
   portfolioRebalance: '/portafolio/rebalanceo',
+  // Fase 5
+  portfolioAgenda: '/portafolio/agenda',
+  portfolioXray: '/portafolio/rayos-x',
 
   // Investigar (F3)
   research: '/investigar',
@@ -43,8 +53,19 @@ export const PATHS = Object.freeze({
   toolsBacktest: '/herramientas/backtest',
   toolsSimulator: '/herramientas/simulador',
 
+  // Empresas (fase 5): /empresas es el índice; cada página vive en su feature
+  business: '/empresas',
+  businessUpdate: '/empresas/actualizacion',
+  businessReference: '/empresas/referencias',
+  businessFx: '/empresas/tipo-de-cambio',
+  businessHedge: '/empresas/cobertura',
+  businessCapital: '/empresas/costo-de-capital',
+  businessCredit: '/empresas/credito',
+  businessCounterparties: '/empresas/contrapartes',
+
   // F5
   watchlist: '/watchlist',
+  alerts: '/alertas',
   onboarding: '/bienvenida',
 
   // Solo en desarrollo (C1)
@@ -71,6 +92,27 @@ export function pathInstrument(symbol) {
 export function pathCompare(symbols) {
   const list = (symbols ?? []).map((s) => encodeURIComponent(String(s).trim().toUpperCase())).filter(Boolean)
   return list.length ? `${PATHS.compare}?symbols=${list.join(',')}` : PATHS.compare
+}
+
+/**
+ * Comparador de contrapartes (hasta 5 claves).
+ * @param {string[]} symbols → "/empresas/contrapartes?symbols=WALMEX.MX,AAPL"
+ */
+export function pathCounterparties(symbols) {
+  const list = [...new Set((symbols ?? []).map((s) => String(s ?? '').trim().toUpperCase()).filter(Boolean))].map(encodeURIComponent)
+  return list.length ? `${PATHS.businessCounterparties}?symbols=${list.join(',')}` : PATHS.businessCounterparties
+}
+
+/**
+ * Una pestaña o sección de la ficha, en el query (?pestana=grafica). Sin pestaña es la ficha.
+ * @param {string} symbol
+ * @param {string} [tab] p. ej. 'grafica', 'documentos', 'resultados'
+ * @returns {string} "/investigar/AAPL?pestana=grafica"
+ */
+export function pathInstrumentTab(symbol, tab) {
+  const base = pathInstrument(symbol)
+  const t = String(tab ?? '').trim().toLowerCase()
+  return t ? `${base}?pestana=${encodeURIComponent(t)}` : base
 }
 
 /** @param {string} term → "/aprender/sharpe" */

@@ -1,4 +1,4 @@
-import { DEFAULT_PRIVATE_PATH, PATHS, pathCompare, pathInstrument, pathLearnTerm, pathLogin, pathMethodology, route, safeNext } from './paths.js'
+import { DEFAULT_PRIVATE_PATH, PATHS, pathCompare, pathCounterparties, pathInstrument, pathInstrumentTab, pathLearnTerm, pathLogin, pathMethodology, route, safeNext } from './paths.js'
 
 describe('paths', () => {
   it('route() quita la diagonal inicial para los routes.jsx', () => {
@@ -12,6 +12,33 @@ describe('paths', () => {
     expect(pathCompare(['aapl', 'MSFT'])).toBe('/investigar/comparar?symbols=AAPL,MSFT')
     expect(pathCompare([])).toBe('/investigar/comparar')
     expect(pathLearnTerm('Sharpe')).toBe('/aprender/sharpe')
+  })
+
+  it('fase 5: rutas nuevas y sus helpers', () => {
+    expect(PATHS.marketsRates).toBe('/mercados/tasas')
+    expect(PATHS.marketsFx).toBe('/mercados/tipo-de-cambio')
+    expect(PATHS.marketsEconomy).toBe('/mercados/economia')
+    expect(PATHS.marketsCalendar).toBe('/mercados/calendario')
+    expect(PATHS.marketsMovers).toBe('/mercados/movimientos')
+    expect(PATHS.marketsBriefing).toBe('/mercados/resumen')
+    expect(PATHS.portfolioAgenda).toBe('/portafolio/agenda')
+    expect(PATHS.portfolioXray).toBe('/portafolio/rayos-x')
+    expect(PATHS.business).toBe('/empresas')
+    expect(PATHS.businessUpdate).toBe('/empresas/actualizacion')
+    expect(PATHS.businessReference).toBe('/empresas/referencias')
+    expect(PATHS.businessFx).toBe('/empresas/tipo-de-cambio')
+    expect(PATHS.businessHedge).toBe('/empresas/cobertura')
+    expect(PATHS.businessCapital).toBe('/empresas/costo-de-capital')
+    expect(PATHS.businessCredit).toBe('/empresas/credito')
+    expect(PATHS.businessCounterparties).toBe('/empresas/contrapartes')
+    expect(PATHS.alerts).toBe('/alertas')
+    expect(new Set(Object.values(PATHS)).size).toBe(Object.values(PATHS).length)
+    expect(pathCounterparties(['walmex.mx', ' aapl ', 'AAPL'])).toBe('/empresas/contrapartes?symbols=WALMEX.MX,AAPL')
+    expect(pathCounterparties([])).toBe('/empresas/contrapartes')
+    expect(pathCounterparties(['^MXX'])).toBe('/empresas/contrapartes?symbols=%5EMXX')
+    expect(pathInstrumentTab('aapl', 'grafica')).toBe('/investigar/AAPL?pestana=grafica')
+    expect(pathInstrumentTab('AAPL', ' Documentos ')).toBe('/investigar/AAPL?pestana=documentos')
+    expect(pathInstrumentTab('AAPL')).toBe('/investigar/AAPL')
   })
 
   it('pathMethodology() arma la liga de una guía de metodología', () => {
