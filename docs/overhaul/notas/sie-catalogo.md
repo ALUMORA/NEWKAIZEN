@@ -106,3 +106,111 @@ banda de `rates.PLAUSIBLE`; así un índice del INPC ya no puede pasar como por 
 
 - Con token en producción, `/v2/rates/mx` ya publica las 12 series (antes, la tasa objetivo no salía).
 - `CONTINUAR.md` sigue diciendo que los ids están mal; lo actualiza quien integre la rama.
+
+# Fase 5, pieza M5BX: series adicionales del SIE
+
+1 de octubre de 2026, rama `ws/M5BX`. Sin navegador. El token se cargó de `.env.local` sin imprimirse
+y la salida de la corrida en vivo se revisó con `grep -c` del token = 0.
+
+## Qué se agregó
+
+Las 26 series que pide la spec de la fase 5 (sección "Preparación del orquestador (M5)") viven en la
+llave nueva `adicionales` de `kaizen_api/data/banxico_series.json`, no en `series`. La razón: `series`
+son los renglones de `/v2/rates/mx` y cada uno necesita un `rateId` del contrato; si las nuevas
+entraran ahí, `/v2/rates/mx` dejaría de validar. Pasan por el mismo candado de título, periodicidad,
+unidad y `verified`, y el proveedor las expone con `banxico.extra_catalog()`, `extra_for(key)`,
+`extra_group(group)` y `scale_for(sid)`; `reviewed()` y `verification()` las conocen igual que a
+las de siempre.
+
+Cada serie trae `key` (el id que usa el contrato de su endpoint), `group` (`curva`,
+`mercadoDeDinero`, `cruces`, `macro`, `encuesta`), los campos de su grupo (`instrument` y
+`tenorYears`, `tenorDays`, `pair`, `item` y `stat`), `maxAgeDays` sacado del hueco más largo entre
+datos de octubre de 2023 a octubre de 2026 y `rangoCreible`, la banda de cordura del último dato en
+unidades del SIE (por ciento, pesos o millones de dólares).
+
+## Resultado en vivo
+
+`KAIZEN_LIVE=1 .venv/bin/python -m pytest -q -p no:cacheprovider -o addopts="" tests/unit/b2b/test_banxico_live.py -s`:
+**7 pasadas**, 12 de 12 del catálogo de siempre y **26 de 26 adicionales confirmadas**. Ninguna
+quedó en `verified: false`.
+
+| id | key | título leído en el SIE | periodicidad | unidad | último dato | verificado |
+| --- | --- | --- | --- | --- | --- | --- |
+| SF43883 | bonoM3 | Valores gubernamentales, Resultados de la subasta semanal, Tasa de rendimiento, Bonos a tasa fija a 3 años | Diaria | Porcentajes | 2026-09-10 (8.24) | sí |
+| SF43886 | bonoM5 | Valores gubernamentales, Resultados de la subasta semanal, Tasa de rendimiento, Bono tasa fija 5 años | Diaria | Porcentajes | 2026-09-17 (9.00) | sí |
+| SF45384 | bonoM20 | Valores Gubernamentales, Resultados de la subasta semanal, Tasa de rendimiento, Bono tasa fija 20 años | Diaria | Porcentajes | 2026-08-27 (9.64) | sí |
+| SF60696 | bonoM30 | Valores Gubernamentales, Resultados de la subasta semanal, Tasa de rendimiento, Bonos a tasa fija a 30 años | Diaria | Porcentajes | 2026-10-01 (10.15) | sí |
+| SF61592 | udibono3 | Valores gubernamentales, Resultados de la subasta semanal, Tasa de rendimiento, Udibonos a 3 años | Diaria | Porcentajes | 2026-09-24 (4.00) | sí |
+| SF46958 | udibono20 | Valores Gubernamentales, Resultados de la subasta semanal, Tasa de rendimiento, Udibonos a 20 años | Diaria | Porcentajes | 2026-08-27 (4.61) | sí |
+| SF46961 | udibono30 | Valores Gubernamentales, Resultados de la subasta semanal, Tasa de rendimiento, Udibonos a 30 años | Diaria | Porcentajes | 2026-09-17 (4.90) | sí |
+| SF43878 | tiie91 | Tasas de interés interbancarias, Por ciento anual, TIIE a 91 días | Diaria | Porcentajes | 2026-10-02 (6.9252) | sí |
+| SF111916 | tiie182 | TIIE a 182 días | Diaria | Porcentajes | 2026-10-02 (6.9817) | sí |
+| SF46410 | EURMXN | Cotización de las divisas que conforman la canasta del DEG, Respecto al peso mexicano, Euro | Diaria | Pesos | 2026-10-01 (20.7457) | sí |
+| SF46406 | JPYMXN | Cotización de las divisas que conforman la canasta del DEG, Respecto al peso mexicano, Yen japonés | Diaria | Pesos | 2026-10-01 (0.1162) | sí |
+| SF46407 | GBPMXN | Cotización de las divisas que conforman la canasta del DEG, Respecto al peso mexicano, Libra esterlina | Diaria | Pesos | 2026-10-01 (24.2927) | sí |
+| SF290383 | CNYMXN | Cotización de las divisas que conforman la canasta del DEG 1/ y del DEG respecto al Peso mexicano 2/, Yuan chino | Diaria | Pesos | 2026-10-01 (2.7344) | sí |
+| SF60632 | CADMXN | Cotización de la divisa, Respecto al peso mexicano, Dólar Canadiense | Diaria | Pesos | 2026-10-01 (N/E; último válido 2026-09-29, 12.7113) | sí |
+| SE27803 | remittances | Remesas Familiares Total | Mensual | Millones de Dólares | 2026-08-01 (5,452.3367) | sí |
+| SF43707 | reserves | Reserva Internacional | Diaria | Millones de Dólares | 2026-09-25 (256,542.8) | sí |
+| SR14138 | inflationT.mean | Encuestas sobre las expectativas de los especialistas en economía del sector privado, Expectativas de inflación anual, Inflación general, Al cierre del año en curso (año t), Media | Mensual | Porcentajes | 2026-09-01 (3.85) | sí |
+| SR14139 | inflationT.median | (misma encuesta) Inflación general, Al cierre del año en curso (año t), Mediana | Mensual | Porcentajes | 2026-09-01 (3.87) | sí |
+| SR14145 | inflationT1.mean | (misma encuesta) Inflación general, Al cierre del siguiente año (año t+1), Media | Mensual | Porcentajes | 2026-09-01 (3.85) | sí |
+| SR14146 | inflationT1.median | (misma encuesta) Inflación general, Al cierre del siguiente año (año t+1), Mediana | Mensual | Porcentajes | 2026-09-01 (3.82) | sí, era inferida |
+| SR14447 | gdpT.mean | (misma encuesta) Pronósticos de la variación porcentual real anual del PIB, Año en curso (año t), Media | Mensual | Porcentajes | 2026-09-01 (1.40) | sí |
+| SR14448 | gdpT.median | (misma encuesta) Pronósticos de la variación porcentual real anual del PIB, Año en curso (año t), Mediana | Mensual | Porcentajes | 2026-09-01 (1.40) | sí, era inferida |
+| SR14769 | fxT.mean | (misma encuesta) Expectativas del tipo de cambio al cierre del año, Cierre del año en curso (año t), Media | Mensual | Pesos por Dólar | 2026-09-01 (17.57) | sí, era inferida |
+| SR14770 | fxT.median | (misma encuesta) Expectativas del tipo de cambio al cierre del año, Cierre del año en curso (año t), Mediana | Mensual | Pesos por Dólar | 2026-09-01 (17.50) | sí |
+| SR14776 | fxT1.mean | (misma encuesta) Expectativas del tipo de cambio al cierre del año, Cierre del siguiente año (año t+1), Media | Mensual | Pesos por Dólar | 2026-09-01 (18.11) | sí |
+| SR14777 | fxT1.median | (misma encuesta) Expectativas del tipo de cambio al cierre del año, Cierre del siguiente año (año t+1), Mediana | Mensual | Pesos por Dólar | 2026-09-01 (18.04) | sí |
+
+Los títulos van con comas en lugar de las tiras de espacios del SIE; el texto exacto está en
+`tests/unit/b2b/sie_metadatos_2026-10-01.json`.
+
+## Hallazgos
+
+- **Las tres inferidas son lo que suponía la spec.** `SR14146` es la mediana de inflación t+1,
+  `SR14448` la mediana del PIB t y `SR14769` la media del tipo de cambio t. Se confirmó leyendo su
+  título, no por secuencia.
+- **Las unidades reales no son las que listaba la spec.** El SIE no reporta "Pesos por divisa" ni
+  "Sin Unidad" en estas 26: los cruces dicen "Pesos", los bonos, la TIIE y la encuesta en por ciento
+  dicen "Porcentajes", la encuesta de tipo de cambio dice "Pesos por Dólar" y remesas y reserva dicen
+  "Millones de Dólares". Las tres primeras ya pasaban el candado por palabra (`porcentaje`, `peso`).
+  Lo único que se amplió es "Millones de Dólares", **por serie** con `unidadExacta` en `SE27803` y
+  `SF43707` y un `sieUnit` nuevo, `usdMillions`, que a propósito no tiene palabras en `UNIT_WORDS`:
+  sin `unidadExacta` nada pasa como millones de dólares, y una serie de las de siempre con
+  "Millones de Dólares" sigue rechazada.
+- **[major] El SIE responde 413 con más de 20 ids.** Probado: 20 pasan y 21 no. Con 12 series nunca
+  se notó, pero con las 26 nuevas `fetch_metadata` y `verification` habrían fallado. **Corregido**:
+  `fetch_series` y `fetch_metadata` parten la lista en tandas de `MAX_IDS_PER_REQUEST = 20` y unen
+  las respuestas.
+- **SF60696 contra SF60691.** Los dos traen el Bono M a 30 años con el mismo valor (10.15): SF60691
+  ("Bonos tasa fija a 30 años") con fecha 2026-09-29 y SF60696 ("Resultados de la subasta semanal,
+  Tasa de rendimiento") con fecha 2026-10-01. Con `tituloContiene` "subasta" y "tasa de rendimiento",
+  SF60691 no pasa.
+- **El dólar canadiense trae N/E en días hábiles.** El 1 de octubre de 2026 el dato oportuno de
+  SF60632 fue N/E, y en tres años hubo 29. El proveedor ya lo descarta (nunca 0); quien publique el
+  cruce toma el último válido o cae a Frankfurter con `fallback`.
+- **La reserva internacional es semanal aunque el SIE diga Diaria** (un dato por viernes, hueco más
+  largo de 9 días), y la TIIE a 91 y 182 días se fecha el día hábil siguiente a su determinación
+  (el 1 de octubre ya había dato con fecha 2 de octubre).
+- **Huecos entre subastas (oct 2023 a oct 2026)**, base de `maxAgeDays`: Bono M 3A y 5A 49 días
+  (60), 20A y 30A 63 días (70), Udibono 3A 41 (50), 20A 50 (60), 30A 49 (60).
+
+## Pruebas sin red
+
+- Nuevo `tests/unit/b2b/test_sie_adicionales.py` (29 pruebas) con dos fixtures reales sin token:
+  `sie_metadatos_2026-10-01.json` (metadatos de las 26 más SF60691) y `sie_oportuno_2026-10-01.json`
+  (el último dato de cada una). Fija que estén las 26 de la spec y ninguna más, la forma de cada
+  grupo, que pasen el candado con sus metadatos reales, que ninguna pase por otra (media contra
+  mediana, t contra t+1, moneda contra moneda, plazo contra plazo, y contra las de `/v2/rates/mx`),
+  que "Millones de Dólares" solo entre por `unidadExacta`, que el último dato real caiga en
+  `rangoCreible`, el escalado a fracción y las tandas de 20 ids contra un SIE simulado que responde
+  413 con 21.
+- `tests/unit/b2b/test_banxico_live.py` ganó dos pruebas en vivo: la tabla de títulos de las
+  adicionales y el dato creíble con edad menor o igual a `maxAgeDays`.
+
+## Lo que no hizo esta pieza
+
+- La spec dice en la sección M5 "grabar esas series en una capa 2026-10-01-banxico", pero la
+  decisión 4 del orquestador dice que no hay capa compartida de Banxico y que cada stream graba lo
+  suyo. No se grabó ninguna capa: Banxico se sigue simulando con `responses` en las pruebas.
