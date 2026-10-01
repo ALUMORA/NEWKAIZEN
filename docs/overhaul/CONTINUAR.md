@@ -1,7 +1,8 @@
 # CONTINUAR: rehacer NEWKAIZEN como "Bloomberg-lite"
 
-Actualizado el **25 de septiembre de 2026**: fase 3 revisada completa, fase 4 (seguridad, copy y UX)
-hecha y compuerta G4 medida. Este archivo es el punto de entrada para la siguiente sesión. Todo lo que hace falta está en `docs/overhaul/`.
+Actualizado el **1 de octubre de 2026**: fases 0 a 4 cerradas y la ronda de pendientes que no
+dependían del dueño (tandas T1 y T2, del 29 de septiembre al 1 de octubre) integrada y recorrida. Este
+archivo es el punto de entrada para la siguiente sesión. Todo lo que hace falta está en `docs/overhaul/`.
 
 ## Qué es esto
 
@@ -264,35 +265,93 @@ orquestador. Reportes en `docs/overhaul/notas/`: `fase3-revision-RP.md`, `-RM.md
 Compuerta final: `npm run check` 2,114 pruebas y bundle al 75 %, pytest 1,519 y 6 omitidas, ruff
 limpio, e2e completa en local 459 pasadas y 0 fallas (47 omitidas, las de un solo viewport).
 
+### 29 de septiembre al 1 de octubre de 2026: pendientes sin decisiones del dueño (T1 y T2)
+
+El usuario pidió hacer todo lo que no dependiera de sus decisiones. Se revalidó cada pendiente contra
+el código, se partió en streams con archivos disjuntos (`scripts/ownership.json`: T1LB, T1PF, T1RS,
+T1MK, T2SW) y se hizo en dos tandas. Los agentes de T1RS y T2SW se atoraron (10 minutos sin avanzar,
+con la Mac cargada) y el orquestador terminó su parte. T2DC (docs y comentarios) lo hizo el
+orquestador directo. Todo en `analizavende`, nada en `main`.
+
+- **T1LB** (`7de741f`): `avgFx` pondera por costo (10@100 FX 17 más 10@200 FX 20 da 57,000 y un split ya
+  no duplica el peso), A4-1, A4-2, A2-2, A3-2, F1-6, un solo parser de CSV para bienvenida y
+  Movimientos que nombra las columnas que no lee, y fuera `legacyChangedSinceMigration`.
+- **T1MK** (`0afc740`): el heatmap muestra sus cifras a 390, noticias con esqueleto de ocho titulares
+  sin CLS, CETES con la retención de `tax-mx.js`, `fmtWeekday` en `format.js`, "Panorama" una sola
+  vez, la tira de mercado se desvanece cuando no cabe, y los selectores de emisoras con `SearchCombobox`.
+- **T1PF** (`d093389`): el resumen valúa el cierre de ayer en USD con el FIX de ayer, no pierde el
+  efectivo en pesos sin tipo de cambio y corta en hoy lo que tiene fecha futura (también Riesgo,
+  Rebalanceo, Rendimiento y Movimientos, que avisan). Riesgo con betas contra NAFTRAC.MX y SPY y
+  concentración por sector; Rendimiento con el tipo de cambio implícito del panel.
+- **T1RS** (`a0ab146`): la industria de la ficha en español (`industryEs`), nueve llaves nuevas del
+  glosario cableadas en la ficha, Comparar y los screeners, con guarda de que todo `termKey` existe, y
+  `SearchCombobox` con fichas en Comparar y en el universo propio del screener.
+- **T2DC** (`6c4fa80` a `d8335c7`): la metodología del TWR, backtest, optimizador y riesgo dice lo que
+  la pantalla hace hoy, página nueva `docs/metodologia/mercados.md`, `api-v2.md` al día en sesión,
+  CORS, 503 y rf, y fuera los comentarios y la condición `onLegacyRoute` del legado.
+- **`9a8802e`**: `SearchCombobox` recibe la prop `error` (`aria-invalid`, alerta en la descripción y
+  cierra el panel); los tres selectores la usan. Pedido 8 de F2 cerrado.
+- **T2SW** (`d61ca73`): el `%` pegado a la cifra en 45 textos del frontend y 7 del API; los errores de
+  `optimize.js` y `walkforward.js` con el menos U+2212 de `format.js`; `PATHS.learnMethodology` y
+  `pathMethodology()` en vez de 11 ligas escritas a mano; "Cómo se calcula" en /mercados hacia su
+  guía; `InlineLink` en herramientas; la frontera eficiente marca la paridad de riesgo. Guardas nuevas:
+  `src/test/copy-guards.test.js` (lee `src/` con el `Linter` de ESLint: `%` separado, `toFixed` dentro
+  de un error y ligas a la metodología escritas a mano, más el `%` de `docs/metodologia`) y
+  `tests/unit/test_copy_percent.py` (cadenas del API por AST, sin docstrings ni `legacy_v1.py`).
+- **Hallado al medir Lighthouse con el portafolio de ejemplo** (el 25 sep el portafolio se auditó
+  vacío, por eso no salía): CLS de 0.40 en /screener, 0.20 en optimizador y backtest, 0.18 en
+  Rendimiento y 0.14 en Riesgo, todos a 1440. La causa que multiplicaba todo era la tira de mercado:
+  cada celda decía "IPC s/d" y al llegar las cifras crecía hasta 2.6 veces, así que las de la derecha
+  se recorrían 175 px, y el CLS multiplica el área que se mueve por la distancia más grande. Ahora cada
+  celda aparta su ancho con datos (`data-id` y `min-width` en `topbar.css`) y el estado el de su
+  insignia. Además, cada pantalla aparta lo suyo: el tablero del screener y los resultados de
+  optimizador y backtest hasta debajo del borde, Rendimiento con esqueletos del alto de sus dos
+  gráficas y textos de espera del mismo largo. Pruebas e2e de CLS nuevas en las cinco pantallas y una
+  que fija la x de cada celda de la tira (`shell.spec.js`).
+- **El optimizador pedía "Revisa los supuestos marcados" mientras cargaba**: la tasa de CETES se pide
+  hasta que llega el panel y, en camino, valía `null` ("no llegó"), así que el campo decía "No llegó la
+  tasa de CETES". Ahora vale `undefined` mientras se espera, como la prima, y `useOptimizer` expone
+  `waiting` para que la pantalla muestre la carga.
+- **Grabaciones nuevas** en la capa `2026-09-22-recorrido`: FEMSA semanal a 5 años (Riesgo) y a 1 y 2
+  años (Comparar con FEMSA daba 500 `ReplayMiss`).
+
+Compuerta sobre `analizavende` integrado: `npm run check` 2,237 pruebas y bundle al 76 %, pytest 1,521 y 6
+omitidas, ruff limpio, e2e completa en local 547 pasadas y 0 fallas (51 omitidas, las de un solo viewport).
+
+Recorrido real (build más replay, 1440x900 y 390x844, portafolio de ejemplo más 5 AAPL en USD del
+2 de marzo): /portafolio y sus cuatro subpáginas, la ficha de WALMEX.MX, Comparar, los tres screeners,
+las cuatro de Mercados, la lista de seguimiento, optimizador, backtest, simulador, /aprender y la guía de
+Mercados. Sin errores de consola, sin scroll horizontal, ningún `N %` separado en pantalla, y todas las
+llamadas al API en 200 salvo los dos `ReplayMiss` de FEMSA, ya grabados. Lighthouse con sesión y el
+portafolio de ejemplo (`LH_EJEMPLO=1`) en diez rutas: 100 en escritorio en todas, 100 en móvil salvo el
+optimizador (94), y accesibilidad y buenas prácticas en 100 en las veinte mediciones.
+
 ### Lo que falta, en orden
 
-Fases 0 a 4 cerradas en código. Lo que queda, de más a menos valor:
+Todo lo que no dependía del dueño quedó hecho. Lo que queda, de más a menos valor:
 
 1. **Lo del dueño** (sección final): servicio v2 en Render, `VITE_API_URL` en Vercel y merge a `main`.
-   Sin eso nada de esto lo ve nadie.
-2. **Confirmar la CI de e2e en Linux**: la última corrida antes de este cierre falló 1 de 451, la
-   tabla de pruebas del screener de factores a 1440 (en la Mac cabe con 0 px de sobra). Se angostaron
-   los encabezados a 11ch; si vuelve a fallar, la tabla necesita menos columnas fijas o scroll propio
-   aceptado.
-3. **Decisiones del dueño** que dejaron las revisiones:
-   - CAPM del optimizador sin prima país contra DCF con ella: elegir un criterio.
-   - INPC que baja da factor menor que 1 y sube el ISR: confirmar con contador (CFF 17-A, LISR 129).
-   - Convención de tipo de cambio: FIX contra el del DOF.
-   - Nombres: Screener, Backtest y walk forward, ¿se traducen?
-   - `/aprender` y legales fuera del shell con sesión (cambio del router).
-   - `render.yaml` todavía declara `kaizen-backend` en modo desarrollo; conviene quitarlo.
-   - `scripts/hash_password.py` solo avisa ante contraseñas cortas en vez de rechazarlas.
+   Sin eso nada de esto lo ve nadie. Arturo no ha movido `alumora` desde `5dd569b` (21 sep).
+2. **Decisiones del dueño** que siguen abiertas (se preguntaron el 29 sep y no se contestaron):
+   - `render.yaml` todavía declara `kaizen-backend` en modo desarrollo (`/docs` abierto, v1, sin sesión).
+   - `scripts/hash_password.py` solo avisa ante contraseñas cortas; ¿rechazar menos de 12?
+   - Campos aditivos del contrato v2 de B3b §5 (`dcf.currency`, `benchmark: null`, supuestos opcionales).
    - El portafolio del navegador no se borra al cerrar sesión (va con la decisión de Supabase).
-   - Retención de FIBRAs al 30 por ciento sobre el resultado fiscal (pendiente desde B3c).
-4. **Al desplegar Render**: revisar cómo llega `X-Forwarded-For` (el límite por IP del login depende de
+   - `/aprender` y legales fuera del shell con sesión, y "Primeros pasos" en el menú de usuario.
+   - Fiscal: INPC que baja (factor menor que 1, CFF 17-A), retención de FIBRAs al 30 por ciento del
+     resultado fiscal, FIX contra DOF, prima país en el CAPM del optimizador, dividendos extranjeros.
+   - Nombres en inglés: Screener, Backtest, walk forward, Tracking error.
+3. **Al desplegar Render**: revisar cómo llega `X-Forwarded-For` (el límite por IP del login depende de
    eso) y, con el backend v2 en vivo, borrar el parseo de `meta.notes` que quedó como respaldo en
    FIBRAs y fórmula mágica.
-5. **Menores abiertos**: `docs/metodologia/portafolio.md:81-88` describe el arreglo viejo del TWR;
-   `avgFx` de `ledger.js` pondera por títulos fuera de Mi portafolio; la industria de la ficha llega
-   en inglés (tabla de traducción en el API); `%` con y sin espacio; el Heatmap esconde valores a
-   390 px; BMV 2027 hay que cotejarla cuando la publique la CNBV (diciembre 2026); A3 con 6 minors; la
-   lista de noticias reserva `100vh` al cargar y con pocos titulares se encoge.
-6. La prueba de desempeño de Monte Carlo (400 ms en local) falla con la Mac cargada por agentes; en
+4. **Menores abiertos**:
+   - Movimientos: si guardas una compra en USD antes de que llegue el FIX de esa fecha, sale "Falta el
+     tipo de cambio" y el aviso se queda aunque el campo ya se haya prellenado; habría que esperar al
+     FIX o bloquear el botón mientras llega.
+   - La ficha a 1440 parte "$775.3 mil M MXN" en dos renglones en el resumen.
+   - No hay primitiva de aviso con tono: `.kz-tool__notice` sigue en `tools.css` (F4).
+   - BMV 2027 hay que cotejarla cuando la publique la CNBV (diciembre 2026).
+5. La prueba de desempeño de Monte Carlo (400 ms en local) falla con la Mac cargada por agentes; en
    corridas en paralelo usar `KAIZEN_PERF_MS=2000`, como la CI.
 
 ## Cómo trabajar aquí
