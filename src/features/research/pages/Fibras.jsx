@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { fibrasScreenerQuery } from '../../../lib/api/queries.js'
 import { MISSING, fmtDate, fmtMoney, fmtMultiple, fmtPct, fmtPp } from '../../../lib/format.js'
 import { Button, Card, DataTable, InfoTip, Input, PageHeader, Skeleton, Stat } from '../../../components/ui/index.js'
-import { PATHS, pathInstrument } from '../../../app/paths.js'
+import { PATHS, pathInstrument, pathMethodology } from '../../../app/paths.js'
 import { QueryBlock } from '../components/QueryBlock.jsx'
 import { Bars } from '../components/screenerCharts.js'
 import {
@@ -26,7 +26,7 @@ import { generalNotes, readableMeta, rowNotes } from '../screenerNotes.js'
 import '../research.css'
 import '../magic-fibras.css'
 
-const METHOD_PATH = '/aprender/metodologia/fibras'
+const METHOD_PATH = pathMethodology('fibras')
 
 /** @param {string} symbol */
 const reasonId = (symbol) => `fibra-sd-${symbol.replace(/[^A-Za-z0-9]/g, '-')}`

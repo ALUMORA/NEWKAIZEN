@@ -3,6 +3,7 @@
 import { Link } from 'react-router'
 import { Card } from '../../../components/ui/index.js'
 import { fmtNumber } from '../../../lib/format.js'
+import { pathMethodology } from '../../../app/paths.js'
 
 /**
  * @param {{ transactions: any[], perf: any }} props
@@ -55,7 +56,7 @@ export default function HowToRead({ transactions, perf }) {
           </ul>
         )}
         <p>
-          <Link to="/aprender/metodologia/portafolio">Metodología completa del portafolio</Link>
+          <Link to={pathMethodology('portafolio')}>Metodología completa del portafolio</Link>
         </p>
       </div>
     </Card>

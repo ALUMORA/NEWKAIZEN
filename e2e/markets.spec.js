@@ -296,6 +296,15 @@ test('/mercados: quien entra sin portafolio ve los primeros pasos y puede descar
   await expect(page.getByRole('region', { name: 'Primeros pasos' })).toHaveCount(0)
 })
 
+test('/mercados: «Cómo se calcula» lleva a la guía de metodología de Mercados', async ({ page, baseURL }) => {
+  await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: HEALTH, routes: V2_ROUTES })
+  await page.goto('/mercados')
+  const link = page.getByRole('link', { name: 'Cómo se calcula' })
+  await expect(link).toHaveAttribute('href', '/aprender/metodologia/mercados')
+  await link.click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Metodología de Mercados' })).toBeVisible()
+})
+
 test('/mercados: bolsas abiertas con retraso, resumen factual, USD/MXN neutral y ligas', async ({ page, baseURL }) => {
   await setupApp(page, { baseURL: /** @type {string} */ (baseURL), session: true, health: HEALTH, routes: V2_ROUTES })
   await page.goto('/mercados')

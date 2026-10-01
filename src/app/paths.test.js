@@ -1,4 +1,4 @@
-import { DEFAULT_PRIVATE_PATH, PATHS, pathCompare, pathInstrument, pathLearnTerm, pathLogin, route, safeNext } from './paths.js'
+import { DEFAULT_PRIVATE_PATH, PATHS, pathCompare, pathInstrument, pathLearnTerm, pathLogin, pathMethodology, route, safeNext } from './paths.js'
 
 describe('paths', () => {
   it('route() quita la diagonal inicial para los routes.jsx', () => {
@@ -12,6 +12,12 @@ describe('paths', () => {
     expect(pathCompare(['aapl', 'MSFT'])).toBe('/investigar/comparar?symbols=AAPL,MSFT')
     expect(pathCompare([])).toBe('/investigar/comparar')
     expect(pathLearnTerm('Sharpe')).toBe('/aprender/sharpe')
+  })
+
+  it('pathMethodology() arma la liga de una guía de metodología', () => {
+    expect(pathMethodology('portafolio')).toBe('/aprender/metodologia/portafolio')
+    expect(pathMethodology(' formula-magica ')).toBe('/aprender/metodologia/formula-magica')
+    expect(route(PATHS.learnMethodology)).toBe('aprender/metodologia/:guia')
   })
 
   it.each([

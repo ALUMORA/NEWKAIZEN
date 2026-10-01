@@ -11,6 +11,7 @@ export const PATHS = Object.freeze({
   login: '/login',
   learn: '/aprender',
   learnTerm: '/aprender/:termino',
+  learnMethodology: '/aprender/metodologia/:guia',
   legalTerms: '/legal/terminos',
   legalPrivacy: '/legal/privacidad',
   legalNotice: '/legal/aviso',
@@ -75,6 +76,11 @@ export function pathCompare(symbols) {
 /** @param {string} term → "/aprender/sharpe" */
 export function pathLearnTerm(term) {
   return `/aprender/${encodeURIComponent(String(term).trim().toLowerCase())}`
+}
+
+/** @param {string} slug → "/aprender/metodologia/portafolio" (una guía de docs/metodologia) */
+export function pathMethodology(slug) {
+  return `/aprender/metodologia/${encodeURIComponent(String(slug).trim())}`
 }
 
 /** Origen contra el que se revisa ?next cuando no hay window (pruebas en Node). */

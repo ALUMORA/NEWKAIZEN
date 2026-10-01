@@ -5,6 +5,7 @@
 import { Link } from 'react-router'
 import { GUIDE_NAMES } from './guides.js'
 import { parseMarkdown } from './markdown-parse.js'
+import { PATHS, pathMethodology } from '../../app/paths.js'
 
 const GUIDE_LINK = /^(?:\.\/)?([a-z0-9-]+)\.md(#.*)?$/
 
@@ -17,7 +18,7 @@ function linkFor(href, text, key) {
   if (guide) {
     const slug = guide[1]
     const label = /\.md$/.test(text) ? (slug === 'README' ? 'Aprender' : (GUIDE_NAMES[slug] ?? text)) : text
-    return <Link key={key} to={slug === 'README' ? '/aprender' : `/aprender/metodologia/${slug}`}>{label}</Link>
+    return <Link key={key} to={slug === 'README' ? PATHS.learn : pathMethodology(slug)}>{label}</Link>
   }
   if (/^https?:\/\//.test(href)) return <a key={key} href={href} rel="noopener noreferrer" target="_blank">{text}</a>
   return <span key={key}>{text}</span>
