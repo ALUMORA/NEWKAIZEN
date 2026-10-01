@@ -19,13 +19,17 @@ function collectTitles(routes, prefix = '') {
 }
 
 // Nombres propios, siglas y marcas que sí van con mayúscula a media frase.
-const PROPER = new Set(['CETES', 'FIBRAs', 'México', 'Kaizen', 'Sharpe', 'DCF'])
+const PROPER = new Set([
+  'CETES', 'FIBRAs', 'México', 'Kaizen', 'Sharpe', 'DCF',
+  // Fase 5
+  'Banxico', 'FIX', 'INPC', 'UMA', 'ETF', 'SEC', 'TIIE', 'IPC', 'Estados', 'Unidos', 'X',
+])
 
 describe('títulos de pestaña', () => {
   const titles = collectTitles(appRoutes)
 
   it('hay un título por ruta y ninguno se repite', () => {
-    expect(titles.length).toBeGreaterThan(25)
+    expect(titles.length).toBeGreaterThan(40)
     const seen = new Map()
     for (const { path, title } of titles) {
       expect(seen.has(title), `"${title}" se repite en ${seen.get(title)} y ${path}`).toBe(false)
