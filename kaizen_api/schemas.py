@@ -1305,7 +1305,7 @@ class ExpectationsResponse(ContractModel):
 class FxSpot(ContractModel):
     value: float = Field(description="Pesos por dólar")
     asOf: IsoDate
-    source: Literal["banxico", "yahoo"] = Field(description="yahoo solo como respaldo, con meta.fallback")
+    source: Literal["banxico"] = Field(description="Siempre el FIX de Banxico (SF43718)")
 
 
 class FxRange52w(ContractModel):

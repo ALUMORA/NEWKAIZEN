@@ -362,6 +362,8 @@ Tipo de cambio (V5FX: `routers/fxdesk.py`):
   futura no es error: `fixDate` y `value` salen `null` y `explanation` lo dice.
 - `GET /v2/fxdesk/fix-table?start&end&rule&monthEnd=true|false` → `FixTableResponse` (macro;
   `fxdesk.fix`). `start` y `end` son obligatorias; más de 3 años responde 400 `INVALID_PARAM`.
+  Con `monthEnd=true` (por omisión `false`), `rows` trae solo el cierre de cada mes; `monthEnds`
+  (cierre y promedio de cada mes) viene siempre.
 - `GET /v2/fxdesk/forward?days=30,91,182,365|date=YYYY-MM-DD&mxn=tiie|cetes|fondeo&usd=ust|sofr`
   → `FxForwardResponse` (macro; `fxdesk.forward`). Un plazo de 0 días o de más de 365, o una fecha
   que no caiga entre mañana y 365 días, responde 400 `INVALID_PARAM`; `days` y `date` juntos, 422.
@@ -1661,7 +1663,7 @@ Cambios semanal y mensual de una serie que ya publica /v2/rates/mx (la UI une po
 | --- | --- | --- | --- |
 | `value` | number | sí | Pesos por dólar |
 | `asOf` | date | sí |  |
-| `source` | "banxico" \| "yahoo" | sí | yahoo solo como respaldo, con meta.fallback |
+| `source` | "banxico" | sí | Siempre el FIX de Banxico (SF43718) |
 
 #### FxRange52w
 
