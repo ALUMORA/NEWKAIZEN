@@ -3,8 +3,9 @@
 import { Link } from 'react-router'
 import { Card, InfoTip } from '../../../components/ui/index.js'
 import { COMPOSITE_TEXT, COVERAGE_TEXT, FACTORS, Z_TEXT } from '../screener-model.js'
+import { pathMethodology } from '../../../app/paths.js'
 
-const METHODOLOGY = '/aprender/metodologia/screener-de-factores'
+const METHODOLOGY = pathMethodology('screener-de-factores')
 
 const ITEMS = [
   { id: 'z', label: 'Puntaje z relativo al sector', termKey: 'z-score-sectorial', text: Z_TEXT },

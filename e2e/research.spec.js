@@ -186,7 +186,7 @@ test.describe('investigar: ficha de la emisora', () => {
   test('banco: el P/VL justificado se ve en la ficha y los avisos de cada sección no se esconden', async ({ page, baseURL }) => {
     const bank = { applicable: true, justifiedPB: 1.84, roe: 0.21, costOfEquity: 0.145, growth: 0.06, impliedPrice: 171.23 }
     const note = 'P/VL justificado: El crecimiento terminal (9.00%) deja menos de 2 puntos contra el costo de capital propio (14.50%); se recortó a 12.50%.'
-    const divNote = 'Este rendimiento sale de los dividendos pagados en los últimos 12 meses; Yahoo publica 4.45 %.'
+    const divNote = 'Este rendimiento sale de los dividendos pagados en los últimos 12 meses; Yahoo publica 4.45%.'
     await open(page, /** @type {string} */ (baseURL), {
       routes: {
         'GET /v2/valuation/:symbol': {
@@ -206,7 +206,7 @@ test.describe('investigar: ficha de la emisora', () => {
     await expect(valuation.getByText('1.84x')).toBeVisible()
     await expect(valuation.getByText('$171.23').first()).toBeVisible()
     await expect(valuation.getByRole('note', { name: 'Avisos de la valuación' })).toContainText('se recortó a 12.50%')
-    await expect(page.getByRole('note', { name: 'Avisos de los dividendos' })).toContainText('Yahoo publica 4.45 %')
+    await expect(page.getByRole('note', { name: 'Avisos de los dividendos' })).toContainText('Yahoo publica 4.45%')
     await noHorizontalScroll(page)
   })
 })
@@ -250,7 +250,7 @@ test.describe('investigar: supuestos fuera de rango', () => {
     const tg = page.getByRole('textbox', { name: 'Crecimiento terminal' })
     await tg.fill('7')
     await page.getByRole('button', { name: 'Recalcular' }).click()
-    await expect(page.getByText('El crecimiento terminal va de −2 a 6 %.')).toBeVisible()
+    await expect(page.getByText('El crecimiento terminal va de −2 a 6%.')).toBeVisible()
     await expect(tg).toHaveAttribute('aria-invalid', 'true')
     await expect(page.getByRole('table', { name: /Malla de sensibilidad/ })).toBeVisible()
     expect(seen.some((q) => q.has('terminalGrowth'))).toBe(false)

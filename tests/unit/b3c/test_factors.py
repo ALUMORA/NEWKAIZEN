@@ -185,7 +185,7 @@ def test_cobertura_baja_excluye_con_el_porcentaje_en_el_motivo(monkeypatch):
     fila = next(r for r in board["rows"] if r["symbol"] == "POCA")
     assert fila["excluded"] is True
     assert fila["coverage"] == pytest.approx(2 / 12, abs=1e-4)
-    assert "17 %" in fila["reason"]
+    assert "17%" in fila["reason"]
 
 
 def test_sector_con_menos_de_cinco_se_compara_contra_el_universo(monkeypatch):

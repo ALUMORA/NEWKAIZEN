@@ -3,7 +3,7 @@
 // solo lo que el servidor anuncia y tiene su propia carga, vacío y error.
 import { Link } from 'react-router'
 import { PageHeader } from '../../../components/ui/index.js'
-import { PATHS } from '../../../app/paths.js'
+import { PATHS, pathMethodology } from '../../../app/paths.js'
 import { ExchangesCard, SummaryCard } from '../overview/TodayCards.jsx'
 import { GroupsSection } from '../overview/GroupsSection.jsx'
 import { VixCard } from '../overview/VixCard.jsx'
@@ -45,6 +45,11 @@ export default function OverviewPage() {
         eyebrow="Panorama"
         title="Mercados"
         description="Cómo van hoy México, Estados Unidos y el mundo. Cada cifra trae su fuente, su fecha y su retraso; si algo falta, lo decimos."
+        actions={
+          <Link className="kz-button" data-variant="secondary" data-size="sm" to={pathMethodology('mercados')}>
+            Cómo se calcula
+          </Link>
+        }
       />
       <FirstSteps />
       <div className="markets-top">

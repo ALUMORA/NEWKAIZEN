@@ -12,18 +12,18 @@ describe('supuestos del optimizador', () => {
     expect(marketPremiumPct(DEFAULT_ASSUMPTIONS, 5.1)).toBe(5.1)
     expect(marketPremiumPct({ ...DEFAULT_ASSUMPTIONS, erpPct: 6, erpTouched: true }, 5.1)).toBe(6)
     expect(validateAssumptions(DEFAULT_ASSUMPTIONS, 3, 7.49, undefined)).toEqual({})
-    expect(validateAssumptions({ ...DEFAULT_ASSUMPTIONS, erpPct: 25, erpTouched: true }, 3, 7.49, 4.23).erpPct).toMatch(/entre 0 % y 20 %/)
+    expect(validateAssumptions({ ...DEFAULT_ASSUMPTIONS, erpPct: 25, erpTouched: true }, 3, 7.49, 4.23).erpPct).toMatch(/entre 0% y 20%/)
   })
 
   it('sin tasa del API hay que escribir una', () => {
     expect(validateAssumptions(DEFAULT_ASSUMPTIONS, 3, null).rfPct).toMatch(/Escribe una/)
     expect(validateAssumptions({ ...DEFAULT_ASSUMPTIONS, rfPct: 8, rfTouched: true }, 3, null)).toEqual({})
-    expect(validateAssumptions({ ...DEFAULT_ASSUMPTIONS, rfPct: null, rfTouched: true }, 3, 7).rfPct).toMatch(/entre 0 %/)
+    expect(validateAssumptions({ ...DEFAULT_ASSUMPTIONS, rfPct: null, rfTouched: true }, 3, 7).rfPct).toMatch(/entre 0%/)
   })
 
   it('una caja que no deja sumar 100 % se explica con el número de emisoras', () => {
-    expect(validateAssumptions({ ...DEFAULT_ASSUMPTIONS, maxPct: 30 }, 3, 7).maxPct).toMatch(/al menos 33.33 %/)
-    expect(validateAssumptions({ ...DEFAULT_ASSUMPTIONS, minPct: 40 }, 3, 7).minPct).toMatch(/hasta 33.33 %/)
+    expect(validateAssumptions({ ...DEFAULT_ASSUMPTIONS, maxPct: 30 }, 3, 7).maxPct).toMatch(/al menos 33.33%/)
+    expect(validateAssumptions({ ...DEFAULT_ASSUMPTIONS, minPct: 40 }, 3, 7).minPct).toMatch(/hasta 33.33%/)
     expect(validateAssumptions({ ...DEFAULT_ASSUMPTIONS, minPct: 50, maxPct: 40 }, 2, 7).minPct).toMatch(/no puede pasar/)
   })
 

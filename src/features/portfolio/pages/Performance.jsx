@@ -16,7 +16,7 @@ import { fmtDate, fmtMoney, fmtNumber, fmtPct, fmtPp } from '../../../lib/format
 import { fxHistoryQuery, inpcQuery, panelQuery } from '../../../lib/api/queries.js'
 import { useCapabilities } from '../../../lib/api/capabilities.js'
 import { DEFAULT_BENCHMARK, useStore } from '../../../lib/storage.js'
-import { PATHS } from '../../../app/paths.js'
+import { PATHS, pathMethodology } from '../../../app/paths.js'
 import { minusDays, todayMx } from '../tx-labels.js'
 import { computePerformance, impliedFx, inpcStart, mergeFx, needsDailyFix, isrView, nativePriceTable, panelAdjustment, pickWindow, pnlByPosition, splitAdjusted, zipTable } from '../lib/performance-view.js'
 import { cutAt, futureNotice } from '../lib/book-cut.js'
@@ -113,7 +113,7 @@ export default function Performance() {
       title="Rendimiento"
       eyebrow={portfolio?.name}
       description="Cómo le ha ido a tu portafolio en pesos, medido por tiempo (TWR) y por dinero (XIRR), contra tu referencia."
-      actions={portfolio ? <Link className="kz-button" data-variant="secondary" data-size="md" to="/aprender/metodologia/portafolio">Cómo se calcula</Link> : undefined}
+      actions={portfolio ? <Link className="kz-button" data-variant="secondary" data-size="md" to={pathMethodology('portafolio')}>Cómo se calcula</Link> : undefined}
     />
   )
 

@@ -90,8 +90,8 @@ export default function Risk() {
           <Card title="Medidas de riesgo" status={meta} description={risk ? `${fmtNumber(risk.weeks, { decimals: 0 })} semanas de datos` : undefined}>
             <div className="kz-metric-grid">
               <Stat loading={loading} label="Caída máxima" value={risk ? fmtPct(risk.maxDrawdown) : undefined} info={{ termKey: 'drawdown-maximo', term: 'Caída máxima' }} />
-              <Stat loading={loading} label="VaR 95 %, una semana" value={risk ? fmtPct(risk.var95) : undefined} sublabel="Pérdida que solo se superó 1 de cada 20 semanas" info={{ termKey: 'var', term: 'VaR' }} />
-              <Stat loading={loading} label="CVaR 95 %, una semana" value={risk ? fmtPct(risk.cvar95) : undefined} sublabel="Pérdida promedio en esas semanas malas" info={{ termKey: 'cvar', term: 'CVaR' }} />
+              <Stat loading={loading} label="VaR 95%, una semana" value={risk ? fmtPct(risk.var95) : undefined} sublabel="Pérdida que solo se superó 1 de cada 20 semanas" info={{ termKey: 'var', term: 'VaR' }} />
+              <Stat loading={loading} label="CVaR 95%, una semana" value={risk ? fmtPct(risk.cvar95) : undefined} sublabel="Pérdida promedio en esas semanas malas" info={{ termKey: 'cvar', term: 'CVaR' }} />
               <Stat loading={loading} label="Beta contra el IPC (NAFTRAC)" value={risk ? fmtNumber(risk.betaIpc) : undefined} info={{ termKey: 'beta', term: 'Beta' }} />
               <Stat loading={loading} label="Beta contra el S&P 500 (SPY, en pesos)" value={risk ? fmtNumber(risk.betaSpx) : undefined} />
               <Stat loading={loading} label="Número efectivo de activos" value={risk ? fmtNumber(risk.effectiveN, { decimals: 1 }) : undefined} info={{ termKey: 'numero-efectivo-de-activos', term: 'Número efectivo de activos' }} />

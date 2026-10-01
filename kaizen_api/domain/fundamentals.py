@@ -771,7 +771,7 @@ def get_dividends(symbol: str) -> dict:
     if computed_yield and published and abs(computed_yield - published) > 0.1 * published:
         notes.append(
             "Este rendimiento sale de los dividendos pagados en los últimos 12 meses. "
-            f"Yahoo publica {published * 100:.2f} % por su propia cuenta, que puede ir por delante."
+            f"Yahoo publica {published * 100:.2f}% por su propia cuenta, que puede ir por delante."
         )
     return {
         "symbol": symbol,

@@ -155,7 +155,7 @@ def _owner(root) -> tuple[str, str | None]:
         if _truthy(_value_of(relationship, "isOfficer")):
             roles.append(f"Directivo: {title}" if title else "Directivo")
         if _truthy(_value_of(relationship, "isTenPercentOwner")):
-            roles.append("Accionista con 10 % o más")
+            roles.append("Accionista con 10% o más")
         if _truthy(_value_of(relationship, "isOther")) and not roles:
             roles.append("Otra relación con la emisora")
     return name, ", ".join(roles) or None

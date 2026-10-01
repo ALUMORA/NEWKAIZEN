@@ -26,11 +26,11 @@ const SEARCH_ROWS = [
 // FactorsResponse (kaizen_api/schemas.py): métricas en fracciones, deuda/capital como razón.
 const METRIC_IDS = ['earningsYield', 'fcfYield', 'ebitdaToEv', 'bookToPrice', 'returnOnEquity', 'returnOnAssets', 'operatingMargin', 'debtToEquity', 'momentum12m1', 'volatility', 'revenueGrowth', 'earningsGrowth']
 const CHECKS = [
-  ['valor', 'Rendimiento de utilidades de 6 % o más', 'earningsYield', '>=', 0.06],
-  ['calidad', 'Rendimiento sobre capital de 15 % o más', 'returnOnEquity', '>=', 0.15],
-  ['margen', 'Margen operativo de 10 % o más', 'operatingMargin', '>=', 0.1],
+  ['valor', 'Rendimiento de utilidades de 6% o más', 'earningsYield', '>=', 0.06],
+  ['calidad', 'Rendimiento sobre capital de 15% o más', 'returnOnEquity', '>=', 0.15],
+  ['margen', 'Margen operativo de 10% o más', 'operatingMargin', '>=', 0.1],
   ['deuda', 'Deuda entre capital de 1.0 o menos', 'debtToEquity', '<=', 1.0],
-  ['crecimiento', 'Ingresos creciendo 5 % o más', 'revenueGrowth', '>=', 0.05],
+  ['crecimiento', 'Ingresos creciendo 5% o más', 'revenueGrowth', '>=', 0.05],
   ['momento', 'Momento 12-1 positivo', 'momentum12m1', '>=', 0],
 ]
 const SMALL = 'Su sector tiene menos de 5 emisoras en este universo: se compara contra todo el universo.'
@@ -69,7 +69,7 @@ const MX_ROWS = [
   factorRow('BIMBOA.MX', 'Grupo Bimbo, S.A.B. de C.V.', 'Consumo básico', [0.07, 0.06, 0.13, 0.5, 0.09, 0.03, 0.07, 1.4, -0.21, 0.26, 0.02, -0.1], [0.9, -0.3, -1.1, -0.2, -0.4, -0.22]),
   factorRow('CEMEXCPO.MX', 'CEMEX, S.A.B. de C.V.', 'Materiales', [null, null, null, null, 0.06, 0.03, 0.11, 0.7, 0.04, 0.33, 0.01, -0.2], [null, -0.6, 0.3, -1.2, 0.2, -0.33], FX),
   factorRow('ORBIA.MX', 'Orbia Advance Corporation, S.A.B. de C.V.', 'Materiales', [0.03, null, 0.09, 0.8, 0.02, null, null, 1.3, null, null, null, null], [0.1, -0.2, null, null, null, null], SMALL),
-  factorRow('TLEVISACPO.MX', 'Grupo Televisa, S.A.B.', 'Comunicaciones', [null, null, null, 1.2, -0.04, null, 0.05, 1.1, -0.3, null, null, null], null, 'Cobertura de 42 %: hacen falta al menos 50 % de las métricas para compararla.'),
+  factorRow('TLEVISACPO.MX', 'Grupo Televisa, S.A.B.', 'Comunicaciones', [null, null, null, 1.2, -0.04, null, 0.05, 1.1, -0.3, null, null, null], null, 'Cobertura de 42%: hacen falta al menos 50% de las métricas para compararla.'),
   factorRow('LIVEPOLC-1.MX', 'El Puerto de Liverpool, S.A.B. de C.V.', 'Consumo discrecional', null, null, 'El proveedor no respondió para esta emisora.'),
 ]
 const US_ROWS = [
@@ -335,7 +335,7 @@ test.describe('screener de factores', () => {
     await expect(board.getByText('Reporta en USD y cotiza en MXN', { exact: false })).toBeVisible()
     const out = page.getByRole('region', { name: 'Fuera del tablero', exact: true })
     await expect(out).toContainText('TLEVISACPO.MX')
-    await expect(out).toContainText('Cobertura de 42 %')
+    await expect(out).toContainText('Cobertura de 42%')
     await expect(out).toContainText('El proveedor no respondió para esta emisora.')
 
     // Nada de comprar o vender: ni columnas ni etiquetas.
@@ -368,7 +368,7 @@ test.describe('screener de factores', () => {
     await screenerReady(page)
     await page.getByRole('tab', { name: 'Pruebas' }).click()
     const checks = page.getByRole('table', { name: 'Pruebas cumple o no cumple' })
-    await expect(checks.getByRole('columnheader', { name: /Rendimiento de utilidades de 6 % o más/ })).toBeVisible()
+    await expect(checks.getByRole('columnheader', { name: /Rendimiento de utilidades de 6% o más/ })).toBeVisible()
     await expect(checks.getByRole('columnheader', { name: /Deuda entre capital de 1.0 o menos/ })).toBeVisible()
     const walmex = bodyRows(checks).filter({ hasText: 'WALMEX.MX' })
     await expect(walmex).toContainText('No cumple')

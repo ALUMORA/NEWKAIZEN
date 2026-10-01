@@ -83,7 +83,7 @@ describe('ventas, efectivo y objetivos', () => {
     })
     expect(plan.targets.A).toBeCloseTo(0.3, 12)
     expect(plan.after.holdings).toEqual({ A: 30, B: 70 })
-    expect(plan.notes.join(' ')).toContain('no sumaban 100 %')
+    expect(plan.notes.join(' ')).toContain('no sumaban 100%')
   })
 
   it('un símbolo sin precio se salta y su objetivo se reparte', () => {

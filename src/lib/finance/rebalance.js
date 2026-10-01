@@ -119,7 +119,7 @@ export function wholeShareRebalance({
   }
   if (targetSum > 0 && Math.abs(targetSum - 1) > 1e-9) {
     for (const symbol of tradable) target[symbol] /= targetSum
-    notes.push('Los objetivos no sumaban 100 %, así que se reescalaron para que sumen.')
+    notes.push('Los objetivos no sumaban 100%, así que se reescalaron para que sumen.')
   }
   if (skipped.length > 0) {
     notes.push(`Se dejaron fuera ${skipped.length} símbolos sin precio y su objetivo se repartió entre los demás.`)

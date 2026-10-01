@@ -7,14 +7,14 @@ import { useQuery } from '@tanstack/react-query'
 import { magicScreenerQuery } from '../../../lib/api/queries.js'
 import { MISSING, fmtDate, fmtInt, fmtMoney, fmtPct } from '../../../lib/format.js'
 import { Badge, Card, DataTable, PageHeader, SegmentedControl, Stat } from '../../../components/ui/index.js'
-import { PATHS, pathInstrument } from '../../../app/paths.js'
+import { PATHS, pathInstrument, pathMethodology } from '../../../app/paths.js'
 import { QueryBlock } from '../components/QueryBlock.jsx'
 import { EXCLUSION_RULES, UNIVERSES, groupExclusions, parseUniverse, sharedValues, withPositions } from '../magicFormula.js'
 import { ebitFallbackRows, readableMeta } from '../screenerNotes.js'
 import '../research.css'
 import '../magic-fibras.css'
 
-const METHOD_PATH = '/aprender/metodologia/formula-magica'
+const METHOD_PATH = pathMethodology('formula-magica')
 
 const ROC_TEXT =
   'EBIT entre el capital que el negocio necesita para operar: capital de trabajo neto sin efectivo ni deuda de corto plazo, más el activo fijo neto.'

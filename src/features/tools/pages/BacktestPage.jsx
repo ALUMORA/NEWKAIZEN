@@ -3,8 +3,8 @@
 // volatilidad, caída máxima y sus gráficas, todo con src/lib/finance. Cuando se prueban los pesos
 // de hoy sobre la historia, la página lo dice antes que cualquier número.
 import { useMemo, useState } from 'react'
-import { Link, useSearchParams } from 'react-router'
-import { Card, EmptyState, ErrorState, PageHeader, Skeleton, SrOnly } from '../../../components/ui/index.js'
+import { useSearchParams } from 'react-router'
+import { Card, EmptyState, ErrorState, InlineLink, PageHeader, Skeleton, SrOnly } from '../../../components/ui/index.js'
 import { derivePositions } from '../../../lib/finance/index.js'
 import { fmtDate } from '../../../lib/format.js'
 import { useStore } from '../../../lib/storage.js'
@@ -14,9 +14,10 @@ import { BacktestForm } from '../components/BacktestForm.jsx'
 import { BacktestResults } from '../components/BacktestResults.jsx'
 import { equalPercents, parseSymbols } from '../selection.js'
 import { useBacktest } from '../useBacktest.js'
+import { pathMethodology } from '../../../app/paths.js'
 import '../tools.css'
 
-const METHODOLOGY = '/aprender/metodologia/backtest'
+const METHODOLOGY = pathMethodology('backtest')
 
 /** @param {any} s */
 const selectActive = (s) => s.portfolios.find((/** @type {any} */ p) => p.id === s.activePortfolioId) ?? null
@@ -88,7 +89,7 @@ export default function BacktestPage() {
   } else if (mode === 'manual' && (Object.keys(bt.manual.errors).length > 0 || bt.manual.sumError)) {
     results = (
       <ResultCard>
-        <EmptyState headingAs="h3" title="Revisa los pesos" text="Cuando cada peso sea válido y sumen 100 %, corremos la prueba." />
+        <EmptyState headingAs="h3" title="Revisa los pesos" text="Cuando cada peso sea válido y sumen 100%, corremos la prueba." />
       </ResultCard>
     )
   } else if (bt.blendError) {
@@ -108,7 +109,7 @@ export default function BacktestPage() {
       <>
         {dropped.length > 0 && (
           <p className="kz-tool__notice" role="note">
-            Sin historia en todo el periodo, quedaron fuera: {dropped.join(', ')}. Los demás pesos se reescalaron para sumar 100 %.
+            Sin historia en todo el periodo, quedaron fuera: {dropped.join(', ')}. Los demás pesos se reescalaron para sumar 100%.
           </p>
         )}
         <BacktestResults result={r} benchLabel={benchLabel} benchShort={benchmarkShort(form.benchmark)} mineLabel={mode === 'portfolio' ? 'Tu portafolio' : 'Tu mezcla'} status={meta} rf={{ meta: bt.rf.data?.meta, isError: bt.rf.isError, refetch: bt.rf.refetch }} />
@@ -158,7 +159,7 @@ export default function BacktestPage() {
               <li>El CAGR es el rendimiento compuesto, no el promedio de las semanas por 52, que exagera.</li>
             </ul>
             <p className="kz-tool__more">
-              <Link to={METHODOLOGY}>Lee la metodología del backtest</Link>
+              <InlineLink to={METHODOLOGY}>Lee la metodología del backtest</InlineLink>
             </p>
           </Card>
         </div>

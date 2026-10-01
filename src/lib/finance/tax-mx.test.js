@@ -294,7 +294,7 @@ describe('interestWithholding: retención provisional de ISR sobre intereses', (
     expect(INTEREST_WITHHOLDING_SOURCE).toContain('art. 24')
     expect(INTEREST_WITHHOLDING_RATE).toBe(0.009)
     expect(INTEREST_WITHHOLDING_SOURCE).toContain('Ley de Ingresos de la Federación 2026')
-    expect(INTEREST_WITHHOLDING_SOURCE).toContain('0.90 %')
+    expect(INTEREST_WITHHOLDING_SOURCE).toContain('0.90%')
   })
 
   it('100 000 a 365 días retienen exactamente la tasa anual: 900', () => {

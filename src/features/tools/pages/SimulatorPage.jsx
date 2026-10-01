@@ -2,15 +2,15 @@
 // escenario de retiro. Todo se calcula en el navegador con src/lib/finance (en su Web Worker); no
 // hay datos del API, así que los supuestos son los que la persona escribe y se dicen como tales.
 import { Suspense, lazy, useMemo, useState } from 'react'
-import { Link } from 'react-router'
-import { Card, EmptyState, ErrorState, NumberInput, PageHeader, SegmentedControl, Skeleton, Stat } from '../../../components/ui/index.js'
+import { Card, EmptyState, ErrorState, InlineLink, NumberInput, PageHeader, SegmentedControl, Skeleton, Stat } from '../../../components/ui/index.js'
 import { MISSING, fmtMoney, fmtNumber, fmtPct } from '../../../lib/format.js'
 import { DEFAULT_INPUTS, DEFAULT_PATHS, fanPoints, retirementFromSim, summarize, validateInputs } from '../simulator.js'
 import { useSimulation } from '../useSimulation.js'
+import { pathMethodology } from '../../../app/paths.js'
 import '../tools.css'
 
-// Guía de docs/metodologia/simulador.md, servida por F5 en /aprender/metodologia/:guia.
-const METHODOLOGY = '/aprender/metodologia/simulador'
+// Guía de docs/metodologia/simulador.md, servida por F5 en PATHS.learnMethodology.
+const METHODOLOGY = pathMethodology('simulador')
 
 const FanChart = lazy(() => import('../../../components/charts/FanChart.jsx').then((m) => ({ default: m.FanChart })))
 
@@ -195,13 +195,13 @@ export default function SimulatorPage() {
           <Card title="Qué supone esta simulación">
             <ul className="kz-sim__notes">
               <li>Cada mes el rendimiento se sortea de una distribución lognormal con el rendimiento y la volatilidad que escribiste. El saldo nunca baja de cero.</li>
-              <li>Las aportaciones entran al inicio de cada mes y crecen un poco cada mes, al ritmo anual que elegiste: con 4 % al año, la de dentro de doce meses es 4 % mayor.</li>
+              <li>Las aportaciones entran al inicio de cada mes y crecen un poco cada mes, al ritmo anual que elegiste: con 4% al año, la de dentro de doce meses es 4% mayor.</li>
               <li>Los pesos de hoy descuentan la inflación: te dicen qué podrías comprar con ese dinero a precios de ahora.</li>
               <li>No incluye impuestos, comisiones ni cambios en tus ingresos. El pasado y los supuestos no garantizan resultados.</li>
               <li>Es una herramienta para explorar escenarios, no una recomendación de inversión.</li>
             </ul>
             <p className="kz-sim__more">
-              <Link to={METHODOLOGY}>Lee la metodología del simulador</Link>
+              <InlineLink to={METHODOLOGY}>Lee la metodología del simulador</InlineLink>
             </p>
           </Card>
         </div>
