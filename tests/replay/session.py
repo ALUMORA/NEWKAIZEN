@@ -34,6 +34,7 @@ from .proxies import (
     default_decoder,
     default_encoder,
     make_download,
+    make_screen,
     make_session_request,
     make_ticker_class,
 )
@@ -312,6 +313,7 @@ class ReplaySession:
         self.orig = {
             "Ticker": yfinance.Ticker,
             "download": yfinance.download,
+            "screen": yfinance.screen,
             "Session.request": requests.Session.request,
             "as_completed": concurrent.futures.as_completed,
             "sleep": time.sleep,
@@ -338,6 +340,10 @@ class ReplaySession:
         download = make_download(self)
         yfinance.Ticker = ticker_cls
         yfinance.download = download
+        # yf.screen (fase 5, V5MK) goes through yfinance's curl_cffi session, not requests: it is
+        # recorded as one value per query. yf.Sector, yf.Industry, yf.Calendars and
+        # YfData().get_raw_json are NOT covered and are vetoed for providers (docs/OWNERSHIP.md).
+        yfinance.screen = make_screen(self)
         requests.Session.request = make_session_request(self)
         if self.deterministic_futures:
             concurrent.futures.as_completed = ordered_as_completed
@@ -373,6 +379,7 @@ class ReplaySession:
             guard.unblock_network()
         yfinance.Ticker = self.orig["Ticker"]
         yfinance.download = self.orig["download"]
+        yfinance.screen = self.orig["screen"]
         requests.Session.request = self.orig["Session.request"]
         concurrent.futures.as_completed = self.orig["as_completed"]
         time.sleep = self.orig["sleep"]

@@ -3,6 +3,8 @@
 yfinance:  ``yf:<SYMBOL>:<attr>[?k=v&...]``        e.g. ``yf:AAPL:history?interval=1wk&period=1y``
            ``yf:<SYMBOL>:fast_info.<prop>``         e.g. ``yf:WALMEX.MX:fast_info.last_price``
 download:  ``yf.download:<TICKERS>[?k=v&...]``      TICKERS is ``AAPL`` for a string, ``[A,B]`` for a list
+screen:    ``yf.screen:<QUERY>[?k=v&...]``           QUERY is the predefined name (``day_gainers``) or
+           ``EquityQuery{...}`` with the query's ``to_dict()`` as sorted compact JSON
 HTTP:      ``http:<METHOD> <scheme://host/path>[?sorted params]``
 
 kwargs are bound to the real signature and values equal to the default are dropped, so
@@ -92,6 +94,19 @@ def download_key(tickers: Any, kwargs: dict[str, Any]) -> str:
     else:
         sym = "[" + ",".join(str(t).upper() for t in tickers) + "]"
     return f"yf.download:{sym}{_query(kwargs)}"
+
+
+def screen_label(query: Any) -> str:
+    """``day_gainers`` for a predefined screen; ``EquityQuery{"operands":[...],"operator":"AND"}`` for a query."""
+    if isinstance(query, str):
+        return query
+    to_dict = getattr(query, "to_dict", None)
+    body = to_dict() if callable(to_dict) else query
+    return f"{type(query).__name__}{_fmt(body)}"
+
+
+def screen_key(query: Any, kwargs: dict[str, Any]) -> str:
+    return f"yf.screen:{screen_label(query)}{_query(kwargs)}"
 
 
 def http_key(method: str, url: str, params: Any = None, body: bytes | str | None = None) -> str:

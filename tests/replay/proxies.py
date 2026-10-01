@@ -1,4 +1,4 @@
-"""Stand-ins installed over yfinance.Ticker, yfinance.download and requests.Session.request.
+"""Stand-ins installed over yfinance.Ticker, yfinance.download, yfinance.screen and requests.Session.request.
 
 They never talk to the network themselves: every access becomes ``session.call(key, live_fn)``.
 In replay mode the session answers from fixtures; in record mode it runs ``live_fn`` (which
@@ -18,7 +18,7 @@ from urllib.parse import urlencode
 import requests
 from requests.structures import CaseInsensitiveDict
 
-from .keys import download_key, http_key, normalize_call, yf_key
+from .keys import download_key, http_key, normalize_call, screen_key, screen_label, yf_key
 from .serialize import decode, encode
 
 if TYPE_CHECKING:
@@ -45,6 +45,17 @@ def _fast_info_template() -> Any:
     return FastInfo(None)  # the constructor only builds key tables, no I/O
 
 
+def _funds_data_members() -> tuple[frozenset[str], frozenset[str]]:
+    """(properties, methods) of ``yfinance.scrapers.funds.FundsData``, read from the class (no I/O)."""
+    try:
+        from yfinance.scrapers.funds import FundsData
+    except Exception:  # pragma: no cover
+        return frozenset(), frozenset()
+    props = {n for n, v in vars(FundsData).items() if not n.startswith("_") and isinstance(v, property)}
+    methods = {n for n, v in vars(FundsData).items() if not n.startswith("_") and callable(v)}
+    return frozenset(props), frozenset(methods)
+
+
 # ─── yfinance.Ticker ─────────────────────────────────────────────────────────
 
 
@@ -60,6 +71,7 @@ class ReplayTicker:
         self._orig_args = (ticker, session, kwargs)
         self._real = None
         self._fast_info_proxy = None
+        self._funds_data_proxy = None
 
     def _real_obj(self) -> Any:
         if self._real is None:
@@ -81,6 +93,13 @@ class ReplayTicker:
             if self._fast_info_proxy is None:
                 self._fast_info_proxy = FastInfoProxy(self)
             return self._fast_info_proxy
+        if name in ("funds_data", "get_funds_data"):
+            # FundsData is a lazy object, not data: each of its properties is recorded on its own key
+            # (``yf:SPY:funds_data.top_holdings``), like fast_info.
+            if self._funds_data_proxy is None:
+                self._funds_data_proxy = FundsDataProxy(self)
+            proxy = self._funds_data_proxy
+            return proxy if name == "funds_data" else (lambda *a, **kw: proxy)
         if isinstance(static, (property, functools.cached_property)):
             key = yf_key(self.ticker, name)
             return self._rp.call(
@@ -173,6 +192,53 @@ class FastInfoProxy:
         return json.dumps({k: self[k] for k in self.keys()}, indent=indent)
 
 
+class FundsDataProxy:
+    """Mimics ``yfinance.scrapers.funds.FundsData``: every property and method is its own recorded call.
+
+    ``Ticker.funds_data`` returns an object that fetches on first access, which cannot be stored as
+    a value. Here ``top_holdings``, ``sector_weightings``, ``asset_classes``, ``fund_overview``,
+    ``fund_operations``, ``equity_holdings``, ``bond_holdings``, ``bond_ratings`` and ``description``
+    go to ``yf:<SYMBOL>:funds_data.<name>`` and ``quote_type()`` to ``yf:<SYMBOL>:funds_data.quote_type``.
+    A fund-less symbol raises inside the real object; that exception is recorded and replayed.
+    """
+
+    def __init__(self, ticker_proxy: ReplayTicker):
+        self._t = ticker_proxy
+        self._real = None
+
+    def _real_fd(self) -> Any:
+        if self._real is None:
+            self._real = self._t._real_obj().funds_data
+        return self._real
+
+    def _call(self, name: str, live: Any) -> Any:
+        key = yf_key(self._t.ticker, f"funds_data.{name}")
+        return self._t._rp.call(
+            key,
+            live,
+            provider="yfinance",
+            meta={"symbol": self._t.ticker, "attr": f"funds_data.{name}", "kwargs": {}},
+        )
+
+    def __getattr__(self, name: str) -> Any:
+        if name.startswith("_"):
+            raise AttributeError(name)
+        props, methods = _funds_data_members()
+        if name in props:
+            return self._call(name, lambda: getattr(self._real_fd(), name))
+        if name in methods:
+
+            def method() -> Any:
+                return self._call(name, lambda: getattr(self._real_fd(), name)())
+
+            method.__name__ = name
+            return method
+        raise AttributeError(f"'FundsData' object has no attribute '{name}'")
+
+    def __repr__(self) -> str:
+        return f"yfinance.FundsData object <{self._t.ticker}> (replay)"
+
+
 def make_ticker_class(session: ReplaySession) -> type:
     return type("Ticker", (ReplayTicker,), {"_rp": session, "__module__": "yfinance.ticker"})
 
@@ -193,6 +259,31 @@ def make_download(session: ReplaySession) -> Any:
 
     download.__wrapped__ = orig
     return download
+
+
+def make_screen(session: ReplaySession) -> Any:
+    """Stand-in for ``yfinance.screen``: a predefined name (``"day_gainers"``) or an ``EquityQuery``.
+
+    ``yf.screen`` talks to Yahoo through yfinance's own curl_cffi session, which the requests hook
+    never sees, so it is recorded here as one value per (query, offset, size, count, sort...).
+    Providers have to call it as ``yf.screen(...)`` (module attribute): ``from yfinance import
+    screen`` binds the original before the replay is installed and would go to the network.
+    """
+    orig = session.orig["screen"]
+
+    def screen(query: Any, *args: Any, **kwargs: Any) -> Any:
+        norm = normalize_call(orig, (query, *args), kwargs)
+        norm.pop("query", None)
+        key = screen_key(query, norm)
+        return session.call(
+            key,
+            lambda: orig(query, *args, **kwargs),
+            provider="yfinance.screen",
+            meta={"symbol": screen_label(query)[:120], "attr": "screen", "kwargs": encode(norm)},
+        )
+
+    screen.__wrapped__ = orig
+    return screen
 
 
 # ─── requests ────────────────────────────────────────────────────────────────
