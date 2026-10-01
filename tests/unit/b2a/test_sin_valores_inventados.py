@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import pytest
 
+from kaizen_api import schemas
 from kaizen_api.domain import fx as fx_domain
 from kaizen_api.domain import macro as macro_domain
 from kaizen_api.providers.yahoo import session as yahoo_session
@@ -77,9 +78,12 @@ def test_el_dxy_del_legado_sigue_saliendo_de_stooq() -> None:
 def test_health_anuncia_exactamente_lo_que_b2a_ya_entrega(client) -> None:
     capacidades = set(client.get("/health").json()["capabilities"])
     assert {"quotes", "fx", "history", "panel", "fx.history", "markets.overview", "markets.world", "search"} <= capacidades
-    # Todavía no hay FIX de Banxico ni rango por fechas en el histórico: no se anuncian.
+    # No hay FIX de Banxico en /v2/fx ni rango por fechas en el histórico: no se anuncian, y desde la
+    # fase 5 ni siquiera existen como capacidad (el FIX vive en /v2/fxdesk/fix, que es "fxdesk.fix").
     assert "fx.fix" not in capacidades
     assert "history.dates" not in capacidades
+    assert "fx.fix" not in schemas.KNOWN_CAPABILITIES
+    assert "history.dates" not in schemas.KNOWN_CAPABILITIES
 
 
 def test_toda_respuesta_de_b2a_trae_meta_completa(client) -> None:
