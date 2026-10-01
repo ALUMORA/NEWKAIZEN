@@ -256,6 +256,25 @@ def _submissions(cik: str) -> dict | None:
     return _cached(f"v2:sec:subs:{cik}", fetch, ttl=SEC_FACTS_TTL, ok=lambda d: bool(d))
 
 
+def submissions(cik: str | int) -> dict | None:
+    """Lista de expedientes del emisor (``data.sec.gov/submissions/CIK##########.json``) o ``None``.
+
+    Envoltura pública de ``_submissions`` para la fase 5 (``/v2/filings`` de V5FI), sin cambiar su
+    conducta: misma URL, mismo User-Agent con contacto, misma caché de 6 horas y ``None`` si la SEC
+    no contesta o no hay JSON. Acepta el CIK con o sin ceros a la izquierda (``320193`` o
+    ``"0000320193"``) y lo pide siempre con 10 dígitos, que es como lo exige EDGAR. Un CIK que no
+    son puros dígitos o que pasa de 10 es un error del que llama (``ValueError``), no de la SEC.
+
+    Para las emisoras de la BMV con ADR, el CIK sale de ``cik_for(<ticker del ADR>)``: por ejemplo
+    ``cik_for("CX")`` para CEMEXCPO.MX según ``data/sec_adr_map.json``. ``cik_for`` con la clave
+    ``.MX`` devuelve ``None`` a propósito, porque EDGAR solo conoce el ticker de EE. UU.
+    """
+    text = str(cik).strip()
+    if not text.isdigit() or len(text) > 10:
+        raise ValueError(f"CIK inválido: {text[:20]!r}")
+    return _submissions(text.zfill(10))
+
+
 def recent_filings(symbol: str, form: str = "4", limit: int = FORM4_MAX) -> list[dict]:
     """Últimos expedientes de un tipo (``form``) del emisor: accession, fechas y documento."""
     cik = cik_for(symbol)
