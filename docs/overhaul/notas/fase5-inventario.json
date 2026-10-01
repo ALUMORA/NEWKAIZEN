@@ -1,0 +1,485 @@
+{
+ "routes": [
+  {
+   "path": "/",
+   "page": "src/app/router.jsx (index de PrivateLayout)",
+   "shows": "Nada propio: <Navigate replace to={DEFAULT_PRIVATE_PATH}> manda a /mercados. Pasa por RequireAuth (src/app/RequireAuth.jsx), así que sin sesión cae en /login?next=.",
+   "endpoints": []
+  },
+  {
+   "path": "/login",
+   "page": "src/features/auth/pages/LoginPage.jsx",
+   "shows": "Formulario usuario y contraseña (pública). Usa session.login (src/lib/auth/session.js) y muestra el estado del servidor con useCapabilities. Los usuarios son fijos en la variable USERS del backend; no hay registro ni recuperación de contraseña.",
+   "endpoints": [
+    "POST /auth/login",
+    "GET /health"
+   ]
+  },
+  {
+   "path": "/aprender",
+   "page": "src/features/learn/pages/LearnIndex.jsx",
+   "shows": "Pública. Glosario completo de src/content/glossary.js con buscador, agrupado por letra, más la lista de las 11 guías de docs/metodologia (src/features/learn/guides.js con import.meta.glob ?raw).",
+   "endpoints": []
+  },
+  {
+   "path": "/aprender/:termino",
+   "page": "src/features/learn/pages/LearnTerm.jsx",
+   "shows": "Pública. Ficha de un concepto del glosario (definición, Fórmula, Para usarlo); pone su nombre en la pestaña con usePageTitle.",
+   "endpoints": []
+  },
+  {
+   "path": "/aprender/metodologia/:guia",
+   "page": "src/features/learn/pages/LearnGuide.jsx",
+   "shows": "Pública. Renderiza un .md de docs/metodologia con el parser propio src/features/learn/markdown-parse.js; 'Guía no encontrada' si el slug no existe.",
+   "endpoints": []
+  },
+  {
+   "path": "/legal/terminos, /legal/privacidad, /legal/aviso",
+   "page": "src/features/legal/pages/Terms.jsx, Privacy.jsx, Notice.jsx (LegalLayout.jsx)",
+   "shows": "Públicas. Texto estático de términos, aviso de privacidad y aviso legal (herramienta informativa, sin recomendaciones).",
+   "endpoints": []
+  },
+  {
+   "path": "/mercados",
+   "page": "src/features/markets/pages/OverviewPage.jsx + src/features/markets/overview/*.jsx",
+   "shows": "Panorama: FirstSteps (si no se hizo la bienvenida), SummaryCard (resumen factual del día) y ExchangesCard (BMV y NYSE abierta o cerrada con su calendario), GroupsSection (tablas sin duplicados: México SOLO el IPC, EE. UU. S&P 500, Nasdaq y Dow, global Nikkei, FTSE, DAX, CAC y Hang Seng, 5 divisas, 6 materias primas, BTC y ETH), VixCard (VIX con percentil sobre su historia), UsRatesCard (Tesoro 3M, 2A, 10A, diferenciales en pb, Fed Funds, DXY), WorldCard (barras de cambio diario por país con ETF en USD) y ligas a México, CETES y Noticias. Cada tarjeta solo consulta si /health anuncia la capacidad (useFeature). Las filas NO ligan a la ficha de la emisora.",
+   "endpoints": [
+    "GET /v2/markets/overview",
+    "GET /v2/macro/us",
+    "GET /v2/history/^VIX",
+    "GET /v2/markets/world"
+   ]
+  },
+  {
+   "path": "/mercados/mexico",
+   "page": "src/features/markets/pages/MexicoPage.jsx",
+   "shows": "Tarjeta México con el último valor de objetivo Banxico, TIIE 28, TIIE de fondeo, CETES 28/91/182/364, Bono M 10a, inflación anual y subyacente, UDI y FIX (más /v2/fx); tarjeta Estados Unidos (macro/us); única gráfica: CETES 28 días en el tiempo. No grafica inflación, tipo de cambio ni curva de rendimientos.",
+   "endpoints": [
+    "GET /v2/rates/mx",
+    "GET /v2/fx",
+    "GET /v2/macro/us",
+    "GET /v2/rates/rf?tenorDays=28"
+   ]
+  },
+  {
+   "path": "/mercados/cetes",
+   "page": "src/features/markets/pages/CetesPage.jsx (+ cetes-calc.js)",
+   "shows": "Tabla de CETES por plazo y calculadora (monto, plazo, tasa) con retención de ISR tomada de src/lib/finance/tax-mx.js (0.90 % LIF 2026, fija en código).",
+   "endpoints": [
+    "GET /v2/rates/mx"
+   ]
+  },
+  {
+   "path": "/mercados/noticias",
+   "page": "src/features/markets/pages/NewsPage.jsx",
+   "shows": "Titulares (título, medio, fecha, liga a la nota) con filtro de idioma es/en/todas y límite 30. No muestra el tono que calcula el backend ni filtra por emisora, medio o tema.",
+   "endpoints": [
+    "GET /v2/news?lang=&limit=30"
+   ]
+  },
+  {
+   "path": "/portafolio",
+   "page": "src/features/portfolio/pages/Summary.jsx",
+   "shows": "Selector del portafolio activo, valor total en pesos, ganancia no realizada, cambio del día (FX de ayer con FIX), posiciones con peso y resultado, asignación (dona) y ligas a las demás páginas. Datos del libro en localStorage. Las posiciones no ligan a la ficha.",
+   "endpoints": [
+    "GET /v2/quotes",
+    "GET /v2/fx",
+    "GET /v2/fx/history"
+   ]
+  },
+  {
+   "path": "/portafolio/movimientos",
+   "page": "src/features/portfolio/pages/Transactions.jsx (+ TransactionDialog.jsx, CsvImportDialog.jsx)",
+   "shows": "Libro del portafolio: alta de compra, venta, dividendo, depósito, retiro, split y comisión; borrado con confirmación y Deshacer; importar CSV y EXPORTAR CSV (el único export de la app); avisos de ventas por más títulos de los que había; posiciones resultantes.",
+   "endpoints": [
+    "GET /v2/fx/history (TransactionDialog, tipo de cambio de la fecha)"
+   ]
+  },
+  {
+   "path": "/portafolio/rendimiento",
+   "page": "src/features/portfolio/pages/Performance.jsx (+ lib/performance-view.js)",
+   "shows": "Valor del portafolio en el tiempo, TWR y XIRR contra settings.benchmark (NAFTRAC.MX por omisión, no editable en la UI), P&L separado en efecto precio y efecto tipo de cambio, ISR estimado con INPC. Usa adjust=splits si hay capacidad panel.splits e INPC si hay rates.inpc.",
+   "endpoints": [
+    "GET /v2/panel (ccy=MXN y ccy=USD)",
+    "GET /v2/fx/history",
+    "GET /v2/rates/mx/inpc"
+   ]
+  },
+  {
+   "path": "/portafolio/riesgo",
+   "page": "src/features/portfolio/pages/Risk.jsx (+ lib/risk-view.js)",
+   "shows": "Con pesos de hoy sobre 3 años semanales en pesos: caída máxima, VaR y CVaR, beta contra NAFTRAC.MX y SPY en pesos, número efectivo de activos, exposición a dólares, concentración por sector (sectorKey de quotes) y mapa de correlaciones.",
+   "endpoints": [
+    "GET /v2/panel",
+    "GET /v2/quotes"
+   ]
+  },
+  {
+   "path": "/portafolio/rebalanceo",
+   "page": "src/features/portfolio/pages/Rebalance.jsx (+ lib/rebalance-view.js)",
+   "shows": "Metas por emisora, plan en títulos enteros (wholeShareRebalance) valuado en pesos, y registrar el plan como movimientos con Deshacer.",
+   "endpoints": [
+    "GET /v2/quotes",
+    "GET /v2/fx"
+   ]
+  },
+  {
+   "path": "/investigar",
+   "page": "src/features/research/pages/Search.jsx",
+   "shows": "Buscador por nombre o clave con espera de 250 ms, resultados con clave, nombre, bolsa y moneda, recientes (los mismos de la paleta), ejemplos y ligas a screeners y comparador.",
+   "endpoints": [
+    "GET /v2/search"
+   ]
+  },
+  {
+   "path": "/investigar/comparar",
+   "page": "src/features/research/pages/Compare.jsx",
+   "shows": "De 2 a 5 emisoras (?symbols=A,B): múltiplos y rentabilidad lado a lado, rendimiento a un año y precio en base 100.",
+   "endpoints": [
+    "GET /v2/instrument/{symbol} (una por emisora con useQueries)",
+    "GET /v2/panel",
+    "GET /v2/search (SymbolPicker)"
+   ]
+  },
+  {
+   "path": "/investigar/:symbol",
+   "page": "src/features/research/pages/Instrument.jsx (+ components/Valuation.jsx)",
+   "shows": "Ficha: Resumen (cotización, fundamentales, beta, clasificación, descripción de Yahoo a veces en inglés con lang=en), Precio histórico (6m, 1a, 5a, todo; solo moneda nativa, sin volumen ni referencia), Momentum 12-1, Dividendos, Valuación (múltiplos contra Damodaran, DCF con sensibilidad, P/VL de bancos, supuestos editables), Estados financieros anual o trimestral, Noticias de la emisora. No tiene botón de agregar a lista, portafolio ni comparar, ni calendario de eventos ni insiders.",
+   "endpoints": [
+    "GET /v2/instrument/{symbol}",
+    "GET /v2/history/{symbol}",
+    "GET /v2/momentum/{symbol}",
+    "GET /v2/instrument/{symbol}/dividends",
+    "GET /v2/valuation/{symbol}",
+    "GET /v2/instrument/{symbol}/statements",
+    "GET /v2/news?symbol="
+   ]
+  },
+  {
+   "path": "/screener",
+   "page": "src/features/research/pages/Screener.jsx (+ screener-model.js, components/FactorTables.jsx)",
+   "shows": "Universo México, EE. UU. o lista propia (escrita, con buscador o tomada de hasta 3 watchlists), tablero de puntajes z por sector con vistas Pruebas y Métricas, filtro de sector, cobertura por emisora; la URL guarda universo, claves y sector.",
+   "endpoints": [
+    "GET /v2/screeners/factors",
+    "GET /v2/search"
+   ]
+  },
+  {
+   "path": "/screener/formula-magica",
+   "page": "src/features/research/pages/MagicFormula.jsx",
+   "shows": "Ranking de Greenblatt (universo mx o us por ?universo=) con empates, exclusiones y notas del cálculo.",
+   "endpoints": [
+    "GET /v2/screeners/magic"
+   ]
+  },
+  {
+   "path": "/screener/fibras",
+   "page": "src/features/research/pages/Fibras.jsx (+ fibras.js)",
+   "shows": "FIBRAs ordenadas por P/NAV con LTV, cap rate implícito, flujo, distribución pagada, diferencial contra la tasa (barras por FIBRA), agregar FIBRAs extra (?extra=), datos faltantes con su motivo y notas.",
+   "endpoints": [
+    "GET /v2/screeners/fibras",
+    "GET /v2/search"
+   ]
+  },
+  {
+   "path": "/herramientas",
+   "page": "src/features/tools/routes.jsx",
+   "shows": "Solo redirige a /herramientas/optimizador (sin handle.title).",
+   "endpoints": []
+  },
+  {
+   "path": "/herramientas/optimizador",
+   "page": "src/features/tools/pages/OptimizerPage.jsx (+ useOptimizer.js, optimizer.js)",
+   "shows": "Elegir emisoras, supuestos editables (ERP por omisión de /v2/assumptions, tasa CETES), mínima varianza, paridad de riesgo y máximo Sharpe sobre covarianza Ledoit-Wolf, frontera eficiente y validación walk forward.",
+   "endpoints": [
+    "GET /v2/panel",
+    "GET /v2/rates/rf",
+    "GET /v2/assumptions",
+    "GET /v2/search"
+   ]
+  },
+  {
+   "path": "/herramientas/backtest",
+   "page": "src/features/tools/pages/BacktestPage.jsx (+ useBacktest.js, backtester.js)",
+   "shows": "Comprar y mantener o mezcla constante sobre semanales en pesos contra IPC, S&P 500 en pesos o una mezcla; CAGR, volatilidad, caída máxima y gráficas; aviso de sesgos.",
+   "endpoints": [
+    "GET /v2/panel",
+    "GET /v2/rates/rf"
+   ]
+  },
+  {
+   "path": "/herramientas/simulador",
+   "page": "src/features/tools/pages/SimulatorPage.jsx (+ simulator.js, src/lib/finance/montecarlo.worker.js)",
+   "shows": "Monte Carlo en Web Worker de un plan de ahorro, probabilidad de llegar a la meta, abanico de saldos y escenario de retiro. Supuestos escritos por la persona.",
+   "endpoints": []
+  },
+  {
+   "path": "/watchlist",
+   "page": "src/features/watchlist/pages/Watchlist.jsx",
+   "shows": "UNA lista (state.watchlists[0]) en localStorage con precio, cambio del día y tendencia de un mes con sparkline; agregar con el buscador y quitar con Deshacer. La descripción de la ruta promete noticias y no hay; filas sin liga a la ficha.",
+   "endpoints": [
+    "GET /v2/quotes",
+    "GET /v2/history/{symbol}?range=1mo (una por símbolo)",
+    "GET /v2/search"
+   ]
+  },
+  {
+   "path": "/bienvenida",
+   "page": "src/features/onboarding/pages/Onboarding.jsx (+ sample.js)",
+   "shows": "Tres formas de empezar: portafolio de EJEMPLO, importar CSV o vacío; guarda settings.onboardingDone y manda a Movimientos. No captura perfil aunque la descripción lo dice.",
+   "endpoints": []
+  },
+  {
+   "path": "/dev/ui",
+   "page": "src/features/dev-ui/DevUiPage.jsx (+ ChartsGallery.jsx)",
+   "shows": "Catálogo de primitivas y galería de gráficas con datos de muestra; solo fuera de producción (MODE !== 'production').",
+   "endpoints": []
+  },
+  {
+   "path": "*",
+   "page": "src/app/NotFound.jsx",
+   "shows": "Página no encontrada con la dirección pedida.",
+   "endpoints": []
+  }
+ ],
+ "endpoints": [
+  {
+   "path": "GET /health",
+   "routerFile": "kaizen_api/routers/health.py",
+   "sources": "ninguna (no sale a la red)",
+   "provides": "status, apiVersion 2, version, commit, authRequired, capabilities (unión de CAPABILITIES de los routers montados), providers {yahoo.ok, sec.ok por señal de la última llamada; banxico, fred, eodhd solo configured}, serverTime. Pública."
+  },
+  {
+   "path": "POST /auth/login, GET /auth/me",
+   "routerFile": "kaizen_api/routers/auth.py",
+   "sources": "USERS del entorno (kaizen_api/security/auth.py), límite de tasa por IP y usuario",
+   "provides": "JWT con expiresAt y user; /auth/me devuelve el usuario de la sesión (getMe existe en endpoints.js pero ningún componente lo usa)."
+  },
+  {
+   "path": "GET /v2/quotes?symbols=",
+   "routerFile": "kaizen_api/routers/quotes.py",
+   "sources": "Yahoo (yfinance info en paralelo, providers/yahoo/prices.fetch_infos)",
+   "provides": "Hasta 50 cotizaciones: precio, cierre previo, cambio, changePct como fracción, moneda, bolsa, tipo (fibra detectada por prefijo), marketState, asOf, sector en español, sectorKey e industria; missing para los que no tienen precio; stale si el precio tiene más de 4 días. Retraso 15 min."
+  },
+  {
+   "path": "GET /v2/fx?pair=",
+   "routerFile": "kaizen_api/routers/quotes.py",
+   "sources": "Banxico SIE FIX SF43718 con token; si no Yahoo USDMXN=X marcado fallback",
+   "provides": "Tipo de cambio spot con fuente, stale y fallback; 503 si no hay dato real."
+  },
+  {
+   "path": "GET /v2/history/{symbol}",
+   "routerFile": "kaizen_api/routers/history.py",
+   "sources": "Yahoo (cierres ajustados por splits y dividendos, domain/history.py), FX Banxico FIX o Yahoo",
+   "provides": "Fechas y cierres; range 1mo a max, interval 1d, 1wk o 1mo (sin intradía), ccy native, MXN o USD con el FX usado; stale si falta una jornada cerrada."
+  },
+  {
+   "path": "GET /v2/panel?symbols=",
+   "routerFile": "kaizen_api/routers/history.py",
+   "sources": "Yahoo + FX Banxico o Yahoo",
+   "provides": "Precios de varios símbolos alineados por INNER JOIN de fechas, sin rellenar, con dropped y su motivo; adjust total o splits (capacidad panel.splits); 400 si mezclan monedas sin ccy."
+  },
+  {
+   "path": "GET /v2/fx/history",
+   "routerFile": "kaizen_api/routers/history.py",
+   "sources": "Banxico FIX SF43718 o Yahoo marcado",
+   "provides": "Serie diaria del tipo de cambio entre start y end."
+  },
+  {
+   "path": "GET /v2/rates/mx",
+   "routerFile": "kaizen_api/routers/rates.py (domain/rates.py, data/banxico_series.json)",
+   "sources": "Banxico SIE con token, 12 series verificadas: SF43718 FIX, SF61745 objetivo, SF43783 TIIE 28, SF331451 TIIE fondeo, SF43936/39/42/45 CETES 28/91/182/364, SF44071 Bono M 10a, SP30578 inflación anual, SP74662 subyacente, SP68257 UDI. Sin token: FRED IRLTLT01MXM156N (Bono M 10a mensual OCDE) marcado fallback",
+   "provides": "Renglones con valor (fracción), previo, cambio en pb, fecha y stale por serie; 503 NOT_CONFIGURED si no queda nada honesto."
+  },
+  {
+   "path": "GET /v2/rates/rf",
+   "routerFile": "kaizen_api/routers/rates.py",
+   "sources": "Banxico CETES por plazo; sin token FRED IR3TIB01MXM156N (interbancaria 3 meses, mensual) con fallback=true",
+   "provides": "Serie de tasa libre de riesgo simple act/360 como fracción, tenorDays 28, 91, 182 o 364."
+  },
+  {
+   "path": "GET /v2/rates/mx/inpc",
+   "routerFile": "kaizen_api/routers/rates.py",
+   "sources": "Banxico SIE (INPC general mensual, índice del catálogo); sin respaldo",
+   "provides": "{AAAA-MM: nivel} con base; 503 NOT_CONFIGURED sin token."
+  },
+  {
+   "path": "GET /v2/macro/us",
+   "routerFile": "kaizen_api/routers/macro.py (domain/macro.py)",
+   "sources": "FRED fredgraph.csv sin llave (DGS3MO, DGS2, DGS10, DFF), CBOE VIX_History.csv (respaldo FRED VIXCLS), Yahoo DX-Y.NYB",
+   "provides": "Tesoro 3M, 2A, 10A y Fed Funds como fracción, diferenciales 10A-2A y 10A-3M en pb, VIX y DXY como nivel, cada uno con previo y cambio; descarta valores implausibles."
+  },
+  {
+   "path": "GET /v2/markets/overview",
+   "routerFile": "kaizen_api/routers/markets.py (domain/markets.py, domain/market_calendar.py)",
+   "sources": "Yahoo (yf.download en lote) + data/holidays_bmv.json y holidays_nyse.json (2025 a 2027)",
+   "provides": "Grupos mx (solo ^MXX), us (^GSPC, ^IXIC, ^DJI, ^VIX), global (5 índices), fx (5 pares), commodities (6 futuros), crypto (BTC, ETH) con precio y cambio; marketStatus de BMV y NYSE."
+  },
+  {
+   "path": "GET /v2/markets/world",
+   "routerFile": "kaizen_api/routers/markets.py",
+   "sources": "Yahoo, 24 ETFs (SPY, EWW, EWZ, EWJ, FXI, INDA...)",
+   "provides": "Cambio diario por país en USD con método explicado."
+  },
+  {
+   "path": "GET /v2/events?symbols=",
+   "routerFile": "kaizen_api/routers/events.py (domain/events.py)",
+   "sources": "Yahoo calendar y dividends",
+   "provides": "Próximos reportes, fechas ex dividendo y de pago por símbolo; amount siempre null. SIN CONSUMIDOR en el frontend."
+  },
+  {
+   "path": "GET /v2/news",
+   "routerFile": "kaizen_api/routers/news.py (domain/news.py, domain/tone.py, data/feeds_es.json)",
+   "sources": "RSS de Expansión (mercados, economía) y El Financiero (mercados, economía) + Yahoo Ticker.news (del símbolo o de ^MXX, ^GSPC, USDMXN=X, GC=F, CL=F, BTC-USD)",
+   "provides": "Titular, liga, medio, fecha, idioma detectado y tono heurístico; sin resumen; sin duplicados; filtro symbol, lang y limit."
+  },
+  {
+   "path": "GET /v2/search",
+   "routerFile": "kaizen_api/routers/search.py (domain/search.py, data/symbols_mx.json)",
+   "sources": "Lista curada de México (54: 41 acciones, 10 FIBRAs, IPC, 1 ETF, 1 divisa) + SEC company_tickers.json (caché 24 h) + INSTRUMENTOS_CONOCIDOS",
+   "provides": "Resultados con símbolo, nombre, bolsa, tipo, moneda y alias."
+  },
+  {
+   "path": "GET /v2/instrument/{symbol}",
+   "routerFile": "kaizen_api/routers/research.py (domain/fundamentals.py)",
+   "sources": "Yahoo info y fast_info, estados de Yahoo para crecimiento, beta calculada contra referencia local en la misma moneda (respaldo beta de Yahoo)",
+   "provides": "Nombre, bolsa, tipo, sector, industria, país, descripción, quote (precio, rango del día, volumen, market cap; SIN máximo y mínimo de 52 semanas), 22 fundamentales en la moneda del precio, beta, coverage; sectorMedians siempre null."
+  },
+  {
+   "path": "GET /v2/instrument/{symbol}/statements",
+   "routerFile": "kaizen_api/routers/research.py (domain/statements.py, providers/sec_edgar.py)",
+   "sources": "SEC companyfacts XBRL para emisores de EE. UU.; Yahoo para el resto (BMV)",
+   "provides": "Periodos y renglones reales (ingresos, utilidad bruta, operativa, neta, flujo, capex, FCF...) anual o trimestral, sin trimestres fabricados."
+  },
+  {
+   "path": "GET /v2/instrument/{symbol}/dividends",
+   "routerFile": "kaizen_api/routers/research.py",
+   "sources": "Yahoo dividends",
+   "provides": "Historia de dividendos, suma de 12 meses y rendimiento."
+  },
+  {
+   "path": "GET /v2/valuation/{symbol}",
+   "routerFile": "kaizen_api/routers/valuation.py (domain/valuation/*)",
+   "sources": "Yahoo fundamentales, FRED (tasa), data/damodaran_2026.json (enero 2026)",
+   "provides": "Múltiplos contra referencia sectorial, DCF FCFF de dos etapas con tabla de sensibilidad, P/VL justificado para bancos y aseguradoras; parámetros erp, crp, terminalGrowth, years, growth; lo que no aplica sale con applicable=false y razón."
+  },
+  {
+   "path": "GET /v2/momentum/{symbol}",
+   "routerFile": "kaizen_api/routers/valuation.py (domain/screeners/momentum.py)",
+   "sources": "Yahoo cierres mensuales ajustados",
+   "provides": "Rendimiento 12-1, 6 y 3 meses contra referencia en la misma moneda."
+  },
+  {
+   "path": "GET /v2/assumptions",
+   "routerFile": "kaizen_api/routers/valuation.py (domain/valuation/params.py)",
+   "sources": "data/damodaran_2026.json (sin red)",
+   "provides": "Prima de mercado por omisión y prima país MX y US con fuente y fecha."
+  },
+  {
+   "path": "GET /v2/screeners/factors",
+   "routerFile": "kaizen_api/routers/screeners.py (domain/screeners/factors.py, domain/universe.py)",
+   "sources": "Yahoo info, estados y cierres; data/universe_mx.json (23) o universe_us.json (38) o custom hasta 50",
+   "provides": "Puntajes z por factor (valor, calidad, momentum, baja volatilidad, crecimiento) relativos al sector, pruebas cumple o no cumple contra umbrales, cobertura; 404 o 503 explícitos."
+  },
+  {
+   "path": "GET /v2/screeners/magic",
+   "routerFile": "kaizen_api/routers/screeners.py (domain/screeners/magic.py)",
+   "sources": "Yahoo (EBIT reportado, EV) sobre universo us o mx",
+   "provides": "Ranking de Greenblatt con lugares, empates, excluidos y partial."
+  },
+  {
+   "path": "GET /v2/screeners/fibras",
+   "routerFile": "kaizen_api/routers/screeners.py (domain/screeners/fibras.py, data/fibras_mx.json)",
+   "sources": "Yahoo info y balances de 10 FIBRAs + hasta 20 extra; CETES 28 de Banxico (o FRED marcado)",
+   "provides": "Distribución, cap rate implícito, NAV por CBFI, P/NAV, LTV, deuda/market cap, flujo y diferencial contra la tasa."
+  },
+  {
+   "path": "GET /v2/insiders/{symbol}",
+   "routerFile": "kaizen_api/routers/insiders.py (domain/screeners/insiders.py)",
+   "sources": "SEC Form 4 (códigos P, S, A, M y casilla 10b5-1); Yahoo de respaldo con texto libre",
+   "provides": "Operaciones de consejeros y directivos y resumen que solo cuenta mercado abierto. SIN CONSUMIDOR en el frontend; para emisoras de la BMV solo hay Yahoo."
+  }
+ ],
+ "shellAndCrossCutting": [
+  "Paleta Cmd+K, Ctrl+K o '/' (src/app/shell/CommandPalette.jsx, palette-model.js, useShortcuts.js): grupos Emisoras (/v2/search con espera + 5 recientes en localStorage 'kaizen.recent-symbols'), Ir a (todas las entradas de nav.js por flatNav, con keywords) y Opciones (cambiar tema, cerrar sesión). Un ticker tecleado + Enter abre su ficha aunque la búsqueda no conteste (WALMEX abre WALMEX.MX). NO entiende comandos: no hay sintaxis tipo 'AAPL DES/GP', ni 'agregar a lista', ni funciones con parámetros, ni busca en glosario, guías o noticias.",
+  "Atajos de teclado: solo los que abren la paleta; no hay atajos para secciones, cambiar periodo ni navegar tablas.",
+  "Tira de mercado en la barra superior (src/app/shell/MarketStrip.jsx, strip-model.js): IPC, S&P 500, USD/MXN, CETES 28 y VIX con cambio y DataStatus; refresca cada 60 s solo con la pestaña visible (QUOTES_REFETCH_MS en src/lib/api/queries.js).",
+  "Estado del servidor: sondeo de /health al arrancar (src/lib/api/capabilities.js, CapabilitiesProvider.jsx) con estados probing, waking (~70 s de reintentos por Render dormido), ready, legacy, down; CapabilitiesBanner.jsx y shell/ServerStatus.jsx lo muestran; las secciones piden datos solo si la capacidad está anunciada.",
+  "Watchlist (src/features/watchlist/pages/Watchlist.jsx): el storage modela varias listas (watchlists[] en src/lib/storage.js, useWatchlists en src/lib/portfolio/usePortfolios.js) pero la UI usa solo la primera; no se puede agregar a la lista desde la ficha, los screeners, el panorama ni la paleta; el screener de factores sí puede tomar hasta 3 listas como universo propio.",
+  "Exportar CSV: solo en Movimientos (downloadCSV de src/lib/csv.js + transactionsToCSV de src/features/portfolio/lib/tx-csv.js). Importar CSV en Movimientos y en Bienvenida (parser único src/lib/portfolio/tx-csv.js). DataTable (src/components/ui/DataTable.jsx) no tiene exportar; no se exportan screeners, watchlist, comparador, estados financieros ni series.",
+  "Respaldo JSON del estado: exportJSON e importJSON existen en src/lib/storage.js pero ninguna pantalla los usa.",
+  "Imprimir o PDF: no hay ningún @media print en src ni botón de imprimir.",
+  "Alertas de precio o de evento: no existen. Notificaciones: solo toasts dentro de la app (useToast de src/components/ui) en Movimientos, Rebalanceo, Watchlist y Bienvenida; sin Notification API, push ni correo.",
+  "Temas: src/theme.js con light, dark y system en localStorage 'kaizen_theme', escribe data-theme en <html>; ThemeToggle en TopBar y acción en la paleta; tokens en src/styles/tokens.css y src/theme.css; theme-color por esquema en index.html.",
+  "Almacenamiento local: localStorage 'kaizen:v2' (portafolios, movimientos, metas, watchlists, settings {benchmark NAFTRAC.MX, riskProfile, onboardingDone}, migrationReport) con migración única de las llaves viejas momentum_* y respaldos 'kaizen:backup:<ISO>:<llave>'; 'kaizen_theme'; 'kaizen.sidebar' (barra plegada, src/app/shell/useCollapsed.js); 'kaizen.recent-symbols'; sessionStorage 'kaizen.session' con el JWT (dura lo que la pestaña). Nada del portafolio vive en el servidor ni se sincroniza entre dispositivos.",
+  "PWA: public/manifest.webmanifest (standalone, es-MX) con un solo ícono favicon.svg; sin service worker, sin modo sin conexión, sin íconos PNG 192/512 ni apple-touch-icon.",
+  "Sesión: RequireAuth protege todo lo privado; usuarios fijos en USERS del backend; 401 dispara el evento kaizen:unauthorized y manda a /login?next= saneado por safeNext (src/app/paths.js); VITE_SKIP_LOGIN solo en dev.",
+  "Títulos de pestaña: handle.title de cada routes.jsx + usePageTitle (src/app/pageTitle.js) para fichas, conceptos y guías; RootLayout escribe '<título> · Kaizen'. handle.description está en todas las rutas pero nadie la lee.",
+  "Navegación: Sidebar plegable con NAV_SECTIONS y NAV_EXTRA, BottomNav móvil (4 destinos + Más), SectionNav móvil con las páginas hermanas, liga 'Saltar al contenido' y foco al cambiar de ruta (useRouteFocus.js).",
+  "Procedencia: cada respuesta trae meta {asOf, source, delayMinutes, stale, fallback, generatedAt, notes} y la UI la pinta con DataStatus y ApiNotes; faltantes como 's/d' (MISSING en src/lib/format.js).",
+  "Pie y legal: Footer con Disclaimer corto y ligas a /legal/*; textos de 'no es recomendación' en panorama, ficha y screeners.",
+  "Errores: ErrorBoundary, RouteError, NotFound; QueryFallback pone QueryClient si falta; reintentos de TanStack definidos en shouldRetry (src/lib/api/queries.js).",
+  "Seguridad del front: CSP en vercel.json con connect-src 'self' https://*.onrender.com: el navegador no puede llamar APIs de terceros, toda fuente nueva tiene que pasar por kaizen_api. Tipografías servidas desde el sitio.",
+  "Compatibilidad con el API viejo: src/lib/api/legacy.js con VITE_ALLOW_LEGACY para historia, cotizaciones, FX y rf; kaizen_api/routers/legacy_v1.py se monta con KAIZEN_LEGACY_ROUTES (encendido por omisión fuera de producción)."
+ ],
+ "partialOrWeak": [
+  "Rutas relativas a /Users/luisalfredolizarragasanchez/Desktop/CLAUDE/05 NEWKAIZEN/.",
+  "kaizen_api/routers/events.py y domain/events.py: /v2/events implementado y anunciado (capacidad events) pero eventsQuery y getEvents no se usan en ningún componente; además el monto del dividendo sale siempre null (domain/events.py línea 83). No hay calendario de reportes ni de ex dividendo en ficha, portafolio ni watchlist.",
+  "kaizen_api/routers/insiders.py: /v2/insiders sin consumidor (insidersQuery sin uso en src); para la BMV solo hay Yahoo.",
+  "kaizen_api/domain/fundamentals.py línea 720: sectorMedians siempre None aunque schemas.InstrumentResponse lo prevé; la ficha no compara contra la mediana del sector (los screeners sí calculan por sector).",
+  "src/features/research/pages/Instrument.jsx: sin botones para agregar a watchlist, al portafolio o al comparador; sin máximo y mínimo de 52 semanas (schemas.InstrumentQuote no los tiene), sin volumen, velas ni referencia en la gráfica (solo moneda nativa); descripción de Yahoo en inglés; sin lista de reportes ante la SEC aunque providers/sec_edgar.py ya baja data.sec.gov/submissions para Form 4 (y está grabado en tests/fixtures/recorded/2026-09-22-b3a).",
+  "Navegación cruzada rota: src/features/portfolio/pages/Summary.jsx (posiciones), src/features/watchlist/pages/Watchlist.jsx (filas) y src/features/markets/overview/GroupsSection.jsx (tablas) no ligan a /investigar/:symbol; pathInstrument solo se usa dentro de research. DataTable ya soporta onRowClick y nadie lo usa fuera de /dev/ui.",
+  "src/features/watchlist/pages/Watchlist.jsx: solo lists[0], sin crear, renombrar ni cambiar de lista; la descripción de la ruta promete noticias y no hay; hace una petición /v2/history por símbolo en vez de un /v2/panel.",
+  "kaizen_api/domain/markets.py OVERVIEW_GROUPS: el grupo México es solo ^MXX; no hay emisoras que más suben o bajan, sectores de la BMV, FTSE BIVA ni mapa de calor de la bolsa mexicana.",
+  "Universos chicos: kaizen_api/data/universe_mx.json 23 emisoras, universe_us.json 38, fibras_mx.json 10, symbols_mx.json 54 curadas (1 solo ETF). La búsqueda en México no encuentra emisoras fuera de esa lista (SIC, ETFs mexicanos); el screener y la fórmula mágica corren sobre universos de muestra.",
+  "kaizen_api/providers/eodhd.py: stub que lanza NotImplementedError; EODHD_API_TOKEN existe en settings.py y en /health sin uso real. FRED_API_KEY tampoco se usa (todo va por fredgraph.csv sin llave).",
+  "Capacidades fantasma: 'history.dates' y 'fx.fix' están en schemas.KNOWN_CAPABILITIES (y en EXTRA_CAPABILITIES de tests/contract/test_schemas.py) pero ningún router las anuncia; /v2/history no acepta start/end; src/features/markets/overview/VixCard.jsx pide useFeature(['history','history.dates']) y e2e/support/app.js HEALTH_V2 anuncia las dos aunque el backend real nunca lo hace.",
+  "Noticias: kaizen_api/data/feeds_es.json tiene solo 4 feeds (Expansión y El Financiero) más Yahoo; el tono heurístico (domain/tone.py) se calcula y la UI no lo muestra; src/features/markets/pages/NewsPage.jsx no filtra por emisora, medio ni tema.",
+  "kaizen_api/data/holidays_bmv.json y holidays_nyse.json cubren 2025 a 2027: después el estado de las bolsas se degrada a una nota.",
+  "src/lib/finance/tax-mx.js INTEREST_WITHHOLDING_RATE = 0.009 fijo a la LIF 2026: hay que cambiarlo a mano cada año (CETES y portafolio). kaizen_api/data/damodaran_2026.json es de enero de 2026 y también se actualiza a mano.",
+  "Dependencia del token de Banxico (gratis, el dueño lo saca en banxico.org.mx; según el contexto ya está en .env.local, en Render va como BANXICO_TOKEN): sin él /v2/rates/mx queda en un renglón de FRED mensual, /v2/rates/rf en interbancaria 3 meses mensual marcada fallback, /v2/rates/mx/inpc responde 503 y el FX cae a Yahoo.",
+  "src/features/markets/pages/MexicoPage.jsx: inflación, UDI, TIIE y Bono M solo como último valor; la única gráfica es CETES 28; no hay gráfica de USD/MXN aunque /v2/fx/history existe, ni curva de rendimientos (CETES 28 a 364 + Bono M 10a, o Tesoro 3M, 2A, 10A) aunque los datos ya llegan.",
+  "Ajustes inexistentes: no hay página de configuración; settings.benchmark (DEFAULT_BENCHMARK 'NAFTRAC.MX' en src/lib/storage.js) no se puede cambiar en la UI; riskProfile no lo escribe ningún componente aunque /bienvenida dice 'tu perfil'; renamePortfolio y deletePortfolio existen en src/lib/portfolio/portfolios.js sin UI (solo se crean en Bienvenida y se cambia el activo en Resumen).",
+  "handle.description declarada en cada src/features/*/routes.jsx y no se usa (ni meta description por ruta ni subtítulo).",
+  "src/ui.jsx: primitivas viejas (Mark, Button) conviven con src/components/ui; las usan src/app/ErrorBoundary.jsx, CapabilitiesBanner.jsx y src/features/auth/pages/LoginPage.jsx.",
+  "Sin intradía: schemas.Interval solo 1d, 1wk, 1mo; cotizaciones de Yahoo con ~15 min de retraso (DELAY_MINUTES) y refresco cada 60 s.",
+  "src/features/research/pages/Compare.jsx: tope de 5 emisoras (MAX = 5) y una llamada /v2/instrument por emisora.",
+  "Macro corta: /v2/macro/us solo Tesoro 3M, 2A, 10A, Fed Funds, VIX y DXY; no hay CPI, desempleo, PIB ni nóminas de EE. UU. aunque fredgraph.csv sin llave los tiene (CPIAUCSL, UNRATE, GDP, PAYEMS); de México no hay PIB, IGAE, desempleo ni balanza (Banxico SIE con el mismo token tiene más series; INEGI pide token gratuito que el dueño tendría que sacar).",
+  "e2e: no existen e2e/watchlist.spec.js, onboarding.spec.js, auth.spec.js ni legal.spec.js aunque scripts/ownership.json (F5) los reserva; esas pantallas solo se tocan de rebote en app, shell y learn specs.",
+  "Fuentes cerradas en el contrato: schemas.SOURCE_TOKENS solo acepta yahoo, banxico, fred, sec, cboe, stooq, rss, eodhd, computed, curated, damodaran, replay, y schemas.HealthProviders fija 5 proveedores: cualquier fuente nueva (inegi, treasury, coingecko, worldbank) exige cambiar kaizen_api/schemas.py, que es congelado de O."
+ ],
+ "extensionPoints": [
+  "Raíz del repo: /Users/luisalfredolizarragasanchez/Desktop/CLAUDE/05 NEWKAIZEN/. Dueños según scripts/ownership.json: paths.js T2SW, router.jsx y src/lib/api/** S2, queries.js T1RS, nav.js y src/app/shell/** C3, main.py M1 y B1, settings.py y http_cache.py B1, schemas.py, routers/__init__.py, tests/contract/**, docs/api-v2.md y render.yaml O (congelados: se piden en docs/requests/<stream>.md).",
+  "Ruta de frontend: (1) constante en PATHS de src/app/paths.js (y helper si lleva parámetro, como pathInstrument o pathCompare, con su prueba en src/app/paths.test.js); (2) en src/features/<área>/routes.jsx: const Pages = { X: lazy(() => import('./pages/X.jsx')) } (objeto, por la regla de Fast Refresh) y { path: route(PATHS.x), element: <Pages.X />, handle: { title: '...', description: '...' } }; handle.public: true la deja fuera de RequireAuth; la página exporta default; (3) si es una feature nueva, importar 'routes as xRoutes' en src/app/router.jsx y sumarlo a featureRoutes; RootLayout ya pone el Suspense. Las rutas estáticas (/investigar/comparar) se declaran antes que las de parámetro (/investigar/:symbol). Prueba de rutas en src/app/router.test.jsx.",
+  "Título de pestaña: handle.title en routes.jsx (RootLayout lo vuelve '<título> · Kaizen'); si depende de datos, usePageTitle(texto) de src/app/pageTitle.js dentro de la página. src/app/titles.test.jsx exige títulos únicos, más de 25 en total, mayúscula de oración, sin guiones largos, y solo permite mayúscula a media frase para el set PROPER (CETES, FIBRAs, México, Kaizen, Sharpe, DCF): un título con 'Estados Unidos', 'IPC', 'Banxico' o 'SEC' obliga a ampliar PROPER.",
+  "Entrada en nav.js: NavItem { id, label, to: PATHS.x, icon (lucide-react), keywords } dentro de NAV_SECTIONS[n].items o en NAV_EXTRA de src/app/nav.js; de ahí salen Sidebar, SectionNav, el grupo 'Ir a' de la paleta (flatNav) y activeNavItem. Un prefijo nuevo de primer nivel necesita entrar en BOTTOM_PREFIXES (o solo marca 'Más' si está en NAV_EXTRA). src/app/shell/nav.test.js fija las etiquetas exactas por sección, NAV_EXTRA y los cuatro destinos de BOTTOM_NAV: hay que actualizar esas listas.",
+  "Endpoint nuevo en el cliente: función async en src/lib/api/endpoints.js con v2Get(path, query, { signal }) y normalizeSymbol o normalizeSymbols; typedef de la respuesta en src/lib/api/types.js; llave en queryKeys y opción xQuery con staleTime de STALE_TIME en src/lib/api/queries.js; condicionar con useCapabilities().capabilities.has('cap') o useFeature (src/features/markets/overview/useFeature.js); pruebas en src/lib/api/endpoints.test.js; en e2e, handler 'GET /v2/x' con mockApi (e2e/support/mockApi.js) y la capacidad en HEALTH (e2e/support/app.js HEALTH_V2 o el spread de cada spec).",
+  "Router v2 nuevo, paso 1: kaizen_api/routers/<nuevo>.py con router = APIRouter(prefix='/v2', tags=[...], responses=ERROR_RESPONSES) y CAPABILITIES: list[str] = [...]; cada ruta con response_model de schemas y dependencies=[cache_control('<clase>')] (clases en CACHE_SECONDS de kaizen_api/http_cache.py: quotes 30, history 3600, fundamentals 21600, macro 3600, news 600, screeners 43200; una clase nueva se agrega ahí); validar con SymbolPath, Symbols, IsoDateQuery, check_date_range y parse_symbols de kaizen_api/routers/__init__.py; errores con ApiError e invalid_param de kaizen_api/errors.py (503 NOT_CONFIGURED o UPSTREAM_UNAVAILABLE, nunca valores inventados); meta con meta(source, as_of=, delay_minutes=, stale=, fallback=, notes=) de kaizen_api/provenance.py.",
+  "Router v2 nuevo, paso 2: importar el módulo en kaizen_api/main.py y agregarlo a la tupla V2_ROUTERS (le pone Depends(require_user) y _collect_capabilities suma su CAPABILITIES a /health).",
+  "Router v2 nuevo, paso 3 (kaizen_api/schemas.py, congelado de O): modelo XResponse(ContractModel) con meta: Meta (extra='forbid'; fracciones, pb en campos *Bp), agregarlo a RESPONSE_MODELS, la capacidad a KNOWN_CAPABILITIES, una fuente nueva a SOURCE_TOKENS y, si /health debe reportarla, un campo en HealthProviders y en routers/health.py.",
+  "Router v2 nuevo, paso 4 (tests/contract/test_schemas.py, de O): fila en SPEC (método, ruta, modelo, URL de ejemplo, (capacidad,)); test_registered_routes_match_the_spec_exactly exige que SPEC y las rutas coincidan exacto, test_every_response_model_is_in_the_registry que SPEC y RESPONSE_MODELS coincidan, y KNOWN_CAPABILITIES debe ser la unión de la quinta columna más EXTRA_CAPABILITIES (los refinamientos sin ruta propia van ahí); casos 400 y 422 en test_invalid_params_get_contract_errors.",
+  "Router v2 nuevo, paso 5: docs/api-v2.md tiene que contener 'GET /v2/<ruta>' y no llevar guiones largos; el bloque de referencia se regenera con KAIZEN_WRITE_DOCS=1 .venv/bin/python -m pytest tests/contract -k docs_reference (generador en tests/contract/docs_reference.py).",
+  "Router v2 nuevo, paso 6: lógica en kaizen_api/domain/<x>.py y proveedor en kaizen_api/providers/<x>.py usando requests (Session o requests.get; FRED con el User-Agent de fábrica, SEC con _edgar_session, RSS y CBOE con providers/yahoo/session._session) para que el replay lo grabe; caché con kaizen_api.cache._cached(key, fn, ttl) y reset con register_reset; si pide token, campo en Settings y from_env de kaizen_api/settings.py, envVars en render.yaml y require_token con 503 NOT_CONFIGURED como providers/eodhd.py. Datos curados en kaizen_api/data/*.json con asOf y fuente.",
+  "Decorador @stub: mientras la ruta no esté lista se escribe @router.get(...) y debajo @stub (de kaizen_api.routers) con cuerpo raise not_implemented('GET /v2/x') (kaizen_api/errors.py) y SIN su capacidad en CAPABILITIES; test_stub_returns_501_error_body exige 501 NOT_IMPLEMENTED con details.endpoint y Cache-Control no-store. Al implementarla se borran @stub y el raise y se agrega la capacidad; la prueba falla si quedan las dos o ninguna. Hoy ninguna ruta lleva @stub.",
+  "Capa de fixtures: python scripts/record_fixtures.py --set 2026-09-22,2026-09-22-<capa> --get '/v2/<ruta>?...' graba con red en la última capa (o la que diga --grabar-en; la base 2026-09-22 pide --permitir-base) creando tests/fixtures/recorded/2026-09-22-<capa>/index.json con el frozen_at heredado; repetir con --goldens-only verifica el replay sin red y al final se revisa que no se filtren BANXICO_TOKEN, FRED_API_KEY ni EODHD_API_TOKEN. El replay solo intercepta yfinance.Ticker, yfinance.download y requests.Session.request (tests/replay/session.py, install): httpx o urllib no se graban y el guard de tests/conftest.py los bloquea. Pruebas en tests/unit/<capa>/conftest.py con LAYER apilada sobre replay_set, replaying(names), reset_state() y TestClient(create_app(Settings.from_env({'KAIZEN_LEGACY_ROUTES': '0'}))) como tests/unit/b2a/conftest.py; KAIZEN_REPLAY_SET apila capas; @pytest.mark.live con KAIZEN_LIVE=1 para pruebas con red; scripts/run_replay_backend.py sirve el backend desde fixtures.",
+  "Entrada de scripts/ownership.json: llave nueva con el nombre del stream y lista de globs ('*' un segmento, '**' varios, '!' al inicio excluye): router, domain, provider, data/*.json, tests/unit/<capa>/**, tests/fixtures/recorded/2026-09-22-<capa>/**, docs/requests/<stream>.md y lo de frontend que toque. scripts/ownership.json mismo es de O. Revisar con node scripts/check-ownership.mjs <stream> [base] (diff contra analizavende más lo no commiteado) y node scripts/check-ownership.mjs --coverage A,B,... [--table] (todo archivo de kaizen_api/ con dueño y ningún archivo ni par de globs en dos streams). npm run ownership es el atajo.",
+  "Compuerta del frontend: npm run check (lint, typecheck con jsconfig.check.json, vitest, build y scripts/check-bundle.mjs con presupuesto de 180 kB gzip de JS inicial); las páginas nuevas van con lazy() para no inflarlo."
+ ],
+ "financeLib": [
+  "src/lib/finance/returns.js: periodsPerYear, inferInterval, simpleReturns, logReturns, cumulative, alignPanel, panelReturns, totalReturn",
+  "src/lib/finance/stats.js: mean, variance, stdev, covariance, correlation, quantile, ols, normalPdf, normalCdf, normalInvCdf",
+  "src/lib/finance/performance.js: cagr, cagrFromReturns, annualizedVol, sharpe, sortino, drawdowns, calmar, historicalVaR, historicalCVaR, parametricVaR, parametricCVaR, summary, percentile",
+  "src/lib/finance/benchmark.js: regress, blumeBeta, trackingError, informationRatio, treynor, jensenAlpha, captureRatios, activeReturns",
+  "src/lib/finance/rates.js: cetesPerPeriod, cetesEffectiveAnnual, annualToPerPeriod, changeInBp, rfSeriesForDates",
+  "src/lib/finance/covariance.js: sampleCov, ledoitWolfConstantCorrelation, annualize, corrFromCov",
+  "src/lib/finance/optimize.js: minVariance, meanVariance, efficientFrontier, maxSharpe, riskParity, projectBoxSimplex",
+  "src/lib/finance/walkforward.js: walkForward; src/lib/finance/expected.js: capmExpected, historicalMean, jamesStein; src/lib/finance/linalg.js: cholesky, solveSPD, matmul y compañía",
+  "src/lib/finance/montecarlo.js + montecarlo.worker.js: simulate en Web Worker, quantilesOf; src/lib/finance/goals.js: probabilityOfGoal, requiredContribution, retirementIncome",
+  "src/lib/finance/ledger.js: orderTransactions, derivePositions(Detailed), cashBalances, realizedSales, realizedPnlBySymbol, externalFlows, ledgerSnapshots, positionPnl",
+  "src/lib/finance/performance-ledger.js: valueSeries, twrReturns, twr, annualizeReturn; src/lib/finance/xirr.js: xnpv, xirr, moneyWeightedReturn",
+  "src/lib/finance/tax-mx.js: isrOnGains con inpcFactor y pérdidas de 10 años, dividendWithholding 10 %, interestWithholding 0.90 % LIF 2026",
+  "src/lib/finance/rebalance.js: wholeShareRebalance; src/lib/finance/fx.js: toCurrency, pnlDecomposition, fxAt, convertSeries, returnInBaseCurrency",
+  "src/lib/finance/backtest.js: buyAndHold, constantMix, withBenchmark, annualTurnover; src/lib/finance/risk.js: effectiveN, hhi, portfolioVol, riskContributions, exposureBy, foreignExposure",
+  "Cada módulo tiene su .test.js y un golden de Python en scripts/golden/<módulo>_golden.py con su JSON en tests/golden/<módulo>.json"
+ ]
+}

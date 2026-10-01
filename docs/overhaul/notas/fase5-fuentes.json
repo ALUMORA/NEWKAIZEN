@@ -1,0 +1,700 @@
+{
+ "mercado": {
+  "sources": [
+   {
+    "id": "yf-sesion-general",
+    "name": "yfinance 1.7.0 (resumen de la corrida en vivo)",
+    "call": ".venv/bin/python scratchpad/probe_yf.py all + probe_yf2.py (yfinance 1.7.0, sesión curl_cffi, contador parchado sobre curl_cffi Session.request)",
+    "works": true,
+    "needsKey": false,
+    "latencyMs": 200,
+    "freshness": "Acciones EE. UU. casi en tiempo real (exchangeDataDelayedBy 0, 'Nasdaq Real Time Price'); BMV 20 min; futuros CME/ICE 10 min; opciones ~15 min; divisas 0 min con etiqueta 'Delayed Quote'.",
+    "sample": "42 peticiones HTTP a Yahoo en total, todas 200 salvo un 401 en /v1/finance/visualization que yfinance reintentó solo con crumb nuevo. Cero 429. Latencias típicas 140-250 ms por llamada; las lentas: get_earnings_dates (raspa HTML, 760-1374 ms), splits vía history(max) 662 ms, primer crumb ~290 ms.",
+    "rateLimitNotes": "Sin 429 con 42 llamadas y pausas de 1 s. Cada proceso nuevo gasta 1 llamada extra en /v1/test/getcrumb. yf.download gasta 2 peticiones por símbolo nuevo (zona horaria + chart): HRC=F y ALI=F costaron 4.",
+    "licenseNotes": "No es API oficial. README de yfinance: 'The Yahoo! finance API is intended for personal use only' y remite a los términos de Yahoo (https://github.com/ranaroussi/yfinance). Riesgo legal para uso comercial o redistribución; anotarlo para el dueño.",
+    "gotchas": "1) El replay de pruebas del repo (tests/replay/session.py) solo parcha yfinance.Ticker, yfinance.download y requests.Session.request: yf.screen, yf.Sector, yf.Industry, yf.Calendars y YfData().get_raw_json NO se graban y saldrían a la red en pruebas; habría que envolverlos en un proveedor que pase por Ticker/requests o extender el replay. Todo lo que cuelga de Ticker (opciones, funds_data, holders, análisis, calendar, shares) sí queda cubierto. 2) `import curl_cffi` directo falla en esta Mac (dlopen, símbolo _CFArrayAppendValue); importado a través de yfinance sí carga. 3) Porcentajes mezclados: unos endpoints dan fracción y otros puntos porcentuales (ver cada fuente); normalizar a fracción para API v2.",
+    "recommendedFor": [
+     "infraestructura",
+     "pruebas offline"
+    ]
+   },
+   {
+    "id": "yf-opciones",
+    "name": "yfinance Ticker.options + option_chain",
+    "call": "yf.Ticker('AAPL').options; .option_chain('2026-10-02'); yf.Ticker('SPY').options; .option_chain('2026-10-01').calls; yf.Ticker('WALMEX.MX').options",
+    "works": true,
+    "needsKey": false,
+    "latencyMs": 170,
+    "freshness": "lastTradeDate máximo 17:32:35Z consultado 17:48Z (~15 min). openInterest es del cierre anterior.",
+    "sample": "AAPL: 22 vencimientos (2026-10-02 a 2029-01-19); cadena 2026-10-02 con 65 calls y 59 puts. Columnas: contractSymbol, lastTradeDate, strike, lastPrice, bid, ask, change, percentChange, volume, openInterest, impliedVolatility, inTheMoney, contractSize, currency. Ej. AAPL261002C00185000 strike 185, bid 142.5, ask 144.9, vol 15, OI 100, IV 3.69. .underlying trae el quote completo (regularMarketPrice 329.48, rango 52 semanas 243.42 - 345.34). SPY: 28 vencimientos incluido 0DTE 2026-10-01, 125 calls. WALMEX.MX: tupla vacía.",
+    "rateLimitNotes": "1 llamada por .options y 1 por cada option_chain(fecha); no cachea entre llamadas, así que la superficie completa de AAPL serían 22 llamadas. Pedir solo 2 o 3 vencimientos y cachear.",
+    "licenseNotes": "Igual que yfinance general (uso personal según Yahoo).",
+    "gotchas": "IV absurda en strikes muy dentro del dinero (3.7 a 4.9 = 370 % a 490 %) y valores marcador 1e-05 y 1.000005 en SPY 0DTE: filtrar a ±20 % del subyacente y descartar IV < 0.01 o > 3. IV viene en fracción pero percentChange en puntos porcentuales. Muchos openInterest en 0 (puts del vencimiento cercano). Sin opciones para emisoras mexicanas (MexDer no está en Yahoo): mostrar s/d. Presentar como datos (cadena, sonrisa de volatilidad, put/call por OI), nunca como estrategia sugerida.",
+    "recommendedFor": [
+     "cadena de opciones EE. UU.",
+     "volatilidad implícita ATM",
+     "razón put/call por interés abierto"
+    ]
+   },
+   {
+    "id": "yf-funds-data",
+    "name": "yfinance Ticker.funds_data",
+    "call": "yf.Ticker(s).funds_data.top_holdings / description / fund_overview / fund_operations / asset_classes / sector_weightings / equity_holdings / bond_ratings para SPY, QQQ, NAFTRAC.MX",
+    "works": true,
+    "needsKey": false,
+    "latencyMs": 165,
+    "freshness": "Ficha del fondo, se actualiza más o menos mensual; sin fecha de corte en la respuesta.",
+    "sample": "SPY top_holdings: NVDA 0.0808, AAPL 0.0703, MSFT 0.0569, AMZN 0.0384 (10 filas). fund_overview: categoryName 'Large Blend', family 'State Street Investment Management', legalType 'Exchange Traded Fund'. fund_operations: Annual Report Expense Ratio 0.000945, Annual Holdings Turnover 0.03, Total Net Assets 513975.7. asset_classes stockPosition 0.9988, cashPosition 0.0011. sector_weightings technology 0.3869, financial_services 0.1206. QQQ: gasto 0.0018, technology 0.5915. NAFTRAC.MX: YFDataException 'No Fund data found.'",
+    "rateLimitNotes": "Una sola llamada quoteSummary por fondo cubre todas las propiedades.",
+    "licenseNotes": "Igual que yfinance general.",
+    "gotchas": "NAFTRAC.MX (y en general ETFs de la BMV) sin datos de fondo: s/d o archivo propio con la ficha del emisor. equity_holdings 'Price/Earnings' 0.04035 es el INVERSO (rendimiento de utilidades; P/E = 1/0.04035 ≈ 24.8) y Category Average viene null. En fund_operations el Category Average de Total Net Assets es igual al del fondo (copiado, no usar). Total Net Assets sin unidad (parece millones de USD). Turnover de QQQ 0.0 sospechoso. Solo 10 posiciones principales.",
+    "recommendedFor": [
+     "ficha de ETF EE. UU.",
+     "comparador de gastos de ETFs",
+     "exposición sectorial de un ETF"
+    ]
+   },
+   {
+    "id": "yf-holders",
+    "name": "yfinance major_holders / institutional_holders / mutualfund_holders",
+    "call": "yf.Ticker('AAPL'|'WALMEX.MX').major_holders, .institutional_holders, .mutualfund_holders",
+    "works": true,
+    "needsKey": false,
+    "latencyMs": 153,
+    "freshness": "Trimestral 13F: fechas 2026-06-30 (algunos fondos 2026-07-31 y 2026-08-31).",
+    "sample": "AAPL major_holders: insidersPercentHeld 0.01648, institutionsPercentHeld 0.66313, institutionsFloatPercentHeld 0.67424, institutionsCount 7679. institutional_holders (10 filas: Date Reported, Holder, pctHeld, Shares, Value, pctChange): Blackrock Inc. 0.0797, 1,162,996,939 acciones, pctChange 0.016. WALMEX.MX: insiders 0.718, instituciones 0.138, 318 instituciones; institutional_holders solo 5 filas (Aristotle Capital 0.0015); mutualfund_holders 10 filas (First Eagle Global Fund 0.0137).",
+    "rateLimitNotes": "Las tres propiedades (y las de insiders) salen de una sola llamada quoteSummary por Ticker.",
+    "licenseNotes": "Igual que yfinance general. Fuente original: formularios 13F de la SEC.",
+    "gotchas": "Para emisoras mexicanas solo aparecen instituciones y fondos que reportan a la SEC: no hay Afores ni fondos mexicanos, así que el porcentaje institucional subestima mucho. En WALMEX el 71.8 % 'insiders' es Walmart Inc., la controladora. Rezago de 45 días o más. pctHeld en fracción; Value en la moneda de cotización (MXN para WALMEX).",
+    "recommendedFor": [
+     "propiedad institucional EE. UU.",
+     "tenedores principales con salvedad para MX"
+    ]
+   },
+   {
+    "id": "yf-calendario-reportes",
+    "name": "yfinance calendar + get_earnings_dates",
+    "call": "yf.Ticker('AAPL'|'WALMEX.MX').calendar; .get_earnings_dates(limit=8)",
+    "works": true,
+    "needsKey": false,
+    "latencyMs": 145,
+    "freshness": "Próximo reporte y estimación de consenso al día.",
+    "sample": "AAPL calendar: Earnings Date [2026-10-29], Earnings Average 1.98236 (Low 1.93, High 2.07), Revenue Average 113,624,521,680, Ex-Dividend Date 2026-08-09, Dividend Date 2026-08-12. WALMEX.MX: Earnings Date [2026-10-27], Earnings Average 0.7129 MXN, Ex-Dividend Date 2026-11-16. earnings_dates: 25 filas de 2020-10 a 2026-10 con EPS Estimate, Reported EPS, Surprise(%) (AAPL 2026-07-30: 1.89 estimado, 2.02 reportado, 6.74).",
+    "rateLimitNotes": "calendar 1 llamada quoteSummary (~145 ms). get_earnings_dates 1 llamada pero raspa HTML de finance.yahoo.com/calendar/earnings: 1374 ms AAPL y 761 ms WALMEX.",
+    "licenseNotes": "Igual que yfinance general; el raspado de HTML es todavía más gris.",
+    "gotchas": "get_earnings_dates es la llamada más lenta y frágil (depende del HTML de la página). limit=8 regresó 25 filas (size fijo 25): recortar en cliente. Horas en America/New_York aun para WALMEX (16:00-04:00 genérico; no tomar la hora como real). Surprise(%) viene en puntos porcentuales, a diferencia de earnings_history (fracción). calendar mezcla tipos (Earnings Date es lista de date).",
+    "recommendedFor": [
+     "calendario de reportes por emisora",
+     "agenda del portafolio",
+     "historial de sorpresas de utilidades"
+    ]
+   },
+   {
+    "id": "yf-estimaciones",
+    "name": "yfinance earnings_estimate / revenue_estimate / eps_trend / eps_revisions / earnings_history",
+    "call": "yf.Ticker('AAPL'|'WALMEX.MX').earnings_estimate, .revenue_estimate, .eps_trend, .eps_revisions; yf.Ticker('AAPL').earnings_history",
+    "works": true,
+    "needsKey": false,
+    "latencyMs": 151,
+    "freshness": "Consenso al día; eps_trend trae la foto de hace 7, 30, 60 y 90 días.",
+    "sample": "AAPL earnings_estimate (filas 0q, +1q, 0y, +1y; columnas avg, low, high, yearAgoEps, numberOfAnalysts, growth, currency): 0q avg 1.97865, 27 analistas, growth 0.0695. revenue_estimate 0y avg 477,854,311,900 (40 analistas). eps_trend 0q current 1.97865 vs 90daysAgo 2.00836. eps_revisions 0q up30 7, down30 14. earnings_history: 4 trimestres (2025-09-30 a 2026-06-30) epsActual, epsEstimate, epsDifference, surprisePercent (0.0674). WALMEX.MX: 0q avg 0.7129 MXN con 3 analistas; 0y 3.02899 con 11.",
+    "rateLimitNotes": "earnings_estimate, revenue_estimate, eps_trend y eps_revisions comparten 1 llamada (módulo earningsTrend); earnings_history otra; growth_estimates haría una tercera (no probada).",
+    "licenseNotes": "Igual que yfinance general.",
+    "gotchas": "Cobertura mexicana delgada (2 a 4 analistas por trimestre en WALMEX): mostrar siempre numberOfAnalysts y s/d cuando falte. growth y surprisePercent en fracción. Presentarlo como 'consenso de estimaciones', neutral, sin lectura de compra o venta.",
+    "recommendedFor": [
+     "consenso de UPA e ingresos",
+     "tendencia de revisiones",
+     "sorpresas de utilidades"
+    ]
+   },
+   {
+    "id": "yf-analistas-prohibido",
+    "name": "yfinance analyst_price_targets / upgrades_downgrades (existen, NO mostrar)",
+    "call": "yf.Ticker('AAPL').analyst_price_targets; .upgrades_downgrades",
+    "works": true,
+    "needsKey": false,
+    "latencyMs": 180,
+    "freshness": "Al día (último cambio 2026-10-01 15:55).",
+    "sample": "analyst_price_targets: current 329.48, high 405.0, low 215.0, mean 328.09, median 340.0. upgrades_downgrades: 971 filas desde 2012-09-12 con Firm, ToGrade, FromGrade, Action, priceTargetAction, currentPriceTarget, priorPriceTarget (ej. Morgan Stanley, Overweight, 'Lowers' de 360 a 355).",
+    "rateLimitNotes": "1 llamada cada uno.",
+    "licenseNotes": "Igual que yfinance general.",
+    "gotchas": "PROHIBIDO mostrarlo en el producto: ToGrade/FromGrade (Buy, Overweight, Hold) son recomendaciones de compra o venta y los precios objetivo son lo mismo con otro nombre. Ojo: también vienen colados en yf.Sector(...).top_companies (columna 'rating' con 'Strong Buy') y en Industry.top_performing_companies ('target price'): hay que quitar esas columnas en el proveedor, no en la UI. currentPriceTarget 0.0 cuando la firma no publica precio.",
+    "recommendedFor": []
+   },
+   {
+    "id": "yf-splits-acciones",
+    "name": "yfinance splits + get_shares_full",
+    "call": "yf.Ticker('AAPL').splits; .get_shares_full(start='2023-01-01')",
+    "works": true,
+    "needsKey": false,
+    "latencyMs": 400,
+    "freshness": "splits al día; acciones en circulación con último punto 2026-08-05.",
+    "sample": "splits: 5 eventos, 1987-06-16 2:1 ... 2014-06-09 7:1, 2020-08-31 4:1. shares_full: 228 puntos de 2023-01-04 (16,526,300,160) a 2026-08-05 (14,594,180,000).",
+    "rateLimitNotes": "splits descarga history(period='max') completo (662 ms, 1 llamada). shares_full 1 llamada al endpoint fundamentals-timeseries (145 ms).",
+    "licenseNotes": "Igual que yfinance general.",
+    "gotchas": "shares_full trae duplicados y saltos (2026-05-02 14,667,688,000 y 2026-05-05 14,687,356,000; dos fechas seguidas con el mismo valor): deduplicar por fecha y suavizar antes de graficar recompras. splits viene con hora 09:30 en zona del mercado.",
+    "recommendedFor": [
+     "historial de splits",
+     "recompras y dilución"
+    ]
+   },
+   {
+    "id": "yf-screener",
+    "name": "yfinance yf.screen (predefinidos y EquityQuery region=mx)",
+    "call": "yf.screen('day_gainers'|'day_losers'|'most_actives', count=5); yf.screen(EquityQuery('and',[EquityQuery('eq',['region','mx']), EquityQuery('gt',['dayvolume',100000])]), sortField='percentchange', sortAsc=False, size=25)",
+    "works": true,
+    "needsKey": false,
+    "latencyMs": 200,
+    "freshness": "Intradía: exchangeDataDelayedBy 0 en EE. UU. y 20 en MX.",
+    "sample": "day_gainers: ACN +18.06 %, SNPS +13.51 %, FICO +13.05 % (campos symbol, shortName, regularMarketPrice, regularMarketChangePercent, regularMarketVolume, marketCap, exchange, más ~80 campos). most_actives: NU 80.9 M, INTC 60.5 M, CTVA -84.42 %. region=mx con volumen > 100 mil: total 52; ej. WALMEX.MX 46.01, PE 15.92, dividendYield 4.36; CEMEXCPO.MX 17.24; FUNO11.MX 29.16, dividendYield 8.77.",
+    "rateLimitNotes": "1 llamada por consulta (los predefinidos por GET, los personalizados por POST con crumb). size máximo 250 por página.",
+    "licenseNotes": "Igual que yfinance general.",
+    "gotchas": "Los predefinidos están fijos a region=us y capitalización >= 2 mil millones: para México hay que usar EquityQuery con region 'mx' (exchange MEX). El orden por percentchange NO se respetó (1.60, -0.27, 1.38, 1.07...): ordenar en el cliente. regularMarketChangePercent, dividendYield (5.46) y fiftyTwoWeekChangePercent vienen en puntos porcentuales, no fracción. region=mx mezcla todo como quoteType EQUITY: warrants (DIABLOI10.MX), notas estructuradas sin nombre (MTP703E-BC092.MX), ETFs del SIC (IVVPESOISHRS.MX) y FIBRAs con el nombre del fiduciario (FUNO11 'BANCO ACTINVER SA', FIBRAMQ12 'HSBC MEXICO S.A.', DANHOS13 'BANCO NACIONAL DE MEXICO'): filtrar contra universe_mx.json y fibras_mx.json y poner el nombre propio. marketCap null en warrants y ETFs. CTVA -84 % en most_actives parece escisión sin ajustar: no confiar en cambios extremos. No pasa por el replay de pruebas.",
+    "recommendedFor": [
+     "movimientos del día EE. UU.",
+     "pantalla de emisoras BMV con filtros",
+     "filtros por múltiplos"
+    ]
+   },
+   {
+    "id": "yf-sector-industria",
+    "name": "yfinance yf.Sector / yf.Industry",
+    "call": "yf.Sector('technology'); yf.Industry('semiconductors')",
+    "works": true,
+    "needsKey": false,
+    "latencyMs": 228,
+    "freshness": "Al día (rendimientos YTD).",
+    "sample": "Sector technology overview: companies_count 861, market_cap 30,009,532,088,320, description; top_companies (NVDA, AAPL, MSFT, AVGO, SKHY); industries ['semiconductors','software-infrastructure','consumer-electronics',...]; top_etfs QQQ, VGT, XLK, QQQM, SMH. Industry semiconductors: 60 empresas, market_cap 11.58 billones USD; top_performing_companies (ytd return, last price, target price); top_growth_companies (MU growth estimate 5.85).",
+    "rateLimitNotes": "1 llamada por sector o industria; 11 sectores en total.",
+    "licenseNotes": "Igual que yfinance general.",
+    "gotchas": "Universo solo EE. UU. (no sirve para sectores de la BMV). Trae columnas de recomendación ('rating' Strong Buy/Buy, 'target price') que hay que quitar. Claves en inglés con guiones: traducir. No pasa por el replay de pruebas.",
+    "recommendedFor": [
+     "mapa sectorial EE. UU.",
+     "ETFs por sector",
+     "líderes por industria sin calificaciones"
+    ]
+   },
+   {
+    "id": "yf-intradia",
+    "name": "yfinance history intradía (5m, 1h)",
+    "call": "yf.Ticker('AAPL').history(period='60d', interval='5m'); .history(period='730d', interval='1h'); yf.Ticker('WALMEX.MX').history(period='5d', interval='5m')",
+    "works": true,
+    "needsKey": false,
+    "latencyMs": 300,
+    "freshness": "AAPL: última vela 13:45 ET consultada a las 13:48 ET (casi tiempo real). WALMEX.MX: última vela 11:25 CDMX (17:25Z) consultada 17:48Z, 20 min de retraso BMV.",
+    "sample": "AAPL 5m/60d: 4,654 velas desde 2026-07-09 09:30 (60 días hábiles), columnas Open, High, Low, Close, Volume, Dividends, Stock Splits. AAPL 1h/730d: 5,071 velas desde 2023-11-02 (llegó más atrás que 730 días naturales). WALMEX.MX 5m/5d: 360 velas de 07:30 a 14:55 hora CDMX.",
+    "rateLimitNotes": "1 llamada por serie (345 ms la de 5m, 411 ms la de 1h, 160 ms WALMEX).",
+    "licenseNotes": "Igual que yfinance general.",
+    "gotchas": "Límites de Yahoo: 5m/15m hasta 60 días, 1h hasta ~730; 1m solo 7-8 días por petición y unos 30 días atrás (no probado hoy para no gastar llamadas). period cuenta días hábiles. Primera vela de la BMV con volumen 0 (subasta de apertura). Horas en la zona del mercado (-04:00 NY, -06:00 CDMX). Sin pre y post mercado salvo prepost=True.",
+    "recommendedFor": [
+     "gráfica intradía 1D/5D",
+     "gráfica 1M con velas de 1h"
+    ]
+   },
+   {
+    "id": "yf-quote-lote",
+    "name": "Yahoo v7/finance/quote en lote (divisas cruzadas, futuros agrícolas y metales)",
+    "call": "yf.data.YfData().get_raw_json('https://query1.finance.yahoo.com/v7/finance/quote', params={'symbols':'EURMXN=X,MXNJPY=X,USDMXN=X,ZC=F,ZW=F,ZS=F,KC=F,SB=F,CT=F,LE=F,HRC=F,ALI=F,WALMEX.MX,NAFTRAC.MX,^MXX,BTC-USD,BTC-MXN'}) + yf.download(['HRC=F','ALI=F'], period='1mo')",
+    "works": true,
+    "needsKey": false,
+    "latencyMs": 162,
+    "freshness": "Divisas delay 0 (etiqueta 'Delayed Quote'); futuros CBOT/CME/ICE/COMEX 10 min; BMV y ^MXX 20 min.",
+    "sample": "17 símbolos en 1 llamada (162 ms). EURMXN=X 20.5999, MXNJPY=X 8.576, USDMXN=X 18.3429 (+1.64 %). ZC=F 497.5 USX (Corn Dec-2026, openInterest 919,540, expireIsoDate 2026-12-14, underlyingSymbol ZCZ26.CBT); ZW=F 680.25; ZS=F 1278.25; KC=F 289.15; SB=F 18.96; CT=F 77.26; LE=F 223.05; HRC=F 1306 USD (OI 8,032); ALI=F 3210.25 USD (OI 527); ^MXX 63,580.66; BTC-USD 84,971.3 (quoteSourceName CoinMarketCap). Historial diario de HRC=F y ALI=F también funciona (3212 y 1306 al 2026-10-01). BTC-MXN no existe.",
+    "rateLimitNotes": "1 llamada para todo el lote; es la forma más barata de una tira de cotizaciones. yf.download en cambio costó 2 peticiones por símbolo.",
+    "licenseNotes": "Igual que yfinance general.",
+    "gotchas": "currency 'USX' = centavos de dólar: dividir entre 100 (maíz 4.975 USD por bushel). CT=F regresa quoteType ALTSYMBOL, sin shortName, con exchange NYM aunque el algodón es de ICE. SB=F trae expireIsoDate 2026-09-30 (ya vencido) con underlying SBH27: el contrato continuo rota sin aviso, no usar expireIsoDate. ALI=F con OI 527 es poco líquido. NAFTRAC.MX en este endpoint es basura: quoteType MUTUALFUND, exchange YHD, precio 45.0 con fecha 2019-06-28; el chart sí está al día (fixture del repo con velas hasta 2026-09-14), así que para NAFTRAC usar solo history, nunca quote ni info. Este endpoint no tiene envoltura pública en yfinance y no pasa por el replay de pruebas.",
+    "recommendedFor": [
+     "cinta de cotizaciones",
+     "matriz de divisas en vivo",
+     "tablero de materias primas (granos, café, azúcar, ganado, acero, aluminio)"
+    ]
+   },
+   {
+    "id": "yf-calendario-economico",
+    "name": "yfinance yf.Calendars().get_economic_events_calendar (extra)",
+    "call": "yf.Calendars().get_economic_events_calendar(limit=10)",
+    "works": true,
+    "needsKey": false,
+    "latencyMs": 653,
+    "freshness": "Ventana de hoy a +7 días.",
+    "sample": "10 filas con Region, Event Time, For, Actual, Expected, Last, Revised; ej. 'Consumer Conf Index*' ID 2026-10-08 Sep, Last 118.5; 'Quarterly Real GDP QQ*' SG Q3, Last 0.5.",
+    "rateLimitNotes": "3 peticiones: el primer POST a /v1/finance/visualization dio 401, yfinance pidió crumb nuevo y reintentó. Máximo 100 filas por página.",
+    "licenseNotes": "Igual que yfinance general.",
+    "gotchas": "Sin filtro por país en la firma: con limit=10 salieron Indonesia, Singapur, Qatar; para MX/EE. UU. hay que paginar hasta 100 y filtrar por Region. Nombres en inglés con asterisco y sin unidades. También existen get_earnings_calendar, get_ipo_info_calendar y get_splits_calendar (no probados). No pasa por el replay. Para México, Banxico SIE e INEGI siguen siendo la fuente primaria.",
+    "recommendedFor": [
+     "agenda económica global",
+     "calendario de reportes del mercado"
+    ]
+   },
+   {
+    "id": "frankfurter-v1",
+    "name": "Frankfurter v1 (BCE)",
+    "call": "https://api.frankfurter.app/latest?from=USD (301 a https://api.frankfurter.dev/v1/latest?from=USD); https://api.frankfurter.dev/v1/2026-09-01..2026-09-30?from=USD&to=MXN,EUR,JPY; https://api.frankfurter.dev/v1/currencies",
+    "works": true,
+    "needsKey": false,
+    "latencyMs": 200,
+    "freshness": "Un dato por día hábil (referencia del BCE, ~16:00 CET); el 2026-10-01 ya estaba publicado a las 17:47Z.",
+    "sample": "{\"base\":\"USD\",\"date\":\"2026-10-01\",\"rates\":{\"MXN\":18.1669,\"EUR\":0.88511,\"JPY\":157.98,\"BRL\":5.1885,\"CAD\":1.4246,\"CNY\":6.7045,...}} 30 monedas. Serie de septiembre solo días hábiles (salta 09-05 y 09-06): 09-01 MXN 17.0009 ... ",
+    "rateLimitNotes": "Sin llave ni cuotas; 'Requests are rate-limited to prevent abuse, but there are no monthly or daily caps'. Cache-Control public, max-age=86400.",
+    "licenseNotes": "Código abierto; 'The rates themselves fall under each provider's terms' (https://frankfurter.dev). Datos del BCE de uso libre con cita de fuente.",
+    "gotchas": "El dominio .app redirige 301 a .dev/v1: requests sigue la redirección pero conviene llamar directo a .dev (y grabar ese URL en fixtures). v1 solo trae ~30 monedas del BCE: pedir COP o CLP las omite en silencio (base MXN regresó solo BRL, CAD, EUR, JPY, USD). Es tipo de referencia diario, no en vivo: difiere del USDMXN=X de Yahoo (18.1669 vs 18.3429 a la misma hora). v1 está deprecada pero 'remains available indefinitely'.",
+    "recommendedFor": [
+     "matriz de divisas de cierre",
+     "historial diario de tipos de cambio",
+     "respaldo cuando Yahoo falle"
+    ]
+   },
+   {
+    "id": "frankfurter-v2",
+    "name": "Frankfurter v2 (104 bancos centrales, incluido Banxico FIX)",
+    "call": "https://api.frankfurter.dev/v2/rates?base=MXN&quotes=COP,CLP,BRL,ARS,PEN,USD; /v2/rates?base=USD&quotes=MXN&from=2026-09-24&to=2026-09-30; /v2/rates?base=USD&quotes=MXN&providers=ECB; /v2/rate/USD/MXN; /v2/currencies; /v2/providers",
+    "works": true,
+    "needsKey": false,
+    "latencyMs": 450,
+    "freshness": "Diario; latest con max-age ~22,300 s.",
+    "sample": "[{\"date\":\"2026-10-01\",\"base\":\"MXN\",\"quote\":\"ARS\",\"rate\":84.1},{...\"BRL\",0.28631},{...\"CLP\",53.698},{...\"COP\",183.12},{...\"PEN\",0.18987},{...\"USD\",0.05519}]. 165 monedas, 104 proveedores (BANXICO 'FIX', FRED 'H.10', BCB PTAX, BANREP, BCCH, BCRA, ECB...). USD/MXN combinado 18.1194; con providers=ECB 18.167.",
+    "rateLimitNotes": "Igual que v1: sin llave ni cuotas, con freno contra abuso.",
+    "licenseNotes": "Cada tasa queda bajo los términos de su proveedor (Banxico, BCE, Fed, etc.); citar fuente.",
+    "gotchas": "Forma de respuesta distinta a v1 (arreglo de {date, base, quote, rate}). La tasa por omisión es una mezcla de proveedores, no igual a la del BCE ni al FIX. La serie histórica incluye sábado y domingo (2026-09-26 y 09-27) con valores: filtrar días hábiles o fijar providers. providers=BANXICO no se probó; Banxico SIE ya está en el repo para el FIX oficial. Latencia algo mayor (370-990 ms en /providers).",
+    "recommendedFor": [
+     "matriz de divisas latinoamericanas (COP, CLP, ARS, PEN, BRL)",
+     "conversión de portafolio a MXN",
+     "respaldo del FIX"
+    ]
+   },
+   {
+    "id": "coingecko-publico",
+    "name": "CoinGecko API pública sin llave",
+    "call": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd,mxn&include_last_updated_at=true&include_24hr_change=true&include_market_cap=true; /api/v3/coins/markets?vs_currency=mxn&per_page=5&page=1; /api/v3/coins/bitcoin/market_chart?vs_currency=mxn&days=7",
+    "works": true,
+    "needsKey": false,
+    "latencyMs": 265,
+    "freshness": "last_updated_at 2026-10-01 17:45:10Z consultado ~17:48Z (2 a 3 min); cache max-age 30 s, s-maxage 60 s.",
+    "sample": "bitcoin: usd 85003, mxn 1,559,041, usd_24h_change 1.17, mxn_24h_change 2.60, usd_market_cap 1.708e12; ethereum: usd 2706.69, mxn 49,643. coins/markets en MXN: current_price, market_cap, market_cap_rank, total_volume, high_24h, low_24h, price_change_percentage_24h, circulating_supply, max_supply, ath, ath_date, image. market_chart 7 días con puntos por hora [ms, precio].",
+    "rateLimitNotes": "Público sin llave: variable, del orden de 5 a 30 llamadas por minuto según tráfico; 429 en ráfagas. Plan Demo gratis con llave: 100 llamadas/min y 10,000 al mes (el dueño tendría que sacar la llave). Cachear 60 s del lado del servidor.",
+    "licenseNotes": "El plan gratuito Demo exige atribución a CoinGecko (https://www.coingecko.com/en/api/pricing); límites en https://docs.coingecko.com/docs/common-errors-rate-limit.",
+    "gotchas": "Cambios de 24 h en puntos porcentuales (no fracción). Coincide con Yahoo en USD (85,003 vs 84,971.3, 0.04 %), pero Yahoo no tiene BTC-MXN y CoinGecko da MXN directo con capitalización y volumen. Valores como float largos: redondear. last_updated_at en segundos Unix y market_chart en milisegundos.",
+    "recommendedFor": [
+     "cripto en MXN",
+     "tabla de criptos por capitalización",
+     "respaldo de BTC-USD si Yahoo falla"
+    ]
+   }
+  ]
+ },
+ "macro": {
+  "sources": [
+   {
+    "id": "fred_curva_tasas_us",
+    "name": "FRED fredgraph.csv: curva del Tesoro y tasas de corto plazo de EE. UU. (DGS1MO, DGS3MO, DGS6MO, DGS1, DGS2, DGS5, DGS10, DGS30, SOFR, DFF)",
+    "call": "GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=<SERIE> con requests.get pelon (User-Agent default de python-requests, igual que kaizen_api/providers/fred.py), timeout 20 s, 6 hilos en paralelo",
+    "works": true,
+    "needsKey": false,
+    "sample": "Encabezado 'observation_date,DGS10'. Ultimo dato 2026-09-29: 1M 4.04, 3M 4.25, 6M 4.36, 1A 4.58, 2A 4.89, 5A 5.06, 10A 5.26, 30A 5.59. SOFR 2026-09-30 3.90. DFF 2026-09-29 3.88.",
+    "latencyMs": 550,
+    "freshness": "Diaria. DGS* con rezago de 1 a 2 dias habiles (el 1 de octubre el ultimo es 29 de septiembre); SOFR al dia habil anterior (30/09).",
+    "gotchas": "Ninguna serie se colgo con el UA default de requests (206 a 718 ms). Con UA de navegador, curl recibe error HTTP/2 inmediato (exit 92, 0.3 s), no cuelga pero falla: nunca mandar UA de navegador a FRED. La columna de fecha se llama 'observation_date', no 'DATE'. Los feriados vienen vacios. Se descarga la serie completa (DGS1 trae 16,891 filas desde 1962): cachear y recortar del lado del servidor, como ya hace fred.py. fredgraph.csv no es la API oficial: para produccion la ruta formal es api.stlouisfed.org con llave gratuita que el dueno tendria que sacar.",
+    "licenseNotes": "DGS1MO, DGS*, DFF: 'Public Domain: Citation Requested'. SOFR: 'Copyrighted: Citation Required' (NY Fed), se puede mostrar citando la fuente. Terminos generales: https://fred.stlouisfed.org/legal/",
+    "rateLimitNotes": "fredgraph no documenta limite; 22 series en paralelo (6 hilos) sin error ni 429. La API formal con llave permite 120 peticiones por minuto.",
+    "recommendedFor": [
+     "curva de rendimientos EE. UU. con historia larga",
+     "diferencial 10A menos 2A",
+     "tasa de fondos federales y SOFR en el tablero de tasas"
+    ]
+   },
+   {
+    "id": "fred_macro_us",
+    "name": "FRED fredgraph.csv: macro de EE. UU. (CPIAUCSL, CPILFESL, UNRATE, PAYEMS, GDPC1, A191RL1Q225SBEA, PCEPILFE)",
+    "call": "GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL (y demas ids), UA default de requests",
+    "works": true,
+    "needsKey": false,
+    "sample": "CPIAUCSL 2026-08-01 334.131; CPILFESL 2026-08-01 337.765; UNRATE 2026-08-01 4.1; PAYEMS 2026-08-01 159075 (miles); GDPC1 2026-04-01 24408.011 (mmd encadenados 2017); A191RL1Q225SBEA 2026-04-01 2.2 (variacion trimestral anualizada); PCEPILFE 2026-08-01 130.455",
+    "latencyMs": 280,
+    "freshness": "Mensual (CPI y empleo de agosto 2026 ya disponibles; el empleo de septiembre sale el 2 de octubre). PIB trimestral al 2T 2026.",
+    "gotchas": "CPI y PCE vienen como indice, no como inflacion: hay que calcular la variacion anual (t contra t-12) y guardarla como fraccion segun el contrato v2. A191RL1Q225SBEA ya viene en por ciento anualizado; GDPC1 es nivel. La fecha del dato es el primer dia del periodo, no la fecha de publicacion.",
+    "licenseNotes": "Todas 'Public Domain: Citation Requested' (BLS, BEA). https://fred.stlouisfed.org/legal/",
+    "rateLimitNotes": "Sin limite observado.",
+    "recommendedFor": [
+     "panel macro EE. UU.",
+     "inflacion general y subyacente",
+     "empleo y desempleo",
+     "crecimiento del PIB"
+    ]
+   },
+   {
+    "id": "fred_mercados_us",
+    "name": "FRED fredgraph.csv: hipotecaria, inflacion implicita, petroleo y peso (MORTGAGE30US, T10YIE, DCOILWTICO, DEXMXUS)",
+    "call": "GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=MORTGAGE30US (y demas), UA default de requests",
+    "works": true,
+    "needsKey": false,
+    "sample": "MORTGAGE30US 2026-10-01 7.28; T10YIE 2026-09-30 2.36; DCOILWTICO 2026-09-29 96.16; DEXMXUS 2026-09-25 17.6932",
+    "latencyMs": 480,
+    "freshness": "MORTGAGE30US semanal (jueves, ya trae el 1 de octubre). T10YIE diaria. DCOILWTICO diaria con 1 a 2 dias de rezago. DEXMXUS (H.10) se publica semanal, el ultimo dato tiene casi una semana.",
+    "gotchas": "DEXMXUS va atrasado una semana: para el peso diario usar el FIX de Banxico (SF43718, ya en catalogo) y dejar DEXMXUS solo para historia larga desde 1993.",
+    "licenseNotes": "MORTGAGE30US: 'Copyright, Freddie Mac. Reprinted with permission', Copyrighted: Citation Required. T10YIE: Copyrighted: Citation Required. DCOILWTICO y DEXMXUS: Public Domain. https://fred.stlouisfed.org/legal/",
+    "rateLimitNotes": "Sin limite observado.",
+    "recommendedFor": [
+     "tasa hipotecaria 30 anos",
+     "inflacion esperada de mercado a 10 anos",
+     "WTI",
+     "historia del peso contra el dolar"
+    ]
+   },
+   {
+    "id": "fred_ice_high_yield",
+    "name": "FRED fredgraph.csv: diferencial high yield ICE BofA (BAMLH0A0HYM2)",
+    "call": "GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=BAMLH0A0HYM2 ; nota de licencia leida en https://fred.stlouisfed.org/series/BAMLH0A0HYM2",
+    "works": true,
+    "needsKey": false,
+    "sample": "2026-09-30 3.12 (por ciento). Primera fila 2023-10-02: solo 794 observaciones.",
+    "latencyMs": 215,
+    "freshness": "Diaria, al dia habil anterior.",
+    "gotchas": "Tecnicamente responde, pero NO se debe publicar en el producto. La pagina de FRED dice: 'Starting in April 2026, this series will only include 3 years of observations', por eso la historia empieza en 2023.",
+    "licenseNotes": "Restriccion de ICE confirmada en la pagina de la serie: 'Copyright, 2023, ICE Data Indices. Reproduction of this data in any form is prohibited except with the prior written permission of ICE Data Indices' y los datos son 'for your internal use only'; la marca en FRED es 'copyrighted: pre-approval required'. Mostrarla a usuarios de Kaizen seria redistribuir sin permiso.",
+    "rateLimitNotes": "Igual que el resto de fredgraph.",
+    "recommendedFor": [
+     "no usar en el producto; solo como referencia interna, o reemplazarla por un diferencial propio con datos publicos"
+    ]
+   },
+   {
+    "id": "fred_espejos_mx",
+    "name": "FRED fredgraph.csv: series de Mexico espejo de OCDE (LRHUTTTTMXM156S, NGDPRSAXDCMXQ, IRLTLT01MXM156N, MEXCPIALLMINMEI)",
+    "call": "GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=LRHUTTTTMXM156S (y demas), UA default de requests",
+    "works": true,
+    "needsKey": false,
+    "sample": "LRHUTTTTMXM156S 2026-07-01 2.711902 (desempleo MX); NGDPRSAXDCMXQ 2026-04-01 6492798.1 (PIB real MX, millones de pesos); IRLTLT01MXM156N 2026-08-01 9.16 (bono 10A MX, mensual); MEXCPIALLMINMEI 2024-07-01 (descontinuada)",
+    "latencyMs": 450,
+    "freshness": "Desempleo con 2 meses de rezago, PIB trimestral al 2T 2026, bono 10A mensual. MEXCPIALLMINMEI se quedo en julio de 2024 y MEXPRINTO01IXOBSAM en 2018: no usar.",
+    "gotchas": "Es el atajo sin token para huecos de INEGI (desempleo y PIB), pero con mas rezago que INEGI directo. Revisar la fecha del ultimo dato antes de mostrar: varias series OCDE de Mexico estan muertas.",
+    "licenseNotes": "Series de OCDE via FRED; revisar la marca de cada serie en su pagina antes de publicar. https://fred.stlouisfed.org/legal/",
+    "rateLimitNotes": "Sin limite observado.",
+    "recommendedFor": [
+     "desempleo y PIB de Mexico mientras no haya token de INEGI"
+    ]
+   },
+   {
+    "id": "tesoro_curva_par",
+    "name": "Tesoro de EE. UU.: Daily Treasury Par Yield Curve y Real Yield Curve (CSV y XML de home.treasury.gov)",
+    "call": "GET https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/2026/all?type=daily_treasury_yield_curve&field_tdr_date_value=2026&page&_format=csv ; XML: https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/xml?data=daily_treasury_yield_curve&field_tdr_date_value_month=202609 ; reales: type=daily_treasury_real_yield_curve",
+    "works": true,
+    "needsKey": false,
+    "sample": "CSV: Date,\"1 Mo\",\"1.5 Month\",\"2 Mo\",\"3 Mo\",\"4 Mo\",\"6 Mo\",\"1 Yr\",\"2 Yr\",\"3 Yr\",\"5 Yr\",\"7 Yr\",\"10 Yr\",\"20 Yr\",\"30 Yr\" / 09/30/2026,4.02,4.13,4.16,4.20,4.29,4.33,4.54,4.88,5.00,5.09,5.19,5.29,5.68,5.64. Real: 09/30/2026 5A 2.73, 10A 2.93, 30A 3.33. XML OData con d:BC_1MONTH, d:BC_1_5MONTH, etc.",
+    "latencyMs": 18500,
+    "freshness": "Diaria, el mismo dia al cierre: el 1 de octubre ya trae el 30 de septiembre (un dia antes que FRED DGS*). 14 plazos, incluye 1.5M, 4M y 20A que FRED no trae en el mismo paquete.",
+    "gotchas": "Trampa grave de latencia, al reves que FRED: con UA de curl, python-requests o descriptivo con correo tarda 17.8 a 20.9 s en responder (TTFB 18.4 s); con 'Mozilla/5.0' tarda 0.7 s. Fechas en formato MM/DD/YYYY, ordenadas de la mas reciente a la mas vieja. El CSV es por ano calendario: en enero hay que pedir tambien el ano anterior. Recomendacion: cachear 1 vez al dia con timeout amplio (30 s) o usar FRED DGS* como principal y el Tesoro solo para el dato del dia y los plazos extra.",
+    "licenseNotes": "Dato del gobierno federal de EE. UU., dominio publico. https://home.treasury.gov/policy-issues/financing-the-government/interest-rate-statistics",
+    "rateLimitNotes": "No documentado; no hubo 429 en 6 peticiones.",
+    "recommendedFor": [
+     "curva del Tesoro completa del dia",
+     "curva real (TIPS)",
+     "inflacion implicita por plazo (nominal menos real)"
+    ]
+   },
+   {
+    "id": "fiscaldata",
+    "name": "Tesoro de EE. UU.: API FiscalData (debt_to_penny, avg_interest_rates)",
+    "call": "GET https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?sort=-record_date&page[size]=2 ; .../v2/accounting/od/avg_interest_rates?sort=-record_date&page[size]=3&fields=record_date,security_desc,avg_interest_rate_amt",
+    "works": true,
+    "needsKey": false,
+    "sample": "debt_to_penny 2026-09-29 tot_pub_debt_out_amt 40096954633566.68 (deuda publica total), debt_held_public_amt 32367872193303.63. avg_interest_rates 2026-08-31: Treasury Bills 3.788, Notes 3.345, Bonds 3.453.",
+    "latencyMs": 680,
+    "freshness": "Deuda diaria con 1 dia habil de rezago; tasas promedio mensuales (agosto 2026).",
+    "gotchas": "Todos los numeros vienen como string; los montos en dolares, no en millones. Paginacion con page[number] y page[size] (hay que codificar los corchetes en la URL). No trae la curva diaria: para eso es el CSV de home.treasury.gov.",
+    "licenseNotes": "Dominio publico, sin llave. Documentacion: https://fiscaldata.treasury.gov/api-documentation/",
+    "rateLimitNotes": "Sin llave ni limite documentado en las pruebas; respuestas en 0.6 a 0.7 s.",
+    "recommendedFor": [
+     "deuda publica de EE. UU. al dia",
+     "costo promedio de la deuda del Tesoro"
+    ]
+   },
+   {
+    "id": "banxico_bonos_m",
+    "name": "Banxico SIE: Bonos M, tasa de rendimiento en subasta primaria (3, 5, 10, 20 y 30 anos)",
+    "call": "GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43883,SF43886,SF44071,SF45384,SF60696 (metadatos) y .../datos/oportuno, cabecera Bmx-Token (token cargado de .env.local sin imprimir)",
+    "works": true,
+    "needsKey": true,
+    "sample": "SF43883 'Resultados de la subasta semanal Tasa de rendimiento Bonos a tasa fija a 3 anos', Diaria, Porcentajes: 10/09/2026 8.24. SF43886 (5A): 17/09/2026 9.00. SF44071 (10A, ya en catalogo): 24/09/2026 9.35. SF45384 (20A): 27/08/2026 9.64. SF60696 (30A): 01/10/2026 10.15.",
+    "latencyMs": 370,
+    "freshness": "Cada plazo solo cambia cuando se subasta (rotacion de varias semanas): el 1 de octubre el 20A es del 27 de agosto. Periodicidad declarada 'Diaria' pero el dato es por subasta.",
+    "gotchas": "No es curva de mercado secundario: mezcla fechas de hasta 5 semanas, hay que mostrar la fecha de cada nodo. SF60691 ('Bonos tasa fija a 30 anos', sin la palabra subasta) trae el mismo 10.15 fechado 29/09 (dia de subasta) mientras SF60696 lo fecha 01/10 (liquidacion): elegir uno y no mezclarlos. Hay series hermanas con el mismo titulo salvo 'Plazo en dias' o 'Monto asignado' (SF43882, SF43884, SF44070, SF44072, SF45385, SF60689, SF60690): el candado tituloContiene tiene que exigir 'tasa de rendimiento'. El SIE no tiene endpoint de catalogo: /doc/catalogoSeries responde '{}' (2 bytes); los ids se hallaron barriendo rangos con el endpoint de metadatos. La curva secundaria diaria (vector de precios) es de Valmer o PIP, de pago.",
+    "licenseNotes": "Banxico pide citar que la informacion proviene de Banco de Mexico, su direccion de internet y la fecha de obtencion. Token gratuito: https://www.banxico.org.mx/SieAPIRest/service/v1/token (ya existe en .env.local).",
+    "rateLimitNotes": "Documentado en https://www.banxico.org.mx/SieAPIRest/service/v1/doc/limiteConsultas: oportunas y metadatos 80 por minuto y 40,000 por dia; historicas 200 por 5 minutos y 10,000 por dia; si se excede, el token se bloquea hasta que cierre la ventana. Hasta 20 ids por peticion en las pruebas.",
+    "recommendedFor": [
+     "curva de Bonos M en la pagina de tasas de Mexico",
+     "comparar con la curva del Tesoro"
+    ]
+   },
+   {
+    "id": "banxico_udibonos",
+    "name": "Banxico SIE: UDIBONOS, tasa real en subasta (3, 20 y 30 anos)",
+    "call": "GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF61592,SF46958,SF46961/datos/oportuno con Bmx-Token",
+    "works": true,
+    "needsKey": true,
+    "sample": "SF61592 'Tasa de rendimiento Udibonos a 3 anos', Diaria, Porcentajes: 24/09/2026 4.00. SF46958 (20A): 27/08/2026 4.61. SF46961 (30A): 17/09/2026 4.90.",
+    "latencyMs": 370,
+    "freshness": "Por subasta, igual que Bonos M.",
+    "gotchas": "El UDIBONO a 10 anos no aparecio en los rangos barridos (SF46940 a SF46979, SF61585 a SF61611, SF44060 a SF44089, SF45385 a SF45399): queda s/d hasta encontrar su id. SF61591 dice 'Udibonos a 3 anos Fecha' y es otra serie (fechada distinto): no confundir con SF61592. Hermanas de plazo y monto (SF46957, SF46959, SF46960, SF46962, SF61593, SF61594).",
+    "licenseNotes": "Igual que Bonos M: citar Banco de Mexico y fecha de obtencion.",
+    "rateLimitNotes": "Mismos limites del SIE.",
+    "recommendedFor": [
+     "tasa real de Mexico",
+     "inflacion implicita (Bono M menos UDIBONO al mismo plazo, con fechas de subasta distintas)"
+    ]
+   },
+   {
+    "id": "banxico_tiie",
+    "name": "Banxico SIE: TIIE 91 y 182 dias (TIIE 28 y TIIE de fondeo ya estan en el catalogo)",
+    "call": "GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43878,SF111916,SF331451/datos/oportuno con Bmx-Token",
+    "works": true,
+    "needsKey": true,
+    "sample": "SF43878 'Tasas de interes interbancarias Por ciento anual TIIE a 91 dias': 01/10/2026 6.8134. SF111916 'TIIE a 182 dias': 01/10/2026 6.8680. SF331451 (fondeo, ya en catalogo): 30/09/2026 6.6300.",
+    "latencyMs": 370,
+    "freshness": "Diaria, del mismo dia.",
+    "gotchas": "Valores en por ciento: convertir a fraccion para el contrato v2. La TIIE de fondeo va un dia atras de las TIIE a plazo.",
+    "licenseNotes": "Citar Banco de Mexico y fecha de obtencion.",
+    "rateLimitNotes": "Mismos limites del SIE.",
+    "recommendedFor": [
+     "curva interbancaria de corto plazo de Mexico",
+     "credito a empresas referenciado a TIIE"
+    ]
+   },
+   {
+    "id": "banxico_fx_otras",
+    "name": "Banxico SIE: tipo de cambio del peso contra otras monedas (euro, yen, libra, dolar canadiense, yuan)",
+    "call": "GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF46410,SF46406,SF46407,SF60632,SF290383/datos/oportuno con Bmx-Token",
+    "works": true,
+    "needsKey": true,
+    "sample": "30/09/2026, pesos por unidad: SF46410 Euro 20.5248; SF46406 Yen 0.1150; SF46407 Libra 24.0149; SF290383 Yuan 2.6940; SF60632 Dolar canadiense 'N/E'.",
+    "latencyMs": 370,
+    "freshness": "Diaria; el ultimo dato es del dia habil anterior.",
+    "gotchas": "El dato oportuno puede venir 'N/E' (paso con el dolar canadiense el 30/09): pedir un rango corto y tomar el ultimo valor valido, o mostrar s/d. Historia solo desde 31/07/2018. Titulos: 'Cotizacion de las divisas que conforman la canasta del DEG Respecto al peso mexicano <moneda>'.",
+    "licenseNotes": "Citar Banco de Mexico y fecha de obtencion.",
+    "rateLimitNotes": "Mismos limites del SIE.",
+    "recommendedFor": [
+     "tablero de divisas contra el peso",
+     "empresas que importan de Europa, Asia o Canada"
+    ]
+   },
+   {
+    "id": "banxico_remesas_reservas",
+    "name": "Banxico SIE: remesas familiares y reserva internacional",
+    "call": "GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SE27803,SF43707/datos/oportuno con Bmx-Token",
+    "works": true,
+    "needsKey": true,
+    "sample": "SE27803 'Remesas Familiares Total', Mensual, Millones de Dolares, Flujos: 01/08/2026 5,452.3367. SF43707 'Reserva Internacional', Diaria, Millones de Dolares, Saldos: 25/09/2026 256,542.8.",
+    "latencyMs": 370,
+    "freshness": "Remesas mensual con un mes de rezago (agosto 2026 publicado el 1 de octubre). Reserva declarada diaria pero el ultimo dato es del viernes anterior (publicacion semanal).",
+    "gotchas": "Los valores traen coma de miles ('5,452.3367'): el parser de banxico.py ya la quita, cualquier parser nuevo tiene que hacer lo mismo. Unidad en millones de dolares, no en pesos.",
+    "licenseNotes": "Citar Banco de Mexico y fecha de obtencion.",
+    "rateLimitNotes": "Mismos limites del SIE.",
+    "recommendedFor": [
+     "panel macro de Mexico",
+     "sector externo"
+    ]
+   },
+   {
+    "id": "banxico_encuesta_especialistas",
+    "name": "Banxico SIE: Encuesta sobre las Expectativas de los Especialistas en Economia del Sector Privado (inflacion, PIB y tipo de cambio esperados)",
+    "call": "GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14138,SR14139,SR14145,SR14447,SR14448,SR14769,SR14770,SR14776,SR14777/datos/oportuno con Bmx-Token",
+    "works": true,
+    "needsKey": true,
+    "sample": "Levantamiento 01/09/2026: SR14138 inflacion general cierre del ano en curso (ano t) Media 3.85; SR14139 Mediana 3.87; SR14447 PIB real ano t Media 1.40; SR14448 1.40; SR14770 tipo de cambio cierre ano t Mediana 17.50 pesos por dolar. Ano t+1: SR14145 inflacion media, SR14776 y SR14777 tipo de cambio media y mediana.",
+    "latencyMs": 240,
+    "freshness": "Mensual; la de septiembre 2026 ya esta. Historia desde 01/1999.",
+    "gotchas": "Cada concepto viene en bloques de 7 ids consecutivos: media, mediana, primer cuartil, tercer cuartil, minimo, maximo, desviacion estandar (inflacion t: SR14138 a SR14144; PIB t-1: SR14440 a SR14446; tipo de cambio t: SR14769 a SR14775). 'Ano t' es relativo a la fecha del levantamiento: en enero cambia de ano, la etiqueta visible tiene que calcular el ano a partir de la fecha. SR14448 se infiere mediana por la secuencia, pero no se leyo su titulo completo: confirmarlo antes de marcar verified. Hay cientos de series de probabilidad por intervalo (SR14600 en adelante) que no hacen falta.",
+    "licenseNotes": "Citar Banco de Mexico y fecha de obtencion.",
+    "rateLimitNotes": "Mismos limites del SIE.",
+    "recommendedFor": [
+     "consenso de analistas sobre inflacion, PIB y peso",
+     "comparar inflacion observada contra esperada"
+    ]
+   },
+   {
+    "id": "inegi_bie_api",
+    "name": "INEGI API del Banco de Indicadores (BIE): IGAE, PIB, desocupacion, INPC quincenal",
+    "call": "GET https://www.inegi.org.mx/app/api/indicadores/desarrolladores/jsonxml/INDICATOR/736939/es/0700/true/BIE/2.0/<TOKEN>?type=json (probado con token falso y vacio)",
+    "works": false,
+    "needsKey": true,
+    "sample": "Token UUID en ceros: HTTP 400 [\"ErrorInfo:No se encontraron resultados\",\"ErrorCode:100\"]. CL_INDICATOR con token 'abc': HTTP 401. Token vacio: pagina HTML 'Pagina no encontrada'.",
+    "latencyMs": 400,
+    "freshness": "s/d (sin token no se pudo leer dato).",
+    "gotchas": "Necesita token si o si. El token es gratuito con registro por correo en https://www.inegi.org.mx/app/desarrolladores/generatoken/Usuarios/token_Verify: el dueno tendria que sacarlo y guardarlo en .env.local como hoy con BANXICO_TOKEN. El error con token invalido no dice 'token invalido', dice 'No se encontraron resultados': un id equivocado y un token malo se ven igual, conviene una prueba en caliente con un id conocido. Mientras tanto, sin token: INPC por Banxico (SP1 y SP30578, ya en catalogo) y desempleo y PIB por FRED (fred_espejos_mx). IGAE e INPC quincenal no tienen sustituto sin token confirmado.",
+    "licenseNotes": "Terminos de libre uso de la informacion del INEGI (permite uso comercial citando la fuente): https://www.inegi.org.mx/inegi/terminos.html . Documentacion de la API: https://www.inegi.org.mx/servicios/api_indicadores.html",
+    "rateLimitNotes": "No documentado en lo revisado.",
+    "recommendedFor": [
+     "IGAE mensual",
+     "PIB trimestral y estimacion oportuna",
+     "tasa de desocupacion ENOE",
+     "INPC quincenal"
+    ]
+   },
+   {
+    "id": "inegi_descargas_sin_token",
+    "name": "INEGI descargas directas sin token (datos abiertos del INPC)",
+    "call": "GET https://www.inegi.org.mx/contenidos/programas/inpc/2018/datosabiertos/inpc_indicador_csv.zip y .../conjunto_de_datos_inpc_2018_csv.zip",
+    "works": false,
+    "needsKey": false,
+    "sample": "HTTP 200 pero el cuerpo es HTML de 2,263 bytes (pagina de no encontrado), no un ZIP.",
+    "latencyMs": 260,
+    "freshness": "s/d",
+    "gotchas": "Soft 404: el status 200 engana, hay que validar el content-type y el tamano. No se confirmo ninguna descarga CSV estable sin token en esta sesion; los tabulados web (app/tabulados) responden HTML, no datos.",
+    "licenseNotes": "https://www.inegi.org.mx/inegi/terminos.html",
+    "rateLimitNotes": "s/d",
+    "recommendedFor": [
+     "no usar; ir por la API con token"
+    ]
+   },
+   {
+    "id": "banco_mundial",
+    "name": "Banco Mundial API v2 (PIB, inflacion, deuda del gobierno central, crecimiento real)",
+    "call": "GET https://api.worldbank.org/v2/country/MEX;USA;BRA/indicator/NY.GDP.MKTP.CD?format=json&date=2023:2025&per_page=20 ; tambien FP.CPI.TOTL.ZG, GC.DOD.TOTL.GD.ZS, NY.GDP.MKTP.KD.ZG con &mrv=2",
+    "works": true,
+    "needsKey": false,
+    "sample": "NY.GDP.MKTP.CD 2025: Mexico 1832641364775.52, Brasil 2279920092492.13, EE. UU. 30769700000000. FP.CPI.TOTL.ZG MX 2025 3.8067, EE. UU. 2025 null. GC.DOD.TOTL.GD.ZS MX 2024 50.27, EE. UU. 2024 115.77. NY.GDP.MKTP.KD.ZG MX 2025 0.5617, EE. UU. 2025 2.1614.",
+    "latencyMs": 550,
+    "freshness": "Anual; lastupdated 2026-07-13. Ultimo ano 2025 en PIB, 2024 en deuda.",
+    "gotchas": "La respuesta es un arreglo [meta, datos]. Valores null frecuentes (inflacion de EE. UU. 2025 viene null): mostrar s/d. La deuda del gobierno central (GC.DOD.TOTL.GD.ZS) es escasa y va un ano atras; para deuda general por pais conviene el FMI. Varios paises se separan con ';' en la ruta. Usar mrv o date para no bajar toda la historia.",
+    "licenseNotes": "Datos del Banco Mundial bajo CC BY 4.0 (uso comercial con atribucion). https://www.worldbank.org/en/about/legal/terms-of-use-for-datasets",
+    "rateLimitNotes": "Sin llave ni limite documentado; 4 peticiones sin problema.",
+    "recommendedFor": [
+     "comparador de paises",
+     "contexto macro anual para empresas que exportan"
+    ]
+   },
+   {
+    "id": "fmi_datamapper",
+    "name": "FMI DataMapper API (extra, sin llave): deuda bruta del gobierno general y proyecciones WEO",
+    "call": "GET https://www.imf.org/external/datamapper/api/v1/GGXWDG_NGDP/MEX/USA?periods=2024,2025,2026",
+    "works": true,
+    "needsKey": false,
+    "sample": "{\"values\":{\"GGXWDG_NGDP\":{\"SDN\":{\"1992\":495.2,...}}}} (deuda bruta del gobierno general, por ciento del PIB)",
+    "latencyMs": 800,
+    "freshness": "Semestral (ediciones del WEO), incluye proyecciones.",
+    "gotchas": "En la prueba el filtro de paises y periodos en la ruta no se respeto: regreso todos los paises (empezando por Sudan) y todos los anos. Hay que filtrar del lado del servidor y cachear. Incluye anos proyectados mezclados con observados: marcarlos.",
+    "licenseNotes": "No verificado en esta sesion; revisar https://www.imf.org/external/terms.htm antes de publicar.",
+    "rateLimitNotes": "s/d",
+    "recommendedFor": [
+     "deuda publica por pais para el comparador",
+     "proyecciones de crecimiento del FMI"
+    ]
+   },
+   {
+    "id": "sec_edgar_submissions",
+    "name": "SEC EDGAR submissions: lista de 10-K, 10-Q y 8-K con ligas",
+    "call": "GET https://data.sec.gov/submissions/CIK0000320193.json con User-Agent 'KAIZEN Investment Group research@kaizeninvestments.app' (el de kaizen_api/providers/sec_edgar.py) y Accept-Encoding gzip; liga = https://www.sec.gov/Archives/edgar/data/<cik>/<accession sin guiones>/<primaryDocument>",
+    "works": true,
+    "needsKey": false,
+    "sample": "Apple Inc., 1000 filings recientes. 10-Q 2026-07-31 (periodo 2026-06-27) https://www.sec.gov/Archives/edgar/data/320193/000032019326000020/aapl-20260627.htm ; 8-K 2026-07-30 items 2.02,9.01 https://www.sec.gov/Archives/edgar/data/320193/000032019326000018/aapl-20260730.htm ; 8-K 2026-04-20 items 5.02.",
+    "latencyMs": 510,
+    "freshness": "Tiempo casi real (se actualiza conforme se presentan los documentos).",
+    "gotchas": "Sin User-Agent responde 403. 'recent' trae solo los ultimos 1000 filings; los viejos estan en filings.files (archivos JSON adicionales). Los arreglos son columnas paralelas (form, filingDate, reportDate, accessionNumber, primaryDocument, items) unidas por indice. Los 8-K traen el campo items con codigos (2.02 resultados, 5.02 cambios de directivos): se pueden traducir a texto en espanol. El CIK va con 10 digitos y ceros a la izquierda en la URL y sin ceros en la ruta de Archives.",
+    "licenseNotes": "Informacion publica del gobierno de EE. UU.; politica de acceso justo de la SEC: https://www.sec.gov/os/accessing-edgar-data",
+    "rateLimitNotes": "Maximo 10 peticiones por segundo por la politica de acceso justo; User-Agent con contacto obligatorio.",
+    "recommendedFor": [
+     "seccion de documentos regulatorios por emisora",
+     "alertas de 8-K"
+    ]
+   },
+   {
+    "id": "cftc_cot_legacy_peso",
+    "name": "CFTC Commitments of Traders, Legacy futures only (Socrata 6dca-aqww): peso mexicano CME",
+    "call": "GET https://publicreporting.cftc.gov/resource/6dca-aqww.json?cftc_contract_market_code=095741&$order=report_date_as_yyyy_mm_dd DESC&$limit=2&$select=report_date_as_yyyy_mm_dd,market_and_exchange_names,open_interest_all,noncomm_positions_long_all,noncomm_positions_short_all,change_in_noncomm_long_all,change_in_noncomm_short_all",
+    "works": true,
+    "needsKey": false,
+    "sample": "2026-09-22 MEXICAN PESO - CHICAGO MERCANTILE EXCHANGE: interes abierto 266061; no comerciales largos 127595, cortos 52428 (neto especulativo +75167 contratos, largo en peso); cambio semanal largos -7012, cortos +5603. Semana previa 2026-09-15: neto +87782.",
+    "latencyMs": 1370,
+    "freshness": "Semanal: posiciones del martes publicadas el viernes; Last-Modified 25 sep 2026 19:30 GMT, X-SODA2-Data-Out-Of-Date false.",
+    "gotchas": "Todos los numeros vienen como string. La fecha viene como timestamp flotante ('2026-09-22T00:00:00.000'). El codigo de contrato 095741 es estable; filtrar por nombre es fragil. Los parametros $ hay que codificarlos (curl -G --data-urlencode).",
+    "licenseNotes": "Datos publicos del gobierno de EE. UU. (CFTC), sin restriccion de redistribucion. https://publicreporting.cftc.gov/stories/s/r4w3-av2u",
+    "rateLimitNotes": "Socrata sin app token comparte un limite por IP; un app token gratuito (requiere cuenta en el portal) sube el limite. Para 1 consulta semanal no hace falta.",
+    "recommendedFor": [
+     "posicionamiento especulativo en el peso",
+     "contexto del tipo de cambio"
+    ]
+   },
+   {
+    "id": "cftc_cot_tff_peso",
+    "name": "CFTC Traders in Financial Futures, futures only (Socrata gpe5-46if): peso mexicano",
+    "call": "GET https://publicreporting.cftc.gov/resource/gpe5-46if.json?cftc_contract_market_code=095741&$order=report_date_as_yyyy_mm_dd DESC&$limit=1&$select=report_date_as_yyyy_mm_dd,lev_money_positions_long,lev_money_positions_short,asset_mgr_positions_long,asset_mgr_positions_short",
+    "works": true,
+    "needsKey": false,
+    "sample": "2026-09-22: fondos apalancados largos 100855, cortos 21667 (neto +79188); gestores de activos largos 110866, cortos 65360 (neto +45506).",
+    "latencyMs": 470,
+    "freshness": "Semanal, mismo calendario que el Legacy.",
+    "gotchas": "Para divisas el reporte TFF separa fondos apalancados de gestores de activos, que es mas fino que 'no comerciales'. Mismos detalles de tipos string que el Legacy.",
+    "licenseNotes": "Datos publicos de la CFTC.",
+    "rateLimitNotes": "Igual que el Legacy.",
+    "recommendedFor": [
+     "desglose de quien esta largo o corto en el peso"
+    ]
+   },
+   {
+    "id": "calendario_fomc",
+    "name": "Calendario de reuniones del FOMC (federalreserve.gov)",
+    "call": "GET https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm y parseo de .fomc-meeting__month / .fomc-meeting__date; https://www.federalreserve.gov/feeds/fomc_calendar.ics probado",
+    "works": true,
+    "needsKey": false,
+    "sample": "2026: 27-28 ene, 17-18 mar*, 28-29 abr, 16-17 jun*, 28-29 jul, 15-16 sep*, 27-28 oct, 8-9 dic*. 2027: 26-27 ene, 16-17 mar*, 27-28 abr, 8-9 jun*, 27-28 jul, 14-15 sep*, 26-27 oct, 7-8 dic* (* = con proyecciones economicas).",
+    "latencyMs": 400,
+    "freshness": "2026 y 2027 ya publicados.",
+    "gotchas": "No hay ICS (fomc_calendar.ics da 404); solo HTML. Se puede parsear, pero el formato del sitio cambia poco y son 8 fechas al ano: conviene escribirlas a mano en kaizen_api/data (como holidays_bmv.json) y dejar una prueba en vivo opcional que compare contra el HTML. El asterisco marca las reuniones con SEP.",
+    "licenseNotes": "Informacion publica de la Reserva Federal.",
+    "rateLimitNotes": "s/d",
+    "recommendedFor": [
+     "calendario economico",
+     "cuenta regresiva a la siguiente decision de la Fed"
+    ]
+   },
+   {
+    "id": "calendario_banxico",
+    "name": "Calendario de anuncios de politica monetaria de Banxico (PDF)",
+    "call": "GET https://www.banxico.org.mx/monetary-policy/d/%7B0C35369C-BF8F-E5A8-7710-FD5A6716474F%7D.pdf y pdftotext -layout; la pagina https://www.banxico.org.mx/publicaciones-y-prensa/anuncios-de-las-decisiones-de-politica-monetaria/anuncios-politica-monetaria-t.html carga el contenido por JavaScript",
+    "works": true,
+    "needsKey": false,
+    "sample": "2026, jueves a las 13:00 hora del centro: 5 feb, 26 mar, 7 may, 25 jun, 6 ago, 24 sep, 5 nov, 17 dic. Minutas dos semanas despues (8 ene, 19 feb, 9 abr, 21 may, 9 jul, 20 ago, 8 oct, 19 nov). Informes trimestrales 26 feb, 27 may, 26 ago, 26 nov.",
+    "latencyMs": 400,
+    "freshness": "2026 completo. El calendario 2027 no estaba publicado en lo revisado (Banxico suele darlo a conocer hacia el final del ano).",
+    "gotchas": "Solo PDF, sin datos estructurados: escribirlo a mano en kaizen_api/data. El encabezado del PDF dice 'for 2025' pero la nota dice 'eight dates in 2026' y las fechas coinciden con los comunicados de 2026: errata del propio PDF. Banxico se reserva decisiones fuera de calendario. La pagina HTML de anuncios no trae las fechas en el HTML estatico.",
+    "licenseNotes": "Informacion publica de Banco de Mexico; citar la fuente.",
+    "rateLimitNotes": "s/d",
+    "recommendedFor": [
+     "calendario economico de Mexico",
+     "cuenta regresiva a la siguiente decision de Banxico"
+    ]
+   },
+   {
+    "id": "calendario_inegi",
+    "name": "Calendario de difusion de INEGI (PDF por ano o semestre)",
+    "call": "GET https://www.inegi.org.mx/contenidos/saladeprensa/doc/cal_2026.pdf y https://www.inegi.org.mx/contenidos/saladeprensa/doc/cal_2027.pdf ; pdftotext -layout",
+    "works": true,
+    "needsKey": false,
+    "sample": "cal_2027.pdf: 'Calendario de difusion de informacion estadistica y geografica y de Interes Nacional del INEGI, primer semestre de 2027 (la informacion se difunde a las 06:00 a.m.)'. cal_2026.pdf con renglones para IGAE, PIBT, EOPIBT, INPC 1.a quincena, ENOE, con fecha de publicacion y periodo.",
+    "latencyMs": 780,
+    "freshness": "2026 completo y primer semestre de 2027 ya disponibles.",
+    "gotchas": "Solo PDF en tabla con columnas; la app web del calendario (inegi.org.mx/app/calendario) se arma con JavaScript y no expone JSON evidente. pdftotext -layout permite extraerlo de forma semiautomatica pero fragil: mejor transcribir a mano los indicadores clave (IGAE, PIB, EOPIBT, INPC quincenal y mensual, ENOE) a kaizen_api/data y revisar cada semestre. Todo se publica a las 06:00 hora del centro.",
+    "licenseNotes": "https://www.inegi.org.mx/inegi/terminos.html (libre uso citando la fuente).",
+    "rateLimitNotes": "s/d",
+    "recommendedFor": [
+     "calendario economico de Mexico"
+    ]
+   },
+   {
+    "id": "calendario_bls",
+    "name": "Calendario de publicaciones del BLS en ICS (CPI, empleo y demas)",
+    "call": "GET https://www.bls.gov/schedule/news_release/bls.ics con User-Agent descriptivo con contacto ('KAIZEN research research@kaizeninvestments.app')",
+    "works": true,
+    "needsKey": false,
+    "sample": "VCALENDAR con 313 VEVENT del 2025-01-03 al 2026-12-30. Proximos: 2026-10-02 08:30 ET Employment Situation; 2026-10-14 08:30 Consumer Price Index; 2026-11-06 empleo; 2026-11-10 CPI; 2026-12-04 empleo; 2026-12-10 CPI.",
+    "latencyMs": 570,
+    "freshness": "Cubre hasta diciembre de 2026; 2027 todavia no viene en el ICS.",
+    "gotchas": "Sin User-Agent o con el de python-requests responde 403; con UA descriptivo con correo responde 200. Horas en US-Eastern (VTIMEZONE propio): convertir a hora del centro de Mexico. Es la unica de las cuatro fuentes de calendario que se puede bajar como datos; se puede leer en vivo con cache diaria. Calendario por programa en HTML: https://www.bls.gov/schedule/news_release/cpi.htm",
+    "licenseNotes": "Informacion publica del gobierno de EE. UU. (dominio publico).",
+    "rateLimitNotes": "El BLS bloquea clientes sin UA identificable; sin limite numerico observado.",
+    "recommendedFor": [
+     "calendario economico de EE. UU.",
+     "fecha del siguiente CPI y reporte de empleo"
+    ]
+   }
+  ]
+ }
+}
