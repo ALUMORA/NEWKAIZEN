@@ -49,8 +49,12 @@ con la regla del DOF usa el FIX del 28 de septiembre).
    features lo usen.
 3. Cada stream escribe sus typedefs de JSDoc en su carpeta (`src/features/<x>/types.js`); las
    funciones de `src/lib/api/endpoints.js` de la fase 5 las deja hechas M5 con parámetros validados.
-4. No hay capa compartida de Banxico: M5 agrega las series al catálogo y las verifica en vivo, y
-   cada stream graba las llamadas que necesita en su propia capa.
+4. M5 agrega las series al catálogo, las verifica en vivo y graba la capa compartida
+   `2026-10-01-banxico` (98 llamadas: metadatos y dato oportuno por grupo, e historia de 10 años de
+   cada una de las 38 series, receta en `notas/sie-catalogo.md`). Todos la apilan, pero el replay
+   busca por URL exacta: solo contesta la llamada con los mismos ids, orden y fechas. Lo que un
+   stream pida distinto lo graba en su propia capa (o pide un id por llamada con la ventana de 10
+   años y recorta en memoria). Nadie escribe en la capa compartida.
 5. Glosario: cada stream escribe sus términos en `src/content/glossary-v5/<stream>.js` (mismo
    esquema que `glossary.js`, que los une). La metodología nueva va en `docs/metodologia/<guía>.md`.
    Las atribuciones del aviso legal se piden en `docs/requests/<stream>.md` y las pone O al final.
