@@ -209,8 +209,92 @@ Los títulos van con comas en lugar de las tiras de espacios del SIE; el texto e
 - `tests/unit/b2b/test_banxico_live.py` ganó dos pruebas en vivo: la tabla de títulos de las
   adicionales y el dato creíble con edad menor o igual a `maxAgeDays`.
 
-## Lo que no hizo esta pieza
+## Revisión adversaria (1 de octubre de 2026, segunda pasada)
 
-- La spec dice en la sección M5 "grabar esas series en una capa 2026-10-01-banxico", pero la
-  decisión 4 del orquestador dice que no hay capa compartida de Banxico y que cada stream graba lo
-  suyo. No se grabó ninguna capa: Banxico se sigue simulando con `responses` en las pruebas.
+- Las 26 de la spec, ni una más; `SF60696` exige "tasa de rendimiento" y `SF60691` no está en el
+  catálogo ni pasa por el Bono M a 30 años. Las tres inferidas por secuencia se volvieron a leer en
+  vivo y su título dice lo que la spec suponía, así que quedan en `verified: true`:
+  `SR14146` "... Inflación general Al cierre del siguiente año (año t+1) Mediana", `SR14448` "...
+  Variación Porcentual Real Anual del PIB ... Año en curso (año t) Mediana" y `SR14769` "...
+  Expectativas del Tipo de Cambio al Cierre del Año ... Cierre del año en curso (año t) Media".
+- El candado de las doce de `/v2/rates/mx` no se relajó: `UNIT_WORDS` no cambió y "Millones de
+  Dólares" solo entra por `unidadExacta` de remesas y reserva.
+- Las tandas se probaron en las fronteras (1, 20, 21, 40 y 41 ids, y 21 con un repetido que cuenta
+  una vez) y un `N/E` a media serie se salta: ni 0 ni el dato vecino.
+- **[major] El FIX nunca salía de Banxico con token.** `kaizen_api/domain/fx.py:_parse_banxico`
+  esperaba el sobre crudo del SIE (`{"bmx": ...}`) o una lista, y `banxico.fetch_series` devuelve
+  `{"SF43718": {"dates", "values"}}`. Con el token puesto, `/v2/fx`, la serie diaria y las
+  conversiones caían siempre a Yahoo marcado como respaldo. Las pruebas de B2a no lo veían porque
+  simulaban `fetch_series` con el sobre crudo. Corregido con
+  `test_el_fix_con_la_forma_real_del_proveedor_no_cae_a_yahoo`, que falla antes del arreglo.
+- Prueba en vivo después de los cambios: 7 pasadas, las 12 de siempre confirmadas y **26 de 26**
+  adicionales confirmadas.
+
+## Capa 2026-10-01-banxico
+
+La sección M5 de la spec pide grabar estas series en una capa que todos los streams apilan, y la
+decisión 4 dice que no hay capa compartida. Se grabó la capa para que los streams la puedan apilar,
+y la decisión 4 sigue valiendo para todo lo que no esté aquí: **el replay busca por URL exacta**,
+así que solo se reproduce una llamada con los mismos ids, en el mismo orden y con las mismas fechas.
+Lo que un stream pida distinto lo graba en su propia capa.
+
+- Ruta: `tests/fixtures/recorded/2026-10-01-banxico/`, 98 llamadas al SIE, ninguna vacía ni con
+  error, 3.7 MB. Hereda el reloj del set base (`frozen_at` 2026-09-22T14:51:31Z), así que "hoy" es
+  2026-09-22 y las ventanas terminan ese día; el dato oportuno sí es el del 1 de octubre.
+- Apilado: `--set 2026-09-22,2026-10-01-banxico,2026-10-01-<stream> --grabar-en 2026-10-01-<stream>`
+  o `KAIZEN_REPLAY_SET=2026-09-22,2026-10-01-banxico,2026-10-01-<stream>`. En las pruebas hay que
+  configurar un token cualquiera (`Settings.from_env({"BANXICO_TOKEN": "x"})`): va en la cabecera y
+  no forma parte de la llave.
+- Sin el token: `grep -rlF "$BANXICO_TOKEN"` sobre la capa da 0 archivos. "Bmx-Token" sí aparece,
+  pero solo como nombre en la cabecera CORS `Access-Control-Allow-Headers` que manda Banxico.
+- Qué trae, con `DESDE = "2016-09-22"` y `HASTA = "2026-09-22"`:
+  - Metadatos (`fetch_metadata` o `verification`) de cada grupo de `extra_group(g)` en su orden, de
+    las 26 juntas en el orden de `extra_catalog()` (dos consultas, 20 y 6) y de las doce de
+    `catalog()`.
+  - `fetch_series(ids)` y `fetch_series(ids, DESDE, HASTA)` de cada grupo y de las doce juntas.
+  - `fetch_series([sid])` y `fetch_series([sid], DESDE, HASTA)` de cada una de las 38 series (26
+    adicionales y 12 del catálogo). Es la forma más predecible: un id por llamada con la ventana de
+    10 años, y cada stream recorta en memoria la ventana que necesite.
+  - Lo que ya hacen `rates.get_mx_rates()` (ventana de 420 días) y `fx.daily_range(None, None)`
+    (el FIX del último año).
+- Prueba sin red: `tests/unit/b2b/test_capa_banxico.py` apila la capa y lee la historia y el dato
+  oportuno de cada grupo, una serie de cada grupo por id, el candado de las 26, `/v2/rates/mx`
+  completo desde Banxico y el FIX desde Banxico. Fija también que la mediana del PIB de noviembre
+  de 2019 fue `0.00` real (se publica 0) y que los 75 `N/E` del dólar canadiense no se vuelven 0.
+
+Receta para regrabarla (una vez, con el token en el entorno y sin escribirlo en ningún archivo):
+
+```python
+# desde la raíz del repo, con BANXICO_TOKEN exportado
+from tests.replay import recording
+with recording("2026-09-22,2026-10-01-banxico", record_layer="2026-10-01-banxico"):
+    import kaizen_api
+    from kaizen_api.domain import fx, rates
+    from kaizen_api.providers import banxico
+    from kaizen_api.settings import Settings, configure
+    configure(Settings.from_env({"BANXICO_TOKEN": os.environ["BANXICO_TOKEN"]}))
+    kaizen_api.reset_state()
+    hoy = dt.date.today().isoformat()  # 2026-09-22, el reloj del set base
+    grupos = ["curva", "mercadoDeDinero", "cruces", "macro", "encuesta"]
+    for g in grupos:
+        banxico.fetch_metadata(list(banxico.extra_group(g)))
+    banxico.fetch_metadata(list(banxico.extra_catalog()))
+    banxico.fetch_metadata(list(banxico.catalog()))
+    for ids in [list(banxico.extra_group(g)) for g in grupos] + [list(banxico.catalog())]:
+        banxico.fetch_series(ids)
+        banxico.fetch_series(ids, "2016-09-22", hoy)
+    for sid in list(banxico.extra_catalog()) + list(banxico.catalog()):
+        banxico.fetch_series([sid])
+        banxico.fetch_series([sid], "2016-09-22", hoy)
+    kaizen_api.reset_state(); rates.get_mx_rates()
+    kaizen_api.reset_state(); fx.daily_range(None, None)
+```
+
+## Lo que queda abierto
+
+- La spec se contradice entre la decisión 4 ("no hay capa compartida de Banxico") y la sección M5
+  ("grabar esas series en una capa 2026-10-01-banxico que todos los streams apilan"). Conviene
+  dejar una sola versión en la spec: la capa existe y sirve las formas de arriba; lo demás, a la
+  capa de cada stream.
+- `fx.py` es de B2a en `ownership.json`; el arreglo de `_parse_banxico` es de M5 y conviene que el
+  dueño lo sepa al integrar.
