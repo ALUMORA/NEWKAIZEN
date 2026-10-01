@@ -333,15 +333,22 @@ pie y para empresas, con datos gratuitos. Spec autoritativa: [specs/fase5-spec.m
 (16 funciones en 9 streams, contratos, cifras de prueba verificadas, decisiones y puertos); fuentes
 probadas en vivo en `notas/fase5-fuentes.json` e inventario en `notas/fase5-inventario.json`.
 
-- **M5 (preparación del orquestador) a medias**, en tres worktrees sin mergear: `ws/M5BE` (contrato:
-  26 modelos y ocho routers en stub, replay de yf.screen y funds_data; falta correr compuertas y
-  terminar `tests/unit/m5/test_router_validations.py`), `ws/M5BX` (26 series del SIE verificadas en
-  vivo, compuertas en verde, revisión pendiente) y `ws/M5FE` (esqueleto del frontend en 10 commits;
-  faltan compuertas y revisión).
-- Siguiente: terminar y revisar M5, mergear las tres ramas, compuertas completas, y lanzar los
-  nueve streams con `workflows/fase5-heavy.sh` (semáforo, cambiar su `DIR`) y
-  `workflows/fase5-render-check.mjs` (recorrido real).
-- Handoff completo: `_handoff/2026-10-01_claude_newkaizen-fase5.md` en la carpeta CLAUDE.
+- **M5 cerrado y mergeado** (sesión de la tarde del 1 oct): `bb38f78` M5BE (contrato, ocho routers
+  en stub, capas vacías de los ocho streams, `history.dates` y `fx.fix` ya no existen), `57f21fc` M5BX
+  (26 series del SIE, las tres inferidas SR14146, SR14448 y SR14769 confirmadas por título en vivo,
+  capa compartida `2026-10-01-banxico` con 98 llamadas, y **el FIX de `domain/fx.py` que con token
+  caía siempre a Yahoo**, corregido), `0864bc3` M5FE (esqueleto del frontend; el cliente valida como
+  el backend). `11be7aa`: los nueve streams en `scripts/ownership.json` y el semáforo con cupos en el
+  TMPDIR del usuario. Compuerta sobre `analizavende` integrado: `npm run check` 2,355 pruebas y
+  bundle al 79 %, pytest y ruff limpios, e2e 546 pasadas (1 intermitente por carga que pasa sola).
+- **Streams**: worktrees creados para V5TS, V5FX, V5EC, V5FI y V5PF (`05 NEWKAIZEN.wt/<stream>`,
+  ramas `ws/<stream>` desde `0864bc3`). Primera tanda lanzada: V5TS, V5FX y V5PF. Falta: V5EC, V5FI,
+  y después V5TC, V5MK, V5EM y V5TM (sin worktree todavía).
+- Notas para los streams que faltan: la prueba de llaves prohibidas de V5FI va sobre sus respuestas,
+  no sobre todas (`vsTargetBp` es legítimo); la "pestaña" Gráfica de la ficha hoy es sección y
+  `pathInstrumentTab` arma `?pestana=` que la ficha aún no lee (V5TC); las capacidades nuevas van en
+  `V5_CAPABILITIES` de `e2e/support/app.js` y cada spec anuncia solo las suyas.
+- Handoff de la mañana: `_handoff/2026-10-01_claude_newkaizen-fase5.md` en la carpeta CLAUDE.
 
 ### Lo que falta, en orden
 
