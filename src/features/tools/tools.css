@@ -268,3 +268,9 @@
   gap: var(--space-2) var(--space-3);
   margin-top: var(--space-3);
 }
+
+/* Mientras cargan el backtest o el optimizador, la tarjeta de resultados aparta hasta debajo del borde
+   de la pantalla: los resultados miden más de 1,700 px y el esqueleto de seis renglones apenas 156, así
+   que la tarjeta de abajo, que ya estaba a la vista, salía de la pantalla al llegar (CLS de 0.20 en las
+   dos a 1440). En el optimizador los resultados empiezan en y = 216, así que hace falta más que 30rem. */
+.kz-tool__pending { min-height: 40rem; }

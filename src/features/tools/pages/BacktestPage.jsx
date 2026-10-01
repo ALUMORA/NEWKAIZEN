@@ -74,7 +74,7 @@ export default function BacktestPage() {
   } else if (bt.panel.isPending) {
     results = (
       <ResultCard>
-        <div aria-busy="true">
+        <div aria-busy="true" className="kz-tool__pending">
           <SrOnly>Cargando precios históricos</SrOnly>
           <Skeleton lines={6} />
         </div>

@@ -9,7 +9,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { test as plainTest } from '@playwright/test'
 import { test, expect, attachGuards } from './support/guards.js'
 import { HEALTH_V2, expectedHttpError, setupApp } from './support/app.js'
-import { expectNoHorizontalScroll } from './support/layout.js'
+import { expectNoHorizontalScroll, readLayoutShift, trackLayoutShift } from './support/layout.js'
 
 const WCAG_AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const THEMES = /** @type {const} */ (['light', 'dark'])
@@ -195,6 +195,35 @@ const PAGES = [
   { path: '/herramientas/optimizador', ready: optimizerReady, name: 'optimizador' },
   { path: '/herramientas/backtest', ready: backtestReady, name: 'backtest' },
 ]
+
+test('optimizador: mientras llegan la tasa de CETES y la prima no pide revisar los supuestos ni empuja la página', async ({ page, baseURL }) => {
+  // La tasa se pide hasta que llega el panel (su inicio sale de la primera fecha). Mientras tanto
+  // la pantalla decía "Revisa los supuestos marcados" y el campo "No llegó la tasa de CETES", y al
+  // llegar todo saltaba: Lighthouse medía CLS de 0.20 a 1440 con el portafolio de ejemplo.
+  await trackLayoutShift(page)
+  await open(page, /** @type {string} */ (baseURL), { routes: { 'GET /v2/rates/rf': { json: RF, delayMs: 1500 } } })
+  await page.goto('/herramientas/optimizador?symbols=WALMEX.MX,AMXB.MX')
+  await expect(page.getByRole('heading', { level: 1, name: 'Optimizador de portafolio' })).toBeVisible()
+  await page.waitForTimeout(700)
+  // Conteo inmediato: toHaveCount(0) reintentaría hasta que llegue la tasa y pasaría de todos modos.
+  expect(await page.getByText('Revisa los supuestos marcados').count()).toBe(0)
+  expect(await page.getByText(/No llegó la tasa de CETES/).count()).toBe(0)
+  await expect(page.getByRole('heading', { name: 'Tres carteras con los mismos supuestos' })).toBeVisible({ timeout: 15_000 })
+  await page.waitForTimeout(500)
+  expect(await readLayoutShift(page), 'desplazamiento acumulado del layout').toBeLessThan(0.1)
+})
+
+test('backtest: los resultados no empujan la página al llegar (CLS < 0.1)', async ({ page, baseURL }) => {
+  // Con el panel tardando, el esqueleto de seis renglones medía una fracción de los resultados y la
+  // tarjeta de sesgos, que ya estaba en pantalla, salía de ella: Lighthouse medía CLS de 0.22 a 1440.
+  const slow = async (/** @type {any} */ args) => ({ ...(await V2_ROUTES['GET /v2/panel'](args)), delayMs: 900 })
+  await trackLayoutShift(page)
+  await open(page, /** @type {string} */ (baseURL), { routes: { 'GET /v2/panel': slow } })
+  await page.goto('/herramientas/backtest')
+  await backtestReady(page)
+  await page.waitForTimeout(500)
+  expect(await readLayoutShift(page), 'desplazamiento acumulado del layout').toBeLessThan(0.1)
+})
 
 test('backtest: si el API tira el S&P 500 y el referente es el IPC, no se reporta como emisora descartada', async ({ page, baseURL }) => {
   const noSpy = ({ url }) => {

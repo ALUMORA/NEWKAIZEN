@@ -42,15 +42,20 @@ export function useOptimizer(symbols, a, positions) {
   const erpPct = marketPremiumPct(a, apiErpPct)
 
   const apiRf = useMemo(() => latestRiskFree(rf.data), [rf.data])
-  const apiRfPct = apiRf ? Math.round(apiRf.effective * 10000) / 100 : null
+  // Como la prima: undefined mientras la tasa sigue en camino (se pide hasta que llega el panel, porque
+  // su inicio sale de la primera fecha), null si la consulta terminó sin tasa. Antes "en camino" valía
+  // null y la pantalla pedía revisar los supuestos y decía "No llegó la tasa de CETES" mientras cargaba.
+  const apiRfPct = apiRf ? Math.round(apiRf.effective * 10000) / 100 : rf.isSuccess || rf.isError ? null : undefined
   const prep = useMemo(() => preparePanel(panel.data, symbols), [panel.data, symbols])
   const n = prep ? prep.assets.length : symbols.length
   const errors = useMemo(() => validateAssumptions(a, n, apiRfPct, apiErpPct), [a, n, apiRfPct, apiErpPct])
-  // Mientras llega la prima no hay error que mostrar, pero el CAPM todavía no se puede calcular.
-  const valid = Object.keys(errors).length === 0 && (a.muMethod !== 'capm' || erpPct != null)
-  const usable = Boolean(prep && prep.assets.length >= 2 && prep.periods >= MIN_PERIODS)
   const rfPct = riskFreePct(a, apiRfPct)
-  const rfAnnual = rfPct === null ? null : rfPct / 100
+  // Mientras llegan la prima o la tasa no hay error que mostrar, pero todavía no se puede calcular:
+  // `waiting` le dice a la pantalla que muestre la carga y no "Revisa los supuestos".
+  const waiting = Object.keys(errors).length === 0 && ((a.muMethod === 'capm' && erpPct === undefined) || rfPct === undefined)
+  const valid = Object.keys(errors).length === 0 && (a.muMethod !== 'capm' || erpPct != null) && rfPct != null
+  const usable = Boolean(prep && prep.assets.length >= 2 && prep.periods >= MIN_PERIODS)
+  const rfAnnual = rfPct == null ? null : rfPct / 100
   const l = (a.minPct ?? 0) / 100
   const u = (a.maxPct ?? 100) / 100
 
@@ -77,5 +82,5 @@ export function useOptimizer(symbols, a, positions) {
   )
   const vols = useMemo(() => (cov ? cov.annual.map((row, i) => Math.sqrt(Math.max(0, row[i]))) : []), [cov])
 
-  return { panel, rf, apiRf, apiErp, errors, valid, prep, usable, cov, betas, exp, solve, validation, vols, rfAnnual }
+  return { panel, rf, apiRf, apiErp, errors, valid, waiting, prep, usable, cov, betas, exp, solve, validation, vols, rfAnnual }
 }

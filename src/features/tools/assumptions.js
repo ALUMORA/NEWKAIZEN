@@ -19,7 +19,7 @@ export const DEFAULT_ASSUMPTIONS = Object.freeze({
 /**
  * Tasa libre de riesgo en porcentaje: la escrita si la persona tocó el campo, si no la del API.
  * @param {Assumptions} a
- * @param {number | null} apiRfPct
+ * @param {number | null | undefined} apiRfPct undefined mientras sigue en camino
  */
 export function riskFreePct(a, apiRfPct) {
   return a.rfTouched ? a.rfPct : apiRfPct
@@ -43,7 +43,8 @@ const fmt = (x) => (Math.round(x * 100) / 100).toLocaleString('es-MX')
  * Errores por campo, en español. Un objeto vacío quiere decir que todo sirve.
  * @param {Assumptions} a
  * @param {number} n cuántas emisoras entran a la optimización
- * @param {number | null} apiRfPct la tasa del API en porcentaje, o null si no llegó
+ * @param {number | null | undefined} apiRfPct la tasa del API en porcentaje, null si no llegó y
+ *   undefined mientras se espera, que no es error pero tampoco deja calcular
  * @param {number | null} [apiErpPct] la prima del API (o la de respaldo) en porcentaje; undefined
  *   mientras se espera, que no es error pero tampoco deja calcular el CAPM
  * @returns {Partial<Record<'erpPct' | 'rfPct' | 'minPct' | 'maxPct', string>>}

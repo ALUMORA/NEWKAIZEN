@@ -32,6 +32,22 @@ function ResultCard({ title = 'Resultado', children }) {
   return <Card title={title}>{children}</Card>
 }
 
+/**
+ * Carga de los resultados: aparta hasta debajo del borde de la pantalla, para que la tarjeta de
+ * supuestos de abajo no brinque cuando llegan las tres carteras (CLS 0.20 a 1440).
+ * @param {{ label: string }} props
+ */
+function Pending({ label }) {
+  return (
+    <ResultCard>
+      <div aria-busy="true" className="kz-tool__pending">
+        <SrOnly>{label}</SrOnly>
+        <Skeleton lines={6} />
+      </div>
+    </ResultCard>
+  )
+}
+
 export default function OptimizerPage() {
   const [params, setParams] = useSearchParams()
   const raw = params.get('symbols')
@@ -61,14 +77,7 @@ export default function OptimizerPage() {
       </ResultCard>
     )
   } else if (m.panel.isPending) {
-    results = (
-      <ResultCard>
-        <div aria-busy="true">
-          <SrOnly>Cargando precios históricos</SrOnly>
-          <Skeleton lines={6} />
-        </div>
-      </ResultCard>
-    )
+    results = <Pending label="Cargando precios históricos" />
   } else if (m.panel.isError) {
     results = (
       <ResultCard>
@@ -89,6 +98,8 @@ export default function OptimizerPage() {
         />
       </ResultCard>
     )
+  } else if (m.waiting) {
+    results = <Pending label="Cargando la tasa libre de riesgo y la prima de mercado" />
   } else if (!m.valid) {
     results = (
       <ResultCard>
