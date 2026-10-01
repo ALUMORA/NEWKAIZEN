@@ -895,6 +895,8 @@ html.kz-scroll-lock { overflow: hidden; }
 .kz-page-header__title:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
 .kz-page-header__description { color: var(--muted); font-size: var(--text-md); line-height: var(--leading-normal); margin: 0; max-width: 72ch; text-wrap: pretty; }
 .kz-page-header__actions { align-items: center; display: flex; flex-wrap: wrap; gap: var(--space-2); }
+/* Una ranura de acciones que todavía no pinta nada (FeatureSlot) no debe ocupar lugar ni hueco. */
+.kz-page-header__actions:empty { display: none; }
 .kz-breadcrumbs { align-items: center; color: var(--muted); display: flex; flex-wrap: wrap; font-size: var(--text-xs); gap: var(--space-1); list-style: none; margin: 0; padding: 0; }
 .kz-breadcrumbs a { text-decoration: underline; text-underline-offset: 2px; }
 .kz-breadcrumbs a:hover { color: var(--ink); }
