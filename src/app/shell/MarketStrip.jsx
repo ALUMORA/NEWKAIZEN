@@ -19,7 +19,7 @@ import { mergeMeta, stripItems } from './strip-model.js'
 export function StripCell({ item }) {
   const value = item.value === null ? MISSING : `${fmtNumber(item.value, { decimals: item.decimals })}${item.suffix ?? ''}`
   return (
-    <li className="kz-strip__item" title={item.title}>
+    <li className="kz-strip__item" data-id={item.id} title={item.title}>
       <span className="kz-strip__label">{item.label}</span>
       <span className="kz-strip__value num" data-missing={item.value === null || undefined}>
         {value}

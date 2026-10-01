@@ -103,10 +103,10 @@ const V2_ROUTES = {
 /**
  * @param {import('@playwright/test').Page} page
  * @param {string} baseURL
- * @param {{ theme?: 'light' | 'dark' }} [options]
+ * @param {{ theme?: 'light' | 'dark', routes?: Record<string, any> }} [options]
  */
-async function openShell(page, baseURL, { theme } = {}) {
-  const api = await setupApp(page, { baseURL, session: true, health: HEALTH, routes: V2_ROUTES })
+async function openShell(page, baseURL, { theme, routes = {} } = {}) {
+  const api = await setupApp(page, { baseURL, session: true, health: HEALTH, routes: { ...V2_ROUTES, ...routes } })
   if (theme) await page.addInitScript((t) => window.localStorage.setItem('kaizen_theme', t), theme)
   return api
 }
@@ -179,6 +179,20 @@ test.describe('shell: estructura', () => {
     await expect(footer.getByRole('link', { name: 'Aviso de privacidad' })).toHaveAttribute('href', '/legal/privacidad')
     await expect(footer.getByRole('link', { name: 'Aviso legal' })).toHaveAttribute('href', '/legal/aviso')
     await expectNoHorizontalScroll(page)
+  })
+
+  test('tira de mercado: las cifras llegan sin recorrer las celdas ni el estado', async ({ page, baseURL }) => {
+    // Mientras carga, cada celda decía solo "IPC s/d" y al llegar las cifras crecía hasta 2.6 veces:
+    // las de la derecha se recorrían 175 px y, junto con cualquier tarjeta que bajara en el mismo
+    // cuadro, Lighthouse medía CLS de 0.14 en /portafolio/riesgo.
+    await openShell(page, /** @type {string} */ (baseURL), { routes: { 'GET /v2/markets/overview': { json: OVERVIEW, delayMs: 1200 } } })
+    await page.goto('/portafolio/riesgo')
+    const strip = page.getByRole('region', { name: 'Mercado en breve' })
+    await expect(strip.getByRole('listitem')).toHaveCount(5)
+    const boxes = () => strip.locator('.kz-strip__item, .kz-strip__status').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().x)))
+    const before = await boxes()
+    await stripReady(page)
+    expect(await boxes()).toEqual(before)
   })
 
   test('tira de mercado: cinco cifras del API v2, USD/MXN en neutral y DataStatus', async ({ page, baseURL }, testInfo) => {

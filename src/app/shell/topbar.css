@@ -109,11 +109,25 @@
 }
 .kz-strip__item + .kz-strip__item { border-left: 1px solid var(--border); }
 .kz-strip__item:first-child { padding-left: 0; }
+/* Cada celda aparta desde el principio el ancho que tendrá con datos (medido a 1440 con cifras
+   típicas, en em de la tira). Mientras carga solo dice "IPC s/d"; sin esta reserva, al llegar las
+   cifras crecía hasta 2.6 veces y las de la derecha se recorrían 175 px, lo que multiplicaba el CLS
+   de cualquier tarjeta que bajara en el mismo cuadro (0.14 en /portafolio/riesgo). */
+.kz-strip__item { --strip-reserve: 0em; min-width: calc(var(--strip-reserve) + 2 * var(--space-3)); }
+.kz-strip__item:first-child { min-width: calc(var(--strip-reserve) + var(--space-3)); }
+.kz-strip__item[data-id='ipc'] { --strip-reserve: 11.5em; }
+.kz-strip__item[data-id='sp500'] { --strip-reserve: 13.5em; }
+.kz-strip__item[data-id='usdmxn'] { --strip-reserve: 22em; }
+.kz-strip__item[data-id='cetes28'] { --strip-reserve: 11.5em; }
+.kz-strip__item[data-id='vix'] { --strip-reserve: 9.5em; }
 .kz-strip__label { color: var(--muted); font-weight: var(--weight-semibold); }
 .kz-strip__value { color: var(--ink); font-weight: var(--weight-semibold); }
 .kz-strip__value[data-missing] { color: var(--muted); font-weight: var(--weight-regular); }
 .kz-strip__delta { font-size: var(--text-xs); }
-.kz-strip__status { flex-shrink: 0; }
+/* El estado también aparta el ancho de su insignia ("Respaldo: yahoo, fred") para no recorrerse 80 px
+   cuando cambia de "Actualizando" a la insignia. Va alineada al principio de ese espacio: si cambia de
+   "Retraso 15 min" a "Respaldo: yahoo, fred" solo crece hacia la derecha, y crecer no es corrimiento. */
+.kz-strip__status { display: flex; flex-shrink: 0; min-width: 9.75rem; }
 .kz-strip__empty { color: var(--muted); font-size: var(--text-xs); white-space: nowrap; }
 
 /* ─── Estado del servidor ─── */
