@@ -340,7 +340,13 @@ test('/mercados: bolsas abiertas con retraso, resumen factual, USD/MXN neutral y
   await expect(hsi.getByText('s/d').first()).toBeVisible()
 
   for (const [name, href] of [
-    [/México y tasas/, '/mercados/mexico'],
+    [/^México/, '/mercados/mexico'],
+    [/^Resumen del día/, '/mercados/resumen'],
+    [/^Tasas y curvas/, '/mercados/tasas'],
+    [/^Tipo de cambio/, '/mercados/tipo-de-cambio'],
+    [/^Economía/, '/mercados/economia'],
+    [/^Calendario/, '/mercados/calendario'],
+    [/^Movimientos del día/, '/mercados/movimientos'],
     [/^CETES/, '/mercados/cetes'],
     [/^Noticias/, '/mercados/noticias'],
   ]) {

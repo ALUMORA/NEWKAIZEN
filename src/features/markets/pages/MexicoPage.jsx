@@ -6,6 +6,8 @@ import { fxQuery, macroUsQuery, ratesMxQuery, riskFreeQuery } from '../../../lib
 import { fmtNumber } from '../../../lib/format.js'
 import { fmtByUnit, fxStatSpec, itemStatus, rfChartText, termFor } from './shared.js'
 import { ApiNotes } from './ApiNotes.jsx'
+import { MoreLinks } from './MoreLinks.jsx'
+import { PATHS } from '../../../app/paths.js'
 import '../markets.css'
 
 const TimeSeries = lazy(() => import('../../../components/charts/TimeSeries.jsx').then((m) => ({ default: m.TimeSeries })))
@@ -142,11 +144,12 @@ export default function MexicoPage() {
         eyebrow="Mercados"
         title="México: tasas, CETES e inflación"
         description="Datos oficiales con su fuente y su fecha. Si alguno viene de respaldo o está viejo, lo verás marcado."
-        breadcrumbs={[{ label: 'Mercados', to: '/mercados' }, { label: 'México' }]}
+        breadcrumbs={[{ label: 'Mercados', to: PATHS.markets }, { label: 'México' }]}
       />
       <MexicoRates />
       <RiskFreeChart />
       <UsRates />
+      <MoreLinks only={['resumen', 'tasas', 'tipo-de-cambio', 'economia', 'calendario', 'movimientos']} />
       <p className="markets-formula">
         Esta página informa, no recomienda comprar ni vender nada.
       </p>

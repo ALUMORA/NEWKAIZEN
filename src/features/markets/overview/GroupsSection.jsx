@@ -1,10 +1,12 @@
 // Tablas del panorama por grupo (México, Estados Unidos, resto del mundo, divisas, materias primas y
 // cripto), sin duplicados: el VIX va en su medidor y cada símbolo sale una sola vez.
+import { useNavigate } from 'react-router'
 import { useQuery } from '@tanstack/react-query'
 import { Card, DataTable, Delta, EmptyState, ErrorState, SectionHeading, Skeleton } from '../../../components/ui/index.js'
 import { marketsOverviewQuery } from '../../../lib/api/queries.js'
 import { MISSING, fmtWeekday } from '../../../lib/format.js'
-import { DXY_SYMBOL, EXCHANGES, dedupeMarkets, fmtItemPrice, fxHint, isFxLike } from '../pages/overview-model.js'
+import { DXY_SYMBOL, EXCHANGES, dedupeMarkets, fmtItemPrice, fxHint, hasInstrumentPage, isFxLike } from '../pages/overview-model.js'
+import { pathInstrument } from '../../../app/paths.js'
 import { useFeature } from './useFeature.js'
 
 const DESCRIPTIONS = {
@@ -57,6 +59,7 @@ function columnsFor(groupId) {
 }
 
 export function GroupsSection() {
+  const navigate = useNavigate()
   const feature = useFeature(['markets.overview'])
   const q = useQuery({ ...marketsOverviewQuery(), enabled: feature.enabled })
   const loading = feature.waiting || (feature.enabled && q.isPending)
@@ -78,7 +81,18 @@ export function GroupsSection() {
         <div className="markets-groups">
           {groups.map((g) => (
             <Card key={g.id} title={g.label} titleAs="h3" description={DESCRIPTIONS[g.id]} status={q.data?.meta} padding="none">
-              <DataTable columns={columnsFor(g.id)} rows={g.items} rowKey="symbol" caption={`Precios por mercado: ${g.label}`} captionHidden density="compact" />
+              <DataTable
+                columns={columnsFor(g.id)}
+                rows={g.items}
+                rowKey="symbol"
+                caption={`Precios por mercado: ${g.label}`}
+                captionHidden
+                density="compact"
+                // Solo liga el grupo si todos sus renglones tienen ficha útil: la tabla vuelve botón
+                // la primera celda de cada renglón y un botón que no lleva a nada confunde.
+                onRowClick={g.items.length && g.items.every(hasInstrumentPage) ? (row) => navigate(pathInstrument(row.symbol)) : undefined}
+                rowLabel={(row) => `Abrir la ficha de ${row.label}`}
+              />
             </Card>
           ))}
         </div>
