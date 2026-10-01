@@ -1,5 +1,5 @@
 // Frontera eficiente: dispersión de activos (riesgo contra rendimiento), la curva de la frontera y
-// marcas de mínima varianza, tangente y portafolio actual. En oscuro tres colores no bastan para
+// marcas de mínima varianza, tangente, paridad de riesgo y portafolio actual. En oscuro tres colores no bastan para
 // distinguir series (pedido 3 de C1): cada grupo tiene forma propia y etiqueta directa.
 import { useMemo } from 'react'
 import { isNum } from '../../lib/format.js'
@@ -13,6 +13,8 @@ import { markerPath } from './series.js'
 const MARKS = [
   { key: 'minVar', label: 'Mínima varianza', shape: 'diamond', color: 'var(--chart-3)' },
   { key: 'tangency', label: 'Tangente', shape: 'triangle', color: 'var(--chart-4)' },
+  // La paridad de riesgo no vive en la curva: es otra regla de reparto, así que va como punto aparte.
+  { key: 'riskParity', label: 'Paridad de riesgo', shape: 'triangle-down', color: 'var(--chart-6)' },
   { key: 'current', label: 'Actual', shape: 'square', color: 'var(--chart-5)' },
 ]
 const ASSET = { shape: 'circle', color: 'var(--chart-2)' }
@@ -22,7 +24,7 @@ const FRONTIER = 'var(--chart-1)'
  * @param {{
  *   assets?: { label: string, risk: number, ret: number }[],
  *   frontier?: { risk: number, ret: number }[],
- *   markers?: { minVar?: { risk: number, ret: number }, tangency?: { risk: number, ret: number }, current?: { risk: number, ret: number } },
+ *   markers?: { minVar?: { risk: number, ret: number }, tangency?: { risk: number, ret: number }, riskParity?: { risk: number, ret: number }, current?: { risk: number, ret: number } },
  *   height?: number, decimals?: number, emptyText?: string,
  *   title: import('react').ReactNode, titleAs?: 'h2' | 'h3' | 'h4' | 'p', description?: import('react').ReactNode,
  *   summary?: string, status?: any, source?: import('react').ReactNode, actions?: import('react').ReactNode, className?: string,

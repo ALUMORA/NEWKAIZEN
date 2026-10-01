@@ -68,12 +68,6 @@
 .kz-sim .kz-page-header {
   margin: 0;
 }
-.kz-sim__more a {
-  color: var(--accent);
-  font-weight: var(--weight-semibold);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
 .kz-sim__notes {
   font-size: var(--text-md);
   line-height: var(--leading-normal);
@@ -205,12 +199,6 @@
 }
 .kz-tool__more {
   margin: var(--space-4) 0 0;
-}
-.kz-tool__more a {
-  color: var(--accent);
-  font-weight: var(--weight-semibold);
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 
 /* Selección de emisoras */
