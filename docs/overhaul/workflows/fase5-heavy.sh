@@ -7,7 +7,8 @@
 SLOTS=${HEAVY_SLOTS:-3}
 WAIT=${HEAVY_WAIT:-420}
 # HEAVY_POOL separa cupos por recurso: "heavy" (RAM, 3 cupos) y "yahoo" (grabaciones, HEAVY_SLOTS=1).
-DIR=/private/tmp/claude-501/-Users-luisalfredolizarragasanchez-Desktop-CLAUDE/2cc037ba-fa15-4041-9ce5-e7079f6f5abf/scratchpad/heavy-locks/${HEAVY_POOL:-heavy}
+# Los cupos viven en el TMPDIR del usuario (el mismo para todas las sesiones); HEAVY_DIR lo cambia.
+DIR=${HEAVY_DIR:-${TMPDIR:-/tmp}/newkaizen-heavy-locks}/${HEAVY_POOL:-heavy}
 mkdir -p "$DIR"
 start=$(date +%s)
 while :; do
