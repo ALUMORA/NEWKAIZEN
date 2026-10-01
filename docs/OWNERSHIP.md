@@ -96,11 +96,29 @@ registro de las 25 operaciones tampoco cambió.
 | `GET /v2/macro/us` | `routers/macro.py` | B2b |
 | `GET /v2/news` | `routers/news.py` | B2b |
 | `GET /v2/instrument/{symbol}` y sus `/statements` y `/dividends` | `routers/research.py` | B3a |
-| `GET /v2/events` | `routers/events.py` | B3a |
+| `GET /v2/events` | `routers/events.py` | B3a (en la fase 5 pasa a V5PF) |
 | `GET /v2/insiders/{symbol}` | `routers/insiders.py` | B3a |
 | `GET /v2/valuation/{symbol}`, `GET /v2/momentum/{symbol}` | `routers/valuation.py` | B3b |
 | `GET /v2/screeners/factors`, `/magic`, `/fibras` | `routers/screeners.py` | B3c |
 | Las rutas v1 del backend viejo | `routers/legacy_v1.py` | O, congelado |
+
+**Fase 5.** M5 registró el 1 de octubre de 2026 las 26 rutas nuevas de
+`docs/overhaul/specs/fase5-spec.md` en ocho routers nuevos y en `events.py`, todas en `@stub`, con
+su `response_model`, su clase de caché y sus parámetros ya validados, y las sumó a `V2_ROUTERS` en
+`kaizen_api/main.py`. Cada stream solo edita su router: borra `@stub` y el
+`raise not_implemented(...)` de la ruta que implementa y agrega la capacidad a `CAPABILITIES`.
+
+| Ruta | Archivo | Stream |
+| --- | --- | --- |
+| `GET /v2/curves`, `GET /v2/curves/spreads`, `GET /v2/money-market`, `GET /v2/expectations` | `routers/curves.py` | V5TS |
+| `GET /v2/fxdesk/monitor`, `/crosses`, `/fix`, `/fix-table`, `/forward` | `routers/fxdesk.py` | V5FX |
+| `GET /v2/calendar/economic`, `GET /v2/macro/indicators`, `GET /v2/macro/world` | `routers/economy.py` | V5EC |
+| `GET /v2/earnings/{symbol}`, `GET /v2/holders/{symbol}`, `GET /v2/shares/{symbol}`, `GET /v2/filings/{symbol}` | `routers/company.py` | V5FI |
+| `GET /v2/ohlc/{symbol}` | `routers/ohlc.py` | V5TC |
+| `GET /v2/movers`, `GET /v2/breadth`, `GET /v2/sectors` | `routers/movers.py` | V5MK |
+| `GET /v2/events` (aditivos `estimateLow`, `estimateHigh` y `dividendSummary`), `GET /v2/events/season` | `routers/events.py` | V5PF |
+| `GET /v2/funds/{symbol}` | `routers/funds.py` | V5PF |
+| `GET /v2/reference/mx`, `GET /v2/reference/mx/update-factor`, `GET /v2/business/industries`, `GET /v2/credit-health/{symbol}` | `routers/business.py` | V5EM |
 
 `kaizen_api/main.py` es de **B1**, y ahí vive `V2_ROUTERS`. Ya están registrados los doce routers
 v2, así que un stream de fase 2 solo edita su propio archivo. Si de verdad hace falta un router
@@ -264,6 +282,57 @@ KAIZEN_REPLAY_SET=2026-09-22,2026-09-22-b2a .venv/bin/python -m pytest -q
 
 Los goldens del legado (`tests/goldens_legacy/`) se quedan fijos en el set base: con varias capas,
 `record_fixtures.py` sin `--get` pide `--goldens-dir` para no regenerarlos por accidente.
+
+## Fase 5: lo que el replay cubre y lo que está vetado
+
+M5 extendió `tests/replay` para lo que la fase 5 le pide a Yahoo, y lo probó dos veces: sin red con
+objetos falsos (`tests/replay/test_fase5_coverage.py`) y con una grabación real mínima en una raíz
+temporal que no se commiteó (14 llamadas reales a Yahoo grabadas y reproducidas sin red idénticas).
+
+**Cubierto, con su llave:**
+
+- `yf.Ticker(...)`: `calendar`, `earnings_history`, `earnings_estimate`, `revenue_estimate`,
+  `eps_trend`, `eps_revisions`, `get_earnings_dates(limit=...)`, `major_holders`,
+  `institutional_holders`, `mutualfund_holders`, `get_shares_full(start=...)`, `splits` e
+  `history(...)` con `interval` 5m, 1h, 1d, 1wk y 1mo (`yf:<SÍMBOLO>:<atributo>[?args]`).
+- `Ticker.funds_data` (y `get_funds_data()`): es un objeto perezoso, no un dato, así que cada
+  propiedad se graba por separado como `yf:SPY:funds_data.top_holdings`, igual con
+  `sector_weightings`, `asset_classes`, `fund_overview`, `fund_operations`, `equity_holdings`,
+  `bond_holdings`, `bond_ratings`, `description` y el método `quote_type()`. Un símbolo que no es
+  fondo lanza su excepción al grabar y la misma al reproducir.
+- `yf.screen(...)`: con un predefinido por nombre (`yf.screen:day_gainers?count=25`) o con un
+  `EquityQuery` (`yf.screen:EquityQuery{...}?size=50&sortField=...`, con el `to_dict()` de la
+  consulta como JSON ordenado). Hay que llamarlo como `yf.screen(...)`: un
+  `from yfinance import screen` se queda con el original antes de que el replay se instale y sale a
+  la red.
+
+**Vetado en la fase 5, porque no pasa por el replay:** `yf.Sector`, `yf.Industry`, `yf.Calendars`
+y `YfData().get_raw_json`. Usan la sesión curl_cffi de yfinance por dentro, sin pasar por
+`Ticker`, `download` ni `screen`, así que una prueba que los toque sale a la red (y el guardia de
+red la tumba). Además traen columnas de calificaciones y precios objetivo que la regla del producto
+prohíbe.
+
+**Proveedores nuevos de HTTP** (Tesoro, Frankfurter, CFTC, BLS, Banco Mundial, SEC): siempre con
+`requests` (una `requests.Session` propia con su User-Agent, o `requests.get`), que el replay
+intercepta en `requests.Session.request`. Nunca `urllib`, `http.client`, `httpx` ni `curl_cffi`
+directo: no se graban, en replay revientan contra el guardia de red y en Render saldrían sin caché
+de pruebas.
+
+**Lo que enseñó la grabación real** (yfinance 1.7.0, 1 de octubre de 2026):
+
+- `history(..., auto_adjust=False)` trae `Adj Close` entre `Close` y `Volume`: no leas columnas
+  por posición.
+- `get_earnings_dates(limit=4)` devolvió 25 renglones: recorta tú.
+- `Ticker("WALMEX.MX").history(period="5d", interval="5m")` dio 371 velas con zona
+  `America/Mexico_City`.
+- `yf.screen` con `EquityQuery` de `region` mx devuelve claves de toda la BMV y del SIC: el filtro
+  contra `universe_mx.json`, `fibras_mx.json` y `symbols_mx.json` lo hace el proveedor de V5MK.
+
+**Capas de la fase 5.** Cada stream graba una sola vez en `2026-10-01-<stream en minúsculas>`,
+encima del set base y de la capa de Banxico de M5:
+`--set 2026-09-22,2026-10-01-banxico,2026-10-01-<stream> --grabar-en 2026-10-01-<stream>` (si la
+capa de Banxico todavía no existe en tu worktree, quítala del `--set`). Las grabaciones a Yahoo van
+por el cupo `yahoo` del semáforo.
 
 ## Las pruebas que fase 2 va a cruzarse
 
