@@ -13,6 +13,16 @@
 // cargarlo con import() dinámico a través de src/content/glossary-lazy.js, para que no entre al
 // bundle de la primera ruta. El detalle está en docs/metodologia/fuentes-de-datos.md.
 import { pathLearnTerm } from '../app/paths.js'
+// Fase 5: cada stream escribe sus términos en su archivo y aquí se unen (ver mergeTerms).
+import V5TS from './glossary-v5/V5TS.js'
+import V5FX from './glossary-v5/V5FX.js'
+import V5EC from './glossary-v5/V5EC.js'
+import V5FI from './glossary-v5/V5FI.js'
+import V5TC from './glossary-v5/V5TC.js'
+import V5MK from './glossary-v5/V5MK.js'
+import V5PF from './glossary-v5/V5PF.js'
+import V5EM from './glossary-v5/V5EM.js'
+import V5TM from './glossary-v5/V5TM.js'
 
 /**
  * Un término del glosario.
@@ -27,6 +37,13 @@ import { pathLearnTerm } from '../app/paths.js'
  * @property {string} fuente Referencia: autor y año, ley o institución.
  * @property {readonly string[]} relacionados Slugs que existen en este mismo glosario.
  * @property {readonly string[]} [alias] Otras formas de nombrarlo, solo para el buscador.
+ */
+
+/**
+ * Un término como se escribe en TERMS y en src/content/glossary-v5/<stream>.js: sin `slug`, que es
+ * la llave del objeto.
+ * @typedef {Omit<GlossaryTerm, 'slug' | 'largo' | 'relacionados' | 'alias'> & {
+ *   largo: string[], relacionados: string[], alias?: string[] }} GlossaryTermInput
  */
 
 const TERMS = {
@@ -1751,10 +1768,36 @@ export function slugify(value) {
   return normalize(value).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 }
 
+/**
+ * Une los términos base con los de cada stream de la fase 5, en ese orden. Un slug repetido es un
+ * error de integración (dos streams escribieron el mismo concepto), así que falla en voz alta.
+ * @param {Record<string, Record<string, any>>} parts
+ * @returns {Record<string, any>}
+ */
+export function mergeTerms(parts) {
+  /** @type {Record<string, any>} */
+  const out = {}
+  /** @type {Record<string, string>} */
+  const owner = {}
+  for (const [part, terms] of Object.entries(parts)) {
+    for (const [slug, term] of Object.entries(terms ?? {})) {
+      if (slug in out) throw new Error(`glosario: "${slug}" de ${part} ya existe en ${owner[slug]}`)
+      out[slug] = term
+      owner[slug] = part
+    }
+  }
+  return out
+}
+
+/** Partes del glosario: la base y una por stream de la fase 5. */
+export const GLOSSARY_PARTS = Object.freeze({ base: TERMS, V5TS, V5FX, V5EC, V5FI, V5TC, V5MK, V5PF, V5EM, V5TM })
+
+const ALL_TERMS = mergeTerms(GLOSSARY_PARTS)
+
 /** Glosario completo, congelado, con el slug dentro de cada término. @type {Record<string, GlossaryTerm>} */
 export const glossary = Object.freeze(
   Object.fromEntries(
-    Object.entries(TERMS).map(([slug, term]) => [
+    Object.entries(ALL_TERMS).map(([slug, term]) => [
       slug,
       Object.freeze({
         slug,

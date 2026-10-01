@@ -8,6 +8,7 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import {
+  GLOSSARY_PARTS,
   getTerm,
   glossary,
   glossaryCount,
@@ -17,6 +18,7 @@ import {
   glossaryTerms,
   glossaryTip,
   hasTerm,
+  mergeTerms,
   relatedTerms,
   slugify,
 } from './glossary.js'
@@ -269,11 +271,20 @@ describe('reglas de estilo de la casa', () => {
 })
 
 describe('páginas de metodología', () => {
-  const PAGINAS = [
+  // Las guías que ya existían no se pueden caer; las que agregue un stream (fase 5) entran solas a
+  // las mismas revisiones porque la lista se lee del disco.
+  const BASE = [
     'README.md', 'portafolio.md', 'riesgo.md', 'optimizador.md', 'backtest.md', 'simulador.md',
     'screener-de-factores.md', 'formula-magica.md', 'fibras.md', 'valuacion-dcf.md',
     'fuentes-de-datos.md', 'mercados.md',
   ]
+  const PAGINAS = readdirSync(new URL('../../docs/metodologia/', import.meta.url)).filter((f) => f.endsWith('.md')).sort()
+
+  it('siguen todas las guías base y se revisan también las nuevas', () => {
+    expect(BASE.filter((nombre) => !PAGINAS.includes(nombre))).toEqual([])
+    expect(PAGINAS.length).toBeGreaterThanOrEqual(BASE.length)
+  })
+
   const leer = (nombre) => readFileSync(new URL(`../../docs/metodologia/${nombre}`, import.meta.url), 'utf8')
 
   it.each(PAGINAS)('docs/metodologia/%s existe, tiene título y el aviso de que no es recomendación', (nombre) => {
@@ -423,5 +434,25 @@ describe('ligas y tarjetas para la interfaz', () => {
 
   it('glossaryTip devuelve null cuando el término no existe, para que el componente use su texto', () => {
     expect(glossaryTip('metrica-que-no-existe')).toBeNull()
+  })
+})
+
+describe('glosario de la fase 5', () => {
+  const STREAMS = ['V5TS', 'V5FX', 'V5EC', 'V5FI', 'V5TC', 'V5MK', 'V5PF', 'V5EM', 'V5TM']
+
+  it('une la base con un archivo por stream, y el total es la suma de las partes', () => {
+    expect(Object.keys(GLOSSARY_PARTS)).toEqual(['base', ...STREAMS])
+    const total = Object.values(GLOSSARY_PARTS).reduce((n, part) => n + Object.keys(part).length, 0)
+    expect(glossaryCount).toBe(total)
+    for (const stream of STREAMS) {
+      const archivo = readFileSync(new URL(`./glossary-v5/${stream}.js`, import.meta.url), 'utf8')
+      expect(archivo, stream).toMatch(/export default TERMS/)
+      expect(typeof GLOSSARY_PARTS[stream], stream).toBe('object')
+    }
+  })
+
+  it('un slug repetido entre partes es un error de integración', () => {
+    expect(mergeTerms({ base: { a: 1 }, V5TS: { b: 2 } })).toEqual({ a: 1, b: 2 })
+    expect(() => mergeTerms({ base: { tiie: 1 }, V5TS: { tiie: 2 } })).toThrow(/"tiie" de V5TS ya existe en base/)
   })
 })

@@ -4,7 +4,7 @@ import { Link } from 'react-router'
 import { Disclaimer, EmptyState, Input, PageHeader } from '../../../components/ui/index.js'
 import { glossaryCount, glossarySearch, glossaryTerms } from '../../../content/glossary.js'
 import { pathLearnTerm, pathMethodology } from '../../../app/paths.js'
-import { GUIDE_NAMES } from '../guides.js'
+import { guideList } from '../guides.js'
 import { PublicPage } from '../PublicPage.jsx'
 import '../learn.css'
 
@@ -67,7 +67,7 @@ export default function LearnIndex() {
         <h2 id="learn-guides">Guías de metodología</h2>
         <p className="learn-count">Cómo calcula Kaizen cada pantalla, con qué datos y qué supuestos trae.</p>
         <ul className="learn-guides">
-          {Object.entries(GUIDE_NAMES).map(([slug, name]) => (
+          {guideList().map(([slug, name]) => (
             <li key={slug}>
               <Link to={pathMethodology(slug)}>{name}</Link>
             </li>

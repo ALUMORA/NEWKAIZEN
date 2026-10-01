@@ -8,7 +8,11 @@ export const GUIDES = Object.fromEntries(
     .filter(([slug]) => slug !== 'README'),
 )
 
-/** Nombres cortos para la lista de /aprender (el título largo sale del propio archivo). */
+/**
+ * Nombres cortos para la lista de /aprender (el título largo sale del propio archivo). Solo se
+ * listan las guías que existen en docs/metodologia; las de la fase 5 ya tienen nombre aquí para que
+ * aparezcan en cuanto su stream escriba el archivo.
+ */
 export const GUIDE_NAMES = {
   backtest: 'Backtest',
   fibras: 'FIBRAs',
@@ -21,6 +25,24 @@ export const GUIDE_NAMES = {
   'screener-de-factores': 'Screener de factores',
   simulador: 'Simulador',
   'valuacion-dcf': 'Valuación DCF',
+  // Fase 5
+  'tasas-y-curvas': 'Tasas y curvas',
+  'tipo-de-cambio': 'Tipo de cambio',
+  'economia-y-calendario': 'Economía y calendario',
+  'resultados-y-documentos': 'Resultados y documentos',
+  'analisis-tecnico': 'Análisis técnico',
+  empresas: 'Empresas',
+}
+
+/**
+ * Guías que se listan en /aprender: las que existen, con su nombre corto o, si una guía nueva no lo
+ * tiene, su slug legible ("costo-de-capital" da "Costo de capital").
+ * @returns {[string, string][]}
+ */
+export function guideList() {
+  return Object.keys(GUIDES)
+    .sort((a, b) => (GUIDE_NAMES[a] ?? a).localeCompare(GUIDE_NAMES[b] ?? b, 'es-MX'))
+    .map((slug) => [slug, GUIDE_NAMES[slug] ?? slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, ' ')])
 }
 
 /** El título (# ...) de una guía. @param {string} source */
