@@ -44,11 +44,15 @@ def parse_forms(forms: str) -> list[str]:
     return out
 
 
-def check_shares_start(start: str | None) -> _dt.date | None:
+def check_shares_start(start: str | None, *, today: _dt.date | None = None) -> _dt.date | None:
+    """Fecha inicial de la serie de acciones; futura (contra ``today``, hora del centro) es 400."""
     first, _ = check_date_range(start, None)
-    if first and first > _dt.datetime.now(_MX).date():
+    if first and first > (today or _dt.datetime.now(_MX).date()):
         raise ApiError(
-            400, "INVALID_PARAM", "La fecha inicial no puede ser futura.", details=field_error("query.start", "out_of_range")
+            400,
+            "INVALID_PARAM",
+            "La fecha inicial no puede ser futura.",
+            details=field_error("query.start", "out_of_range"),
         )
     return first
 
