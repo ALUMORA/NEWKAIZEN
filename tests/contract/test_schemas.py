@@ -342,6 +342,8 @@ def test_health_announces_every_capability_that_the_routers_declare(app, client)
         ("/v2/fxdesk/forward?days=0", 400, "INVALID_PARAM"),
         ("/v2/fxdesk/forward?days=30,400", 400, "INVALID_PARAM"),
         ("/v2/fxdesk/forward?days=-5", 422, "VALIDATION_ERROR"),
+        ("/v2/fxdesk/forward?days=10000", 400, "INVALID_PARAM"),  # más de 365 es 400 por largo que sea
+        ("/v2/fxdesk/forward?days=30,123456", 400, "INVALID_PARAM"),
         ("/v2/fxdesk/forward?date=2030-01-01", 400, "INVALID_PARAM"),
         ("/v2/fxdesk/forward?date=2020-01-01", 400, "INVALID_PARAM"),
         ("/v2/fxdesk/forward?days=30&date=2026-12-01", 422, "VALIDATION_ERROR"),

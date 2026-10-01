@@ -151,7 +151,7 @@ def fx_fix_table(
     start: Annotated[str, Query(pattern=ISO_DATE_PATTERN, description="Fecha inicial YYYY-MM-DD")],
     end: Annotated[str, Query(pattern=ISO_DATE_PATTERN, description="Fecha final YYYY-MM-DD")],
     rule: Annotated[Literal["fecha", "dof"], Query(description="fecha = el FIX de ese día; dof = regla del DOF")] = "fecha",
-    month_end: Annotated[bool, Query(alias="monthEnd", description="Solo los cierres de mes")] = False,
+    month_end: Annotated[bool, Query(alias="monthEnd", description="true: rows trae solo el cierre de cada mes; monthEnds viene siempre")] = False,
 ) -> FixTableResponse:
     check_fix_table_params(start, end)
     raise not_implemented("GET /v2/fxdesk/fix-table")
@@ -167,7 +167,7 @@ def fx_fix_table(
 def fx_forward(
     days: Annotated[
         str | None,
-        Query(pattern=r"^\d{1,4}(,\d{1,4}){0,11}$", description="Plazos en días separados por coma (1 a 365)"),
+        Query(pattern=r"^\d{1,9}(,\d{1,9}){0,11}$", description="Plazos en días separados por coma (1 a 365)"),
     ] = None,
     date: IsoDateQuery = None,
     mxn: Annotated[Literal["tiie", "cetes", "fondeo"], Query(description="Tasa de referencia en pesos")] = "tiie",
