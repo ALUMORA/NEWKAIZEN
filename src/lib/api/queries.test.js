@@ -3,6 +3,7 @@
 // la app esperaría el doble antes de ver el error.
 import { ApiError } from './http.js'
 import { COLD_START_DELAYS_MS } from './client.js'
+import * as Q from './queries.js'
 import { STALE_TIME, createQueryClient, factorScreenerQuery, queryKeys, shouldRetry } from './queries.js'
 
 const abort = () => Object.assign(new Error('The operation was aborted.'), { name: 'AbortError' })
@@ -76,5 +77,61 @@ describe('factorScreenerQuery', () => {
     expect(factorScreenerQuery({ universe: 'mx' }).enabled).toBe(true)
     expect(factorScreenerQuery({ universe: 'us' }).enabled).toBe(true)
     expect(factorScreenerQuery().enabled).toBe(true)
+  })
+})
+
+describe('fase 5', () => {
+  const FACTORIES = [
+    'curvesQuery', 'curveSpreadsQuery', 'moneyMarketQuery', 'expectationsQuery', 'fxMonitorQuery', 'fxCrossesQuery', 'fixQuery', 'fixTableQuery',
+    'fxForwardQuery', 'economicCalendarQuery', 'macroIndicatorsQuery', 'macroWorldQuery', 'eventsSeasonQuery', 'earningsQuery', 'holdersQuery',
+    'sharesQuery', 'filingsQuery', 'ohlcQuery', 'moversQuery', 'breadthQuery', 'sectorsQuery', 'fundQuery', 'referenceMxQuery',
+    'updateFactorQuery', 'industriesQuery', 'creditHealthQuery',
+  ]
+
+  it('hay un xQuery por ruta nueva, con llave bajo "api" y frescura de una clase conocida', () => {
+    const classes = new Set(Object.values(STALE_TIME))
+    for (const name of FACTORIES) {
+      const factory = /** @type {any} */ (Q)[name]
+      expect(typeof factory, name).toBe('function')
+      const opts = factory('AAPL', {})
+      expect(opts.queryKey[0], name).toBe('api')
+      expect(classes.has(opts.staleTime), name).toBe(true)
+      expect(typeof opts.queryFn, name).toBe('function')
+    }
+  })
+
+  it('clases nuevas: curvas 1 h, intradía 1 min, movimientos 5 min y referencia 24 h', () => {
+    expect(STALE_TIME.curves).toBe(3_600_000)
+    expect(STALE_TIME.intraday).toBe(60_000)
+    expect(STALE_TIME.movers).toBe(300_000)
+    expect(STALE_TIME.reference).toBe(86_400_000)
+    expect(Q.curvesQuery({ country: 'mx' }).staleTime).toBe(STALE_TIME.curves)
+    expect(Q.referenceMxQuery().staleTime).toBe(STALE_TIME.reference)
+    expect(Q.economicCalendarQuery({ start: '2026-10-01', end: '2026-10-07' }).staleTime).toBe(STALE_TIME.reference)
+    expect(Q.moversQuery({ market: 'mx', kind: 'gainers' }).staleTime).toBe(STALE_TIME.movers)
+  })
+
+  it('velas intradía se refrescan cada minuto; las diarias no', () => {
+    const intraday = Q.ohlcQuery('AAPL', { range: '1d', interval: '5m' })
+    expect(intraday.staleTime).toBe(STALE_TIME.intraday)
+    expect(typeof intraday.refetchInterval).toBe('function')
+    const daily = Q.ohlcQuery('AAPL', { range: '1y', interval: '1d' })
+    expect(daily.staleTime).toBe(STALE_TIME.history)
+    expect(daily.refetchInterval).toBe(false)
+  })
+
+  it('las llaves no dependen del orden de las listas ni de los undefined', () => {
+    expect(queryKeys.curves({ country: 'mx', compare: ['1y', '1w'] })).toEqual(queryKeys.curves({ country: 'mx', compare: ['1w', '1y'], extra: undefined }))
+    expect(queryKeys.earnings(' aapl'.trim())).toEqual(['api', 'earnings', 'AAPL'])
+    expect(queryKeys.ohlc('aapl')).toEqual(['api', 'ohlc', 'AAPL', { range: '1y', interval: '1d' }])
+  })
+
+  it('las que piden fechas o meses no salen sin ellas', () => {
+    expect(Q.fixQuery(/** @type {any} */ ({})).enabled).toBe(false)
+    expect(Q.fixTableQuery(/** @type {any} */ ({ start: '2026-01-01' })).enabled).toBe(false)
+    expect(Q.economicCalendarQuery(/** @type {any} */ ({ end: '2026-10-01' })).enabled).toBe(false)
+    expect(Q.updateFactorQuery(/** @type {any} */ ({ from: '2026-01' })).enabled).toBe(false)
+    expect(Q.earningsQuery('').enabled).toBe(false)
+    expect(Q.fixQuery({ date: '2026-09-30' }).enabled).toBe(true)
   })
 })
