@@ -402,6 +402,21 @@ function dateWindow(start, end, maxDays, label) {
   if (days > maxDays) throw invalid(`un rango de ${days} días; el máximo es ${label}`)
 }
 
+/**
+ * Hoy en la Ciudad de México (AAAA-MM-DD), el mismo "hoy" con el que el API revisa las fechas
+ * futuras. En la frontera del día el reloj del servidor manda; esto solo adelanta el rechazo.
+ */
+function todayMx() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Mexico_City', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
+}
+
+/** Primer FIX publicado en el SIE (SF43718); el API rechaza fechas anteriores. */
+const FIX_FIRST_DATE = '1991-11-12'
+/** Tope de la tabla de FIX: 3 × 366 días, igual que fxdesk.FIX_TABLE_MAX_DAYS. */
+const FIX_TABLE_MAX_DAYS = 3 * 366
+/** Plazos del forward por consulta (el patrón de `days` del API admite hasta 12). */
+const FORWARD_MAX_TENORS = 12
+
 /** @param {string} name @param {unknown} value @param {number} min @param {number} max @param {{ optional?: boolean }} [opts] */
 function intIn(name, value, min, max, { optional = false } = {}) {
   if (value == null && optional) return undefined
@@ -428,17 +443,22 @@ export const INDUSTRY_MARKETS = /** @type {const} */ (['US', 'EM'])
 export const CREDIT_HEALTH_YEARS = /** @type {const} */ ([3, 5])
 
 /**
- * Combinaciones de /v2/ohlc que Yahoo no sirve y el API contesta con 400: velas de 5 minutos más
- * allá de un mes y de una hora más allá de un año. El servidor manda; aquí solo se adelanta el
- * rechazo de las que seguro fallan.
+ * Rangos que admite cada intervalo de /v2/ohlc (copia de ohlc.VALID_RANGES del API; lo demás es
+ * 400): velas de 5 minutos hasta un mes, de una hora hasta un año, y semanales o mensuales solo en
+ * periodos donde caben varias velas.
  */
-const OHLC_MAX_RANGE = Object.freeze({ '5m': ['1d', '5d', '1mo'], '1h': ['1d', '5d', '1mo', '6mo', '1y'] })
+const OHLC_VALID_RANGES = Object.freeze({
+  '5m': ['1d', '5d', '1mo'],
+  '1h': ['1d', '5d', '1mo', '6mo', '1y'],
+  '1d': ['1d', '5d', '1mo', '6mo', '1y', '5y', 'max'],
+  '1wk': ['1mo', '6mo', '1y', '5y', 'max'],
+  '1mo': ['6mo', '1y', '5y', 'max'],
+})
 
 /** @param {string} range @param {string} interval */
 export function isValidOhlc(range, interval) {
   if (!OHLC_RANGES.includes(/** @type {any} */ (range)) || !OHLC_INTERVALS.includes(/** @type {any} */ (interval))) return false
-  const allowed = OHLC_MAX_RANGE[interval]
-  return !allowed || allowed.includes(range)
+  return /** @type {Record<string, string[]>} */ (OHLC_VALID_RANGES)[interval].includes(range)
 }
 
 /** @typedef {import('./types.js').V5Response} V5Response */
@@ -489,7 +509,9 @@ export async function getFxCrosses({ signal } = {}) {
  * @returns {Promise<V5Response>}
  */
 export async function getFix({ date, rule = 'fecha' } = /** @type {any} */ ({}), { signal } = {}) {
-  return v2Get('/v2/fxdesk/fix', { date: isoDate('la fecha', date), rule: oneOf('la regla', rule, FIX_RULES) }, { signal })
+  const d = isoDate('la fecha', date)
+  if (d < FIX_FIRST_DATE) throw invalid(`el FIX del ${d}; el primero es del ${FIX_FIRST_DATE}`)
+  return v2Get('/v2/fxdesk/fix', { date: d, rule: oneOf('la regla', rule, FIX_RULES) }, { signal })
 }
 
 /**
@@ -501,9 +523,8 @@ export async function getFix({ date, rule = 'fecha' } = /** @type {any} */ ({}),
 export async function getFixTable({ start, end, rule, monthEnd } = /** @type {any} */ ({}), { signal } = {}) {
   const s = isoDate('el inicio', start)
   const e = isoDate('el fin', end)
-  const [sy, sm, sd] = s.split('-').map(Number)
-  const limit = new Date(Date.UTC(sy + 3, sm - 1, sd)).toISOString().slice(0, 10)
-  dateWindow(s, e, daysBetween(s, limit), '3 años')
+  if (s < FIX_FIRST_DATE) throw invalid(`una tabla de FIX desde el ${s}; el primero es del ${FIX_FIRST_DATE}`)
+  dateWindow(s, e, FIX_TABLE_MAX_DAYS, `${FIX_TABLE_MAX_DAYS} días (3 años)`)
   if (monthEnd != null && typeof monthEnd !== 'boolean') throw invalid(`cierres de mes "${String(monthEnd)}"`)
   const query = { start: s, end: e, rule: oneOf('la regla', rule, FIX_RULES, { optional: true }), monthEnd: monthEnd == null ? undefined : String(monthEnd) }
   return v2Get('/v2/fxdesk/fix-table', query, { signal })
@@ -518,9 +539,15 @@ export async function getFixTable({ start, end, rule, monthEnd } = /** @type {an
 export async function getFxForward({ days, date, mxn, usd } = {}, { signal } = {}) {
   if (days != null && date != null) throw invalid('plazos y fecha a la vez')
   const list = days == null ? undefined : [...new Set((Array.isArray(days) ? days : [days]).map((d) => intIn('el plazo en días', d, 1, 365)))]
+  if (list && list.length > FORWARD_MAX_TENORS) throw invalid(`${list.length} plazos; el máximo es ${FORWARD_MAX_TENORS}`)
+  const target = isoDate('la fecha', date, { optional: true })
+  if (target) {
+    const span = daysBetween(todayMx(), target)
+    if (span < 1 || span > 365) throw invalid(`un forward al ${target}; la fecha tiene que caer entre mañana y dentro de 365 días`)
+  }
   const query = {
     days: list && list.length ? list : undefined,
-    date: isoDate('la fecha', date, { optional: true }),
+    date: target,
     mxn: oneOf('la referencia en pesos', mxn, FORWARD_MXN, { optional: true }),
     usd: oneOf('la referencia en dólares', usd, FORWARD_USD, { optional: true }),
   }
@@ -605,7 +632,9 @@ export async function getHolders(symbol, { signal } = {}) {
  */
 export async function getShares(symbol, { start } = {}, { signal } = {}) {
   const s = normalizeSymbol(symbol)
-  return v2Get(`/v2/shares/${seg(s)}`, { start: isoDate('el inicio', start, { optional: true }) }, { signal })
+  const first = isoDate('el inicio', start, { optional: true })
+  if (first && first > todayMx()) throw invalid(`acciones desde el ${first}, que todavía no llega`)
+  return v2Get(`/v2/shares/${seg(s)}`, { start: first }, { signal })
 }
 
 /**
@@ -629,7 +658,7 @@ export async function getFilings(symbol, { forms, limit } = {}, { signal } = {})
  * @param {CallOptions} [options]
  * @returns {Promise<V5Response>}
  */
-export async function getOhlc(symbol, { range = '1y', interval = '1d', compare } = {}, { signal } = {}) {
+export async function getOhlc(symbol, { range = '6mo', interval = '1d', compare } = {}, { signal } = {}) {
   const s = normalizeSymbol(symbol)
   oneOf('el periodo', range, OHLC_RANGES)
   oneOf('el intervalo', interval, OHLC_INTERVALS)

@@ -8,8 +8,8 @@
 // Frescura (staleTime) según qué tan rápido cambia el dato en la fuente:
 //   cotizaciones 30 s (y se refrescan cada 60 s solo con la pestaña visible), historia 1 h,
 //   emisora y fundamentales 6 h, macro y tasas 1 h, noticias 10 min, screeners 12 h,
-//   búsqueda 24 h. Fase 5: curvas 1 h, velas intradía 1 min, movimientos del día 5 min y
-//   referencias y calendarios curados 24 h.
+//   búsqueda 24 h. Fase 5: curvas 1 h, velas intradía 1 min (movimientos, amplitud y sectores con
+//   las cotizaciones) y referencias y calendarios curados 24 h, igual que http_cache del API.
 // Reintentos: apiFetch ya reintenta el arranque en frío (~67 s), así que aquí NO se vuelve a
 // reintentar eso ni los errores de red; a lo más uno más para un 5xx del API despierto, y nunca
 // para 4xx ni cancelaciones.
@@ -37,7 +37,6 @@ export const STALE_TIME = Object.freeze({
   // Fase 5
   curves: HOUR,
   intraday: MINUTE,
-  movers: 5 * MINUTE,
   reference: 24 * HOUR,
 })
 
@@ -146,7 +145,7 @@ export const queryKeys = {
   holders: (symbol) => ['api', 'holders', String(symbol).toUpperCase()],
   shares: (symbol, params = {}) => ['api', 'shares', String(symbol).toUpperCase(), normParams(params)],
   filings: (symbol, params = {}) => ['api', 'filings', String(symbol).toUpperCase(), normParams(params)],
-  ohlc: (symbol, params = {}) => ['api', 'ohlc', String(symbol).toUpperCase(), { range: '1y', interval: '1d', ...normParams(params) }],
+  ohlc: (symbol, params = {}) => ['api', 'ohlc', String(symbol).toUpperCase(), { range: '6mo', interval: '1d', ...normParams(params) }],
   movers: (params = {}) => ['api', 'movers', normParams(params)],
   breadth: (params = {}) => ['api', 'breadth', normParams(params)],
   sectors: (params = {}) => ['api', 'sectors', normParams(params)],
@@ -362,20 +361,20 @@ export const expectationsQuery = () => ({
 export const fxMonitorQuery = (params = {}) => ({
   queryKey: queryKeys.fxMonitor(params),
   queryFn: ({ signal }) => api.getFxMonitor(params, { signal }),
-  staleTime: STALE_TIME.fx,
+  staleTime: STALE_TIME.macro,
 })
 
 export const fxCrossesQuery = () => ({
   queryKey: queryKeys.fxCrosses(),
   queryFn: ({ signal }) => api.getFxCrosses({ signal }),
-  staleTime: STALE_TIME.fx,
+  staleTime: STALE_TIME.macro,
 })
 
 /** FIX de una fecha con su regla (fecha o DOF). @param {{ date: string, rule?: 'fecha' | 'dof' }} params */
 export const fixQuery = (params) => ({
   queryKey: queryKeys.fix(params),
   queryFn: ({ signal }) => api.getFix(params, { signal }),
-  staleTime: STALE_TIME.rates,
+  staleTime: STALE_TIME.macro,
   enabled: Boolean(params?.date),
 })
 
@@ -383,7 +382,7 @@ export const fixQuery = (params) => ({
 export const fixTableQuery = (params) => ({
   queryKey: queryKeys.fixTable(params),
   queryFn: ({ signal }) => api.getFixTable(params, { signal }),
-  staleTime: STALE_TIME.rates,
+  staleTime: STALE_TIME.macro,
   enabled: Boolean(params?.start && params?.end),
 })
 
@@ -391,7 +390,7 @@ export const fixTableQuery = (params) => ({
 export const fxForwardQuery = (params = {}) => ({
   queryKey: queryKeys.fxForward(params),
   queryFn: ({ signal }) => api.getFxForward(params, { signal }),
-  staleTime: STALE_TIME.fx,
+  staleTime: STALE_TIME.macro,
 })
 
 /** @param {{ start: string, end: string, country?: ('mx' | 'us')[] }} params */
@@ -477,21 +476,21 @@ export const ohlcQuery = (symbol, params = {}) => {
 export const moversQuery = (params) => ({
   queryKey: queryKeys.movers(params),
   queryFn: ({ signal }) => api.getMovers(params, { signal }),
-  staleTime: STALE_TIME.movers,
+  staleTime: STALE_TIME.quotes,
 })
 
 /** @param {{ market: 'mx' | 'us' }} params */
 export const breadthQuery = (params) => ({
   queryKey: queryKeys.breadth(params),
   queryFn: ({ signal }) => api.getBreadth(params, { signal }),
-  staleTime: STALE_TIME.movers,
+  staleTime: STALE_TIME.quotes,
 })
 
 /** @param {{ market: 'mx' | 'us' }} params */
 export const sectorsQuery = (params) => ({
   queryKey: queryKeys.sectors(params),
   queryFn: ({ signal }) => api.getSectors(params, { signal }),
-  staleTime: STALE_TIME.movers,
+  staleTime: STALE_TIME.quotes,
 })
 
 /** @param {string} symbol */
@@ -512,7 +511,7 @@ export const referenceMxQuery = () => ({
 export const updateFactorQuery = (params) => ({
   queryKey: queryKeys.updateFactor(params),
   queryFn: ({ signal }) => api.getUpdateFactor(params, { signal }),
-  staleTime: STALE_TIME.reference,
+  staleTime: STALE_TIME.macro,
   enabled: Boolean(params?.from && params?.to),
 })
 

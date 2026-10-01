@@ -206,7 +206,7 @@ describe('fase 5: rutas y validación antes de salir a la red', () => {
       '/v2/fxdesk/monitor?years=1',
       '/v2/fxdesk/fix?date=2026-09-30&rule=fecha',
       '/v2/fxdesk/forward',
-      '/v2/ohlc/AAPL?range=1y&interval=1d',
+      '/v2/ohlc/AAPL?range=6mo&interval=1d',
     ])
   })
 
@@ -219,7 +219,10 @@ describe('fase 5: rutas y validación antes de salir a la red', () => {
     ['fecha del FIX mal formada', () => getFix({ date: '30/09/2026' })],
     ['fecha del FIX imposible', () => getFix({ date: '2026-02-30' })],
     ['regla del FIX', () => getFix({ date: '2026-09-30', rule: /** @type {any} */ ('sat') })],
-    ['tabla de FIX de más de 3 años', () => getFixTable({ start: '2020-01-01', end: '2023-01-02' })],
+    ['tabla de FIX de más de 3 × 366 días', () => getFixTable({ start: '2020-01-01', end: '2023-01-04' })],
+    ['tabla de FIX antes del primer FIX', () => getFixTable({ start: '1991-11-11', end: '1992-01-31' })],
+    ['FIX antes del primer FIX', () => getFix({ date: '1991-11-11' })],
+    ['más de 12 plazos en forward', () => getFxForward({ days: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13] })],
     ['tabla de FIX al revés', () => getFixTable({ start: '2026-09-30', end: '2026-01-01' })],
     ['plazo 0 en forward', () => getFxForward({ days: [0] })],
     ['plazo mayor a 365 en forward', () => getFxForward({ days: [366] })],
@@ -238,6 +241,8 @@ describe('fase 5: rutas y validación antes de salir a la red', () => {
     ['límite de documentos', () => getFilings('AAPL', { limit: 51 })],
     ['intradía de 5 minutos a un año', () => getOhlc('AAPL', { range: '1y', interval: '5m' })],
     ['intradía de 1 hora a 5 años', () => getOhlc('AAPL', { range: '5y', interval: '1h' })],
+    ['velas semanales de 5 días', () => getOhlc('AAPL', { range: '5d', interval: '1wk' })],
+    ['velas mensuales de un mes', () => getOhlc('AAPL', { range: '1mo', interval: '1mo' })],
     ['periodo de velas', () => getOhlc('AAPL', { range: /** @type {any} */ ('3mo') })],
     ['referencia de velas', () => getOhlc('AAPL', { compare: /** @type {any} */ ('QQQ') })],
     ['tipo de movimientos', () => getMovers({ market: 'mx', kind: /** @type {any} */ ('up') })],
@@ -261,5 +266,51 @@ describe('fase 5: rutas y validación antes de salir a la red', () => {
     expect(isValidOhlc('max', '1h')).toBe(false)
     expect(isValidOhlc('max', '1mo')).toBe(true)
     expect(isValidOhlc('2y', '1d')).toBe(false)
+    // La tabla completa de ohlc.VALID_RANGES del backend, no solo la del intradía.
+    expect(isValidOhlc('1d', '1wk')).toBe(false)
+    expect(isValidOhlc('5d', '1wk')).toBe(false)
+    expect(isValidOhlc('1mo', '1wk')).toBe(true)
+    expect(isValidOhlc('1d', '1mo')).toBe(false)
+    expect(isValidOhlc('5d', '1mo')).toBe(false)
+    expect(isValidOhlc('1mo', '1mo')).toBe(false)
+    expect(isValidOhlc('6mo', '1mo')).toBe(true)
+  })
+
+  it('la tabla de FIX admite hasta 3 × 366 días y desde el 12 de noviembre de 1991, como el API', async () => {
+    const f = installFetch([json(200, { meta: {} }), json(200, { meta: {} }), json(200, { meta: {} })])
+    await getFixTable({ start: '2020-01-01', end: '2023-01-03' })
+    await getFixTable({ start: '1991-11-12', end: '1992-01-31' })
+    await getFix({ date: '1991-11-12' })
+    expect(f.calls).toHaveLength(3)
+  })
+
+  describe('fechas contra hoy en la Ciudad de México', () => {
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'] })
+      // 1 de octubre de 2026, 23:30 en la Ciudad de México (ya es 2 de octubre en UTC).
+      vi.setSystemTime(new Date('2026-10-02T05:30:00Z'))
+    })
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it.each([
+      ['forward a hoy', () => getFxForward({ date: '2026-10-01' })],
+      ['forward a ayer', () => getFxForward({ date: '2026-09-30' })],
+      ['forward a más de 365 días', () => getFxForward({ date: '2027-10-02' })],
+      ['inicio de acciones futuro', () => getShares('AAPL', { start: '2026-10-02' })],
+    ])('%s: 400 sin salir a la red', async (_, call) => {
+      const f = installFetch([])
+      await expect(call()).rejects.toMatchObject({ status: 400 })
+      expect(f.calls).toHaveLength(0)
+    })
+
+    it('forward de mañana a 365 días y acciones desde hoy sí salen', async () => {
+      const f = installFetch([json(200, { meta: {} }), json(200, { meta: {} }), json(200, { meta: {} })])
+      await getFxForward({ date: '2026-10-02' })
+      await getFxForward({ date: '2027-10-01' })
+      await getShares('AAPL', { start: '2026-10-01' })
+      expect(f.calls).toHaveLength(3)
+    })
   })
 })
