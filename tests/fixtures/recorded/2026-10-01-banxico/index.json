@@ -1,0 +1,702 @@
+{
+ "set": "2026-10-01-banxico",
+ "entries": {
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SE27803,SF43707": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--37f2adda0b4ec01e.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:22+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SE27803,SF43707/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--b4e6a33ae3914bd4.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:34+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SE27803,SF43707/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--5c367ee684b6dbbf.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:33+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SE27803/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--896f77056431e8be.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:09+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SE27803/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--fad2c305b9b71986.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:08+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF111916/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--bfb18a8e66219977.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:56+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF111916/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--ce33aeb75ece61c9.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:55+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF290383/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--7dac227639011a7f.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:04+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF290383/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--2f2fb5fcb372c4c1.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:03+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF331451/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--0eeccdca0109d9d5.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:40+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF331451/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--b64fff5abb7dea4e.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:39+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43707/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--4bcad90c69868f15.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:10+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43707/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--b222c2978b9c02c0.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:09+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718,SF61745,SF43783,SF331451,SF43936,SF43939,SF43942,SF43945,SF44071,SP30578,SP74662,SP68257": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--54d66b5e5862c442.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:26+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718,SF61745,SF43783,SF331451,SF43936,SF43939,SF43942,SF43945,SF44071,SP30578,SP74662,SP68257/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--ba31aeb13bb1bf67.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:39+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718,SF61745,SF43783,SF331451,SF43936,SF43939,SF43942,SF43945,SF44071,SP30578,SP74662,SP68257/datos/2025-07-29/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--4dbf18e7c498f922.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:57+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718,SF61745,SF43783,SF331451,SF43936,SF43939,SF43942,SF43945,SF44071,SP30578,SP74662,SP68257/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--570ac51573048547.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:37+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--b8768af835ce44ff.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:34+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718/datos/2025-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--ac3c66af11e7476c.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:58+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--614ae028ebab9716.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:33+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43783/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--db21c888b028e93f.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:38+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43783/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--b8857caaa5019ee8.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:37+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43878,SF111916": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--10cfcca4690be706.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:20+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43878,SF111916/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--2deb56d65747eed0.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:30+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43878,SF111916/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--da5283dd69bdd1f2.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:29+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43878/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--cbacb1304841a46a.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:54+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43878/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--f4225d2d6bb23236.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:53+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43883,SF43886,SF45384,SF60696,SF61592,SF46958,SF46961": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--41be65ba78f641e7.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:19+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43883,SF43886,SF45384,SF60696,SF61592,SF46958,SF46961,SF43878,SF111916,SF46410,SF46406,SF46407,SF290383,SF60632,SE27803,SF43707,SR14138,SR14139,SR14145,SR14146": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--c6faa0b07fdd9d7d.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:24+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43883,SF43886,SF45384,SF60696,SF61592,SF46958,SF46961/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--0d338ed6eca02d0d.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:28+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43883,SF43886,SF45384,SF60696,SF61592,SF46958,SF46961/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--7174153fd0945ae2.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:27+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43883/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--19afef0b46ba1651.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:40+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43883/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--d03870edde09dc05.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:39+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43886/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--764f874889a1a96a.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:42+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43886/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--484dcfa1482760ef.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:41+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43936/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--f5d7d68ea7b0094c.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:42+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43936/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--2a169c50e606798f.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:41+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43939/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--ae7cecf81505804c.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:44+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43939/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--f2f77560e7ffa3eb.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:43+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43942/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--db12015cdecd3a63.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:46+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43942/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--1dcc9397aae07bb7.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:45+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43945/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--6b300dbf024ff1a8.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:48+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43945/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--bc8061df38dee68f.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:47+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF44071/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--71743ff0aed411f5.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:50+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF44071/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--0056e111da2b6e4f.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:49+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF45384/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--cac6c661ce519615.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:44+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF45384/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--c3c6a33eb1abb21c.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:43+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF46406/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--260a9bb9073b8305.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:00+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF46406/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--b8af275351b2c4c7.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:59+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF46407/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--f055381ef57b7a1c.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:02+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF46407/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--31d3ea3e58ec99a1.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:01+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF46410,SF46406,SF46407,SF290383,SF60632": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--25d8feda5fb1725d.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:21+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF46410,SF46406,SF46407,SF290383,SF60632/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--f63e17ecbae747ec.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:32+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF46410,SF46406,SF46407,SF290383,SF60632/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--8fdd42dbd9fe2cd1.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:31+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF46410/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--a35d932b49078450.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:58+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF46410/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--fb64f2cd5f1fffaf.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:57+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF46958/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--a86bcae4dce0e316.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:50+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF46958/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--2318d44ca63bb6e1.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:49+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF46961/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--7552149adaaad00b.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:52+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF46961/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--5c8fb0d2319aa842.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:51+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF60632/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--ab7ffde488892e54.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:06+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF60632/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--4c1f17b2f2a19567.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:05+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF60696/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--bf7f5bd51679e15c.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:46+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF60696/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--f5e18488deb0e71b.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:45+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF61592/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--3837e8c6038c19d3.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:48+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF61592/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--b9eaa39ee9663771.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:47+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF61745/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--7ba8a6744478a371.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:36+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF61745/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--9a38d6cd0f149237.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:35+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SP30578/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--84aa85d28e3212bb.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:52+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SP30578/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--8bb332a85ad00262.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:51+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SP68257/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--7ae9aa25582ecadb.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:56+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SP68257/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--2279ed49b2f04c65.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:55+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SP74662/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--cf34c3bfbf4fe741.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:54+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SP74662/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--7f6b8c8894d10da3.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:53+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14138,SR14139,SR14145,SR14146,SR14447,SR14448,SR14769,SR14770,SR14776,SR14777": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--78d596b1162eeba1.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:23+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14138,SR14139,SR14145,SR14146,SR14447,SR14448,SR14769,SR14770,SR14776,SR14777/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--ec21ff3f72dfc501.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:36+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14138,SR14139,SR14145,SR14146,SR14447,SR14448,SR14769,SR14770,SR14776,SR14777/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--d097d689e833eaca.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:35+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14138/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--a1c8dcbee81dee3d.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:14+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14138/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--fcbdeb932e62f868.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:13+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14139/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--1350a5ea15ceea53.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:16+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14139/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--2fb4c649a4a6f609.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:15+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14145/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--48a7cf8240fbf338.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:18+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14145/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--e80c2cb2f15fe693.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:17+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14146/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--2b86457679b6ebe0.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:20+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14146/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--93623cfda9bf85f6.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:19+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14447,SR14448,SR14769,SR14770,SR14776,SR14777": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--891d491fe5b2682d.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:28:25+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14447/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--5a7cdc139b6bbddf.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:22+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14447/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--8841522bce9984ef.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:21+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14448/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--a257abf5b0bff593.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:24+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14448/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--ecb3e58a9357781a.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:23+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14769/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--dd7ba7a3351b6431.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:26+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14769/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--70eae0046ddfd3ee.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:25+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14770/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--1a8906b8b4b9ca00.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:28+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14770/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--319651e215214df6.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:27+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14776/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--0a43f8099de5662b.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:30+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14776/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--347cef221887108c.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:29+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14777/datos/2016-09-22/2026-09-22": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--30fa8541b7b3d877.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:32+00:00"
+  },
+  "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SR14777/datos/oportuno": {
+   "file": "http-GET-https-www.banxico.org.mx-SieAPIRest-service--fcbeca126cb8a014.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:29:31+00:00"
+  }
+ },
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "created_at": "2026-10-01T23:28:19+00:00",
+ "yfinance_version": "1.7.0",
+ "layered_on": [
+  "2026-09-22"
+ ],
+ "lookup_order": [
+  "2026-09-22",
+  "2026-10-01-banxico"
+ ],
+ "updated_at": "2026-10-01T23:29:58+00:00"
+}

@@ -1,0 +1,31 @@
+{
+ "key": "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43883,SF43886,SF45384,SF60696,SF61592,SF46958,SF46961/datos/oportuno",
+ "provider": "http",
+ "method": "GET",
+ "url": "https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43883,SF43886,SF45384,SF60696,SF61592,SF46958,SF46961/datos/oportuno",
+ "params": null,
+ "kind": "value",
+ "payload": {
+  "status": 200,
+  "reason": "OK",
+  "url": "https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43883,SF43886,SF45384,SF60696,SF61592,SF46958,SF46961/datos/oportuno",
+  "encoding": "UTF-8",
+  "headers": {
+   "Access-Control-Allow-Origin": "*",
+   "Access-Control-Allow-Headers": "Bmx-Token, Accept, Accept-Encoding, Content-Type",
+   "Access-Control-Allow-Methods": "GET",
+   "Content-Security-Policy": "script-src 'self'",
+   "Cache-Control": "no-store",
+   "Content-Language": "es",
+   "Content-Type": "application/json;charset=UTF-8",
+   "Date": "Thu, 01 Oct 2026 23:28:27 GMT"
+  },
+  "body": {
+   "text": "{\"bmx\":{\"series\":[{\"idSerie\":\"SF45384\",\"titulo\":\"Valores Gubernamentales    Resultados de la subasta semanal Tasa de rendimiento  Bono tasa fija 20 años\",\"datos\":[{\"fecha\":\"27/08/2026\",\"dato\":\"9.64\"}]},{\"idSerie\":\"SF43886\",\"titulo\":\"Valores gubernamentales                        Resultados de la subasta semanal Tasa de rendimiento                            Bono tasa fija 5 años\",\"datos\":[{\"fecha\":\"17/09/2026\",\"dato\":\"9.00\"}]},{\"idSerie\":\"SF60696\",\"titulo\":\"Valores Gubernamentales Resultados de la subasta semanal, Tasa de rendimiento Bonos a tasa fija a 30 años\",\"datos\":[{\"fecha\":\"01/10/2026\",\"dato\":\"10.15\"}]},{\"idSerie\":\"SF46961\",\"titulo\":\"Valores Gubernamentales   Resultados de la subasta semanal Tasa de rendimiento   Udibonos a 30 años\",\"datos\":[{\"fecha\":\"17/09/2026\",\"dato\":\"4.90\"}]},{\"idSerie\":\"SF61592\",\"titulo\":\"Valores gubernamentales                        Resultados de la subasta semanal Tasa de rendimiento                            Udibonos a 3 años\",\"datos\":[{\"fecha\":\"24/09/2026\",\"dato\":\"4.00\"}]},{\"idSerie\":\"SF46958\",\"titulo\":\"Valores Gubernamentales   Resultados de la subasta semanal Tasa de rendimiento   Udibonos a 20 años\",\"datos\":[{\"fecha\":\"27/08/2026\",\"dato\":\"4.61\"}]},{\"idSerie\":\"SF43883\",\"titulo\":\"Valores gubernamentales Resultados de la subasta semanal Tasa de rendimiento Bonos a tasa fija a 3 años\",\"datos\":[{\"fecha\":\"10/09/2026\",\"dato\":\"8.24\"}]}]}}"
+  }
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:28:27+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "e7939ba70221"
+}

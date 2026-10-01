@@ -1,0 +1,31 @@
+{
+ "key": "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43886/datos/oportuno",
+ "provider": "http",
+ "method": "GET",
+ "url": "https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43886/datos/oportuno",
+ "params": null,
+ "kind": "value",
+ "payload": {
+  "status": 200,
+  "reason": "OK",
+  "url": "https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43886/datos/oportuno",
+  "encoding": "UTF-8",
+  "headers": {
+   "Access-Control-Allow-Origin": "*",
+   "Access-Control-Allow-Headers": "Bmx-Token, Accept, Accept-Encoding, Content-Type",
+   "Access-Control-Allow-Methods": "GET",
+   "Content-Security-Policy": "script-src 'self'",
+   "Cache-Control": "no-store",
+   "Content-Language": "es",
+   "Content-Type": "application/json;charset=UTF-8",
+   "Date": "Thu, 01 Oct 2026 23:28:41 GMT"
+  },
+  "body": {
+   "text": "{\"bmx\":{\"series\":[{\"idSerie\":\"SF43886\",\"titulo\":\"Valores gubernamentales                        Resultados de la subasta semanal Tasa de rendimiento                            Bono tasa fija 5 años\",\"datos\":[{\"fecha\":\"17/09/2026\",\"dato\":\"9.00\"}]}]}}"
+  }
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:28:41+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "e7939ba70221"
+}

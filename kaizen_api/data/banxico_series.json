@@ -302,5 +302,737 @@
   ],
   "indicesVerificadas": [
     "SP1"
-  ]
+  ],
+  "adicionalesPorQue": "Series que NO son renglones de /v2/rates/mx: las leen los endpoints de la fase 5 (curvas, mercado de dinero, expectativas, cruces del peso y tablero de economía) con banxico.extra_catalog(). Pasan por el mismo candado (título, periodicidad, unidad y verified). key es el id que usa el contrato de cada endpoint, group dice a qué endpoint sirve y rangoCreible es la banda de cordura del último dato en las unidades del SIE (por ciento, pesos o millones de dólares), antes de convertir a fracción.",
+  "adicionales": [
+    {
+      "id": "SF43883",
+      "key": "bonoM3",
+      "group": "curva",
+      "instrument": "bonoM",
+      "tenorYears": 3,
+      "label": "Bono M a 3 años",
+      "unit": "fraction",
+      "sieUnit": "percent",
+      "verified": true,
+      "periodicidad": "Diaria",
+      "maxAgeDays": 60,
+      "rangoCreible": [
+        1,
+        25
+      ],
+      "tituloContiene": [
+        "subasta",
+        "tasa de rendimiento",
+        "tasa fija a 3 anos"
+      ],
+      "tituloExcluye": [
+        "udibono",
+        "monto",
+        "plazo",
+        "sobretasa",
+        "precio"
+      ],
+      "nota": "Tasa de rendimiento de la subasta primaria del Bono M a 3 años. Entre octubre de 2023 y octubre de 2026 el hueco más largo entre subastas fue de 49 días."
+    },
+    {
+      "id": "SF43886",
+      "key": "bonoM5",
+      "group": "curva",
+      "instrument": "bonoM",
+      "tenorYears": 5,
+      "label": "Bono M a 5 años",
+      "unit": "fraction",
+      "sieUnit": "percent",
+      "verified": true,
+      "periodicidad": "Diaria",
+      "maxAgeDays": 60,
+      "rangoCreible": [
+        1,
+        25
+      ],
+      "tituloContiene": [
+        "subasta",
+        "tasa de rendimiento",
+        "tasa fija 5 anos"
+      ],
+      "tituloExcluye": [
+        "udibono",
+        "monto",
+        "plazo",
+        "sobretasa",
+        "precio"
+      ],
+      "nota": "Tasa de rendimiento de la subasta primaria del Bono M a 5 años. Hueco más largo entre subastas en tres años: 49 días."
+    },
+    {
+      "id": "SF45384",
+      "key": "bonoM20",
+      "group": "curva",
+      "instrument": "bonoM",
+      "tenorYears": 20,
+      "label": "Bono M a 20 años",
+      "unit": "fraction",
+      "sieUnit": "percent",
+      "verified": true,
+      "periodicidad": "Diaria",
+      "maxAgeDays": 70,
+      "rangoCreible": [
+        1,
+        25
+      ],
+      "tituloContiene": [
+        "subasta",
+        "tasa de rendimiento",
+        "tasa fija 20 anos"
+      ],
+      "tituloExcluye": [
+        "udibono",
+        "monto",
+        "plazo",
+        "sobretasa",
+        "precio"
+      ],
+      "nota": "Tasa de rendimiento de la subasta primaria del Bono M a 20 años. Hueco más largo entre subastas en tres años: 63 días, de ahí maxAgeDays 70."
+    },
+    {
+      "id": "SF60696",
+      "key": "bonoM30",
+      "group": "curva",
+      "instrument": "bonoM",
+      "tenorYears": 30,
+      "label": "Bono M a 30 años",
+      "unit": "fraction",
+      "sieUnit": "percent",
+      "verified": true,
+      "periodicidad": "Diaria",
+      "maxAgeDays": 70,
+      "rangoCreible": [
+        1,
+        25
+      ],
+      "tituloContiene": [
+        "subasta",
+        "tasa de rendimiento",
+        "tasa fija a 30 anos"
+      ],
+      "tituloExcluye": [
+        "udibono",
+        "monto",
+        "plazo",
+        "sobretasa",
+        "precio"
+      ],
+      "nota": "Tasa de rendimiento de la subasta del Bono M a 30 años. SF60691 (\"Bonos tasa fija a 30 años\", sin \"tasa de rendimiento\" en el título) trae el mismo valor con otra fecha y no pasa el candado. Hueco más largo en tres años: 63 días."
+    },
+    {
+      "id": "SF61592",
+      "key": "udibono3",
+      "group": "curva",
+      "instrument": "udibono",
+      "tenorYears": 3,
+      "label": "Udibono a 3 años",
+      "unit": "fraction",
+      "sieUnit": "percent",
+      "verified": true,
+      "periodicidad": "Diaria",
+      "maxAgeDays": 50,
+      "rangoCreible": [
+        -2,
+        15
+      ],
+      "tituloContiene": [
+        "subasta",
+        "tasa de rendimiento",
+        "udibonos a 3 anos"
+      ],
+      "tituloExcluye": [
+        "tasa fija",
+        "monto",
+        "plazo",
+        "sobretasa",
+        "precio"
+      ],
+      "nota": "Tasa real de rendimiento de la subasta primaria del Udibono a 3 años. Hueco más largo entre subastas en tres años: 41 días."
+    },
+    {
+      "id": "SF46958",
+      "key": "udibono20",
+      "group": "curva",
+      "instrument": "udibono",
+      "tenorYears": 20,
+      "label": "Udibono a 20 años",
+      "unit": "fraction",
+      "sieUnit": "percent",
+      "verified": true,
+      "periodicidad": "Diaria",
+      "maxAgeDays": 60,
+      "rangoCreible": [
+        -2,
+        15
+      ],
+      "tituloContiene": [
+        "subasta",
+        "tasa de rendimiento",
+        "udibonos a 20 anos"
+      ],
+      "tituloExcluye": [
+        "tasa fija",
+        "monto",
+        "plazo",
+        "sobretasa",
+        "precio"
+      ],
+      "nota": "Tasa real de rendimiento de la subasta primaria del Udibono a 20 años. Hueco más largo entre subastas en tres años: 50 días."
+    },
+    {
+      "id": "SF46961",
+      "key": "udibono30",
+      "group": "curva",
+      "instrument": "udibono",
+      "tenorYears": 30,
+      "label": "Udibono a 30 años",
+      "unit": "fraction",
+      "sieUnit": "percent",
+      "verified": true,
+      "periodicidad": "Diaria",
+      "maxAgeDays": 60,
+      "rangoCreible": [
+        -2,
+        15
+      ],
+      "tituloContiene": [
+        "subasta",
+        "tasa de rendimiento",
+        "udibonos a 30 anos"
+      ],
+      "tituloExcluye": [
+        "tasa fija",
+        "monto",
+        "plazo",
+        "sobretasa",
+        "precio"
+      ],
+      "nota": "Tasa real de rendimiento de la subasta primaria del Udibono a 30 años. Hueco más largo entre subastas en tres años: 49 días. No hay Udibono a 10 años en el SIE con id confirmado: ese nodo queda s/d."
+    },
+    {
+      "id": "SF43878",
+      "key": "tiie91",
+      "group": "mercadoDeDinero",
+      "instrument": "tiie",
+      "tenorDays": 91,
+      "label": "TIIE a 91 días",
+      "unit": "fraction",
+      "sieUnit": "percent",
+      "verified": true,
+      "periodicidad": "Diaria",
+      "maxAgeDays": 7,
+      "rangoCreible": [
+        0,
+        30
+      ],
+      "tituloContiene": [
+        "tiie a 91 dias"
+      ],
+      "tituloExcluye": [
+        "fondeo"
+      ],
+      "nota": "Tasa de interés interbancaria de equilibrio a 91 días, en por ciento anual. El SIE la fecha el día hábil siguiente a su determinación."
+    },
+    {
+      "id": "SF111916",
+      "key": "tiie182",
+      "group": "mercadoDeDinero",
+      "instrument": "tiie",
+      "tenorDays": 182,
+      "label": "TIIE a 182 días",
+      "unit": "fraction",
+      "sieUnit": "percent",
+      "verified": true,
+      "periodicidad": "Diaria",
+      "maxAgeDays": 10,
+      "rangoCreible": [
+        0,
+        30
+      ],
+      "tituloContiene": [
+        "tiie a 182 dias"
+      ],
+      "tituloExcluye": [
+        "fondeo"
+      ],
+      "nota": "Tasa de interés interbancaria de equilibrio a 182 días, en por ciento anual. Hueco más largo en tres años: 8 días (Semana Santa), de ahí maxAgeDays 10."
+    },
+    {
+      "id": "SF46410",
+      "key": "EURMXN",
+      "group": "cruces",
+      "pair": "EURMXN",
+      "label": "Euro en pesos",
+      "unit": "mxn",
+      "sieUnit": "mxn",
+      "verified": true,
+      "periodicidad": "Diaria",
+      "maxAgeDays": 7,
+      "rangoCreible": [
+        10,
+        40
+      ],
+      "tituloContiene": [
+        "respecto al peso mexicano",
+        "euro"
+      ],
+      "tituloExcluye": [],
+      "nota": "Pesos por euro, de la canasta del DEG que publica Banxico. Existe desde el 31 de julio de 2018."
+    },
+    {
+      "id": "SF46406",
+      "key": "JPYMXN",
+      "group": "cruces",
+      "pair": "JPYMXN",
+      "label": "Yen japonés en pesos",
+      "unit": "mxn",
+      "sieUnit": "mxn",
+      "verified": true,
+      "periodicidad": "Diaria",
+      "maxAgeDays": 7,
+      "rangoCreible": [
+        0.05,
+        0.4
+      ],
+      "tituloContiene": [
+        "respecto al peso mexicano",
+        "yen"
+      ],
+      "tituloExcluye": [],
+      "nota": "Pesos por yen, de la canasta del DEG que publica Banxico. Existe desde el 31 de julio de 2018."
+    },
+    {
+      "id": "SF46407",
+      "key": "GBPMXN",
+      "group": "cruces",
+      "pair": "GBPMXN",
+      "label": "Libra esterlina en pesos",
+      "unit": "mxn",
+      "sieUnit": "mxn",
+      "verified": true,
+      "periodicidad": "Diaria",
+      "maxAgeDays": 7,
+      "rangoCreible": [
+        10,
+        50
+      ],
+      "tituloContiene": [
+        "respecto al peso mexicano",
+        "libra esterlina"
+      ],
+      "tituloExcluye": [],
+      "nota": "Pesos por libra esterlina, de la canasta del DEG que publica Banxico. Existe desde el 31 de julio de 2018."
+    },
+    {
+      "id": "SF290383",
+      "key": "CNYMXN",
+      "group": "cruces",
+      "pair": "CNYMXN",
+      "label": "Yuan chino en pesos",
+      "unit": "mxn",
+      "sieUnit": "mxn",
+      "verified": true,
+      "periodicidad": "Diaria",
+      "maxAgeDays": 7,
+      "rangoCreible": [
+        1,
+        6
+      ],
+      "tituloContiene": [
+        "respecto al peso mexicano",
+        "yuan"
+      ],
+      "tituloExcluye": [],
+      "nota": "Pesos por yuan, de la canasta del DEG que publica Banxico. Existe desde el 31 de julio de 2018."
+    },
+    {
+      "id": "SF60632",
+      "key": "CADMXN",
+      "group": "cruces",
+      "pair": "CADMXN",
+      "label": "Dólar canadiense en pesos",
+      "unit": "mxn",
+      "sieUnit": "mxn",
+      "verified": true,
+      "periodicidad": "Diaria",
+      "maxAgeDays": 7,
+      "rangoCreible": [
+        6,
+        30
+      ],
+      "tituloContiene": [
+        "respecto al peso mexicano",
+        "dolar canadiense"
+      ],
+      "tituloExcluye": [],
+      "nota": "Pesos por dólar canadiense. Existe desde el 31 de julio de 2018. Trae N/E en algunos días hábiles (29 en tres años, entre ellos el 1 de octubre de 2026): se toma el último valor válido, nunca 0."
+    },
+    {
+      "id": "SE27803",
+      "key": "remittances",
+      "group": "macro",
+      "label": "Remesas familiares",
+      "unit": "usdMillions",
+      "sieUnit": "usdMillions",
+      "unidadExacta": [
+        "Millones de Dólares"
+      ],
+      "verified": true,
+      "periodicidad": "Mensual",
+      "maxAgeDays": 100,
+      "rangoCreible": [
+        1000,
+        15000
+      ],
+      "tituloContiene": [
+        "remesas familiares",
+        "total"
+      ],
+      "tituloExcluye": [
+        "numero",
+        "promedio"
+      ],
+      "nota": "Ingresos por remesas familiares del mes, en millones de dólares. El dato se fecha el día 1 del mes y Banxico lo publica hacia el primer día hábil del segundo mes siguiente, así que puede tener unos 92 días: de ahí maxAgeDays 100."
+    },
+    {
+      "id": "SF43707",
+      "key": "reserves",
+      "group": "macro",
+      "label": "Reserva internacional",
+      "unit": "usdMillions",
+      "sieUnit": "usdMillions",
+      "unidadExacta": [
+        "Millones de Dólares"
+      ],
+      "verified": true,
+      "periodicidad": "Diaria",
+      "maxAgeDays": 14,
+      "rangoCreible": [
+        100000,
+        500000
+      ],
+      "tituloContiene": [
+        "reserva internacional"
+      ],
+      "tituloExcluye": [
+        "variacion",
+        "activos"
+      ],
+      "nota": "Saldo de la reserva internacional, en millones de dólares. El SIE la etiqueta Diaria pero trae un dato por semana (el viernes); hueco más largo en tres años: 9 días."
+    },
+    {
+      "id": "SR14138",
+      "key": "inflationT.mean",
+      "group": "encuesta",
+      "item": "inflationT",
+      "stat": "mean",
+      "label": "Inflación esperada al cierre del año, media",
+      "unit": "fraction",
+      "sieUnit": "percent",
+      "verified": true,
+      "periodicidad": "Mensual",
+      "maxAgeDays": 70,
+      "rangoCreible": [
+        0,
+        30
+      ],
+      "tituloContiene": [
+        "especialistas en economia del sector privado",
+        "expectativas de inflacion anual",
+        "año en curso",
+        "media"
+      ],
+      "tituloExcluye": [
+        "mediana",
+        "siguiente",
+        "subyacente"
+      ],
+      "nota": "Encuesta mensual de Banxico a especialistas del sector privado. El dato se fecha el día 1 del mes del levantamiento y se publica a inicios del mes siguiente, así que puede tener hasta unos 62 días: de ahí maxAgeDays 70. El año t es el año de esa fecha, no el de la consulta."
+    },
+    {
+      "id": "SR14139",
+      "key": "inflationT.median",
+      "group": "encuesta",
+      "item": "inflationT",
+      "stat": "median",
+      "label": "Inflación esperada al cierre del año, mediana",
+      "unit": "fraction",
+      "sieUnit": "percent",
+      "verified": true,
+      "periodicidad": "Mensual",
+      "maxAgeDays": 70,
+      "rangoCreible": [
+        0,
+        30
+      ],
+      "tituloContiene": [
+        "especialistas en economia del sector privado",
+        "expectativas de inflacion anual",
+        "año en curso",
+        "mediana"
+      ],
+      "tituloExcluye": [
+        "siguiente",
+        "subyacente"
+      ],
+      "nota": "Encuesta mensual de Banxico a especialistas del sector privado. El dato se fecha el día 1 del mes del levantamiento y se publica a inicios del mes siguiente, así que puede tener hasta unos 62 días: de ahí maxAgeDays 70. El año t es el año de esa fecha, no el de la consulta."
+    },
+    {
+      "id": "SR14145",
+      "key": "inflationT1.mean",
+      "group": "encuesta",
+      "item": "inflationT1",
+      "stat": "mean",
+      "label": "Inflación esperada al cierre del año siguiente, media",
+      "unit": "fraction",
+      "sieUnit": "percent",
+      "verified": true,
+      "periodicidad": "Mensual",
+      "maxAgeDays": 70,
+      "rangoCreible": [
+        0,
+        30
+      ],
+      "tituloContiene": [
+        "especialistas en economia del sector privado",
+        "expectativas de inflacion anual",
+        "siguiente año",
+        "media"
+      ],
+      "tituloExcluye": [
+        "mediana",
+        "en curso",
+        "subyacente"
+      ],
+      "nota": "Encuesta mensual de Banxico a especialistas del sector privado. El dato se fecha el día 1 del mes del levantamiento y se publica a inicios del mes siguiente, así que puede tener hasta unos 62 días: de ahí maxAgeDays 70. El año t es el año de esa fecha, no el de la consulta."
+    },
+    {
+      "id": "SR14146",
+      "key": "inflationT1.median",
+      "group": "encuesta",
+      "item": "inflationT1",
+      "stat": "median",
+      "label": "Inflación esperada al cierre del año siguiente, mediana",
+      "unit": "fraction",
+      "sieUnit": "percent",
+      "verified": true,
+      "periodicidad": "Mensual",
+      "maxAgeDays": 70,
+      "rangoCreible": [
+        0,
+        30
+      ],
+      "tituloContiene": [
+        "especialistas en economia del sector privado",
+        "expectativas de inflacion anual",
+        "siguiente año",
+        "mediana"
+      ],
+      "tituloExcluye": [
+        "en curso",
+        "subyacente"
+      ],
+      "nota": "Encuesta mensual de Banxico a especialistas del sector privado. El dato se fecha el día 1 del mes del levantamiento y se publica a inicios del mes siguiente, así que puede tener hasta unos 62 días: de ahí maxAgeDays 70. El año t es el año de esa fecha, no el de la consulta. Se infirió por secuencia y el 1 de octubre de 2026 se confirmó leyendo su título en el SIE."
+    },
+    {
+      "id": "SR14447",
+      "key": "gdpT.mean",
+      "group": "encuesta",
+      "item": "gdpT",
+      "stat": "mean",
+      "label": "Crecimiento real del PIB esperado en el año, media",
+      "unit": "fraction",
+      "sieUnit": "percent",
+      "verified": true,
+      "periodicidad": "Mensual",
+      "maxAgeDays": 70,
+      "rangoCreible": [
+        -15,
+        15
+      ],
+      "tituloContiene": [
+        "especialistas en economia del sector privado",
+        "variacion porcentual real anual del pib",
+        "año en curso",
+        "media"
+      ],
+      "tituloExcluye": [
+        "mediana",
+        "siguiente"
+      ],
+      "nota": "Encuesta mensual de Banxico a especialistas del sector privado. El dato se fecha el día 1 del mes del levantamiento y se publica a inicios del mes siguiente, así que puede tener hasta unos 62 días: de ahí maxAgeDays 70. El año t es el año de esa fecha, no el de la consulta."
+    },
+    {
+      "id": "SR14448",
+      "key": "gdpT.median",
+      "group": "encuesta",
+      "item": "gdpT",
+      "stat": "median",
+      "label": "Crecimiento real del PIB esperado en el año, mediana",
+      "unit": "fraction",
+      "sieUnit": "percent",
+      "verified": true,
+      "periodicidad": "Mensual",
+      "maxAgeDays": 70,
+      "rangoCreible": [
+        -15,
+        15
+      ],
+      "tituloContiene": [
+        "especialistas en economia del sector privado",
+        "variacion porcentual real anual del pib",
+        "año en curso",
+        "mediana"
+      ],
+      "tituloExcluye": [
+        "siguiente"
+      ],
+      "nota": "Encuesta mensual de Banxico a especialistas del sector privado. El dato se fecha el día 1 del mes del levantamiento y se publica a inicios del mes siguiente, así que puede tener hasta unos 62 días: de ahí maxAgeDays 70. El año t es el año de esa fecha, no el de la consulta. Se infirió por secuencia y el 1 de octubre de 2026 se confirmó leyendo su título en el SIE."
+    },
+    {
+      "id": "SR14769",
+      "key": "fxT.mean",
+      "group": "encuesta",
+      "item": "fxT",
+      "stat": "mean",
+      "label": "Tipo de cambio esperado al cierre del año, media",
+      "unit": "mxnPerUsd",
+      "sieUnit": "mxn",
+      "verified": true,
+      "periodicidad": "Mensual",
+      "maxAgeDays": 70,
+      "rangoCreible": [
+        10,
+        40
+      ],
+      "tituloContiene": [
+        "especialistas en economia del sector privado",
+        "expectativas del tipo de cambio al cierre del ano",
+        "año en curso",
+        "media"
+      ],
+      "tituloExcluye": [
+        "mediana",
+        "siguiente"
+      ],
+      "nota": "Encuesta mensual de Banxico a especialistas del sector privado. El dato se fecha el día 1 del mes del levantamiento y se publica a inicios del mes siguiente, así que puede tener hasta unos 62 días: de ahí maxAgeDays 70. El año t es el año de esa fecha, no el de la consulta. Se infirió por secuencia y el 1 de octubre de 2026 se confirmó leyendo su título en el SIE."
+    },
+    {
+      "id": "SR14770",
+      "key": "fxT.median",
+      "group": "encuesta",
+      "item": "fxT",
+      "stat": "median",
+      "label": "Tipo de cambio esperado al cierre del año, mediana",
+      "unit": "mxnPerUsd",
+      "sieUnit": "mxn",
+      "verified": true,
+      "periodicidad": "Mensual",
+      "maxAgeDays": 70,
+      "rangoCreible": [
+        10,
+        40
+      ],
+      "tituloContiene": [
+        "especialistas en economia del sector privado",
+        "expectativas del tipo de cambio al cierre del ano",
+        "año en curso",
+        "mediana"
+      ],
+      "tituloExcluye": [
+        "siguiente"
+      ],
+      "nota": "Encuesta mensual de Banxico a especialistas del sector privado. El dato se fecha el día 1 del mes del levantamiento y se publica a inicios del mes siguiente, así que puede tener hasta unos 62 días: de ahí maxAgeDays 70. El año t es el año de esa fecha, no el de la consulta."
+    },
+    {
+      "id": "SR14776",
+      "key": "fxT1.mean",
+      "group": "encuesta",
+      "item": "fxT1",
+      "stat": "mean",
+      "label": "Tipo de cambio esperado al cierre del año siguiente, media",
+      "unit": "mxnPerUsd",
+      "sieUnit": "mxn",
+      "verified": true,
+      "periodicidad": "Mensual",
+      "maxAgeDays": 70,
+      "rangoCreible": [
+        10,
+        40
+      ],
+      "tituloContiene": [
+        "especialistas en economia del sector privado",
+        "expectativas del tipo de cambio al cierre del ano",
+        "siguiente año",
+        "media"
+      ],
+      "tituloExcluye": [
+        "mediana",
+        "en curso"
+      ],
+      "nota": "Encuesta mensual de Banxico a especialistas del sector privado. El dato se fecha el día 1 del mes del levantamiento y se publica a inicios del mes siguiente, así que puede tener hasta unos 62 días: de ahí maxAgeDays 70. El año t es el año de esa fecha, no el de la consulta."
+    },
+    {
+      "id": "SR14777",
+      "key": "fxT1.median",
+      "group": "encuesta",
+      "item": "fxT1",
+      "stat": "median",
+      "label": "Tipo de cambio esperado al cierre del año siguiente, mediana",
+      "unit": "mxnPerUsd",
+      "sieUnit": "mxn",
+      "verified": true,
+      "periodicidad": "Mensual",
+      "maxAgeDays": 70,
+      "rangoCreible": [
+        10,
+        40
+      ],
+      "tituloContiene": [
+        "especialistas en economia del sector privado",
+        "expectativas del tipo de cambio al cierre del ano",
+        "siguiente año",
+        "mediana"
+      ],
+      "tituloExcluye": [
+        "en curso"
+      ],
+      "nota": "Encuesta mensual de Banxico a especialistas del sector privado. El dato se fecha el día 1 del mes del levantamiento y se publica a inicios del mes siguiente, así que puede tener hasta unos 62 días: de ahí maxAgeDays 70. El año t es el año de esa fecha, no el de la consulta."
+    }
+  ],
+  "adicionalesVerificadas": [
+    "SE27803",
+    "SF111916",
+    "SF290383",
+    "SF43707",
+    "SF43878",
+    "SF43883",
+    "SF43886",
+    "SF45384",
+    "SF46406",
+    "SF46407",
+    "SF46410",
+    "SF46958",
+    "SF46961",
+    "SF60632",
+    "SF60696",
+    "SF61592",
+    "SR14138",
+    "SR14139",
+    "SR14145",
+    "SR14146",
+    "SR14447",
+    "SR14448",
+    "SR14769",
+    "SR14770",
+    "SR14776",
+    "SR14777"
+  ],
+  "adicionalesRevisado": "2026-10-01"
 }

@@ -27,6 +27,19 @@ https://www.banxico.org.mx/SieAPIRest/service/v1/token; en la Mac del dueño viv
 Esa prueba pide los metadatos de cada id del catálogo, los pasa por :func:`classify` (el mismo
 candado de título, periodicidad y unidad que usa el servidor) e imprime la lista de ids que se
 pueden dejar en ``verified: true``.
+
+**Series adicionales (fase 5).** La llave ``adicionales`` del mismo archivo trae las series que NO
+son renglones de ``/v2/rates/mx``: la curva de Bonos M y Udibonos, la TIIE a 91 y 182 días, los
+cruces del peso, las remesas, la reserva internacional y la encuesta de especialistas. Se leen con
+:func:`extra_catalog` (o :func:`extra_for` y :func:`extra_group`) y pasan por el mismo candado:
+:func:`reviewed` y :func:`verification` las conocen igual que a las de ``series``. Su ``key`` es el
+id que usa el contrato de cada endpoint (``bonoM20``, ``tiie91``, ``EURMXN``, ``remittances``,
+``inflationT1.median``) y ``rangoCreible`` es la banda de cordura del último dato en unidades del
+SIE. Se confirmaron en vivo las 26 el 1 de octubre de 2026.
+
+**Límite del SIE.** Una consulta con más de 20 ids responde 413 (probado el 1 de octubre de 2026:
+20 pasan, 21 no). :func:`fetch_series` y :func:`fetch_metadata` parten la lista en tandas de
+:data:`MAX_IDS_PER_REQUEST` y unen las respuestas, así que quien llama puede pedir las que quiera.
 """
 
 from __future__ import annotations
@@ -54,6 +67,9 @@ ciento). No es la lista de publicables: esa la da ``verified`` en el catálogo, 
 TIMEOUT = 10
 CATALOG_PATH = Path(__file__).resolve().parents[1] / "data" / "banxico_series.json"
 
+MAX_IDS_PER_REQUEST = 20
+"""Cuántos ids acepta el SIE en una sola consulta: con 21 responde 413 (probado el 1 oct 2026)."""
+
 NO_DATA = ("N/E", "N/D", "", "-")
 """Marcas del SIE para "sin dato". ``N/E`` = no existe ese día (feriado, serie sin publicar)."""
 
@@ -72,7 +88,7 @@ def catalog() -> dict[str, dict[str, Any]]:
 def catalog_notes() -> dict[str, Any]:
     """El resto del archivo del catálogo (cómo verificar, fecha de revisión)."""
     raw = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
-    return {k: v for k, v in raw.items() if k not in ("series", "indices")}
+    return {k: v for k, v in raw.items() if k not in ("series", "indices", "adicionales")}
 
 
 @lru_cache(maxsize=1)
@@ -87,8 +103,51 @@ def index_catalog() -> dict[str, dict[str, Any]]:
     return {item["id"]: item for item in raw.get("indices") or []}
 
 
+@lru_cache(maxsize=1)
+def extra_catalog() -> dict[str, dict[str, Any]]:
+    """Series del SIE para los endpoints de la fase 5, que no son renglones de ``/v2/rates/mx``.
+
+    Viven en la llave ``adicionales`` de ``banxico_series.json``: ``{idSerie: {key, group, label,
+    unit, sieUnit, verified, periodicidad, maxAgeDays, rangoCreible, tituloContiene, ...}}``. Los
+    grupos son ``curva`` (Bonos M y Udibonos, con ``instrument`` y ``tenorYears``),
+    ``mercadoDeDinero`` (TIIE 91 y 182, con ``tenorDays``), ``cruces`` (con ``pair``), ``macro``
+    (remesas y reserva internacional) y ``encuesta`` (con ``item`` y ``stat``: ``mean`` o
+    ``median``). Para publicar una hace falta lo mismo que en las demás: :func:`reviewed` y que
+    :func:`verification` no traiga razones.
+    """
+    raw = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
+    return {item["id"]: item for item in raw.get("adicionales") or []}
+
+
+def extra_for(key: str) -> str | None:
+    """Id del SIE de una serie adicional por su ``key`` (``bonoM20`` a ``SF45384``)."""
+    for sid, item in extra_catalog().items():
+        if item.get("key") == key:
+            return sid
+    return None
+
+
+def extra_group(group: str) -> dict[str, dict[str, Any]]:
+    """Las series adicionales de un grupo (``curva``, ``mercadoDeDinero``, ``cruces``, ``macro``, ``encuesta``)."""
+    return {sid: item for sid, item in extra_catalog().items() if item.get("group") == group}
+
+
+SCALE_TO_CONTRACT = {"percent": 0.01}
+"""Por cuánto se multiplica el dato del SIE para llegar a la unidad del API v2 (por ciento a fracción)."""
+
+
+def scale_for(series_id: str) -> float:
+    """``0.01`` si la serie viene en por ciento (se publica como fracción) y ``1.0`` en lo demás."""
+    return SCALE_TO_CONTRACT.get(str(_entry(series_id).get("sieUnit") or ""), 1.0)
+
+
 def _entry(series_id: str) -> dict[str, Any]:
-    return catalog().get(series_id) or index_catalog().get(series_id) or {}
+    return (
+        catalog().get(series_id)
+        or index_catalog().get(series_id)
+        or extra_catalog().get(series_id)
+        or {}
+    )
 
 
 def series_for(rate_id: str) -> str | None:
@@ -104,6 +163,7 @@ def _forget_catalog() -> None:
     catalog.cache_clear()
     catalog_notes.cache_clear()
     index_catalog.cache_clear()
+    extra_catalog.cache_clear()
 
 
 # ─── formatos del SIE ────────────────────────────────────────────────────────
@@ -202,11 +262,21 @@ def _series_of(body: dict) -> list[dict]:
     return [s for s in series if isinstance(s, dict)] if isinstance(series, list) else []
 
 
-def _ids(series_ids: list[str] | tuple[str, ...]) -> str:
+def _id_list(series_ids: list[str] | tuple[str, ...]) -> list[str]:
     clean = [str(s).strip().upper() for s in series_ids if str(s).strip()]
     if not clean:
         raise ValueError("banxico: hay que pedir al menos una serie")
-    return ",".join(dict.fromkeys(clean))
+    return list(dict.fromkeys(clean))
+
+
+def _ids(series_ids: list[str] | tuple[str, ...]) -> str:
+    return ",".join(_id_list(series_ids))
+
+
+def _batches(series_ids: list[str] | tuple[str, ...]) -> list[str]:
+    """Los ids en tandas de :data:`MAX_IDS_PER_REQUEST`, ya unidos con coma para la URL."""
+    ids = _id_list(series_ids)
+    return [",".join(ids[i : i + MAX_IDS_PER_REQUEST]) for i in range(0, len(ids), MAX_IDS_PER_REQUEST)]
 
 
 def fetch_series(
@@ -220,16 +290,14 @@ def fetch_series(
     cronológico y sin los días marcados ``N/E``. Sin ``start`` ni ``end`` pide el dato oportuno
     (el último publicado). Sin token levanta 503 ``NOT_CONFIGURED``.
     """
-    ids = _ids(series_ids)
-    if start and end:
-        path = f"/series/{ids}/datos/{start}/{end}"
-    elif start or end:
+    if bool(start) != bool(end):
         raise ValueError("banxico: el rango necesita start y end, o ninguno de los dos")
-    else:
-        path = f"/series/{ids}/datos/oportuno"
-    body = _get(path)
+    suffix = f"/datos/{start}/{end}" if start and end else "/datos/oportuno"
+    raw: list[dict] = []
+    for ids in _batches(series_ids):
+        raw.extend(_series_of(_get(f"/series/{ids}{suffix}")))
     out: dict[str, dict] = {}
-    for serie in _series_of(body):
+    for serie in raw:
         sid = str(serie.get("idSerie") or "").upper()
         if not sid:
             continue
@@ -256,9 +324,11 @@ def fetch_series(
 
 def fetch_metadata(series_ids: list[str] | tuple[str, ...]) -> dict[str, dict]:
     """Metadatos del SIE: ``{idSerie: {"titulo", "unidad", "periodicidad", "fechaFin", ...}}``."""
-    body = _get(f"/series/{_ids(series_ids)}")
+    raw: list[dict] = []
+    for ids in _batches(series_ids):
+        raw.extend(_series_of(_get(f"/series/{ids}")))
     out: dict[str, dict] = {}
-    for serie in _series_of(body):
+    for serie in raw:
         sid = str(serie.get("idSerie") or "").upper()
         if sid:
             out[sid] = {
@@ -285,7 +355,10 @@ NOT_RETURNED = "el SIE no devolvió esta serie"
 
 UNIT_WORDS = {"percent": ("por ciento", "porcentaje", "%"), "mxn": ("peso",)}
 """Lo que tiene que decir la ``unidad`` del SIE según el ``sieUnit`` del catálogo."""
-UNIT_NAMES = {"percent": "por ciento", "mxn": "pesos"}
+UNIT_NAMES = {"percent": "por ciento", "mxn": "pesos", "usdMillions": "millones de dólares"}
+"""Cómo se nombra cada ``sieUnit`` en la razón de rechazo. ``usdMillions`` (remesas y reserva) no
+tiene palabras en :data:`UNIT_WORDS` a propósito: solo pasa con su ``unidadExacta`` ("Millones de
+Dólares"), así que una serie en millones de pesos o en número de operaciones no se cuela."""
 
 
 def mismatches(info: dict | None, item: dict) -> list[str]:
@@ -313,8 +386,9 @@ def mismatches(info: dict | None, item: dict) -> list[str]:
     unidad = str(info.get("unidad") or "")
     words = UNIT_WORDS.get(str(item.get("sieUnit") or ""), ())
     # ``unidadExacta``: la etiqueta literal que el SIE reporta para ESA serie aunque no diga por ciento
-    # ni pesos ("Sin Unidad" en SF61745, SF43783, SP30578 y SP74662, "Unidades de Inversión" en SP68257). Es por serie
-    # y compara la unidad completa, así que no relaja el candado de las demás.
+    # ni pesos ("Sin Unidad" en SF61745, SF43783, SP30578 y SP74662, "Unidades de Inversión" en SP68257,
+    # "Millones de Dólares" en SE27803 y SF43707). Es por serie y compara la unidad completa, así que no
+    # relaja el candado de las demás.
     exactas = {_fold(str(u)).strip() for u in item.get("unidadExacta") or []}
     if not any(word in _fold(unidad) for word in words) and _fold(unidad).strip() not in exactas:
         esperada = UNIT_NAMES.get(str(item.get("sieUnit") or ""), "la del catálogo")

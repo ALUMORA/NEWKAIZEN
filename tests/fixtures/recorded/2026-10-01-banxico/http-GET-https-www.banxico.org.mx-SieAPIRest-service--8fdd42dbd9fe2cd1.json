@@ -1,0 +1,31 @@
+{
+ "key": "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF46410,SF46406,SF46407,SF290383,SF60632/datos/oportuno",
+ "provider": "http",
+ "method": "GET",
+ "url": "https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF46410,SF46406,SF46407,SF290383,SF60632/datos/oportuno",
+ "params": null,
+ "kind": "value",
+ "payload": {
+  "status": 200,
+  "reason": "OK",
+  "url": "https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF46410,SF46406,SF46407,SF290383,SF60632/datos/oportuno",
+  "encoding": "UTF-8",
+  "headers": {
+   "Access-Control-Allow-Origin": "*",
+   "Access-Control-Allow-Headers": "Bmx-Token, Accept, Accept-Encoding, Content-Type",
+   "Access-Control-Allow-Methods": "GET",
+   "Content-Security-Policy": "script-src 'self'",
+   "Cache-Control": "no-store",
+   "Content-Language": "es",
+   "Content-Type": "application/json;charset=UTF-8",
+   "Date": "Thu, 01 Oct 2026 23:28:30 GMT"
+  },
+  "body": {
+   "text": "{\"bmx\":{\"series\":[{\"idSerie\":\"SF46410\",\"titulo\":\"Cotización de las divisas que conforman la canasta del DEG Respecto al peso mexicano Euro\",\"datos\":[{\"fecha\":\"01/10/2026\",\"dato\":\"20.7457\"}]},{\"idSerie\":\"SF60632\",\"titulo\":\"Cotización de la divisa Respecto al peso mexicano Dólar Canadiense\",\"datos\":[{\"fecha\":\"01/10/2026\",\"dato\":\"12.8436\"}]},{\"idSerie\":\"SF290383\",\"titulo\":\"Cotización de las divisas que conforman la canasta del DEG 1/ y del DEG respecto al Peso mexicano 2/ Yuan chino\",\"datos\":[{\"fecha\":\"01/10/2026\",\"dato\":\"2.7344\"}]},{\"idSerie\":\"SF46407\",\"titulo\":\"Cotización de las divisas que conforman la canasta del DEG Respecto al peso mexicano Libra esterlina\",\"datos\":[{\"fecha\":\"01/10/2026\",\"dato\":\"24.2927\"}]},{\"idSerie\":\"SF46406\",\"titulo\":\"Cotización de las divisas que conforman la canasta del DEG Respecto al peso mexicano Yen japonés\",\"datos\":[{\"fecha\":\"01/10/2026\",\"dato\":\"0.1162\"}]}]}}"
+  }
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:28:31+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "e7939ba70221"
+}

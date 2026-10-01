@@ -1,0 +1,278 @@
+{
+  "capturado": "2026-10-01",
+  "fuente": "GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/<ids>/datos/oportuno (el último dato publicado; el token va en la cabecera y no se guarda aquí).",
+  "bmx": {
+    "series": [
+      {
+        "idSerie": "SE27803",
+        "titulo": "Remesas Familiares Total",
+        "datos": [
+          {
+            "fecha": "01/08/2026",
+            "dato": "5,452.3367"
+          }
+        ]
+      },
+      {
+        "idSerie": "SF111916",
+        "titulo": "TIIE a 182 días",
+        "datos": [
+          {
+            "fecha": "02/10/2026",
+            "dato": "6.9817"
+          }
+        ]
+      },
+      {
+        "idSerie": "SF290383",
+        "titulo": "Cotización de las divisas que conforman la canasta del DEG 1/ y del DEG respecto al Peso mexicano 2/ Yuan chino",
+        "datos": [
+          {
+            "fecha": "01/10/2026",
+            "dato": "2.7344"
+          }
+        ]
+      },
+      {
+        "idSerie": "SF43707",
+        "titulo": "Reserva Internacional",
+        "datos": [
+          {
+            "fecha": "25/09/2026",
+            "dato": "256,542.8"
+          }
+        ]
+      },
+      {
+        "idSerie": "SF43878",
+        "titulo": "Tasas de interés interbancarias                Por ciento anual TIIE a 91 días",
+        "datos": [
+          {
+            "fecha": "02/10/2026",
+            "dato": "6.9252"
+          }
+        ]
+      },
+      {
+        "idSerie": "SF43883",
+        "titulo": "Valores gubernamentales Resultados de la subasta semanal Tasa de rendimiento Bonos a tasa fija a 3 años",
+        "datos": [
+          {
+            "fecha": "10/09/2026",
+            "dato": "8.24"
+          }
+        ]
+      },
+      {
+        "idSerie": "SF43886",
+        "titulo": "Valores gubernamentales                        Resultados de la subasta semanal Tasa de rendimiento                            Bono tasa fija 5 años",
+        "datos": [
+          {
+            "fecha": "17/09/2026",
+            "dato": "9.00"
+          }
+        ]
+      },
+      {
+        "idSerie": "SF45384",
+        "titulo": "Valores Gubernamentales    Resultados de la subasta semanal Tasa de rendimiento  Bono tasa fija 20 años",
+        "datos": [
+          {
+            "fecha": "27/08/2026",
+            "dato": "9.64"
+          }
+        ]
+      },
+      {
+        "idSerie": "SF46406",
+        "titulo": "Cotización de las divisas que conforman la canasta del DEG Respecto al peso mexicano Yen japonés",
+        "datos": [
+          {
+            "fecha": "01/10/2026",
+            "dato": "0.1162"
+          }
+        ]
+      },
+      {
+        "idSerie": "SF46407",
+        "titulo": "Cotización de las divisas que conforman la canasta del DEG Respecto al peso mexicano Libra esterlina",
+        "datos": [
+          {
+            "fecha": "01/10/2026",
+            "dato": "24.2927"
+          }
+        ]
+      },
+      {
+        "idSerie": "SF46410",
+        "titulo": "Cotización de las divisas que conforman la canasta del DEG Respecto al peso mexicano Euro",
+        "datos": [
+          {
+            "fecha": "01/10/2026",
+            "dato": "20.7457"
+          }
+        ]
+      },
+      {
+        "idSerie": "SF46958",
+        "titulo": "Valores Gubernamentales   Resultados de la subasta semanal Tasa de rendimiento   Udibonos a 20 años",
+        "datos": [
+          {
+            "fecha": "27/08/2026",
+            "dato": "4.61"
+          }
+        ]
+      },
+      {
+        "idSerie": "SF46961",
+        "titulo": "Valores Gubernamentales   Resultados de la subasta semanal Tasa de rendimiento   Udibonos a 30 años",
+        "datos": [
+          {
+            "fecha": "17/09/2026",
+            "dato": "4.90"
+          }
+        ]
+      },
+      {
+        "idSerie": "SF60632",
+        "titulo": "Cotización de la divisa Respecto al peso mexicano Dólar Canadiense",
+        "datos": [
+          {
+            "fecha": "01/10/2026",
+            "dato": "N/E"
+          }
+        ]
+      },
+      {
+        "idSerie": "SF60691",
+        "titulo": "Bonos tasa fija a 30 años",
+        "datos": [
+          {
+            "fecha": "29/09/2026",
+            "dato": "10.15"
+          }
+        ]
+      },
+      {
+        "idSerie": "SF60696",
+        "titulo": "Valores Gubernamentales Resultados de la subasta semanal, Tasa de rendimiento Bonos a tasa fija a 30 años",
+        "datos": [
+          {
+            "fecha": "01/10/2026",
+            "dato": "10.15"
+          }
+        ]
+      },
+      {
+        "idSerie": "SF61592",
+        "titulo": "Valores gubernamentales                        Resultados de la subasta semanal Tasa de rendimiento                            Udibonos a 3 años",
+        "datos": [
+          {
+            "fecha": "24/09/2026",
+            "dato": "4.00"
+          }
+        ]
+      },
+      {
+        "idSerie": "SR14138",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Expectativas de Inflación Anual Cifras en por ciento Inflación general Al cierre del año en curso (año t) Media",
+        "datos": [
+          {
+            "fecha": "01/09/2026",
+            "dato": "3.85"
+          }
+        ]
+      },
+      {
+        "idSerie": "SR14139",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Expectativas de Inflación Anual Cifras en por ciento Inflación general Al cierre del año en curso (año t) Mediana",
+        "datos": [
+          {
+            "fecha": "01/09/2026",
+            "dato": "3.87"
+          }
+        ]
+      },
+      {
+        "idSerie": "SR14145",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Expectativas de Inflación Anual Cifras en por ciento Inflación general Al cierre del siguiente año (año t+1) Media",
+        "datos": [
+          {
+            "fecha": "01/09/2026",
+            "dato": "3.85"
+          }
+        ]
+      },
+      {
+        "idSerie": "SR14146",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Expectativas de Inflación Anual Cifras en por ciento Inflación general Al cierre del siguiente año (año t+1) Mediana",
+        "datos": [
+          {
+            "fecha": "01/09/2026",
+            "dato": "3.82"
+          }
+        ]
+      },
+      {
+        "idSerie": "SR14447",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Pronósticos de la Variación Porcentual Real Anual del PIB en el Año Indicado Cifras en por ciento Año en curso  (año t) Media",
+        "datos": [
+          {
+            "fecha": "01/09/2026",
+            "dato": "1.40"
+          }
+        ]
+      },
+      {
+        "idSerie": "SR14448",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Pronósticos de la Variación Porcentual Real Anual del PIB en el Año Indicado Cifras en por ciento Año en curso  (año t) Mediana",
+        "datos": [
+          {
+            "fecha": "01/09/2026",
+            "dato": "1.40"
+          }
+        ]
+      },
+      {
+        "idSerie": "SR14769",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Expectativas del Tipo de Cambio al Cierre del Año Pesos por dólar estadounidense Cierre del año en curso (año t) Media",
+        "datos": [
+          {
+            "fecha": "01/09/2026",
+            "dato": "17.57"
+          }
+        ]
+      },
+      {
+        "idSerie": "SR14770",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Expectativas del Tipo de Cambio al Cierre del Año Pesos por dólar estadounidense Cierre del año en curso (año t) Mediana",
+        "datos": [
+          {
+            "fecha": "01/09/2026",
+            "dato": "17.50"
+          }
+        ]
+      },
+      {
+        "idSerie": "SR14776",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Expectativas del Tipo de Cambio al Cierre del Año Pesos por dólar estadounidense Cierre del siguiente año (año t+1) Media",
+        "datos": [
+          {
+            "fecha": "01/09/2026",
+            "dato": "18.11"
+          }
+        ]
+      },
+      {
+        "idSerie": "SR14777",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Expectativas del Tipo de Cambio al Cierre del Año Pesos por dólar estadounidense Cierre del siguiente año (año t+1) Mediana",
+        "datos": [
+          {
+            "fecha": "01/09/2026",
+            "dato": "18.04"
+          }
+        ]
+      }
+    ]
+  }
+}
