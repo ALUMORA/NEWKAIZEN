@@ -120,7 +120,8 @@ def _banxico_points(start: str | None, end: str | None) -> list[tuple[str, float
     Lee la costura ``providers.banxico.fetch_series`` sin importarla en tiempo de módulo, para que
     B2b pueda cambiarle el cuerpo mientras esto corre. Acepta las dos formas razonables de
     respuesta: el sobre crudo del SIE (``{"bmx": {"series": [{"datos": [...]}]}}``) y un mapa ya
-    normalizado ``{"SF43718": [(fecha, valor), ...]}``.
+    normalizado, ``{"SF43718": [(fecha, valor), ...]}`` o el de ``fetch_series``,
+    ``{"SF43718": {"dates": [...], "values": [...]}}``.
     """
     from kaizen_api.providers import banxico
 
@@ -146,8 +147,14 @@ def _parse_banxico(raw) -> list[tuple[str, float]]:
                 rows.extend((item or {}).get("datos") or [])
         else:
             for key in ("datos", "SF43718", "sf43718"):
-                if isinstance(raw.get(key), list):
-                    rows.extend(raw[key])
+                value = raw.get(key)
+                if isinstance(value, list):
+                    rows.extend(value)
+                    break
+                # La forma que de verdad devuelve ``banxico.fetch_series``:
+                # ``{"SF43718": {"dates": [ISO...], "values": [float...]}}``, ya sin los ``N/E``.
+                if isinstance(value, dict) and isinstance(value.get("dates"), list):
+                    rows.extend(zip(value["dates"], value.get("values") or [], strict=False))
                     break
     elif isinstance(raw, list):
         rows = raw

@@ -189,3 +189,22 @@ def test_la_conversion_semanal_se_queda_en_yahoo(monkeypatch) -> None:
     monkeypatch.setattr(fx_domain, "_yahoo_points", lambda period, interval="1d": [("2026-09-14", 18.0)])
     series = fx_domain.series_for("1y", "1wk")
     assert series.source == fx_domain.YAHOO_SOURCE and series.fallback is True
+
+
+def test_el_fix_con_la_forma_real_del_proveedor_no_cae_a_yahoo(monkeypatch) -> None:
+    """``banxico.fetch_series`` devuelve ``{"SF43718": {"dates", "values"}}``, no el sobre crudo del SIE.
+
+    Las pruebas de arriba simulan el sobre ``{"bmx": ...}``; con el proveedor de verdad (y el token
+    puesto) ``_parse_banxico`` no reconocía la forma normalizada y el FIX siempre caía a Yahoo
+    marcado como respaldo. Aquí pasa por el ``fetch_series`` real con un ``N/E`` a media serie.
+    """
+    sobre = {"bmx": {"series": [{"idSerie": "SF43718", "titulo": "FIX", "datos": [
+        {"fecha": "17/09/2026", "dato": "18.4010"}, {"fecha": "18/09/2026", "dato": "N/E"},
+        {"fecha": "22/09/2026", "dato": "18.3500"}]}]}}
+    monkeypatch.setattr(banxico, "require_token", lambda: "token-falso")
+    monkeypatch.setattr(banxico, "_get", lambda path: sobre)
+    assert fx_domain._banxico_points("2026-09-17", "2026-09-22") == [("2026-09-17", 18.401), ("2026-09-22", 18.35)]
+    monkeypatch.setattr(fx_domain, "_today", lambda: _dt.date(2026, 9, 22))
+    serie = fx_domain.daily_range(_dt.date(2026, 9, 17), _dt.date(2026, 9, 22))
+    assert serie.source == fx_domain.BANXICO_FIX_SOURCE and serie.fallback is False
+    assert serie.values == [18.401, 18.35]
