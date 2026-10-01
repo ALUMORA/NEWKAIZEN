@@ -19,11 +19,18 @@ del catálogo y la unidad tiene que cuadrar con ``sieUnit``. Imprime tres listas
 los que el SIE no conoce y los que no cuadran, con la razón exacta. Después hay que poner
 ``verified: true`` **nada más en los ids confirmados** y actualizar ``revisado`` con la fecha.
 
+Las series adicionales de la fase 5 (llave ``adicionales`` del catálogo: curva de Bonos M y Udibonos,
+TIIE a 91 y 182 días, cruces del peso, remesas, reserva y encuesta de especialistas) pasan por el mismo
+candado en :func:`test_las_series_adicionales_son_las_que_dice_el_catalogo`, que imprime la tabla de
+títulos leídos, y por la banda ``rangoCreible`` en :func:`test_cada_serie_adicional_trae_un_dato_creible`.
+La corrida del 1 de octubre de 2026 confirmó las 26.
+
 Sin ``KAIZEN_LIVE=1`` se salta, y sin ``BANXICO_TOKEN`` también: no falla la corrida normal.
 """
 
 from __future__ import annotations
 
+import datetime as dt
 import os
 
 import pytest
@@ -116,3 +123,46 @@ def test_los_indices_del_catalogo_pasan_el_candado_en_vivo(token):
     assert resultado["distintos"] == [] and resultado["desconocidos"] == [], resultado
     data = rates_domain.get_inpc("2025-08-01", "2026-09-25")
     assert data["seriesId"] == "SP1" and 100 < data["monthly"]["2025-08"] < 200
+
+
+def test_las_series_adicionales_son_las_que_dice_el_catalogo(token, capsys):
+    """Las 26 de la fase 5: el SIE confirma título, periodicidad y unidad, y la tabla queda impresa."""
+    adicionales = banxico.extra_catalog()
+    metadatos = banxico.fetch_metadata(list(adicionales))  # más de 20 ids: el proveedor las parte en tandas
+    resultado = banxico.classify(adicionales, metadatos)
+    confirmados = resultado["confirmados"]
+    with capsys.disabled():
+        print("\n── series adicionales del SIE (fase 5) ──")
+        print("  id | key | título leído | periodicidad | unidad | último dato | confirmada")
+        for sid in sorted(adicionales, key=lambda s: (adicionales[s]["group"], s)):
+            info = metadatos.get(sid) or {}
+            print(f'  {sid} | {adicionales[sid]["key"]} | {" ".join(str(info.get("titulo", "")).split())} | '
+                  f'{info.get("periodicidad")} | {info.get("unidad")} | {info.get("fechaFin")} | '
+                  f'{"sí" if sid in confirmados else "NO"}')
+        for sid in resultado["desconocidos"]:
+            print(f"  ???  {sid}: el SIE no devolvió esta serie.")
+        for sid, razones in resultado["distintos"]:
+            print(f"  NO   {sid}: " + "; ".join(razones))
+        print(f"\n  {len(confirmados)} de {len(adicionales)} confirmadas.\n")
+    marcadas = sorted(sid for sid in adicionales if banxico.reviewed(sid))
+    assert set(marcadas) <= set(confirmados), f"marcadas sin pasar el candado: {set(marcadas) - set(confirmados)}"
+
+
+def test_cada_serie_adicional_trae_un_dato_creible(token):
+    """El último dato de los últimos 120 días cae en la banda ``rangoCreible`` de cada serie marcada.
+
+    Se pide un rango y no el dato oportuno porque el oportuno puede ser ``N/E`` (el dólar canadiense lo
+    trajo el 1 de octubre de 2026), y 120 días alcanzan a las mensuales (remesas tiene unos 92 de rezago).
+    """
+    adicionales = banxico.extra_catalog()
+    marcadas = sorted(sid for sid in adicionales if banxico.reviewed(sid))
+    hoy = dt.date.today()
+    series = banxico.fetch_series(marcadas, (hoy - dt.timedelta(days=120)).isoformat(), hoy.isoformat())
+    for sid in marcadas:
+        serie = series.get(sid)
+        assert serie and serie["values"], f"{sid} no devolvió datos en 120 días"
+        bajo, alto = adicionales[sid]["rangoCreible"]
+        valor = serie["values"][-1]
+        assert bajo < valor < alto, f"{sid} trajo {valor} el {serie['dates'][-1]}, fuera de [{bajo}, {alto}]"
+        edad = (hoy - dt.date.fromisoformat(serie["dates"][-1])).days
+        assert edad <= adicionales[sid]["maxAgeDays"], f"{sid} tiene {edad} días, más que su maxAgeDays"

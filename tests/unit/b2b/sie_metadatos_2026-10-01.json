@@ -1,0 +1,278 @@
+{
+  "capturado": "2026-10-01",
+  "fuente": "GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/<ids> (solo metadatos; el token va en la cabecera Bmx-Token y no se guarda aquí). Las 26 series adicionales de la fase 5 más SF60691, la vecina que no debe pasar como Bono M a 30 años.",
+  "bmx": {
+    "series": [
+      {
+        "idSerie": "SE27803",
+        "titulo": "Remesas Familiares Total",
+        "fechaInicio": "01/01/1995",
+        "fechaFin": "01/08/2026",
+        "periodicidad": "Mensual",
+        "cifra": "Flujos",
+        "unidad": "Millones de Dólares",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF111916",
+        "titulo": "TIIE a 182 días",
+        "fechaInicio": "06/04/2011",
+        "fechaFin": "02/10/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF290383",
+        "titulo": "Cotización de las divisas que conforman la canasta del DEG 1/ y del DEG respecto al Peso mexicano 2/ Yuan chino",
+        "fechaInicio": "31/07/2018",
+        "fechaFin": "01/10/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Tipo de Cambio",
+        "unidad": "Pesos",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF43707",
+        "titulo": "Reserva Internacional",
+        "fechaInicio": "29/12/1995",
+        "fechaFin": "25/09/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Saldos",
+        "unidad": "Millones de Dólares",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF43878",
+        "titulo": "Tasas de interés interbancarias                Por ciento anual TIIE a 91 días",
+        "fechaInicio": "23/01/1997",
+        "fechaFin": "02/10/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF43883",
+        "titulo": "Valores gubernamentales Resultados de la subasta semanal Tasa de rendimiento Bonos a tasa fija a 3 años",
+        "fechaInicio": "27/01/2000",
+        "fechaFin": "10/09/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF43886",
+        "titulo": "Valores gubernamentales                        Resultados de la subasta semanal Tasa de rendimiento                            Bono tasa fija 5 años",
+        "fechaInicio": "25/05/2000",
+        "fechaFin": "17/09/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF45384",
+        "titulo": "Valores Gubernamentales    Resultados de la subasta semanal Tasa de rendimiento  Bono tasa fija 20 años",
+        "fechaInicio": "30/10/2003",
+        "fechaFin": "27/08/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF46406",
+        "titulo": "Cotización de las divisas que conforman la canasta del DEG Respecto al peso mexicano Yen japonés",
+        "fechaInicio": "31/07/2018",
+        "fechaFin": "01/10/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Tipo de Cambio",
+        "unidad": "Pesos",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF46407",
+        "titulo": "Cotización de las divisas que conforman la canasta del DEG Respecto al peso mexicano Libra esterlina",
+        "fechaInicio": "31/07/2018",
+        "fechaFin": "01/10/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Tipo de Cambio",
+        "unidad": "Pesos",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF46410",
+        "titulo": "Cotización de las divisas que conforman la canasta del DEG Respecto al peso mexicano Euro",
+        "fechaInicio": "31/07/2018",
+        "fechaFin": "01/10/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Tipo de Cambio",
+        "unidad": "Pesos",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF46958",
+        "titulo": "Valores Gubernamentales   Resultados de la subasta semanal Tasa de rendimiento   Udibonos a 20 años",
+        "fechaInicio": "05/01/2006",
+        "fechaFin": "27/08/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF46961",
+        "titulo": "Valores Gubernamentales   Resultados de la subasta semanal Tasa de rendimiento   Udibonos a 30 años",
+        "fechaInicio": "05/01/2006",
+        "fechaFin": "17/09/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF60632",
+        "titulo": "Cotización de la divisa Respecto al peso mexicano Dólar Canadiense",
+        "fechaInicio": "31/07/2018",
+        "fechaFin": "01/10/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Tipo de Cambio",
+        "unidad": "Pesos",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF60691",
+        "titulo": "Bonos tasa fija a 30 años",
+        "fechaInicio": "24/10/2006",
+        "fechaFin": "29/09/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF60696",
+        "titulo": "Valores Gubernamentales Resultados de la subasta semanal, Tasa de rendimiento Bonos a tasa fija a 30 años",
+        "fechaInicio": "26/10/2006",
+        "fechaFin": "01/10/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SF61592",
+        "titulo": "Valores gubernamentales                        Resultados de la subasta semanal Tasa de rendimiento                            Udibonos a 3 años",
+        "fechaInicio": "30/05/1996",
+        "fechaFin": "24/09/2026",
+        "periodicidad": "Diaria",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SR14138",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Expectativas de Inflación Anual Cifras en por ciento Inflación general Al cierre del año en curso (año t) Media",
+        "fechaInicio": "01/01/1999",
+        "fechaFin": "01/09/2026",
+        "periodicidad": "Mensual",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SR14139",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Expectativas de Inflación Anual Cifras en por ciento Inflación general Al cierre del año en curso (año t) Mediana",
+        "fechaInicio": "01/01/1999",
+        "fechaFin": "01/09/2026",
+        "periodicidad": "Mensual",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SR14145",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Expectativas de Inflación Anual Cifras en por ciento Inflación general Al cierre del siguiente año (año t+1) Media",
+        "fechaInicio": "01/01/1999",
+        "fechaFin": "01/09/2026",
+        "periodicidad": "Mensual",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SR14146",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Expectativas de Inflación Anual Cifras en por ciento Inflación general Al cierre del siguiente año (año t+1) Mediana",
+        "fechaInicio": "01/01/1999",
+        "fechaFin": "01/09/2026",
+        "periodicidad": "Mensual",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SR14447",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Pronósticos de la Variación Porcentual Real Anual del PIB en el Año Indicado Cifras en por ciento Año en curso  (año t) Media",
+        "fechaInicio": "01/01/1999",
+        "fechaFin": "01/09/2026",
+        "periodicidad": "Mensual",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SR14448",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Pronósticos de la Variación Porcentual Real Anual del PIB en el Año Indicado Cifras en por ciento Año en curso  (año t) Mediana",
+        "fechaInicio": "01/01/1999",
+        "fechaFin": "01/09/2026",
+        "periodicidad": "Mensual",
+        "cifra": "Porcentajes",
+        "unidad": "Porcentajes",
+        "versionada": false
+      },
+      {
+        "idSerie": "SR14769",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Expectativas del Tipo de Cambio al Cierre del Año Pesos por dólar estadounidense Cierre del año en curso (año t) Media",
+        "fechaInicio": "01/01/1999",
+        "fechaFin": "01/09/2026",
+        "periodicidad": "Mensual",
+        "cifra": "Tipo de Cambio",
+        "unidad": "Pesos por Dólar",
+        "versionada": false
+      },
+      {
+        "idSerie": "SR14770",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Expectativas del Tipo de Cambio al Cierre del Año Pesos por dólar estadounidense Cierre del año en curso (año t) Mediana",
+        "fechaInicio": "01/01/1999",
+        "fechaFin": "01/09/2026",
+        "periodicidad": "Mensual",
+        "cifra": "Tipo de Cambio",
+        "unidad": "Pesos por Dólar",
+        "versionada": false
+      },
+      {
+        "idSerie": "SR14776",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Expectativas del Tipo de Cambio al Cierre del Año Pesos por dólar estadounidense Cierre del siguiente año (año t+1) Media",
+        "fechaInicio": "01/01/1999",
+        "fechaFin": "01/09/2026",
+        "periodicidad": "Mensual",
+        "cifra": "Tipo de Cambio",
+        "unidad": "Pesos por Dólar",
+        "versionada": false
+      },
+      {
+        "idSerie": "SR14777",
+        "titulo": "Encuestas Sobre las Expectativas de los Especialistas en Economía del Sector Privado Expectativas del Tipo de Cambio al Cierre del Año Pesos por dólar estadounidense Cierre del siguiente año (año t+1) Mediana",
+        "fechaInicio": "01/01/1999",
+        "fechaFin": "01/09/2026",
+        "periodicidad": "Mensual",
+        "cifra": "Tipo de Cambio",
+        "unidad": "Pesos por Dólar",
+        "versionada": false
+      }
+    ]
+  }
+}
