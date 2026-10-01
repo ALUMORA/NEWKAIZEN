@@ -1,5 +1,9 @@
 /* Páginas nuevas de Mi portafolio (F1). Solo espacio vertical; lo demás sale de C1. */
 .kz-portfolio-page { padding-block: var(--space-6) var(--space-7); }
+/* Alto de las dos gráficas de Rendimiento ya dibujadas (medido a 1440 y a 390): sus esqueletos lo
+   apartan mientras llegan los precios. */
+.kz-portfolio-page { --perf-chart-twr: 417px; --perf-chart-value: 367px; }
+@media (max-width: 599px) { .kz-portfolio-page { --perf-chart-twr: 484px; --perf-chart-value: 467px; } }
 .kz-portfolio-stats { padding: var(--space-4); }
 .kz-portfolio-note { color: var(--muted); font-size: var(--text-sm); margin: 0; padding: var(--space-3) var(--space-4); }
 .kz-portfolio-list { display: grid; font-size: var(--text-md); gap: var(--space-2); margin: 0; padding-inline-start: var(--space-5); }

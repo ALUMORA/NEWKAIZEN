@@ -7,7 +7,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { test as plainTest } from '@playwright/test'
 import { test, expect, attachGuards } from './support/guards.js'
 import { HEALTH_V2, expectedHttpError, setupApp } from './support/app.js'
-import { expectNoHorizontalScroll } from './support/layout.js'
+import { expectNoHorizontalScroll, readLayoutShift, trackLayoutShift } from './support/layout.js'
 
 const WCAG_AA = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']
 const THEMES = /** @type {const} */ (['light', 'dark'])
@@ -146,10 +146,10 @@ const STATE = {
 /**
  * @param {import('@playwright/test').Page} page
  * @param {string} baseURL
- * @param {{ theme?: 'light' | 'dark', state?: object | null }} [options]
+ * @param {{ theme?: 'light' | 'dark', state?: object | null, routes?: Record<string, any> }} [options]
  */
-async function open(page, baseURL, { theme, state = STATE } = {}) {
-  await setupApp(page, { baseURL, session: true, health: HEALTH, routes: V2_ROUTES })
+async function open(page, baseURL, { theme, state = STATE, routes = {} } = {}) {
+  await setupApp(page, { baseURL, session: true, health: HEALTH, routes: { ...V2_ROUTES, ...routes } })
   if (theme) await page.addInitScript((t) => window.localStorage.setItem('kaizen_theme', t), theme)
   if (state) await page.addInitScript((s) => window.localStorage.setItem('kaizen:v2', s), JSON.stringify(state))
 }
@@ -180,6 +180,28 @@ async function noHorizontalScroll(page) {
 
 const txTable = (page) => page.getByRole('table', { name: 'Movimientos del portafolio' })
 const posTable = (page) => page.getByRole('table', { name: 'Posiciones abiertas según el libro' })
+
+/** El panel de precios tarda: así se ve si lo que llega empuja lo que ya estaba en pantalla. */
+const SLOW_PANEL = { 'GET /v2/panel': async (/** @type {any} */ args) => ({ ...(typeof PANEL === 'function' ? await PANEL(args) : PANEL), delayMs: 900 }) }
+
+test.describe('portafolio: sin saltos al llegar los precios (CLS < 0.1)', () => {
+  // Con datos, las tarjetas de arriba estrenaban su descripción hasta tener precios ("Del 1 sep al
+  // 22 sep...", "11 semanas de datos") y todo lo de abajo bajaba un renglón: Lighthouse medía CLS de
+  // 0.18 en Rendimiento y 0.15 en Riesgo a 1440.
+  for (const [path, state, ready] of /** @type {const} */ ([
+    ['/portafolio/rendimiento', 'perf', 'TWR del periodo'],
+    ['/portafolio/riesgo', 'risk', 'semanas de datos'],
+  ])) {
+    test(path, async ({ page, baseURL }) => {
+      await trackLayoutShift(page)
+      await open(page, baseURL, { state: state === 'perf' ? PERF_STATE : RISK_STATE, routes: SLOW_PANEL })
+      await page.goto(path)
+      await expect(page.getByText(ready).first()).toBeVisible({ timeout: 15_000 })
+      await page.waitForTimeout(500)
+      expect(await readLayoutShift(page), 'desplazamiento acumulado del layout').toBeLessThan(0.1)
+    })
+  }
+})
 
 test.describe('portafolio: movimientos', () => {
   for (const theme of THEMES) {

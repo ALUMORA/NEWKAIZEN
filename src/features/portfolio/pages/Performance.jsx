@@ -153,7 +153,9 @@ export default function Performance() {
     />
   )
   const dropped = [...(panelMxn.data?.dropped ?? []), ...(panelUsd.data?.dropped ?? [])]
-  const period = ok ? `Del ${fmtDate(ok.windowDates[0])} al ${fmtDate(ok.windowDates[ok.windowDates.length - 1])}, ${fmtNumber(ok.windowDates.length, { decimals: 0 })} cierres ${(panelMxn.data?.interval ?? win.interval) === '1d' ? 'diarios' : 'semanales'}` : undefined
+  // Mientras llegan los precios, la descripción y los textos de abajo de cada cifra ya ocupan su lugar
+  // con un texto del mismo largo: sin eso las cifras bajaban hasta 97 px al llegar (CLS 0.12 a 390).
+  const period = ok ? `Del ${fmtDate(ok.windowDates[0])} al ${fmtDate(ok.windowDates[ok.windowDates.length - 1])}, ${fmtNumber(ok.windowDates.length, { decimals: 0 })} cierres ${(panelMxn.data?.interval ?? win.interval) === '1d' ? 'diarios' : 'semanales'}` : loading ? 'Calculando el periodo con los cierres de tus emisoras' : undefined
   const chartPoints = (/** @type {(number | null)[]} */ arr) => (ok ? ok.windowDates.map((date, i) => ({ date, value: arr[i] == null ? null : /** @type {number} */ (arr[i]) * 100 })) : [])
 
   return (
@@ -181,14 +183,14 @@ export default function Performance() {
                   label="TWR del periodo"
                   info={{ termKey: 'twr', term: 'TWR' }}
                   value={ok ? <Delta value={ok.twr} /> : undefined}
-                  sublabel={ok ? (ok.twrAnnual != null ? `${fmtPct(ok.twrAnnual, { sign: true })} al año` : 'Menos de un año: no se anualiza') : undefined}
+                  sublabel={ok ? (ok.twrAnnual != null ? `${fmtPct(ok.twrAnnual, { sign: true })} al año` : 'Menos de un año: no se anualiza') : loading ? 'Quita el efecto de cuándo aportaste' : undefined}
                 />
                 <Stat
                   loading={loading}
                   label="XIRR anual"
                   info={{ termKey: 'xirr', term: 'XIRR' }}
                   value={ok ? <Delta value={ok.xirr} /> : undefined}
-                  sublabel={ok ? (ok.years < 1 ? 'Anualizado: con menos de un año exagera' : 'Rendimiento de tu dinero, con sus fechas') : undefined}
+                  sublabel={ok ? (ok.years < 1 ? 'Anualizado: con menos de un año exagera' : 'Rendimiento de tu dinero, con sus fechas') : loading ? 'Rendimiento de tu dinero, con sus fechas' : undefined}
                 />
                 <Stat loading={loading} label={`Referencia: ${benchmark}`} value={ok ? <Delta value={ok.benchReturn} /> : undefined} sublabel="Mismo periodo, en pesos" />
                 <Stat
@@ -205,7 +207,11 @@ export default function Performance() {
           </Card>
 
           {loading ? (
-            <Skeleton height={320} />
+            <>
+              {/* Del alto de cada gráfica ya dibujada, para que lo de abajo no brinque al llegar. */}
+              <Skeleton height="var(--perf-chart-twr)" />
+              <Skeleton height="var(--perf-chart-value)" />
+            </>
           ) : (
             ok && (
               <Suspense fallback={<Skeleton height={320} />}>
