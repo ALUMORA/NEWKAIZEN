@@ -112,14 +112,77 @@ SPEC = [
     ),
     ("GET", "/v2/insiders/{symbol}", schemas.InsidersResponse, "/v2/insiders/AAPL", ("insiders",)),
     ("GET", "/v2/assumptions", schemas.AssumptionsResponse, "/v2/assumptions", ("assumptions",)),
+    # fase 5 (M5): todas nacen en @stub; cada stream las implementa en su router
+    ("GET", "/v2/curves", schemas.CurvesResponse, "/v2/curves?country=mx&compare=1m,1y", ("curves",)),
+    ("GET", "/v2/curves/spreads", schemas.CurveSpreadsResponse, "/v2/curves/spreads?history=5y", ("curves",)),
+    ("GET", "/v2/money-market", schemas.MoneyMarketResponse, "/v2/money-market", ("moneyMarket",)),
+    ("GET", "/v2/expectations", schemas.ExpectationsResponse, "/v2/expectations", ("expectations",)),
+    ("GET", "/v2/fxdesk/monitor", schemas.FxMonitorResponse, "/v2/fxdesk/monitor?years=5", ("fxdesk",)),
+    ("GET", "/v2/fxdesk/crosses", schemas.FxCrossesResponse, "/v2/fxdesk/crosses", ("fxdesk.crosses",)),
+    ("GET", "/v2/fxdesk/fix", schemas.FixLookupResponse, "/v2/fxdesk/fix?date=2026-09-30&rule=dof", ("fxdesk.fix",)),
+    (
+        "GET",
+        "/v2/fxdesk/fix-table",
+        schemas.FixTableResponse,
+        "/v2/fxdesk/fix-table?start=2026-01-01&end=2026-09-30&rule=fecha&monthEnd=true",
+        ("fxdesk.fix",),
+    ),
+    (
+        "GET",
+        "/v2/fxdesk/forward",
+        schemas.FxForwardResponse,
+        "/v2/fxdesk/forward?days=30,91,182,365&mxn=tiie&usd=ust",
+        ("fxdesk.forward",),
+    ),
+    (
+        "GET",
+        "/v2/calendar/economic",
+        schemas.EconomicCalendarResponse,
+        "/v2/calendar/economic?start=2026-10-01&end=2026-10-31&country=mx,us",
+        ("calendar.economic",),
+    ),
+    (
+        "GET",
+        "/v2/macro/indicators",
+        schemas.MacroIndicatorsResponse,
+        "/v2/macro/indicators?country=us&years=10",
+        ("macro.indicators",),
+    ),
+    (
+        "GET",
+        "/v2/macro/world",
+        schemas.MacroWorldResponse,
+        "/v2/macro/world?countries=MEX,USA,BRA&indicators=gdpUsd,inflation",
+        ("macro.world",),
+    ),
+    ("GET", "/v2/events/season", schemas.EventsSeasonResponse, "/v2/events/season?universe=mx&days=60", ("events.season",)),
+    ("GET", "/v2/earnings/{symbol}", schemas.EarningsResponse, "/v2/earnings/AAPL", ("earnings",)),
+    ("GET", "/v2/holders/{symbol}", schemas.HoldersResponse, "/v2/holders/WALMEX.MX", ("holders",)),
+    ("GET", "/v2/shares/{symbol}", schemas.SharesResponse, "/v2/shares/AAPL?start=2023-10-01", ("shares",)),
+    ("GET", "/v2/filings/{symbol}", schemas.FilingsResponse, "/v2/filings/AAPL?forms=10-K,8-K&limit=10", ("filings",)),
+    ("GET", "/v2/ohlc/{symbol}", schemas.OhlcResponse, "/v2/ohlc/WALMEX.MX?range=5d&interval=5m&compare=%5EMXX", ("ohlc",)),
+    ("GET", "/v2/movers", schemas.MoversResponse, "/v2/movers?market=us&kind=losers&limit=10", ("movers",)),
+    ("GET", "/v2/breadth", schemas.BreadthResponse, "/v2/breadth?market=mx", ("breadth",)),
+    ("GET", "/v2/sectors", schemas.SectorsResponse, "/v2/sectors?market=us", ("sectors",)),
+    ("GET", "/v2/funds/{symbol}", schemas.FundResponse, "/v2/funds/SPY", ("funds",)),
+    ("GET", "/v2/reference/mx", schemas.ReferenceMxResponse, "/v2/reference/mx", ("reference.mx",)),
+    (
+        "GET",
+        "/v2/reference/mx/update-factor",
+        schemas.UpdateFactorResponse,
+        "/v2/reference/mx/update-factor?from=2025-01&to=2026-08",
+        ("reference.mx",),
+    ),
+    ("GET", "/v2/business/industries", schemas.IndustriesResponse, "/v2/business/industries?market=EM", ("business.industries",)),
+    ("GET", "/v2/credit-health/{symbol}", schemas.CreditHealthResponse, "/v2/credit-health/CEMEXCPO.MX?years=3", ("creditHealth",)),
 ]
 STUBS = [row for row in SPEC if row[3]]
 
 EXTRA_CAPABILITIES = {
     "legacy.v1",  # el router del backend viejo, que no está en el spec v2
-    "fx.fix",  # refinamiento de /v2/fx: el tipo de cambio salió del FIX de Banxico y no de Yahoo
-    "history.dates",  # refinamiento de /v2/history: acepta rango por fechas, no solo range/interval
     "panel.splits",  # refinamiento de /v2/panel: ?adjust=splits da cierres sin ajustar por dividendos
+    "events.dividends",  # refinamiento de /v2/events: trae dividendSummary (fase 5)
+    "ohlc.intraday",  # refinamiento de /v2/ohlc: sirve velas de 5m y 1h, no solo diarias (fase 5)
 }
 """Capacidades de ``KNOWN_CAPABILITIES`` que no son "la" capacidad de ninguna ruta del spec."""
 
@@ -264,6 +327,60 @@ def test_health_announces_every_capability_that_the_routers_declare(app, client)
         ("/v2/screeners/factors?universe=mx&symbols=AAPL", 422, "VALIDATION_ERROR"),
         ("/v2/screeners/magic?universe=eu", 422, "VALIDATION_ERROR"),
         ("/v2/instrument/AAPL/statements?freq=monthly", 422, "VALIDATION_ERROR"),
+        # fase 5 (M5): las validaciones corren antes del stub
+        ("/v2/curves", 422, "VALIDATION_ERROR"),
+        ("/v2/curves?country=br", 422, "VALIDATION_ERROR"),
+        ("/v2/curves?country=mx&compare=2y", 422, "VALIDATION_ERROR"),
+        ("/v2/curves/spreads?history=10y", 422, "VALIDATION_ERROR"),
+        ("/v2/fxdesk/monitor?years=2", 422, "VALIDATION_ERROR"),
+        ("/v2/fxdesk/fix", 422, "VALIDATION_ERROR"),
+        ("/v2/fxdesk/fix?date=2026-02-30", 422, "VALIDATION_ERROR"),
+        ("/v2/fxdesk/fix?date=2026-09-30&rule=sat", 422, "VALIDATION_ERROR"),
+        ("/v2/fxdesk/fix?date=1990-01-02", 400, "INVALID_PARAM"),
+        ("/v2/fxdesk/fix-table?start=2026-09-30&end=2026-01-01", 422, "VALIDATION_ERROR"),
+        ("/v2/fxdesk/fix-table?start=2020-01-01&end=2026-09-30", 400, "INVALID_PARAM"),
+        ("/v2/fxdesk/forward?days=0", 400, "INVALID_PARAM"),
+        ("/v2/fxdesk/forward?days=30,400", 400, "INVALID_PARAM"),
+        ("/v2/fxdesk/forward?days=-5", 422, "VALIDATION_ERROR"),
+        ("/v2/fxdesk/forward?days=10000", 400, "INVALID_PARAM"),  # más de 365 es 400 por largo que sea
+        ("/v2/fxdesk/forward?days=30,123456", 400, "INVALID_PARAM"),
+        ("/v2/fxdesk/forward?date=2030-01-01", 400, "INVALID_PARAM"),
+        ("/v2/fxdesk/forward?date=2020-01-01", 400, "INVALID_PARAM"),
+        ("/v2/fxdesk/forward?days=30&date=2026-12-01", 422, "VALIDATION_ERROR"),
+        ("/v2/fxdesk/forward?mxn=libor", 422, "VALIDATION_ERROR"),
+        ("/v2/calendar/economic?start=2026-01-01&end=2026-12-31", 400, "INVALID_PARAM"),
+        ("/v2/calendar/economic?start=2026-10-31&end=2026-10-01", 422, "VALIDATION_ERROR"),
+        ("/v2/calendar/economic?country=br", 422, "VALIDATION_ERROR"),
+        ("/v2/macro/indicators?country=br", 422, "VALIDATION_ERROR"),
+        ("/v2/macro/indicators?years=3", 422, "VALIDATION_ERROR"),
+        ("/v2/macro/world?countries=MEX,USA,BRA,ARG,CHL,COL,PER,CAN,DEU,FRA,JPN", 422, "VALIDATION_ERROR"),
+        ("/v2/macro/world?indicators=pib", 422, "VALIDATION_ERROR"),
+        ("/v2/events/season?universe=eu", 422, "VALIDATION_ERROR"),
+        ("/v2/events/season?days=45", 422, "VALIDATION_ERROR"),
+        ("/v2/earnings/%3Cscript%3E", 400, "INVALID_SYMBOL"),
+        ("/v2/holders/" + "A" * 21, 400, "INVALID_SYMBOL"),
+        ("/v2/shares/AAPL?start=2099-01-01", 400, "INVALID_PARAM"),
+        ("/v2/shares/AAPL?start=2026-13-01", 422, "VALIDATION_ERROR"),
+        ("/v2/filings/AAPL?forms=10-K,S-1", 422, "VALIDATION_ERROR"),
+        ("/v2/filings/AAPL?limit=51", 422, "VALIDATION_ERROR"),
+        ("/v2/ohlc/AAPL%20X", 400, "INVALID_SYMBOL"),
+        ("/v2/ohlc/WALMEX.MX?interval=5m&range=1y", 400, "INVALID_PARAM"),
+        ("/v2/ohlc/WALMEX.MX?interval=1h&range=max", 400, "INVALID_PARAM"),
+        ("/v2/ohlc/WALMEX.MX?interval=1mo&range=5d", 400, "INVALID_PARAM"),
+        ("/v2/ohlc/WALMEX.MX?interval=1m", 422, "VALIDATION_ERROR"),
+        ("/v2/ohlc/WALMEX.MX?range=3mo", 422, "VALIDATION_ERROR"),
+        ("/v2/ohlc/WALMEX.MX?compare=QQQ", 422, "VALIDATION_ERROR"),
+        ("/v2/movers?market=eu", 422, "VALIDATION_ERROR"),
+        ("/v2/movers?kind=hot", 422, "VALIDATION_ERROR"),
+        ("/v2/movers?limit=5", 422, "VALIDATION_ERROR"),
+        ("/v2/breadth?market=br", 422, "VALIDATION_ERROR"),
+        ("/v2/sectors?market=br", 422, "VALIDATION_ERROR"),
+        ("/v2/funds/$$$$$$$$$$$$$$$$$$$$$", 400, "INVALID_SYMBOL"),
+        ("/v2/reference/mx/update-factor?from=2026-13&to=2026-08", 422, "VALIDATION_ERROR"),
+        ("/v2/reference/mx/update-factor?from=2026-08&to=2025-01", 422, "VALIDATION_ERROR"),
+        ("/v2/reference/mx/update-factor?from=2026-01", 422, "VALIDATION_ERROR"),
+        ("/v2/business/industries?market=MX", 422, "VALIDATION_ERROR"),
+        ("/v2/credit-health/AAPL?years=4", 422, "VALIDATION_ERROR"),
         ("/v2/no-existe", 404, "NOT_FOUND"),
     ],
 )
@@ -274,6 +391,8 @@ def test_invalid_params_get_contract_errors(client, url, status, code):
     assert body.error.code == code
     assert r.headers["cache-control"] == "no-store"
     if status in (400, 422):
+        if code == "INVALID_PARAM":  # 400 de regla de negocio: el mensaje dice qué rango admite
+            assert body.error.message and body.error.message != "La solicitud no es válida."
         fields = body.error.details["fields"]
         assert fields and all(set(f) == {"field", "type"} and f["field"].startswith(("path.", "query.")) for f in fields)
 
@@ -388,3 +507,135 @@ def test_links_must_be_http_and_minor_units_are_documented():
     for malo in ("javascript:alert(1)", "data:text/html,<script>", "//ejemplo.mx/nota", "ftp://ejemplo.mx"):
         with pytest.raises(ValidationError):
             schemas.NewsItem.model_validate({**news, "url": malo})
+
+
+# ─── fase 5 (M5): reglas que viven en los modelos ────────────────────────────
+
+
+def test_events_stays_compatible_and_gains_estimate_range_and_dividends():
+    """Lo que hoy responde /v2/events sigue siendo válido; los campos nuevos son opcionales."""
+    item = {"symbol": "AAPL", "type": "earnings", "date": "2026-10-29", "estimate": 1.6, "amount": None, "currency": "USD"}
+    old = schemas.EventsResponse.model_validate({"items": [item], "meta": _meta()})
+    assert old.dividendSummary is None and old.items[0].estimateLow is None
+    new = schemas.EventsResponse.model_validate(
+        {
+            "items": [{**item, "estimateLow": 1.5, "estimateHigh": 1.75}],
+            "dividendSummary": [
+                {
+                    "symbol": "WALMEX.MX",
+                    "currency": "MXN",
+                    "lastPaidAmount": 0.5,
+                    "lastPaidDate": "2026-07-15",
+                    "frequency": "trimestral",
+                    "paidMonths": [1, 4, 7, 10],
+                }
+            ],
+            "meta": _meta(),
+        }
+    )
+    assert new.items[0].estimateHigh == 1.75 and new.dividendSummary[0].paidMonths == [1, 4, 7, 10]
+    with pytest.raises(ValidationError):
+        schemas.DividendSummaryItem.model_validate({**new.dividendSummary[0].model_dump(), "paidMonths": [13]})
+
+
+def _ohlc(interval: str, t: str, compare_t: str | None = None) -> dict:
+    return {
+        "symbol": "WALMEX.MX",
+        "currency": "MXN",
+        "interval": interval,
+        "timezone": "America/Mexico_City",
+        "adjustment": "splits",
+        "bars": [{"t": t, "o": 60.0, "h": 61.0, "l": 59.5, "c": 60.5, "v": 0.0}],
+        "compare": {"symbol": "^MXX", "points": [{"t": compare_t or t, "c": 55000.0}]},
+        "high52w": 70.0,
+        "low52w": 50.0,
+        "meta": _meta(),
+    }
+
+
+def test_ohlc_t_is_a_date_for_daily_bars_and_an_instant_for_intraday():
+    schemas.OhlcResponse.model_validate(_ohlc("1d", "2026-09-30"))
+    schemas.OhlcResponse.model_validate(_ohlc("1wk", "2026-09-28"))
+    schemas.OhlcResponse.model_validate(_ohlc("5m", "2026-09-30T08:30:00-06:00"))
+    schemas.OhlcResponse.model_validate(_ohlc("1h", "2026-09-30T14:30:00Z"))
+    for bad in (_ohlc("1d", "2026-09-30T08:30:00-06:00"), _ohlc("5m", "2026-09-30"), _ohlc("1d", "2026-09-30", "2026-09-30T08:30:00Z")):
+        with pytest.raises(ValidationError):
+            schemas.OhlcResponse.model_validate(bad)
+    with pytest.raises(ValidationError):
+        schemas.OhlcResponse.model_validate({**_ohlc("1d", "2026-09-30"), "adjustment": "total"})
+    with pytest.raises(ValidationError):
+        schemas.OhlcResponse.model_validate({**_ohlc("1d", "2026-09-30"), "interval": "1m"})
+
+
+def _indicator(kind: str, **changes) -> dict:
+    return {
+        "id": "unemployment",
+        "label": "Desempleo",
+        "kind": kind,
+        "unit": "fraction",
+        "frequency": "monthly",
+        "last": {"date": "2026-08-01", "value": 0.045},
+        "previous": {"date": "2026-07-01", "value": 0.044},
+        "changeYoY": None,
+        "changeYoYBp": None,
+        "history": {"dates": ["2026-07-01", "2026-08-01"], "values": [0.044, 0.045]},
+        "seriesId": "UNRATE",
+        "source": "fred",
+        "fallback": False,
+        "stale": False,
+        "nextRelease": "2026-10-02",
+        **changes,
+    }
+
+
+def test_macro_rates_change_in_bp_and_levels_in_fraction():
+    schemas.MacroIndicator.model_validate(_indicator("rate", changeYoYBp=40.0))
+    schemas.MacroIndicator.model_validate(_indicator("level", changeYoY=0.090467))
+    with pytest.raises(ValidationError):
+        schemas.MacroIndicator.model_validate(_indicator("rate", changeYoY=0.004))
+    with pytest.raises(ValidationError):
+        schemas.MacroIndicator.model_validate(_indicator("level", changeYoYBp=40.0))
+    with pytest.raises(ValidationError):
+        schemas.MacroIndicator.model_validate(_indicator("rate", unit="percent"))
+    with pytest.raises(ValidationError):
+        schemas.MacroIndicator.model_validate(_indicator("rate", history={"dates": ["2026-08-01"], "values": [0.1, 0.2]}))
+
+
+def test_credit_health_not_applicable_has_reason_and_no_years():
+    base = {"symbol": "GFNORTEO.MX", "currency": "MXN", "inputsMissing": [], "meta": _meta()}
+    schemas.CreditHealthResponse.model_validate({**base, "applicable": False, "reason": "Es un banco", "years": []})
+    year = {
+        "fiscalYear": 2025,
+        "altmanZEm": 7.052,
+        "netDebtToEbitda": 2.0,
+        "interestCoverage": 5.0,
+        "currentRatio": None,
+        "quickRatio": None,
+        "dso": 30.0,
+        "dpo": None,
+    }
+    with pytest.raises(ValidationError):
+        schemas.CreditHealthResponse.model_validate({**base, "applicable": False, "reason": "Es un banco", "years": [year]})
+    with pytest.raises(ValidationError):
+        schemas.CreditHealthResponse.model_validate({**base, "applicable": False, "reason": None, "years": []})
+    schemas.CreditHealthResponse.model_validate({**base, "applicable": True, "reason": None, "years": [year]})
+
+
+def test_survey_date_is_always_the_first_of_the_month():
+    survey = {"surveyDate": "2026-12-01", "yearT": 2026, "items": []}
+    schemas.ExpectationsSurvey.model_validate(survey)
+    with pytest.raises(ValidationError):
+        schemas.ExpectationsSurvey.model_validate({**survey, "surveyDate": "2026-12-15"})
+
+
+def test_new_sources_are_valid_and_units_are_closed_lists():
+    for source in ("treasury", "frankfurter", "cftc", "bls", "worldbank", "fred,treasury", "curated,banxico"):
+        schemas.Meta.model_validate({**_meta(), "source": source})
+    with pytest.raises(ValidationError):
+        schemas.MacroWorldRow.model_validate(
+            {"country": "MEX", "name": "México", "indicator": "gdpUsd", "unit": "mxn", "year": 2025, "value": 1.0}
+        )
+    with pytest.raises(ValidationError):
+        schemas.FilingsResponse.model_validate(
+            {"symbol": "AAPL", "cik": "320193", "viaAdr": None, "filings": [], "meta": {**_meta(), "source": "sec"}}
+        )

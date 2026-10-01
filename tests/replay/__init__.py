@@ -3,7 +3,9 @@
 Patches the OUTERMOST I/O boundary the backend touches:
 
 * ``yfinance.Ticker`` (every property and method, including ``fast_info`` attribute and
-  dict-like access) and ``yfinance.download``;
+  dict-like access, and each property of ``funds_data``), ``yfinance.download`` and
+  ``yfinance.screen`` (predefined names and ``EquityQuery``). ``yf.Sector``, ``yf.Industry``,
+  ``yf.Calendars`` and ``YfData().get_raw_json`` are NOT covered (vetoed in docs/OWNERSHIP.md);
 * ``requests.Session.request``, which ``requests.get`` and every ``Session.get`` go through
   (FRED, CBOE, Stooq, SEC EDGAR, RSS).
 
