@@ -1,0 +1,31 @@
+{
+ "key": "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718,SF61745,SF43783,SF331451,SF43936,SF43939,SF43942,SF43945,SF44071,SP30578,SP74662,SP68257/datos/oportuno",
+ "provider": "http",
+ "method": "GET",
+ "url": "https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718,SF61745,SF43783,SF331451,SF43936,SF43939,SF43942,SF43945,SF44071,SP30578,SP74662,SP68257/datos/oportuno",
+ "params": null,
+ "kind": "value",
+ "payload": {
+  "status": 200,
+  "reason": "OK",
+  "url": "https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43718,SF61745,SF43783,SF331451,SF43936,SF43939,SF43942,SF43945,SF44071,SP30578,SP74662,SP68257/datos/oportuno",
+  "encoding": "UTF-8",
+  "headers": {
+   "Access-Control-Allow-Origin": "*",
+   "Access-Control-Allow-Headers": "Bmx-Token, Accept, Accept-Encoding, Content-Type",
+   "Access-Control-Allow-Methods": "GET",
+   "Content-Security-Policy": "script-src 'self'",
+   "Cache-Control": "no-store",
+   "Content-Language": "es",
+   "Content-Type": "application/json;charset=UTF-8",
+   "Date": "Thu, 01 Oct 2026 23:28:37 GMT"
+  },
+  "body": {
+   "text": "{\"bmx\":{\"series\":[{\"idSerie\":\"SF43936\",\"titulo\":\"Valores gubernamentales                        Resultados de la subasta semanal Tasa de rendimiento                            Cetes a 28 días\",\"datos\":[{\"fecha\":\"01/10/2026\",\"dato\":\"6.01\"}]},{\"idSerie\":\"SP68257\",\"titulo\":\"Valor de UDIS\",\"datos\":[{\"fecha\":\"10/10/2026\",\"dato\":\"8.853467\"}]},{\"idSerie\":\"SF44071\",\"titulo\":\"Valores Gubernamentales    Resultados de la subasta semanal Tasa de rendimiento  Bono tasa fija 10 años\",\"datos\":[{\"fecha\":\"24/09/2026\",\"dato\":\"9.35\"}]},{\"idSerie\":\"SF43939\",\"titulo\":\"Valores gubernamentales                        Resultados de la subasta semanal Tasa de rendimiento                            Cetes a 91 días\",\"datos\":[{\"fecha\":\"01/10/2026\",\"dato\":\"6.73\"}]},{\"idSerie\":\"SF43942\",\"titulo\":\"Valores gubernamentales                        Resultados de la subasta semanal Tasa de rendimiento                            Cetes a 182 días\",\"datos\":[{\"fecha\":\"01/10/2026\",\"dato\":\"7.01\"}]},{\"idSerie\":\"SF43783\",\"titulo\":\"TIIE a 28 días Tasa de interés en por ciento anual\",\"datos\":[{\"fecha\":\"02/10/2026\",\"dato\":\"6.8865\"}]},{\"idSerie\":\"SF43945\",\"titulo\":\"Valores gubernamentales                        Resultados de la subasta semanal Tasa de rendimiento                            Cetes a 364 días\",\"datos\":[{\"fecha\":\"01/10/2026\",\"dato\":\"7.44\"}]},{\"idSerie\":\"SF43718\",\"titulo\":\"Tipo de cambio                                          Pesos por dólar E.U.A. Tipo de cambio para solventar obligaciones denominadas en moneda extranjera Fecha de determinación (FIX)\",\"datos\":[{\"fecha\":\"01/10/2026\",\"dato\":\"18.3688\"}]},{\"idSerie\":\"SP74662\",\"titulo\":\"Inflación Subyacente (nueva definición) Anual\",\"datos\":[{\"fecha\":\"01/08/2026\",\"dato\":\"3.8800\"}]},{\"idSerie\":\"SF331451\",\"titulo\":\"TIIE de Fondeo a Un Día Hábil Bancario, Mediana ponderada por volumen\",\"datos\":[{\"fecha\":\"01/10/2026\",\"dato\":\"6.5000\"}]},{\"idSerie\":\"SF61745\",\"titulo\":\"Tasa objetivo\",\"datos\":[{\"fecha\":\"02/10/2026\",\"dato\":\"6.5000\"}]},{\"idSerie\":\"SP30578\",\"titulo\":\"Índice Nacional de Precios al consumidor variación anual\",\"datos\":[{\"fecha\":\"01/08/2026\",\"dato\":\"3.26000000\"}]}]}}"
+  }
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:28:37+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "e7939ba70221"
+}

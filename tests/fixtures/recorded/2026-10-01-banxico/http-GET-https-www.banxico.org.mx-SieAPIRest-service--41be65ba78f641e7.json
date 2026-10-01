@@ -1,0 +1,31 @@
+{
+ "key": "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43883,SF43886,SF45384,SF60696,SF61592,SF46958,SF46961",
+ "provider": "http",
+ "method": "GET",
+ "url": "https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43883,SF43886,SF45384,SF60696,SF61592,SF46958,SF46961",
+ "params": null,
+ "kind": "value",
+ "payload": {
+  "status": 200,
+  "reason": "OK",
+  "url": "https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF43883,SF43886,SF45384,SF60696,SF61592,SF46958,SF46961",
+  "encoding": "UTF-8",
+  "headers": {
+   "Access-Control-Allow-Origin": "*",
+   "Access-Control-Allow-Headers": "Bmx-Token, Accept, Accept-Encoding, Content-Type",
+   "Access-Control-Allow-Methods": "GET",
+   "Content-Security-Policy": "script-src 'self'",
+   "Cache-Control": "no-store",
+   "Content-Language": "es",
+   "Content-Type": "application/json;charset=UTF-8",
+   "Date": "Thu, 01 Oct 2026 23:28:19 GMT"
+  },
+  "body": {
+   "text": "{\"bmx\":{\"series\":[{\"idSerie\":\"SF46958\",\"titulo\":\"Valores Gubernamentales   Resultados de la subasta semanal Tasa de rendimiento   Udibonos a 20 años\",\"fechaInicio\":\"05/01/2006\",\"fechaFin\":\"27/08/2026\",\"periodicidad\":\"Diaria\",\"cifra\":\"Porcentajes\",\"unidad\":\"Porcentajes\",\"versionada\":false},{\"idSerie\":\"SF45384\",\"titulo\":\"Valores Gubernamentales    Resultados de la subasta semanal Tasa de rendimiento  Bono tasa fija 20 años\",\"fechaInicio\":\"30/10/2003\",\"fechaFin\":\"27/08/2026\",\"periodicidad\":\"Diaria\",\"cifra\":\"Porcentajes\",\"unidad\":\"Porcentajes\",\"versionada\":false},{\"idSerie\":\"SF60696\",\"titulo\":\"Valores Gubernamentales Resultados de la subasta semanal, Tasa de rendimiento Bonos a tasa fija a 30 años\",\"fechaInicio\":\"26/10/2006\",\"fechaFin\":\"01/10/2026\",\"periodicidad\":\"Diaria\",\"cifra\":\"Porcentajes\",\"unidad\":\"Porcentajes\",\"versionada\":false},{\"idSerie\":\"SF46961\",\"titulo\":\"Valores Gubernamentales   Resultados de la subasta semanal Tasa de rendimiento   Udibonos a 30 años\",\"fechaInicio\":\"05/01/2006\",\"fechaFin\":\"17/09/2026\",\"periodicidad\":\"Diaria\",\"cifra\":\"Porcentajes\",\"unidad\":\"Porcentajes\",\"versionada\":false},{\"idSerie\":\"SF43886\",\"titulo\":\"Valores gubernamentales                        Resultados de la subasta semanal Tasa de rendimiento                            Bono tasa fija 5 años\",\"fechaInicio\":\"25/05/2000\",\"fechaFin\":\"17/09/2026\",\"periodicidad\":\"Diaria\",\"cifra\":\"Porcentajes\",\"unidad\":\"Porcentajes\",\"versionada\":false},{\"idSerie\":\"SF61592\",\"titulo\":\"Valores gubernamentales                        Resultados de la subasta semanal Tasa de rendimiento                            Udibonos a 3 años\",\"fechaInicio\":\"30/05/1996\",\"fechaFin\":\"24/09/2026\",\"periodicidad\":\"Diaria\",\"cifra\":\"Porcentajes\",\"unidad\":\"Porcentajes\",\"versionada\":false},{\"idSerie\":\"SF43883\",\"titulo\":\"Valores gubernamentales Resultados de la subasta semanal Tasa de rendimiento Bonos a tasa fija a 3 años\",\"fechaInicio\":\"27/01/2000\",\"fechaFin\":\"10/09/2026\",\"periodicidad\":\"Diaria\",\"cifra\":\"Porcentajes\",\"unidad\":\"Porcentajes\",\"versionada\":false}]}}"
+  }
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:28:19+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "e7939ba70221"
+}

@@ -1,0 +1,31 @@
+{
+ "key": "http:GET https://www.banxico.org.mx/SieAPIRest/service/v1/series/SE27803,SF43707",
+ "provider": "http",
+ "method": "GET",
+ "url": "https://www.banxico.org.mx/SieAPIRest/service/v1/series/SE27803,SF43707",
+ "params": null,
+ "kind": "value",
+ "payload": {
+  "status": 200,
+  "reason": "OK",
+  "url": "https://www.banxico.org.mx/SieAPIRest/service/v1/series/SE27803,SF43707",
+  "encoding": "UTF-8",
+  "headers": {
+   "Access-Control-Allow-Origin": "*",
+   "Access-Control-Allow-Headers": "Bmx-Token, Accept, Accept-Encoding, Content-Type",
+   "Access-Control-Allow-Methods": "GET",
+   "Content-Security-Policy": "script-src 'self'",
+   "Cache-Control": "no-store",
+   "Content-Language": "es",
+   "Content-Type": "application/json;charset=UTF-8",
+   "Date": "Thu, 01 Oct 2026 23:28:22 GMT"
+  },
+  "body": {
+   "text": "{\"bmx\":{\"series\":[{\"idSerie\":\"SF43707\",\"titulo\":\"Reserva Internacional\",\"fechaInicio\":\"29/12/1995\",\"fechaFin\":\"25/09/2026\",\"periodicidad\":\"Diaria\",\"cifra\":\"Saldos\",\"unidad\":\"Millones de Dólares\",\"versionada\":false},{\"idSerie\":\"SE27803\",\"titulo\":\"Remesas Familiares Total\",\"fechaInicio\":\"01/01/1995\",\"fechaFin\":\"01/08/2026\",\"periodicidad\":\"Mensual\",\"cifra\":\"Flujos\",\"unidad\":\"Millones de Dólares\",\"versionada\":false}]}}"
+  }
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:28:22+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "e7939ba70221"
+}
