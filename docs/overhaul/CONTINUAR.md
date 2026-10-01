@@ -326,6 +326,23 @@ llamadas al API en 200 salvo los dos `ReplayMiss` de FEMSA, ya grabados. Lightho
 portafolio de ejemplo (`LH_EJEMPLO=1`) en diez rutas: 100 en escritorio en todas, 100 en móvil salvo el
 optimizador (94), y accesibilidad y buenas prácticas en 100 en las veinte mediciones.
 
+### Fase 5 en curso (1 de octubre de 2026, pausada por cuota a las 11:40)
+
+El dueño pidió desarrollar lo que le falta para ser un Bloomberg barato para el inversionista de a
+pie y para empresas, con datos gratuitos. Spec autoritativa: [specs/fase5-spec.md](specs/fase5-spec.md)
+(16 funciones en 9 streams, contratos, cifras de prueba verificadas, decisiones y puertos); fuentes
+probadas en vivo en `notas/fase5-fuentes.json` e inventario en `notas/fase5-inventario.json`.
+
+- **M5 (preparación del orquestador) a medias**, en tres worktrees sin mergear: `ws/M5BE` (contrato:
+  26 modelos y ocho routers en stub, replay de yf.screen y funds_data; falta correr compuertas y
+  terminar `tests/unit/m5/test_router_validations.py`), `ws/M5BX` (26 series del SIE verificadas en
+  vivo, compuertas en verde, revisión pendiente) y `ws/M5FE` (esqueleto del frontend en 10 commits;
+  faltan compuertas y revisión).
+- Siguiente: terminar y revisar M5, mergear las tres ramas, compuertas completas, y lanzar los
+  nueve streams con `workflows/fase5-heavy.sh` (semáforo, cambiar su `DIR`) y
+  `workflows/fase5-render-check.mjs` (recorrido real).
+- Handoff completo: `_handoff/2026-10-01_claude_newkaizen-fase5.md` en la carpeta CLAUDE.
+
 ### Lo que falta, en orden
 
 Todo lo que no dependía del dueño quedó hecho. Lo que queda, de más a menos valor:
