@@ -8,6 +8,8 @@ import '@fontsource-variable/plus-jakarta-sans/wght-italic.css'
 import '@fontsource-variable/jetbrains-mono/wght.css'
 import '@fontsource-variable/jetbrains-mono/wght-italic.css'
 import './index.css'
+// Estilos de impresión (Guardar como PDF desde cualquier página). Vacío hasta que V5TM lo llene.
+import './styles/print.css'
 import AppRoot from './app/AppRoot.jsx'
 
 createRoot(document.getElementById('root')).render(
