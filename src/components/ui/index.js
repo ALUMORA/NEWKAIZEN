@@ -22,6 +22,10 @@ export { SearchCombobox } from './SearchCombobox.jsx'
 export { ThemeToggle } from './ThemeToggle.jsx'
 export { Mark } from './Mark.jsx'
 export { UiProvider } from './UiProvider.jsx'
+// Fase 5
+export { Popover } from './Popover.jsx'
+export { ApiNotes } from './ApiNotes.jsx'
+export { DownloadButton } from './DownloadButton.jsx'
 export { useUi, useToast, useConfirm } from './useUi.js'
 // Utilidades puras que acompañan a los componentes.
 export { parseNumber, formatForInput } from './number.js'

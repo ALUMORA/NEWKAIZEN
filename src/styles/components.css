@@ -1000,3 +1000,20 @@ html.kz-scroll-lock { overflow: hidden; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* ApiNotes: notas de la fuente y aviso de respaldo (se mudó de markets.css en la fase 5). */
+.kz-api-notes {
+  border: 1px solid var(--stale);
+  background: var(--stale-soft);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-sm);
+}
+.kz-api-notes__title {
+  margin: 0 0 var(--space-1);
+  font-weight: var(--weight-semibold);
+}
+.kz-api-notes ul {
+  margin: 0;
+  padding-left: var(--space-5);
+}

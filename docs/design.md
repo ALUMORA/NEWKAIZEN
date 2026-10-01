@@ -205,6 +205,7 @@ reescribe agrupado. `parseNumber(texto)` y `formatForInput(valor, decimales)` sa
 | `stickyFirstColumn` | boolean | true |
 | `maxHeight` | number \| string | con alto máximo, el encabezado se queda fijo |
 | `className` | string | |
+| `download` | `{ filename, columns?, meta? }` | fase 5: monta `DownloadButton` con las filas en el orden en que se ven; `columns` por omisión son las de la tabla. Aditiva: mientras `DownloadButton` sea provisional no cambia nada en pantalla |
 
 `DataTableColumn`: `key`, `header` (nodo), `numeric` (derecha, tabulares, orden inicial
 descendente y `fmtNumber` si no hay `format`), `align` (`'left' | 'right' | 'center'`), `format(value, row)`
@@ -311,6 +312,19 @@ foco), `description`, `eyebrow`, `actions`, `breadcrumbs` `{ label, to? }[]` (el
 actual), `className`.
 `SectionHeading`: `title`, `description`, `info` (props de InfoTip), `actions`, `as` `'h2' | 'h3'`
 ('h2'), `id` (para `aria-labelledby` de la sección), `className`.
+
+### ApiNotes, Popover y DownloadButton (fase 5)
+
+- `ApiNotes({ meta, label? })`: lista visible de `meta.notes` y el aviso de respaldo cuando
+  `meta.fallback`. Se mudó de Mercados (`src/features/markets/pages/ApiNotes.jsx` lo reexporta).
+  No pinta nada si no hay notas ni respaldo. Clases `.kz-api-notes`.
+- `Popover({ trigger, label, onOpenChange, className, children })`: el popover nativo anclado a un
+  botón que usan InfoTip y DataStatus, ahora en el barril para las features.
+- `DownloadButton({ filename, columns, rows, meta })`: botón Descargar de datos públicos. Hoy es
+  provisional y devuelve null; lo hereda V5TM con `src/lib/download.js`. Se usa a través de la prop
+  `download` de DataTable y ChartFrame.
+- La ranura de acciones de `PageHeader` vacía no ocupa lugar (`.kz-page-header__actions:empty`), para
+  que una ranura de FeatureSlot que todavía no pinta nada no mueva el encabezado.
 
 ### SrOnly, ThemeToggle, Mark
 
@@ -434,6 +448,10 @@ Marco para una gráfica propia: las props comunes más `legend` (`LegendItem[]`:
 como `var(--…)`, `value?`, `shape?`, `kind?` `'line' | 'dash' | 'area' | 'band' | 'marker'`,
 `opacity?`), `table` (`{ columns, rows, rowKey }` en el formato de `DataTable`), `tableCaption` y
 `children` (el trazo). También exporta `Legend` y `Swatch`.
+
+`download` (fase 5, aditiva): `{ filename, columns?, meta?, rows? }`. Monta `DownloadButton` en las
+acciones del encabezado con `rows` o, si no vienen, las filas de `table`; `meta` por omisión es
+`status`. Un contenedor de acciones vacío no ocupa lugar (`.kz-chart__actions:empty`).
 
 ### TimeSeries
 
