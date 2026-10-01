@@ -465,9 +465,9 @@ describe('simulate: bootstrap por bloques', () => {
     expect(() => simulate({ years: 1, method: 'bootstrap', history: [0.01, Number.NaN, 0.02] })).toThrow(
       /número finito/,
     )
-    expect(() => simulate({ years: 1, method: 'bootstrap', history: [0.01, -1, 0.02] })).toThrow(/−100 %/)
+    expect(() => simulate({ years: 1, method: 'bootstrap', history: [0.01, -1, 0.02] })).toThrow(/−100%/)
     expect(() => simulate({ years: 1, method: 'bootstrap', history: [0.01, -1.5, 0.02, 0.03, 0.04, 0.05] })).toThrow(
-      /−100 %/,
+      /−100%/,
     )
     expect(() => simulate({ years: 1, method: 'bootstrap', history, blockSize: 0 })).toThrow(
       /entero mayor o igual a 1/,

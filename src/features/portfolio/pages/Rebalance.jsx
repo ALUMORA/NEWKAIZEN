@@ -116,7 +116,7 @@ export default function Rebalance() {
     const errors = {}
     if (!symbol) errors.symbol = 'Esa clave no es válida. Usa la clave de pizarra, por ejemplo AMXB.MX o AAPL.'
     else if (symbols.includes(symbol)) errors.symbol = `${symbol} ya está en tus metas: cambia su meta en la tabla.`
-    if (draft.pct == null || !(draft.pct > 0) || draft.pct > 100) errors.pct = 'La meta va de 0 a 100 %.'
+    if (draft.pct == null || !(draft.pct > 0) || draft.pct > 100) errors.pct = 'La meta va de 0 a 100%.'
     setDraftErrors(errors)
     if (errors.symbol || errors.pct || !symbol) return
     setTarget(symbol, draft.pct)

@@ -19,10 +19,10 @@ export function validatePercents(symbols, percents) {
   let total = 0
   for (const s of symbols) {
     const v = percents[s]
-    if (v === null || v === undefined || v < 0 || v > 100) errors[s] = 'Escribe un peso entre 0 % y 100 %.'
+    if (v === null || v === undefined || v < 0 || v > 100) errors[s] = 'Escribe un peso entre 0% y 100%.'
     else total += v
   }
-  const sumError = Object.keys(errors).length === 0 && Math.abs(total - 100) > 0.05 ? `Los pesos suman ${Math.round(total * 100) / 100} % y tienen que sumar 100 %.` : null
+  const sumError = Object.keys(errors).length === 0 && Math.abs(total - 100) > 0.05 ? `Los pesos suman ${Math.round(total * 100) / 100}% y tienen que sumar 100%.` : null
   return { errors, sumError, total }
 }
 
@@ -41,7 +41,7 @@ export function useBacktest({ symbols, mode, percents, positions, strategy, reba
   const rf = useQuery({ ...riskFreeQuery({ start }), enabled: Boolean(start) })
 
   const manual = useMemo(() => validatePercents(symbols, percents), [symbols, percents])
-  const blendError = benchmark === 'blend' && (blendIpcPct === null || blendIpcPct < 0 || blendIpcPct > 100) ? 'Escribe un porcentaje entre 0 % y 100 %.' : null
+  const blendError = benchmark === 'blend' && (blendIpcPct === null || blendIpcPct < 0 || blendIpcPct > 100) ? 'Escribe un porcentaje entre 0% y 100%.' : null
 
   const weights = useMemo(() => {
     if (mode === 'portfolio') return panel.data ? marketWeights(positions, panel.data.prices) : null

@@ -9,6 +9,7 @@
 // Orientación de los datos: `returnMatrix` es T x N, renglones = periodos, columnas = activos.
 // Todo sale en la periodicidad de esos rendimientos; `k` solo se usa para anualizar el resumen.
 
+import { fmtNumber } from '../format.js'
 import { ledoitWolfConstantCorrelation, sampleCov } from './covariance.js'
 import { assertMatrix, InvalidInputError } from './linalg.js'
 import { maxSharpe, minVariance, projectBoxSimplex, riskParity } from './optimize.js'
@@ -75,14 +76,14 @@ function checkStrategyWeights(raw, n, l, u) {
   let sum = 0
   for (const x of w) sum += x
   if (Math.abs(sum - 1) > 1e-9) {
-    throw new InvalidInputError(`Los pesos de la estrategia suman ${sum.toFixed(6)} y tienen que sumar 1.`)
+    throw new InvalidInputError(`Los pesos de la estrategia suman ${fmtNumber(sum, { decimals: 6 })} y tienen que sumar 1.`)
   }
   for (let i = 0; i < n; i += 1) {
     const lo = typeof l === 'number' ? l : l[i]
     const hi = typeof u === 'number' ? u : u[i]
     if (w[i] < lo - 1e-9 || w[i] > hi + 1e-9) {
       throw new InvalidInputError(
-        `El peso ${i + 1} de la estrategia (${w[i].toFixed(6)}) se sale de la caja: tiene que quedar entre ${lo} y ${hi}.`,
+        `El peso ${i + 1} de la estrategia (${fmtNumber(w[i], { decimals: 6 })}) se sale de la caja: tiene que quedar entre ${lo} y ${hi}.`,
       )
     }
   }

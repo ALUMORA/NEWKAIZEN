@@ -11,10 +11,10 @@ describe('validateAssumptions', () => {
   it('detiene lo que el API rechazaría con 422, con el rango en el mensaje', () => {
     const { params, errors } = validateAssumptions({ terminalGrowth: 7, erp: 25, years: 20, growth: -60, crp: 2 })
     expect(params).toEqual({ crp: 0.02 })
-    expect(errors.terminalGrowth).toBe('El crecimiento terminal va de −2 a 6 %.')
-    expect(errors.erp).toMatch(/0 a 20 %/)
+    expect(errors.terminalGrowth).toBe('El crecimiento terminal va de −2 a 6%.')
+    expect(errors.erp).toMatch(/0 a 20%/)
     expect(errors.years).toBe('Los años de proyección van de 1 a 15.')
-    expect(errors.growth).toMatch(/−50 a 100 %/)
+    expect(errors.growth).toMatch(/−50 a 100%/)
   })
   it('los bordes son válidos', () => {
     expect(validateAssumptions({ terminalGrowth: -2, years: 15 }).errors).toEqual({})

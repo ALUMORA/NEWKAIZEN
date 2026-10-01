@@ -13,6 +13,7 @@
 // todo por periodo). Los pesos son fracciones que suman 1. Ninguna función de aquí sugiere
 // comprar ni vender nada: entrega la mezcla que cumple las restricciones que le diste.
 
+import { fmtNumber } from '../format.js'
 import { assertSquare, assertVector, InvalidInputError, largestEigenvalue, matVec, quadForm, solveSPD } from './linalg.js'
 
 /**
@@ -66,13 +67,13 @@ function assertFeasible(lo, hi) {
   }
   if (sumLo > 1 + FEAS_EPS) {
     throw new InfeasibleError(
-      `No hay solución: los pesos mínimos suman ${sumLo.toFixed(4)} y tendrían que sumar 1 o menos.`,
+      `No hay solución: los pesos mínimos suman ${fmtNumber(sumLo, { decimals: 4 })} y tendrían que sumar 1 o menos.`,
     )
   }
   if (sumHi < 1 - FEAS_EPS) {
     throw new InfeasibleError(
-      `No hay solución: los pesos máximos suman ${sumHi.toFixed(4)} y tendrían que sumar 1 o más. ` +
-        `Con ${lo.length} activos y un tope de ${(sumHi / lo.length).toFixed(4)} por activo no se llega al 100 %.`,
+      `No hay solución: los pesos máximos suman ${fmtNumber(sumHi, { decimals: 4 })} y tendrían que sumar 1 o más. ` +
+        `Con ${lo.length} activos y un tope de ${fmtNumber(sumHi / lo.length, { decimals: 4 })} por activo no se llega al 100%.`,
     )
   }
 }

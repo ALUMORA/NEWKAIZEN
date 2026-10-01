@@ -34,7 +34,7 @@ export function validateAssumptions(draft) {
     }
     const value = key === 'years' ? Math.round(v) : v
     if (value < lim.min || value > lim.max) {
-      errors[key] = `${lim.label} de ${fmtBound(lim.min)} a ${fmtBound(lim.max)}${key === 'years' ? '' : ' %'}.`
+      errors[key] = `${lim.label} de ${fmtBound(lim.min)} a ${fmtBound(lim.max)}${key === 'years' ? '' : '%'}.`
       continue
     }
     params[key] = key === 'years' ? value : value / 100

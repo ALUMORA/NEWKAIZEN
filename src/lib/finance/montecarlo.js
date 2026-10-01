@@ -562,7 +562,7 @@ export function simulate(options) {
     for (const value of raw) {
       finite(value, 'history')
       if (value <= -1) {
-        throw new Error('montecarlo: history no puede traer rendimientos de −100 % o peores')
+        throw new Error('montecarlo: history no puede traer rendimientos de −100% o peores')
       }
     }
     block = Math.trunc(finite(blockSize, 'blockSize'))

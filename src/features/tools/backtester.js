@@ -37,7 +37,7 @@ export function benchmarkShort(id) {
 /** Nombre del referente para la pantalla. @param {string} id @param {number} blendIpc */
 export function benchmarkLabel(id, blendIpc) {
   if (id === 'spx') return 'S&P 500 en pesos'
-  if (id === 'blend') return `Mezcla: ${Math.round(blendIpc * 100)} % IPC y ${Math.round((1 - blendIpc) * 100)} % S&P 500`
+  if (id === 'blend') return `Mezcla: ${Math.round(blendIpc * 100)}% IPC y ${Math.round((1 - blendIpc) * 100)}% S&P 500`
   return 'IPC'
 }
 

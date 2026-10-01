@@ -112,8 +112,8 @@ function Calculator({ rows }) {
             calcula sobre el capital, no sobre los intereses: monto × tasa de retención × plazo ÷ 365.
           </p>
           <p>
-            La tasa efectiva anual reinvierte el plazo durante 365 días: (1 + tasa × plazo ÷ 360)^(365 ÷ plazo) − 1. Con 11 % a 28 días da 11.75 %, no
-            11 %: la diferencia es el interés compuesto.
+            La tasa efectiva anual reinvierte el plazo durante 365 días: (1 + tasa × plazo ÷ 360)^(365 ÷ plazo) − 1. Con 11% a 28 días da 11.75%, no
+            11%: la diferencia es el interés compuesto.
           </p>
           <p>La retención es un pago provisional; el impuesto final se ajusta en tu declaración anual. Esto es una estimación educativa, no una recomendación.</p>
         </div>

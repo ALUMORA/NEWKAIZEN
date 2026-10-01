@@ -53,18 +53,18 @@ export function validateAssumptions(a, n, apiRfPct, apiErpPct) {
   const errors = {}
   const erp = marketPremiumPct(a, apiErpPct)
   if (a.muMethod === 'capm' && erp !== undefined && (erp === null || erp < 0 || erp > 20)) {
-    errors.erpPct = 'Escribe una prima entre 0 % y 20 %.'
+    errors.erpPct = 'Escribe una prima entre 0% y 20%.'
   }
   const rf = riskFreePct(a, apiRfPct)
-  if (rf === null) errors.rfPct = a.rfTouched ? 'Escribe una tasa entre 0 % y 50 %.' : 'No llegó la tasa de CETES. Escribe una para seguir.'
-  else if (rf < 0 || rf > 50) errors.rfPct = 'Escribe una tasa entre 0 % y 50 %.'
-  if (a.minPct === null || a.minPct < 0 || a.minPct > 100) errors.minPct = 'Escribe un mínimo entre 0 % y 100 %.'
-  if (a.maxPct === null || a.maxPct <= 0 || a.maxPct > 100) errors.maxPct = 'Escribe un máximo mayor que 0 % y hasta 100 %.'
+  if (rf === null) errors.rfPct = a.rfTouched ? 'Escribe una tasa entre 0% y 50%.' : 'No llegó la tasa de CETES. Escribe una para seguir.'
+  else if (rf < 0 || rf > 50) errors.rfPct = 'Escribe una tasa entre 0% y 50%.'
+  if (a.minPct === null || a.minPct < 0 || a.minPct > 100) errors.minPct = 'Escribe un mínimo entre 0% y 100%.'
+  if (a.maxPct === null || a.maxPct <= 0 || a.maxPct > 100) errors.maxPct = 'Escribe un máximo mayor que 0% y hasta 100%.'
   if (errors.minPct || errors.maxPct) return errors
   const min = /** @type {number} */ (a.minPct)
   const max = /** @type {number} */ (a.maxPct)
   if (min > max) errors.minPct = 'El mínimo no puede pasar del máximo.'
-  else if (n > 0 && min * n > 100 + 1e-9) errors.minPct = `Con ${n} emisoras el mínimo puede ser hasta ${fmt(100 / n)} %, para que los pesos sumen 100 %.`
-  else if (n > 0 && max * n < 100 - 1e-9) errors.maxPct = `Con ${n} emisoras el máximo tiene que ser de al menos ${fmt(100 / n)} %, para que los pesos sumen 100 %.`
+  else if (n > 0 && min * n > 100 + 1e-9) errors.minPct = `Con ${n} emisoras el mínimo puede ser hasta ${fmt(100 / n)}%, para que los pesos sumen 100%.`
+  else if (n > 0 && max * n < 100 - 1e-9) errors.maxPct = `Con ${n} emisoras el máximo tiene que ser de al menos ${fmt(100 / n)}%, para que los pesos sumen 100%.`
   return errors
 }

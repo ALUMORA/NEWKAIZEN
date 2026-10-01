@@ -132,6 +132,10 @@ describe('projectBoxSimplex', () => {
     expect(() => projectBoxSimplex([0.5, 0.5], 0, 0.35)).toThrow(InfeasibleError)
     expect(() => projectBoxSimplex([0.5, 0.5, 0.5], 0.4, 1)).toThrow(InfeasibleError)
     expect(() => projectBoxSimplex([0.5, 0.5], [0.6, 0], [0.2, 1])).toThrow(InfeasibleError)
+    // Los mensajes arman las cifras con format.js: un negativo sale con U+2212, no con el guion ASCII.
+    expect(() => projectBoxSimplex([0.5, 0.5], [-1, -1], [-0.1, -0.1])).toThrow(
+      'los pesos máximos suman \u22120.2000 y tendrían que sumar 1 o más. Con 2 activos y un tope de \u22120.1000 por activo',
+    )
   })
 
   it('el mensaje de infactibilidad está en español y sin guiones largos', () => {

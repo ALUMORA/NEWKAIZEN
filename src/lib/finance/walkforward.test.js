@@ -318,6 +318,14 @@ describe('walkForward, estrategias propias y avisos del optimizador', () => {
     expect(() => walkForward(returns, dates, { ...opts, u: 0.4, method: () => [0.4, 0.35, 0.25] })).not.toThrow()
   })
 
+  it('el mensaje de un peso negativo fuera de la caja lleva el signo menos U+2212, no el guion', () => {
+    const { returns, dates } = panel(40, 3, 12)
+    const opts = { estimationWindow: 20, holdPeriods: 5 }
+    expect(() => walkForward(returns, dates, { ...opts, method: () => [-0.1, 0.6, 0.5] })).toThrow(
+      'El peso 1 de la estrategia (\u22120.100000) se sale de la caja',
+    )
+  })
+
   it('si el optimizador no convergió en un corte, el rebalanceo lo dice en la nota', async () => {
     // Con datos reales es casi imposible hacer que FISTA o la paridad de riesgo topen con su límite
     // de iteraciones, así que se sustituye el optimizador por uno que reporta converged=false.

@@ -39,7 +39,7 @@ export default function IsrCard({ isr }) {
       title="ISR estimado por tus ventas"
       info={{ termKey: 'isr-ganancia-de-capital', term: 'ISR por ganancia de capital' }}
       padding="none"
-      description="Estimación del 10 % sobre la ganancia neta anual por vender acciones en la BMV o en el SIC. Sale de tus ventas registradas en pesos."
+      description="Estimación del 10% sobre la ganancia neta anual por vender acciones en la BMV o en el SIC. Sale de tus ventas registradas en pesos."
     >
       <div className="kz-metric-grid kz-portfolio-stats">
         <Stat label="ISR estimado, todos los ejercicios" value={est ? fmtMoney(est.tax) : undefined} />

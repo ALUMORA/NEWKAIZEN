@@ -53,7 +53,7 @@ export function BacktestForm({ state, set, hasPortfolio, portfolioSymbols, onSym
                   />
                 ))}
                 <p className="kz-tool__hint" role={manual.sumError ? 'alert' : undefined} data-tone={manual.sumError ? 'warning' : undefined}>
-                  {manual.sumError ?? `Suman ${Math.round(manual.total * 100) / 100} %.`}
+                  {manual.sumError ?? `Suman ${Math.round(manual.total * 100) / 100}%.`}
                 </p>
                 <Button variant="ghost" size="sm" onClick={onEqual}>
                   Repartir parejo

@@ -27,7 +27,7 @@ describe('backtest', () => {
   it('la mezcla de referentes pesa cada índice como se pidió', () => {
     const out = runBacktest(PANEL, { ...BASE, benchmark: 'blend', blendIpc: 1 })
     expect(out.growth.benchmark.at(-1).value).toBeCloseTo(52 / 50, 10)
-    expect(benchmarkLabel('blend', 0.6)).toBe('Mezcla: 60 % IPC y 40 % S&P 500')
+    expect(benchmarkLabel('blend', 0.6)).toBe('Mezcla: 60% IPC y 40% S&P 500')
   })
 
   it('caída máxima con fechas de pico y fondo', () => {

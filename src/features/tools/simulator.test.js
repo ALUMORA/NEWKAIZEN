@@ -70,7 +70,7 @@ describe('simulador: armado de datos', () => {
   })
 
   it('el retiro acepta lo que dice su mensaje: de 0.1 % a 30 %', () => {
-    expect(validateInputs({ ...DEFAULT_INPUTS, withdrawalRatePct: 0.05 }).withdrawalRatePct).toBe('Usa un valor entre 0.1 % y 30 %.')
+    expect(validateInputs({ ...DEFAULT_INPUTS, withdrawalRatePct: 0.05 }).withdrawalRatePct).toBe('Usa un valor entre 0.1% y 30%.')
     expect(validateInputs({ ...DEFAULT_INPUTS, withdrawalRatePct: 0.1 })).toEqual({})
   })
 

@@ -31,7 +31,7 @@ export const LOSS_CARRY_YEARS = 10
 export const INTEREST_WITHHOLDING_RATE = 0.009
 /** De dónde sale la tasa anterior, para mostrarlo junto al cálculo. */
 export const INTEREST_WITHHOLDING_SOURCE =
-  'Ley de Ingresos de la Federación 2026, art. 24: tasa anual de retención de 0.90 % sobre el capital (LISR arts. 54 y 135)'
+  'Ley de Ingresos de la Federación 2026, art. 24: tasa anual de retención de 0.90% sobre el capital (LISR arts. 54 y 135)'
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 const NO_YEAR = 'sin fecha'
@@ -223,7 +223,7 @@ export function isrOnGains({ sales, inpc = {}, rate = ISR_GAINS_RATE, lossCarryI
   /** @type {string[]} */
   const notes = [
     'Es una estimación, no un cálculo fiscal ni una recomendación. Confírmala con tu contador y con la constancia de tu casa de bolsa.',
-    `Base: LISR art. 129, ${(taxRate * 100).toFixed(0)} % sobre la ganancia neta del ejercicio por acciones en BMV o en el SIC.`,
+    `Base: LISR art. 129, ${(taxRate * 100).toFixed(0)}% sobre la ganancia neta del ejercicio por acciones en BMV o en el SIC.`,
     'El costo se actualiza con el INPC del mes anterior a la venta entre el INPC del mes de la compra.',
   ]
   if (withoutIndex > 0) {
@@ -285,7 +285,7 @@ export function dividendWithholding(amount, { rate = DIVIDEND_WITHHOLDING_RATE }
     net: amount - withholding,
     notes: [
       'Es una estimación informativa, no un cálculo fiscal.',
-      `Dato: ${(applied * 100).toFixed(0)} % de retención sobre dividendos de emisoras mexicanas (LISR art. 140). Los dividendos del extranjero siguen otras reglas.`,
+      `Dato: ${(applied * 100).toFixed(0)}% de retención sobre dividendos de emisoras mexicanas (LISR art. 140). Los dividendos del extranjero siguen otras reglas.`,
     ],
   }
 }
