@@ -1,0 +1,68 @@
+{
+  "descripcion": "Nodos del centro de tasas (V5TS). tenorDays de un plazo en años = 365 x años. Las series del SIE pasan por el candado de banxico_series.json; las de FRED y del Tesoro son de dominio público (SOFR con cita a NY Fed).",
+  "mx": {
+    "nodes": [
+      {"seriesId": "SF43936", "tenorDays": 28, "label": "28 días", "instrument": "cetes"},
+      {"seriesId": "SF43939", "tenorDays": 91, "label": "91 días", "instrument": "cetes"},
+      {"seriesId": "SF43942", "tenorDays": 182, "label": "182 días", "instrument": "cetes"},
+      {"seriesId": "SF43945", "tenorDays": 364, "label": "364 días", "instrument": "cetes"},
+      {"seriesId": "SF43883", "tenorDays": 1095, "label": "3 años", "instrument": "bonoM"},
+      {"seriesId": "SF43886", "tenorDays": 1825, "label": "5 años", "instrument": "bonoM"},
+      {"seriesId": "SF44071", "tenorDays": 3650, "label": "10 años", "instrument": "bonoM"},
+      {"seriesId": "SF45384", "tenorDays": 7300, "label": "20 años", "instrument": "bonoM"},
+      {"seriesId": "SF60696", "tenorDays": 10950, "label": "30 años", "instrument": "bonoM"}
+    ],
+    "real": [
+      {"seriesId": "SF61592", "tenorDays": 1095, "label": "3 años", "instrument": "udibono"},
+      {"seriesId": "SF46958", "tenorDays": 7300, "label": "20 años", "instrument": "udibono"},
+      {"seriesId": "SF46961", "tenorDays": 10950, "label": "30 años", "instrument": "udibono"}
+    ],
+    "breakeven": [
+      {"tenorDays": 1095, "nominal": "SF43883", "real": "SF61592"},
+      {"tenorDays": 7300, "nominal": "SF45384", "real": "SF46958"},
+      {"tenorDays": 10950, "nominal": "SF60696", "real": "SF46961"}
+    ],
+    "fallbackBonoM10": {"seriesId": "IRLTLT01MXM156N", "tenorDays": 3650, "label": "10 años", "instrument": "bonoM", "maxAgeDays": 70}
+  },
+  "us": {
+    "nodes": [
+      {"seriesId": "DGS1MO", "source": "fred", "tenorDays": 30, "label": "1 mes"},
+      {"seriesId": "DGS3MO", "source": "fred", "tenorDays": 91, "label": "3 meses"},
+      {"seriesId": "DGS6MO", "source": "fred", "tenorDays": 182, "label": "6 meses"},
+      {"seriesId": "DGS1", "source": "fred", "tenorDays": 365, "label": "1 año"},
+      {"seriesId": "DGS2", "source": "fred", "tenorDays": 730, "label": "2 años"},
+      {"seriesId": "TSY-PAR-3Y", "source": "treasury", "column": "3 Yr", "tenorDays": 1095, "label": "3 años"},
+      {"seriesId": "DGS5", "source": "fred", "tenorDays": 1825, "label": "5 años"},
+      {"seriesId": "TSY-PAR-7Y", "source": "treasury", "column": "7 Yr", "tenorDays": 2555, "label": "7 años"},
+      {"seriesId": "DGS10", "source": "fred", "tenorDays": 3650, "label": "10 años"},
+      {"seriesId": "TSY-PAR-20Y", "source": "treasury", "column": "20 Yr", "tenorDays": 7300, "label": "20 años"},
+      {"seriesId": "DGS30", "source": "fred", "tenorDays": 10950, "label": "30 años"}
+    ],
+    "real": [
+      {"seriesId": "TSY-REAL-5Y", "column": "5 YR", "nominalColumn": "5 Yr", "tenorDays": 1825, "label": "5 años"},
+      {"seriesId": "TSY-REAL-7Y", "column": "7 YR", "nominalColumn": "7 Yr", "tenorDays": 2555, "label": "7 años"},
+      {"seriesId": "TSY-REAL-10Y", "column": "10 YR", "nominalColumn": "10 Yr", "tenorDays": 3650, "label": "10 años"},
+      {"seriesId": "TSY-REAL-20Y", "column": "20 YR", "nominalColumn": "20 Yr", "tenorDays": 7300, "label": "20 años"},
+      {"seriesId": "TSY-REAL-30Y", "column": "30 YR", "nominalColumn": "30 Yr", "tenorDays": 10950, "label": "30 años"}
+    ]
+  },
+  "spreads": [
+    {"tenorYears": 1, "mx": "SF43945", "us": "DGS1"},
+    {"tenorYears": 3, "mx": "SF43883", "us": "TSY-PAR-3Y"},
+    {"tenorYears": 5, "mx": "SF43886", "us": "DGS5"},
+    {"tenorYears": 10, "mx": "SF44071", "us": "DGS10"},
+    {"tenorYears": 20, "mx": "SF45384", "us": "TSY-PAR-20Y"},
+    {"tenorYears": 30, "mx": "SF60696", "us": "DGS30"}
+  ],
+  "moneyMarket": [
+    {"id": "tiie91", "label": "TIIE a 91 días", "country": "MX", "seriesId": "SF43878", "source": "banxico", "convention": "act/360 simple", "maxAgeDays": 7},
+    {"id": "tiie182", "label": "TIIE a 182 días", "country": "MX", "seriesId": "SF111916", "source": "banxico", "convention": "act/360 simple", "maxAgeDays": 10},
+    {"id": "dff", "label": "Fondos federales efectiva", "country": "US", "seriesId": "DFF", "source": "fred", "convention": "overnight", "maxAgeDays": 7},
+    {"id": "sofr", "label": "SOFR", "country": "US", "seriesId": "SOFR", "source": "fred", "convention": "overnight", "maxAgeDays": 7},
+    {"id": "ust1m", "label": "Tesoro a 1 mes", "country": "US", "seriesId": "DGS1MO", "source": "fred", "convention": "cmt base bono", "maxAgeDays": 7},
+    {"id": "ust3m", "label": "Tesoro a 3 meses", "country": "US", "seriesId": "DGS3MO", "source": "fred", "convention": "cmt base bono", "maxAgeDays": 7},
+    {"id": "ust6m", "label": "Tesoro a 6 meses", "country": "US", "seriesId": "DGS6MO", "source": "fred", "convention": "cmt base bono", "maxAgeDays": 7},
+    {"id": "ust1y", "label": "Tesoro a 1 año", "country": "US", "seriesId": "DGS1", "source": "fred", "convention": "cmt base bono", "maxAgeDays": 7}
+  ],
+  "mxChanges": ["target", "tiie28", "tiieFondeo", "cetes28", "cetes91", "cetes182", "cetes364", "bonoM10"]
+}
