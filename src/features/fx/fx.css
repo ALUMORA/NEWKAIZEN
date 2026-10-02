@@ -1,0 +1,61 @@
+/* Tipo de cambio (V5FX). Solo tokens; el ritmo de página lo da .kz-page .kz-col. */
+.fx-page { padding-block: var(--space-6) var(--space-10); }
+
+.fx-grid-2 { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1040px) {
+  .fx-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Alto reservado mientras llegan los datos: el esqueleto ocupa lo que ocupará la gráfica. */
+.fx-chart-slot { min-height: 360px; }
+.fx-chart-slot--bars { min-height: 320px; }
+.fx-table-slot { min-height: 240px; }
+
+.fx-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  align-items: flex-end;
+}
+.fx-controls > * { min-width: 0; }
+.fx-controls .kz-form-field { flex: 1 1 200px; max-width: 280px; }
+
+.fx-prose {
+  color: var(--ink-soft);
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+  margin: 0;
+  max-width: 72ch;
+}
+.fx-prose + .fx-prose { margin-top: var(--space-3); }
+
+.fx-explanation {
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: var(--text-md);
+  line-height: var(--leading-normal);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+}
+
+.fx-cell-source { display: inline-flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+
+.fx-textarea {
+  font-family: var(--font-mono, monospace);
+  min-height: 140px;
+  padding-block: var(--space-2);
+  resize: vertical;
+}
+
+.fx-batch-errors {
+  color: var(--down);
+  font-size: var(--text-sm);
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
+.fx-dialog-actions { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+
+.fx-note { color: var(--muted); font-size: var(--text-sm); margin: 0; }
+.fx-pad { padding: var(--space-4); }
