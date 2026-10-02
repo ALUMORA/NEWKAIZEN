@@ -122,10 +122,13 @@ test('calendario: cuenta regresiva, anterior y publicado por unidad, consenso s/
 
 test('calendario: filtro de país y semana en la URL', async ({ page, baseURL }) => {
   await open(page, baseURL, '/mercados/calendario')
+  // En la CI el clic llegaba antes de que el shell terminara de navegar y se perdía: primero los datos.
+  await expect(page.getByText('Decisión de política monetaria de Banxico').first()).toBeVisible()
   const req = page.waitForRequest((r) => r.url().includes('/v2/calendar/economic') && r.url().includes('country=us'))
-  await page.getByRole('radio', { name: 'EE. UU.' }).check()
+  await page.getByRole('radio', { name: 'EE. UU.' }).click()
   await req
   await expect(page).toHaveURL(/pais=us/)
+  await expect(page.getByRole('radio', { name: 'EE. UU.' })).toBeChecked()
   await page.getByRole('button', { name: 'Semana siguiente' }).click()
   await expect(page).toHaveURL(/semana=2026-09-28/)
 })
