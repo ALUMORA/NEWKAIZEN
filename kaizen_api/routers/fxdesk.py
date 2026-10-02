@@ -1,9 +1,10 @@
 """Mesa de tipo de cambio: monitor del peso, cruces, FIX por fecha y forward teórico (stream V5FX).
 
-Lo dejó M5 con cada ruta del contrato registrada y en ``@stub``. Las validaciones del contrato ya
-corren antes del 501: plazo de 0 días o mayor a 365 y fecha fuera de rango responden 400
-``INVALID_PARAM``; un parámetro con forma o valor inválido, 422 ``VALIDATION_ERROR``. V5FX borra
-``@stub`` y el ``raise not_implemented(...)`` al implementar cada ruta y agrega su capacidad.
+M5 dejó las rutas registradas con sus validaciones: plazo de 0 días o mayor a 365 y fecha fuera de
+rango responden 400 ``INVALID_PARAM``; un parámetro con forma o valor inválido, 422
+``VALIDATION_ERROR``. V5FX las implementó en ``domain/fxdesk.py`` (monitor, cruces y FIX),
+``domain/dof_rule.py`` (regla del DOF) y ``domain/forward.py``. "Hoy" es la fecha de la Ciudad de
+México y se le pasa al dominio como ``today``.
 """
 
 from __future__ import annotations
@@ -14,9 +15,11 @@ from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Query
 
-from kaizen_api.errors import ApiError, field_error, invalid_param, not_implemented
+from kaizen_api.domain import forward as forward_domain
+from kaizen_api.domain import fxdesk as desk
+from kaizen_api.errors import ApiError, field_error, invalid_param
 from kaizen_api.http_cache import cache_control
-from kaizen_api.routers import ERROR_RESPONSES, IsoDateQuery, check_date_range, stub
+from kaizen_api.routers import ERROR_RESPONSES, IsoDateQuery, check_date_range
 from kaizen_api.schemas import (
     ISO_DATE_PATTERN,
     FixLookupResponse,
@@ -27,7 +30,7 @@ from kaizen_api.schemas import (
 )
 
 router = APIRouter(prefix="/v2", tags=["tipo de cambio"], responses=ERROR_RESPONSES)
-CAPABILITIES: list[str] = []
+CAPABILITIES: list[str] = ["fxdesk", "fxdesk.crosses", "fxdesk.fix", "fxdesk.forward"]
 
 MONITOR_YEARS = (1, 3, 5, 10)
 FIX_FIRST_DATE = _dt.date(1991, 11, 12)
@@ -104,14 +107,13 @@ def check_forward_params(days: str | None, date: str | None, *, today: _dt.date 
     dependencies=[cache_control("macro")],
     summary="Monitor del peso: FIX, rango de 52 semanas, cambios, volatilidad y posicionamiento CFTC",
 )
-@stub
 def fx_monitor(
     years: Annotated[
         int, Query(description="Años de historia de la serie", json_schema_extra={"enum": list(MONITOR_YEARS)})
     ] = 1,
 ) -> FxMonitorResponse:
     check_monitor_params(years)
-    raise not_implemented("GET /v2/fxdesk/monitor")
+    return FxMonitorResponse.model_validate(desk.build_monitor(years, today_mx()))
 
 
 @router.get(
@@ -120,9 +122,8 @@ def fx_monitor(
     dependencies=[cache_control("macro")],
     summary="Cruces del peso contra otras monedas (canasta del SIE y latinoamericanas)",
 )
-@stub
 def fx_crosses() -> FxCrossesResponse:
-    raise not_implemented("GET /v2/fxdesk/crosses")
+    return FxCrossesResponse.model_validate(desk.build_crosses(today_mx()))
 
 
 @router.get(
@@ -131,13 +132,12 @@ def fx_crosses() -> FxCrossesResponse:
     dependencies=[cache_control("macro")],
     summary="El FIX que aplica a una fecha, por fecha o con la regla del DOF (art. 20 del CFF)",
 )
-@stub
 def fx_fix(
     date: Annotated[str, Query(pattern=ISO_DATE_PATTERN, description="Fecha YYYY-MM-DD", examples=["2026-09-30"])],
     rule: Annotated[Literal["fecha", "dof"], Query(description="fecha = el FIX de ese día; dof = regla del DOF")] = "fecha",
 ) -> FixLookupResponse:
-    check_fix_date(date)
-    raise not_implemented("GET /v2/fxdesk/fix")
+    day = check_fix_date(date)
+    return FixLookupResponse.model_validate(desk.lookup_fix(day, rule, today_mx()))
 
 
 @router.get(
@@ -146,15 +146,14 @@ def fx_fix(
     dependencies=[cache_control("macro")],
     summary="Tabla del FIX por fecha (hasta 3 años) con cierres y promedios de mes",
 )
-@stub
 def fx_fix_table(
     start: Annotated[str, Query(pattern=ISO_DATE_PATTERN, description="Fecha inicial YYYY-MM-DD")],
     end: Annotated[str, Query(pattern=ISO_DATE_PATTERN, description="Fecha final YYYY-MM-DD")],
     rule: Annotated[Literal["fecha", "dof"], Query(description="fecha = el FIX de ese día; dof = regla del DOF")] = "fecha",
     month_end: Annotated[bool, Query(alias="monthEnd", description="true: rows trae solo el cierre de cada mes; monthEnds viene siempre")] = False,
 ) -> FixTableResponse:
-    check_fix_table_params(start, end)
-    raise not_implemented("GET /v2/fxdesk/fix-table")
+    first, last = check_fix_table_params(start, end)
+    return FixTableResponse.model_validate(desk.fix_table(first, last, rule, month_end, today_mx()))
 
 
 @router.get(
@@ -163,7 +162,6 @@ def fx_fix_table(
     dependencies=[cache_control("macro")],
     summary="Forward teórico USD/MXN por paridad de tasas, sin margen bancario",
 )
-@stub
 def fx_forward(
     days: Annotated[
         str | None,
@@ -173,5 +171,6 @@ def fx_forward(
     mxn: Annotated[Literal["tiie", "cetes", "fondeo"], Query(description="Tasa de referencia en pesos")] = "tiie",
     usd: Annotated[Literal["ust", "sofr"], Query(description="Tasa de referencia en dólares")] = "ust",
 ) -> FxForwardResponse:
-    check_forward_params(days, date)
-    raise not_implemented("GET /v2/fxdesk/forward")
+    today = today_mx()
+    tenors = check_forward_params(days, date, today=today)
+    return FxForwardResponse.model_validate(forward_domain.build_forward(tenors, mxn, usd, today))
