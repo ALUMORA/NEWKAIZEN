@@ -561,6 +561,13 @@
    "soft_failure": false,
    "recorded_at": "2026-10-01T23:54:36+00:00"
   },
+  "yf:SPY:history?period=1y": {
+   "file": "yf-SPY-history-bec615f96f4804bb.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-02T01:00:39+00:00"
+  },
   "yf:TLEVISACPO.MX:calendar": {
    "file": "yf-TLEVISACPO.MX-calendar-05e10be5424cc955.json",
    "provider": "yfinance",
@@ -650,9 +657,9 @@
   "2026-10-01-v5pf"
  ],
  "summary": {
-  "keys_total": 91,
+  "keys_total": 92,
   "keys_by_provider": {
-   "yf": 91
+   "yf": 92
   },
   "exceptions_by_provider": {},
   "empty_by_provider": {
@@ -670,5 +677,5 @@
    ]
   }
  },
- "updated_at": "2026-10-01T23:56:06+00:00"
+ "updated_at": "2026-10-02T01:00:39+00:00"
 }
