@@ -114,5 +114,6 @@ def test_health_announces_exactly_what_these_routers_do(client):
 
 def test_declared_capabilities_are_known_and_complete():
     declared = set(research_router.CAPABILITIES) | set(events_router.CAPABILITIES) | set(insiders_router.CAPABILITIES)
-    assert declared == {"instrument", "statements.real", "dividends", "events", "insiders"}
+    # events.py pasó a V5PF en la fase 5 y anuncia además events.season y events.dividends.
+    assert declared == {"instrument", "statements.real", "dividends", "events", "insiders", "events.season", "events.dividends"}
     assert declared <= set(schemas.KNOWN_CAPABILITIES)
