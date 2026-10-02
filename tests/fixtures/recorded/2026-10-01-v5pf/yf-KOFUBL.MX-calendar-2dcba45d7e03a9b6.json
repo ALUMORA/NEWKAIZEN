@@ -1,0 +1,25 @@
+{
+ "key": "yf:KOFUBL.MX:calendar",
+ "provider": "yfinance",
+ "symbol": "KOFUBL.MX",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-10-12"
+  },
+  "Earnings Date": [],
+  "Earnings High": 3.22,
+  "Earnings Low": 3.06,
+  "Earnings Average": 3.14834,
+  "Revenue High": 4469990000,
+  "Revenue Low": 4441388000,
+  "Revenue Average": 4456139000
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:10+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

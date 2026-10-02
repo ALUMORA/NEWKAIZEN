@@ -1,0 +1,30 @@
+{
+ "key": "yf:ADBE:calendar",
+ "provider": "yfinance",
+ "symbol": "ADBE",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2005-03-24"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-12-09"
+   }
+  ],
+  "Earnings High": 6.35,
+  "Earnings Low": 6.05,
+  "Earnings Average": 6.33138,
+  "Revenue High": 6936000000,
+  "Revenue Low": 6800000000,
+  "Revenue Average": 6832800840
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:34+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

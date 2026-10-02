@@ -1,0 +1,34 @@
+{
+ "key": "yf:COP:calendar",
+ "provider": "yfinance",
+ "symbol": "COP",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-01"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-08-17"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-11-05"
+   }
+  ],
+  "Earnings High": 3.29,
+  "Earnings Low": 1.7405,
+  "Earnings Average": 2.64464,
+  "Revenue High": 19804297000,
+  "Revenue Low": 14098700050,
+  "Revenue Average": 17858828880
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:57+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

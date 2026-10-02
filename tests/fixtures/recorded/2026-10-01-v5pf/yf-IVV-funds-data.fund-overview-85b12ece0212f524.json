@@ -1,0 +1,17 @@
+{
+ "key": "yf:IVV:funds_data.fund_overview",
+ "provider": "yfinance",
+ "symbol": "IVV",
+ "attr": "funds_data.fund_overview",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "categoryName": "Large Blend",
+  "family": "iShares",
+  "legalType": "Exchange Traded Fund"
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:54:52+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

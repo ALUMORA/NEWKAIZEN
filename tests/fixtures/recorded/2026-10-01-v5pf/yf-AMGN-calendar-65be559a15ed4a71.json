@@ -1,0 +1,34 @@
+{
+ "key": "yf:AMGN:calendar",
+ "provider": "yfinance",
+ "symbol": "AMGN",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-11"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-08-21"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-11-03"
+   }
+  ],
+  "Earnings High": 6.16412,
+  "Earnings Low": 5.48,
+  "Earnings Average": 5.78099,
+  "Revenue High": 10274505000,
+  "Revenue Low": 9847000000,
+  "Revenue Average": 10046710390
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:39+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

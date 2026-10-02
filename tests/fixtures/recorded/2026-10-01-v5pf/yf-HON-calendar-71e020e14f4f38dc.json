@@ -1,0 +1,34 @@
+{
+ "key": "yf:HON:calendar",
+ "provider": "yfinance",
+ "symbol": "HON",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-04"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-11-13"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-22"
+   }
+  ],
+  "Earnings High": 2.23328,
+  "Earnings Low": 2.1,
+  "Earnings Average": 2.1643,
+  "Revenue High": 5122000000,
+  "Revenue Low": 4908325000,
+  "Revenue Average": 5005741070
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:51+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

@@ -1,0 +1,17 @@
+{
+ "key": "yf:VOO:funds_data.fund_overview",
+ "provider": "yfinance",
+ "symbol": "VOO",
+ "attr": "funds_data.fund_overview",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "categoryName": "Large Blend",
+  "family": "Vanguard",
+  "legalType": "Exchange Traded Fund"
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:54:59+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

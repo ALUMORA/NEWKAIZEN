@@ -1,0 +1,78 @@
+{
+ "key": "yf:SPY:funds_data.top_holdings",
+ "provider": "yfinance",
+ "symbol": "SPY",
+ "attr": "funds_data.top_holdings",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "__rp__": "DataFrame",
+  "index": {
+   "__rp__": "Index",
+   "name": "Symbol",
+   "data": {
+    "dtype": "str",
+    "v": [
+     "NVDA",
+     "AAPL",
+     "MSFT",
+     "AMZN",
+     "GOOGL",
+     "AVGO",
+     "GOOG",
+     "META",
+     "MU",
+     "TSLA"
+    ]
+   }
+  },
+  "columns": {
+   "__rp__": "Index",
+   "name": null,
+   "data": {
+    "dtype": "str",
+    "v": [
+     "Name",
+     "Holding Percent"
+    ]
+   }
+  },
+  "data": [
+   {
+    "dtype": "str",
+    "v": [
+     "NVIDIA Corp",
+     "Apple Inc",
+     "Microsoft Corp",
+     "Amazon.com Inc",
+     "Alphabet Inc Class A",
+     "Broadcom Inc",
+     "Alphabet Inc Class C",
+     "Meta Platforms Inc Class A",
+     "Micron Technology Inc",
+     "Tesla Inc"
+    ]
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": [
+     0.08078709,
+     0.0703063,
+     0.0569307,
+     0.0384188,
+     0.0300627,
+     0.026491001,
+     0.0239504,
+     0.0189886,
+     0.0163338,
+     0.0156492
+    ]
+   }
+  ]
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:54:36+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

@@ -1,0 +1,58 @@
+{
+ "key": "yf:QQQ:funds_data.fund_operations",
+ "provider": "yfinance",
+ "symbol": "QQQ",
+ "attr": "funds_data.fund_operations",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "__rp__": "DataFrame",
+  "index": {
+   "__rp__": "Index",
+   "name": "Attributes",
+   "data": {
+    "dtype": "str",
+    "v": [
+     "Annual Report Expense Ratio",
+     "Annual Holdings Turnover",
+     "Total Net Assets"
+    ]
+   }
+  },
+  "columns": {
+   "__rp__": "Index",
+   "name": null,
+   "data": {
+    "dtype": "str",
+    "v": [
+     "QQQ",
+     "Category Average"
+    ]
+   }
+  },
+  "data": [
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": [
+     0.0018000001,
+     0.0,
+     720847.44
+    ]
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": [
+     0.0089579,
+     0.6156,
+     720847.44
+    ]
+   }
+  ]
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:54:46+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

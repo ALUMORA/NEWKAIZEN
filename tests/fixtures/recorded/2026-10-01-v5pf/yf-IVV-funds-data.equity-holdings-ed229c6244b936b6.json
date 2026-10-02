@@ -1,0 +1,83 @@
+{
+ "key": "yf:IVV:funds_data.equity_holdings",
+ "provider": "yfinance",
+ "symbol": "IVV",
+ "attr": "funds_data.equity_holdings",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "__rp__": "DataFrame",
+  "index": {
+   "__rp__": "Index",
+   "name": "Average",
+   "data": {
+    "dtype": "str",
+    "v": [
+     "Price/Earnings",
+     "Price/Book",
+     "Price/Sales",
+     "Price/Cashflow",
+     "Median Market Cap",
+     "3 Year Earnings Growth"
+    ]
+   }
+  },
+  "columns": {
+   "__rp__": "Index",
+   "name": null,
+   "data": {
+    "dtype": "str",
+    "v": [
+     "IVV",
+     "Category Average"
+    ]
+   }
+  },
+  "data": [
+   {
+    "dtype": "object",
+    "np": true,
+    "v": [
+     0.04035,
+     0.18934,
+     0.27335,
+     0.0526,
+     {
+      "__rp__": "na"
+     },
+     {
+      "__rp__": "na"
+     }
+    ]
+   },
+   {
+    "dtype": "object",
+    "np": true,
+    "v": [
+     {
+      "__rp__": "na"
+     },
+     {
+      "__rp__": "na"
+     },
+     {
+      "__rp__": "na"
+     },
+     {
+      "__rp__": "na"
+     },
+     {
+      "__rp__": "na"
+     },
+     {
+      "__rp__": "na"
+     }
+    ]
+   }
+  ]
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:54:54+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

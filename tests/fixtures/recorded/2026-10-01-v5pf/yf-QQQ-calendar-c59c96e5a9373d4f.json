@@ -1,0 +1,16 @@
+{
+ "key": "yf:QQQ:calendar",
+ "provider": "yfinance",
+ "symbol": "QQQ",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {},
+ "soft_failure": true,
+ "logs": [
+  "HTTP Error 404: {\"quoteSummary\":{\"result\":null,\"error\":{\"code\":\"Not Found\",\"description\":\"No fundamentals data found for symbol: QQQ\"}}}"
+ ],
+ "recorded_at": "2026-10-01T23:55:08+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

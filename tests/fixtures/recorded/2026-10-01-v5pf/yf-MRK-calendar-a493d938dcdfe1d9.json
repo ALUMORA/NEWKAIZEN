@@ -1,0 +1,34 @@
+{
+ "key": "yf:MRK:calendar",
+ "provider": "yfinance",
+ "symbol": "MRK",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-10-07"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-15"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-29"
+   }
+  ],
+  "Earnings High": 2.34,
+  "Earnings Low": 1.8,
+  "Earnings Average": 2.18569,
+  "Revenue High": 17655000000,
+  "Revenue Low": 16898000000,
+  "Revenue Average": 17345111480
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:38+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

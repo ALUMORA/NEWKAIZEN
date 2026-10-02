@@ -1,0 +1,30 @@
+{
+ "key": "yf:AMXB.MX:calendar",
+ "provider": "yfinance",
+ "symbol": "AMXB.MX",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-11-10"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-13"
+   }
+  ],
+  "Earnings High": 0.4,
+  "Earnings Low": 0.36,
+  "Earnings Average": 0.38,
+  "Revenue High": 247269000000,
+  "Revenue Low": 241185919000,
+  "Revenue Average": 244755954280
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:26+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

@@ -1,0 +1,34 @@
+{
+ "key": "yf:LLY:calendar",
+ "provider": "yfinance",
+ "symbol": "LLY",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-10"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-08-14"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-29"
+   }
+  ],
+  "Earnings High": 11.30501,
+  "Earnings Low": 9.23,
+  "Earnings Average": 9.95585,
+  "Revenue High": 24041177990,
+  "Revenue Low": 21384200000,
+  "Revenue Average": 22362169340
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:35+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

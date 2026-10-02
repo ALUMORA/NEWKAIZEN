@@ -1,0 +1,34 @@
+{
+ "key": "yf:META:calendar",
+ "provider": "yfinance",
+ "symbol": "META",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-28"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-21"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-28"
+   }
+  ],
+  "Earnings High": 7.64,
+  "Earnings Low": 3.92,
+  "Earnings Average": 6.73583,
+  "Revenue High": 65278000000,
+  "Revenue Low": 61702000000,
+  "Revenue Average": 63329245590
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:56:00+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

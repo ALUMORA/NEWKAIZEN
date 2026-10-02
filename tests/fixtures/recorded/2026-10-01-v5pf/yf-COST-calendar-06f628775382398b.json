@@ -1,0 +1,34 @@
+{
+ "key": "yf:COST:calendar",
+ "provider": "yfinance",
+ "symbol": "COST",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-08-07"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-07-24"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-12-10"
+   }
+  ],
+  "Earnings High": 5.61,
+  "Earnings Low": 4.62,
+  "Earnings Average": 4.9411,
+  "Revenue High": 75766323890,
+  "Revenue Low": 71201000000,
+  "Revenue Average": 74048632640
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:46+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

@@ -1,0 +1,34 @@
+{
+ "key": "yf:FCX:calendar",
+ "provider": "yfinance",
+ "symbol": "FCX",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-11-02"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-10-15"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-22"
+   }
+  ],
+  "Earnings High": 0.84,
+  "Earnings Low": 0.62,
+  "Earnings Average": 0.73727,
+  "Revenue High": 8438146030,
+  "Revenue Low": 6771536390,
+  "Revenue Average": 7422257820
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:56:06+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

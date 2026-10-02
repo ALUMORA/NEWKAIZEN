@@ -1,4 +1,674 @@
 {
  "set": "2026-10-01-v5pf",
- "entries": {}
+ "entries": {
+  "yf:ABBV:calendar": {
+   "file": "yf-ABBV-calendar-51ee6f9bd9f66532.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:37+00:00"
+  },
+  "yf:AC.MX:calendar": {
+   "file": "yf-AC.MX-calendar-ac1c9df134aa02dd.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:13+00:00"
+  },
+  "yf:ADBE:calendar": {
+   "file": "yf-ADBE-calendar-2c4d3372e4ebfe89.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:34+00:00"
+  },
+  "yf:ALSEA.MX:calendar": {
+   "file": "yf-ALSEA.MX-calendar-e6e649441e3cef5d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:28+00:00"
+  },
+  "yf:AMGN:calendar": {
+   "file": "yf-AMGN-calendar-65be559a15ed4a71.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:39+00:00"
+  },
+  "yf:AMXB.MX:calendar": {
+   "file": "yf-AMXB.MX-calendar-c7218601d6585f45.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:26+00:00"
+  },
+  "yf:AMZN:calendar": {
+   "file": "yf-AMZN-calendar-5ec5c155b33443ab.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:40+00:00"
+  },
+  "yf:APD:calendar": {
+   "file": "yf-APD-calendar-b263b3d560cbe9e3.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:56:04+00:00"
+  },
+  "yf:ASURB.MX:calendar": {
+   "file": "yf-ASURB.MX-calendar-f58954ea85793ad8.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:23+00:00"
+  },
+  "yf:AVGO:calendar": {
+   "file": "yf-AVGO-calendar-deb234255b2d2917.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:32+00:00"
+  },
+  "yf:BBAJIOO.MX:calendar": {
+   "file": "yf-BBAJIOO.MX-calendar-54a0fa70ade422f6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:18+00:00"
+  },
+  "yf:BIMBOA.MX:calendar": {
+   "file": "yf-BIMBOA.MX-calendar-9a98bd0dc3e9b379.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:11+00:00"
+  },
+  "yf:CAT:calendar": {
+   "file": "yf-CAT-calendar-459788cc05741ac1.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:50+00:00"
+  },
+  "yf:CHDRAUIB.MX:calendar": {
+   "file": "yf-CHDRAUIB.MX-calendar-fd6e62a9b9ffa9bd.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:12+00:00"
+  },
+  "yf:CMCSA:calendar": {
+   "file": "yf-CMCSA-calendar-3c53e3e79b170f98.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:56:02+00:00"
+  },
+  "yf:COP:calendar": {
+   "file": "yf-COP-calendar-3ce9ba92e2566b18.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:57+00:00"
+  },
+  "yf:COST:calendar": {
+   "file": "yf-COST-calendar-06f628775382398b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:46+00:00"
+  },
+  "yf:CVX:calendar": {
+   "file": "yf-CVX-calendar-5bb78e7484a6a761.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:56+00:00"
+  },
+  "yf:DE:calendar": {
+   "file": "yf-DE-calendar-7950bfe9a8bd3f09.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:54+00:00"
+  },
+  "yf:DIS:calendar": {
+   "file": "yf-DIS-calendar-e749dd44d4b90651.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:56:01+00:00"
+  },
+  "yf:EOG:calendar": {
+   "file": "yf-EOG-calendar-2b3d2a85a47ed125.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:58+00:00"
+  },
+  "yf:FCX:calendar": {
+   "file": "yf-FCX-calendar-9390e80539711349.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:56:06+00:00"
+  },
+  "yf:FEMSAUBD.MX:calendar": {
+   "file": "yf-FEMSAUBD.MX-calendar-7c71dc2b55e5d3d4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:04+00:00"
+  },
+  "yf:FEMSAUBD.MX:dividends": {
+   "file": "yf-FEMSAUBD.MX-dividends-3c315940f5d49daf.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:06+00:00"
+  },
+  "yf:GAPB.MX:calendar": {
+   "file": "yf-GAPB.MX-calendar-d200a0af320592ec.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:22+00:00"
+  },
+  "yf:GENTERA.MX:calendar": {
+   "file": "yf-GENTERA.MX-calendar-42d6a361a3adec09.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:19+00:00"
+  },
+  "yf:GFNORTEO.MX:calendar": {
+   "file": "yf-GFNORTEO.MX-calendar-5c7e7e4ade6aa31d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:16+00:00"
+  },
+  "yf:GMEXICOB.MX:calendar": {
+   "file": "yf-GMEXICOB.MX-calendar-821ca9ce26e309ca.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:20+00:00"
+  },
+  "yf:GOOGL:calendar": {
+   "file": "yf-GOOGL-calendar-4ec07862f1a3a25a.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:59+00:00"
+  },
+  "yf:GRUMAB.MX:calendar": {
+   "file": "yf-GRUMAB.MX-calendar-af4d5a74ade2637d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:14+00:00"
+  },
+  "yf:HD:calendar": {
+   "file": "yf-HD-calendar-0908d2f75f4ca4dd.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:41+00:00"
+  },
+  "yf:HON:calendar": {
+   "file": "yf-HON-calendar-71e020e14f4f38dc.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:51+00:00"
+  },
+  "yf:IVV:funds_data.asset_classes": {
+   "file": "yf-IVV-funds-data.asset-classes-c38289f7ec6a0784.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:51+00:00"
+  },
+  "yf:IVV:funds_data.equity_holdings": {
+   "file": "yf-IVV-funds-data.equity-holdings-ed229c6244b936b6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:54+00:00"
+  },
+  "yf:IVV:funds_data.fund_operations": {
+   "file": "yf-IVV-funds-data.fund-operations-372b0390e4225efc.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:53+00:00"
+  },
+  "yf:IVV:funds_data.fund_overview": {
+   "file": "yf-IVV-funds-data.fund-overview-85b12ece0212f524.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:52+00:00"
+  },
+  "yf:IVV:funds_data.sector_weightings": {
+   "file": "yf-IVV-funds-data.sector-weightings-150df975499e8413.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:50+00:00"
+  },
+  "yf:IVV:funds_data.top_holdings": {
+   "file": "yf-IVV-funds-data.top-holdings-8d63634d9c969e4e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:49+00:00"
+  },
+  "yf:IVV:info": {
+   "file": "yf-IVV-info-aa814aae52cbd878.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:56+00:00"
+  },
+  "yf:JNJ:calendar": {
+   "file": "yf-JNJ-calendar-ae59122f9a9ae4f2.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:36+00:00"
+  },
+  "yf:KIMBERA.MX:calendar": {
+   "file": "yf-KIMBERA.MX-calendar-07ae8725771bdab3.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:15+00:00"
+  },
+  "yf:KO:calendar": {
+   "file": "yf-KO-calendar-96c8541e4cf5d9b1.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:48+00:00"
+  },
+  "yf:KOFUBL.MX:calendar": {
+   "file": "yf-KOFUBL.MX-calendar-2dcba45d7e03a9b6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:10+00:00"
+  },
+  "yf:LIN:calendar": {
+   "file": "yf-LIN-calendar-75507a0119530b0f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:56:03+00:00"
+  },
+  "yf:LIVEPOLC-1.MX:calendar": {
+   "file": "yf-LIVEPOLC-1.MX-calendar-ff05b02e50463cd4.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:29+00:00"
+  },
+  "yf:LLY:calendar": {
+   "file": "yf-LLY-calendar-8e359d340cab875d.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:35+00:00"
+  },
+  "yf:LOW:calendar": {
+   "file": "yf-LOW-calendar-21dc78d9ff06be40.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:44+00:00"
+  },
+  "yf:MCD:calendar": {
+   "file": "yf-MCD-calendar-ecceaf04a89eca26.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:42+00:00"
+  },
+  "yf:META:calendar": {
+   "file": "yf-META-calendar-016460004303e750.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:56:00+00:00"
+  },
+  "yf:MRK:calendar": {
+   "file": "yf-MRK-calendar-a493d938dcdfe1d9.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:38+00:00"
+  },
+  "yf:MSFT:calendar": {
+   "file": "yf-MSFT-calendar-cafb1f8afb5c59e9.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:30+00:00"
+  },
+  "yf:NAFTRAC.MX:calendar": {
+   "file": "yf-NAFTRAC.MX-calendar-746dc1bfdd2f2ff8.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-10-01T23:55:03+00:00"
+  },
+  "yf:NAFTRAC.MX:dividends": {
+   "file": "yf-NAFTRAC.MX-dividends-21f0de9217471e60.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:05+00:00"
+  },
+  "yf:NKE:calendar": {
+   "file": "yf-NKE-calendar-adb37b7363edecb5.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:43+00:00"
+  },
+  "yf:NVDA:calendar": {
+   "file": "yf-NVDA-calendar-6d6543e4de07df2b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:31+00:00"
+  },
+  "yf:OMAB.MX:calendar": {
+   "file": "yf-OMAB.MX-calendar-350b5d60ff1a6292.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:24+00:00"
+  },
+  "yf:ORBIA.MX:calendar": {
+   "file": "yf-ORBIA.MX-calendar-c27ed502ec4c86fc.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:21+00:00"
+  },
+  "yf:ORCL:calendar": {
+   "file": "yf-ORCL-calendar-2c074f011d130cd5.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:33+00:00"
+  },
+  "yf:PEP:calendar": {
+   "file": "yf-PEP-calendar-85382a23583ef004.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:49+00:00"
+  },
+  "yf:PG:calendar": {
+   "file": "yf-PG-calendar-1756c082718b7be1.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:47+00:00"
+  },
+  "yf:PINFRA.MX:calendar": {
+   "file": "yf-PINFRA.MX-calendar-d8872908e2ebb7fa.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:25+00:00"
+  },
+  "yf:Q.MX:calendar": {
+   "file": "yf-Q.MX-calendar-8491a2480343c12b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:17+00:00"
+  },
+  "yf:QQQ:calendar": {
+   "file": "yf-QQQ-calendar-c59c96e5a9373d4f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-10-01T23:55:08+00:00"
+  },
+  "yf:QQQ:dividends": {
+   "file": "yf-QQQ-dividends-44def2afd38f20af.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:10+00:00"
+  },
+  "yf:QQQ:funds_data.asset_classes": {
+   "file": "yf-QQQ-funds-data.asset-classes-c03631e92de1c7e9.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:44+00:00"
+  },
+  "yf:QQQ:funds_data.equity_holdings": {
+   "file": "yf-QQQ-funds-data.equity-holdings-186020f6af675f5e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:47+00:00"
+  },
+  "yf:QQQ:funds_data.fund_operations": {
+   "file": "yf-QQQ-funds-data.fund-operations-d35262cd0eb7d26f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:46+00:00"
+  },
+  "yf:QQQ:funds_data.fund_overview": {
+   "file": "yf-QQQ-funds-data.fund-overview-35b912c30b8e0e74.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:45+00:00"
+  },
+  "yf:QQQ:funds_data.sector_weightings": {
+   "file": "yf-QQQ-funds-data.sector-weightings-536a088af09e431e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:43+00:00"
+  },
+  "yf:QQQ:funds_data.top_holdings": {
+   "file": "yf-QQQ-funds-data.top-holdings-519173b4500189c3.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:42+00:00"
+  },
+  "yf:QQQ:info": {
+   "file": "yf-QQQ-info-baf66ba73bfa7053.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:48+00:00"
+  },
+  "yf:RTX:calendar": {
+   "file": "yf-RTX-calendar-ce2dd9d89e0d7502.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:52+00:00"
+  },
+  "yf:SHW:calendar": {
+   "file": "yf-SHW-calendar-10786f71fe5a5fe7.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:56:05+00:00"
+  },
+  "yf:SPY:calendar": {
+   "file": "yf-SPY-calendar-0b418746621580de.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": true,
+   "recorded_at": "2026-10-01T23:55:08+00:00"
+  },
+  "yf:SPY:funds_data.asset_classes": {
+   "file": "yf-SPY-funds-data.asset-classes-2adf761be9fdb030.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:38+00:00"
+  },
+  "yf:SPY:funds_data.equity_holdings": {
+   "file": "yf-SPY-funds-data.equity-holdings-5a05c1fed059ae7f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:41+00:00"
+  },
+  "yf:SPY:funds_data.fund_operations": {
+   "file": "yf-SPY-funds-data.fund-operations-9efa2e42c51030ee.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:40+00:00"
+  },
+  "yf:SPY:funds_data.fund_overview": {
+   "file": "yf-SPY-funds-data.fund-overview-e5f2b622361d59c6.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:39+00:00"
+  },
+  "yf:SPY:funds_data.sector_weightings": {
+   "file": "yf-SPY-funds-data.sector-weightings-6b3bda5f83aac969.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:37+00:00"
+  },
+  "yf:SPY:funds_data.top_holdings": {
+   "file": "yf-SPY-funds-data.top-holdings-aab942215bb60fc2.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:36+00:00"
+  },
+  "yf:TLEVISACPO.MX:calendar": {
+   "file": "yf-TLEVISACPO.MX-calendar-05e10be5424cc955.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:27+00:00"
+  },
+  "yf:UNP:calendar": {
+   "file": "yf-UNP-calendar-5c54bfc28ebeec50.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:53+00:00"
+  },
+  "yf:VOO:funds_data.asset_classes": {
+   "file": "yf-VOO-funds-data.asset-classes-a66e1619563b2063.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:58+00:00"
+  },
+  "yf:VOO:funds_data.equity_holdings": {
+   "file": "yf-VOO-funds-data.equity-holdings-831722e7a6aaed2e.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:01+00:00"
+  },
+  "yf:VOO:funds_data.fund_operations": {
+   "file": "yf-VOO-funds-data.fund-operations-3664b9bfe376e3aa.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:00+00:00"
+  },
+  "yf:VOO:funds_data.fund_overview": {
+   "file": "yf-VOO-funds-data.fund-overview-9e06b435f70b86d7.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:59+00:00"
+  },
+  "yf:VOO:funds_data.sector_weightings": {
+   "file": "yf-VOO-funds-data.sector-weightings-59c2706ec12e6e2b.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:57+00:00"
+  },
+  "yf:VOO:funds_data.top_holdings": {
+   "file": "yf-VOO-funds-data.top-holdings-50af43ec360bdc78.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:54:56+00:00"
+  },
+  "yf:VOO:info": {
+   "file": "yf-VOO-info-eff24628b01de711.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:03+00:00"
+  },
+  "yf:WMT:calendar": {
+   "file": "yf-WMT-calendar-a820440a6aed5f2f.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:45+00:00"
+  },
+  "yf:XOM:calendar": {
+   "file": "yf-XOM-calendar-bb0f1783e121f6dc.json",
+   "provider": "yfinance",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:55+00:00"
+  }
+ },
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "created_at": "2026-10-01T23:54:35+00:00",
+ "yfinance_version": "1.7.0",
+ "layered_on": [
+  "2026-09-22"
+ ],
+ "lookup_order": [
+  "2026-09-22",
+  "2026-10-01-v5pf"
+ ],
+ "summary": {
+  "keys_total": 91,
+  "keys_by_provider": {
+   "yf": 91
+  },
+  "exceptions_by_provider": {},
+  "empty_by_provider": {
+   "yf": 3
+  },
+  "symbols_with_failed_or_empty_calls": {
+   "NAFTRAC.MX": [
+    "calendar"
+   ],
+   "QQQ": [
+    "calendar"
+   ],
+   "SPY": [
+    "calendar"
+   ]
+  }
+ },
+ "updated_at": "2026-10-01T23:56:06+00:00"
 }

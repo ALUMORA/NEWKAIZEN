@@ -1,0 +1,34 @@
+{
+ "key": "yf:CVX:calendar",
+ "provider": "yfinance",
+ "symbol": "CVX",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-10"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-08-19"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-30"
+   }
+  ],
+  "Earnings High": 5.7,
+  "Earnings Low": 3.61,
+  "Earnings Average": 4.70514,
+  "Revenue High": 61974000000,
+  "Revenue Low": 48408882110,
+  "Revenue Average": 56753640260
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:56+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

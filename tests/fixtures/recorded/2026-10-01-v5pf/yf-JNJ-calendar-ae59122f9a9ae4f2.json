@@ -1,0 +1,34 @@
+{
+ "key": "yf:JNJ:calendar",
+ "provider": "yfinance",
+ "symbol": "JNJ",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-08"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-08-25"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-13"
+   }
+  ],
+  "Earnings High": 2.66,
+  "Earnings Low": 2.31,
+  "Earnings Average": 2.48162,
+  "Revenue High": 25696000000,
+  "Revenue Low": 25036000000,
+  "Revenue Average": 25313052920
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:36+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}
