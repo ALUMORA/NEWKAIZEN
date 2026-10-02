@@ -37,5 +37,5 @@ def test_layer_stacks_on_base_and_keeps_its_clock(stream):
     with replaying(",".join(stack)) as session:
         assert session.store.names == stack
         assert session.store.frozen_at == BASE_CLOCK
-        assert base_keys <= session.store.keys()
+        assert set(base_keys) <= set(session.store.keys())
         assert _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds") == BASE_CLOCK
