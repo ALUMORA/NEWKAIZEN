@@ -341,9 +341,25 @@ probadas en vivo en `notas/fase5-fuentes.json` e inventario en `notas/fase5-inve
   el backend). `11be7aa`: los nueve streams en `scripts/ownership.json` y el semáforo con cupos en el
   TMPDIR del usuario. Compuerta sobre `analizavende` integrado: `npm run check` 2,355 pruebas y
   bundle al 79 %, pytest y ruff limpios, e2e 546 pasadas (1 intermitente por carga que pasa sola).
-- **Streams**: worktrees creados para V5TS, V5FX, V5EC, V5FI y V5PF (`05 NEWKAIZEN.wt/<stream>`,
-  ramas `ws/<stream>` desde `0864bc3`). Primera tanda lanzada: V5TS, V5FX y V5PF. Falta: V5EC, V5FI,
-  y después V5TC, V5MK, V5EM y V5TM (sin worktree todavía).
+- **Primera tanda mergeada**: `34ead26` V5TS (centro de tasas), `443703e` V5FX (monitor del peso,
+  FIX contable con regla del DOF, forward y presupuesto) y `76a31e7` V5PF (agenda, temporada de
+  reportes, ETF por dentro y rayos X). Ajustes del orquestador al integrar: la prueba de capas de M5
+  acepta capas ya grabadas (`d42ef0c`, `55b97fc`), la de capacidades de B3a suma las de eventos
+  (`e50552d`) y la guía de tipo de cambio lleva el aviso de no recomendación (`b3dfe75`). Compuerta
+  integrada: `npm run check` 2,413 pruebas, pytest y ruff limpios, e2e 613 pasadas y 0 fallas.
+  Recorrido integrado (las seis capas, 9 rutas, dos viewports y dos temas): 36 de 36 limpio, CLS
+  máximo 0.064, y la tarjeta de la encuesta de Banxico en /empresas/cobertura ya lee `/v2/expectations`.
+- **El replay necesita `BANXICO_TOKEN` en el entorno** (uno falso basta, no es parte de la llave): sin
+  él la app toma el camino sin token y el monitor del peso da `ReplayMiss` de Frankfurter.
+- **Abiertos de la primera tanda** (para la revisión final de la fase): sin FIX de Banxico el monitor
+  responde 503 y la pantalla salta con CLS de 0.32 (el estado de error no aparta su alto); fechas ISO
+  en avisos visibles de V5FX ("dato al 2026-09-22"); hueco vacío bajo la gráfica de impacto en
+  /empresas/cobertura; el Disclaimer de /mercados/tasas se suma al del pie y se ve dos veces; el P/U
+  de un ETF no llega a pantalla porque el contrato no tiene el campo (`docs/requests/V5PF.md`); las
+  atribuciones del aviso legal y la integración del glosario de cada stream las pone O al final
+  (`docs/requests/V5TS.md`, `V5FX.md`, `V5PF.md`).
+- **Segunda tanda**: V5EC lanzado solo (la cuota iba en 53 %). Faltan V5FI (worktree ya creado), y
+  V5TC, V5MK, V5EM y V5TM (sin worktree todavía).
 - Notas para los streams que faltan: la prueba de llaves prohibidas de V5FI va sobre sus respuestas,
   no sobre todas (`vsTargetBp` es legítimo); la "pestaña" Gráfica de la ficha hoy es sección y
   `pathInstrumentTab` arma `?pestana=` que la ficha aún no lee (V5TC); las capacidades nuevas van en
