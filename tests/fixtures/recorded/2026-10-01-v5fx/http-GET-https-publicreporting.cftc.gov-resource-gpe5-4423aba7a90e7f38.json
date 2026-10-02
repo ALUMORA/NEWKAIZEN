@@ -1,0 +1,43 @@
+{
+ "key": "http:GET https://publicreporting.cftc.gov/resource/gpe5-46if.json?%24limit=1&%24order=report_date_as_yyyy_mm_dd+DESC&%24select=report_date_as_yyyy_mm_dd%2Clev_money_positions_long%2Clev_money_positions_short%2Casset_mgr_positions_long%2Casset_mgr_positions_short&%24where=cftc_contract_market_code%3D%27095741%27+AND+report_date_as_yyyy_mm_dd+%3C%3D+%272026-09-22T00%3A00%3A00%27",
+ "provider": "http",
+ "method": "GET",
+ "url": "https://publicreporting.cftc.gov/resource/gpe5-46if.json",
+ "params": {
+  "$select": "report_date_as_yyyy_mm_dd,lev_money_positions_long,lev_money_positions_short,asset_mgr_positions_long,asset_mgr_positions_short",
+  "$where": "cftc_contract_market_code='095741' AND report_date_as_yyyy_mm_dd <= '2026-09-22T00:00:00'",
+  "$order": "report_date_as_yyyy_mm_dd DESC",
+  "$limit": "1"
+ },
+ "kind": "value",
+ "payload": {
+  "status": 200,
+  "reason": "OK",
+  "url": "https://publicreporting.cftc.gov/resource/gpe5-46if.json?%24select=report_date_as_yyyy_mm_dd%2Clev_money_positions_long%2Clev_money_positions_short%2Casset_mgr_positions_long%2Casset_mgr_positions_short&%24where=cftc_contract_market_code%3D%27095741%27+AND+report_date_as_yyyy_mm_dd+%3C%3D+%272026-09-22T00%3A00%3A00%27&%24order=report_date_as_yyyy_mm_dd+DESC&%24limit=1",
+  "encoding": "utf-8",
+  "headers": {
+   "Server": "nginx",
+   "Date": "Thu, 01 Oct 2026 23:55:19 GMT",
+   "Content-Type": "application/json;charset=utf-8",
+   "Access-Control-Allow-Origin": "*",
+   "ETag": "\"aG90ZWwuNDkzNTZfM18zNTE4aENvUE1vOGxKaHFHYTBRdE9KaTBIVTJJRWc---gziqZNjeorTUvrXa1Fi4vtR7HMvBA-g--gzip--gzip\"",
+   "X-SODA2-Fields": "[\"report_date_as_yyyy_mm_dd\",\"lev_money_positions_long\",\"lev_money_positions_short\",\"asset_mgr_positions_long\",\"asset_mgr_positions_short\"]",
+   "X-SODA2-Types": "[\"floating_timestamp\",\"number\",\"number\",\"number\",\"number\"]",
+   "X-SODA2-Data-Out-Of-Date": "false",
+   "X-SODA2-Truth-Last-Modified": "Fri, 25 Sep 2026 19:30:07 GMT",
+   "X-SODA2-Secondary-Last-Modified": "Fri, 25 Sep 2026 19:30:07 GMT",
+   "Last-Modified": "Fri, 25 Sep 2026 19:30:07 GMT",
+   "Vary": "Accept-Encoding",
+   "X-Socrata-Region": "aws-us-east-1-fedramp-prod",
+   "X-Socrata-RequestId": "f3803fbe6a8e9ade74752ffbd123f85c",
+   "Strict-Transport-Security": "max-age=31536000; includeSubDomains"
+  },
+  "body": {
+   "text": "[{\"report_date_as_yyyy_mm_dd\":\"2026-09-22T00:00:00.000\",\"lev_money_positions_long\":\"100855\",\"lev_money_positions_short\":\"21667\",\"asset_mgr_positions_long\":\"110866\",\"asset_mgr_positions_short\":\"65360\"}]\n"
+  }
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:19+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "2d81fb8260e8"
+}

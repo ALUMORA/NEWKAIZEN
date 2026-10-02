@@ -1,4 +1,78 @@
 {
  "set": "2026-10-01-v5fx",
- "entries": {}
+ "entries": {
+  "http:GET https://api.frankfurter.dev/v2/rates?base=MXN&from=2025-08-18&quotes=BRL%2CCOP%2CCLP%2CARS%2CPEN&to=2026-09-22": {
+   "file": "http-GET-https-api.frankfurter.dev-v2-rates-ff813e6d07bbbd4f.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:21+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS1": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-3408857b827fbd36.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:25+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS1MO": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-9812e821dbdc30b1.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:22+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS6MO": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-3b84a47595b78511.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:25+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=SOFR": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-8e6b1569f08cf007.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:26+00:00"
+  },
+  "http:GET https://publicreporting.cftc.gov/resource/6dca-aqww.json?%24limit=2&%24order=report_date_as_yyyy_mm_dd+DESC&%24select=report_date_as_yyyy_mm_dd%2Copen_interest_all%2Cnoncomm_positions_long_all%2Cnoncomm_positions_short_all&%24where=cftc_contract_market_code%3D%27095741%27+AND+report_date_as_yyyy_mm_dd+%3C%3D+%272026-09-22T00%3A00%3A00%27": {
+   "file": "http-GET-https-publicreporting.cftc.gov-resource-6dca-d3076a3707b3f676.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:18+00:00"
+  },
+  "http:GET https://publicreporting.cftc.gov/resource/gpe5-46if.json?%24limit=1&%24order=report_date_as_yyyy_mm_dd+DESC&%24select=report_date_as_yyyy_mm_dd%2Clev_money_positions_long%2Clev_money_positions_short%2Casset_mgr_positions_long%2Casset_mgr_positions_short&%24where=cftc_contract_market_code%3D%27095741%27+AND+report_date_as_yyyy_mm_dd+%3C%3D+%272026-09-22T00%3A00%3A00%27": {
+   "file": "http-GET-https-publicreporting.cftc.gov-resource-gpe5-4423aba7a90e7f38.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-01T23:55:19+00:00"
+  }
+ },
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "created_at": "2026-10-01T23:55:17+00:00",
+ "yfinance_version": "1.7.0",
+ "layered_on": [
+  "2026-09-22",
+  "2026-10-01-banxico"
+ ],
+ "lookup_order": [
+  "2026-09-22",
+  "2026-10-01-banxico",
+  "2026-10-01-v5fx"
+ ],
+ "summary": {
+  "keys_total": 7,
+  "keys_by_provider": {
+   "http:api.frankfurter.dev": 1,
+   "http:fred.stlouisfed.org": 4,
+   "http:publicreporting.cftc.gov": 2
+  },
+  "exceptions_by_provider": {},
+  "empty_by_provider": {},
+  "symbols_with_failed_or_empty_calls": {}
+ },
+ "updated_at": "2026-10-01T23:55:26+00:00"
 }
