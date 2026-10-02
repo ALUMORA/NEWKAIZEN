@@ -59,3 +59,8 @@
 
 .fx-note { color: var(--muted); font-size: var(--text-sm); margin: 0; }
 .fx-pad { padding: var(--space-4); }
+
+/* El resumen del FIX reserva el alto que tendrá con su subetiqueta: sin esto, en 390 px la llegada
+   de los datos empujaba la gráfica (CLS 0.15 medido en el recorrido). */
+.fx-headline > .kz-stat { min-height: 4.75rem; }
+.fx-headline > .kz-stat:first-child { min-height: 5.375rem; }

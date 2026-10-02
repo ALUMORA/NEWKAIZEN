@@ -173,7 +173,7 @@ function Headline({ data, loading }) {
   const spotStatus = data ? { ...data.meta, asOf: data.spot.asOf } : undefined
   const cents = data?.changesCents.d1
   return (
-    <section aria-label="Resumen del FIX" className="kz-metric-grid">
+    <section aria-label="Resumen del FIX" className="kz-metric-grid fx-headline">
       <Stat
         size="lg"
         label="FIX, pesos por dólar"
