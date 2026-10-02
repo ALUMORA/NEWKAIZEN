@@ -1,0 +1,179 @@
+{
+ "fuente": "https://www.banxico.org.mx/monetary-policy/d/%7B0C35369C-BF8F-E5A8-7710-FD5A6716474F%7D.pdf",
+ "transcrito": "2026-10-01",
+ "revisar": "Cada semestre y cuando Banxico publique el calendario 2027 (suele darlo a conocer hacia el final del año).",
+ "coverageUntil": "2026-12-17",
+ "nota": "Banco de México se reserva el derecho de ajustar su postura en fechas distintas de las programadas.",
+ "timeZone": "America/Mexico_City",
+ "events": [
+  {
+   "kind": "minutes",
+   "title": "Minuta de la decisión de política monetaria",
+   "period": "dic 2025",
+   "date": "2026-01-08",
+   "time": null
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de política monetaria de Banxico",
+   "date": "2026-02-05",
+   "time": "13:00",
+   "seriesId": "SF61745",
+   "unit": "fraction"
+  },
+  {
+   "kind": "minutes",
+   "title": "Minuta de la decisión de política monetaria",
+   "period": "feb 2026",
+   "date": "2026-02-19",
+   "time": null
+  },
+  {
+   "kind": "report",
+   "title": "Informe trimestral de Banxico",
+   "period": "4T 2025",
+   "date": "2026-02-26",
+   "time": null
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de política monetaria de Banxico",
+   "date": "2026-03-26",
+   "time": "13:00",
+   "seriesId": "SF61745",
+   "unit": "fraction"
+  },
+  {
+   "kind": "minutes",
+   "title": "Minuta de la decisión de política monetaria",
+   "period": "mar 2026",
+   "date": "2026-04-09",
+   "time": null
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de política monetaria de Banxico",
+   "date": "2026-05-07",
+   "time": "13:00",
+   "seriesId": "SF61745",
+   "unit": "fraction"
+  },
+  {
+   "kind": "minutes",
+   "title": "Minuta de la decisión de política monetaria",
+   "period": "may 2026",
+   "date": "2026-05-21",
+   "time": null
+  },
+  {
+   "kind": "report",
+   "title": "Informe trimestral de Banxico",
+   "period": "1T 2026",
+   "date": "2026-05-27",
+   "time": null
+  },
+  {
+   "kind": "report",
+   "title": "Reporte de estabilidad financiera",
+   "period": null,
+   "date": "2026-06-10",
+   "time": null
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de política monetaria de Banxico",
+   "date": "2026-06-25",
+   "time": "13:00",
+   "seriesId": "SF61745",
+   "unit": "fraction"
+  },
+  {
+   "kind": "minutes",
+   "title": "Minuta de la decisión de política monetaria",
+   "period": "jun 2026",
+   "date": "2026-07-09",
+   "time": null
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de política monetaria de Banxico",
+   "date": "2026-08-06",
+   "time": "13:00",
+   "seriesId": "SF61745",
+   "unit": "fraction"
+  },
+  {
+   "kind": "minutes",
+   "title": "Minuta de la decisión de política monetaria",
+   "period": "ago 2026",
+   "date": "2026-08-20",
+   "time": null
+  },
+  {
+   "kind": "report",
+   "title": "Informe trimestral de Banxico",
+   "period": "2T 2026",
+   "date": "2026-08-26",
+   "time": null
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de política monetaria de Banxico",
+   "date": "2026-09-24",
+   "time": "13:00",
+   "seriesId": "SF61745",
+   "unit": "fraction"
+  },
+  {
+   "kind": "minutes",
+   "title": "Minuta de la decisión de política monetaria",
+   "period": "sep 2026",
+   "date": "2026-10-08",
+   "time": null
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de política monetaria de Banxico",
+   "date": "2026-11-05",
+   "time": "13:00",
+   "seriesId": "SF61745",
+   "unit": "fraction"
+  },
+  {
+   "kind": "minutes",
+   "title": "Minuta de la decisión de política monetaria",
+   "period": "nov 2026",
+   "date": "2026-11-19",
+   "time": null
+  },
+  {
+   "kind": "report",
+   "title": "Informe trimestral de Banxico",
+   "period": "3T 2026",
+   "date": "2026-11-26",
+   "time": null
+  },
+  {
+   "kind": "report",
+   "title": "Reporte de estabilidad financiera",
+   "period": null,
+   "date": "2026-12-09",
+   "time": null
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de política monetaria de Banxico",
+   "date": "2026-12-17",
+   "time": "13:00",
+   "seriesId": "SF61745",
+   "unit": "fraction"
+  },
+  {
+   "kind": "minutes",
+   "title": "Minuta de la decisión de política monetaria",
+   "period": "dic 2026",
+   "date": "2027-01-07",
+   "time": null
+  }
+ ]
+}

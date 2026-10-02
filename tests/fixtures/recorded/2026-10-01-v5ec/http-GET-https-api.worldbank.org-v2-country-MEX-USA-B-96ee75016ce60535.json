@@ -1,0 +1,41 @@
+{
+ "key": "http:GET https://api.worldbank.org/v2/country/MEX;USA;BRA/indicator/FP.CPI.TOTL.ZG?format=json&mrv=5&per_page=100",
+ "provider": "http",
+ "method": "GET",
+ "url": "https://api.worldbank.org/v2/country/MEX;USA;BRA/indicator/FP.CPI.TOTL.ZG",
+ "params": {
+  "format": "json",
+  "mrv": 5,
+  "per_page": 100
+ },
+ "kind": "value",
+ "payload": {
+  "status": 200,
+  "reason": "OK",
+  "url": "https://api.worldbank.org/v2/country/MEX;USA;BRA/indicator/FP.CPI.TOTL.ZG?format=json&mrv=5&per_page=100",
+  "encoding": "utf-8",
+  "headers": {
+   "Date": "Fri, 02 Oct 2026 01:23:44 GMT",
+   "Content-Type": "application/json;charset=utf-8",
+   "CF-Ray": "a43fe74a989512d0-QRO",
+   "CF-Cache-Status": "MISS",
+   "Access-Control-Allow-Origin": "*",
+   "Cache-Control": "public, max-age=86400",
+   "Expires": "Sat, 03 Oct 2026 01:23:44 GMT",
+   "Last-Modified": "Fri, 02 Oct 2026 01:23:44 GMT",
+   "Server": "cloudflare",
+   "Vary": "accept-encoding",
+   "Access-Control-Allow-Headers": "X-Requested-With",
+   "Access-Control-Allow-Methods": "GET",
+   "Request-Context": "appId=cid-v1:da002513-bd8b-4441-9f30-737944134422",
+   "X-Powered-By": "ASP.NET"
+  },
+  "body": {
+   "text": "[{\"page\":1,\"pages\":1,\"per_page\":100,\"total\":15,\"sourceid\":\"2\",\"lastupdated\":\"2026-07-13\"},[{\"indicator\":{\"id\":\"FP.CPI.TOTL.ZG\",\"value\":\"Inflation, consumer prices (annual %)\"},\"country\":{\"id\":\"BR\",\"value\":\"Brazil\"},\"countryiso3code\":\"BRA\",\"date\":\"2025\",\"value\":5.01675279604836,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"FP.CPI.TOTL.ZG\",\"value\":\"Inflation, consumer prices (annual %)\"},\"country\":{\"id\":\"BR\",\"value\":\"Brazil\"},\"countryiso3code\":\"BRA\",\"date\":\"2024\",\"value\":4.36746407652337,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"FP.CPI.TOTL.ZG\",\"value\":\"Inflation, consumer prices (annual %)\"},\"country\":{\"id\":\"BR\",\"value\":\"Brazil\"},\"countryiso3code\":\"BRA\",\"date\":\"2023\",\"value\":4.59356282283204,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"FP.CPI.TOTL.ZG\",\"value\":\"Inflation, consumer prices (annual %)\"},\"country\":{\"id\":\"BR\",\"value\":\"Brazil\"},\"countryiso3code\":\"BRA\",\"date\":\"2022\",\"value\":9.28010608956873,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"FP.CPI.TOTL.ZG\",\"value\":\"Inflation, consumer prices (annual %)\"},\"country\":{\"id\":\"BR\",\"value\":\"Brazil\"},\"countryiso3code\":\"BRA\",\"date\":\"2021\",\"value\":8.30165975585673,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"FP.CPI.TOTL.ZG\",\"value\":\"Inflation, consumer prices (annual %)\"},\"country\":{\"id\":\"MX\",\"value\":\"Mexico\"},\"countryiso3code\":\"MEX\",\"date\":\"2025\",\"value\":3.80668650726485,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"FP.CPI.TOTL.ZG\",\"value\":\"Inflation, consumer prices (annual %)\"},\"country\":{\"id\":\"MX\",\"value\":\"Mexico\"},\"countryiso3code\":\"MEX\",\"date\":\"2024\",\"value\":4.72225588452932,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"FP.CPI.TOTL.ZG\",\"value\":\"Inflation, consumer prices (annual %)\"},\"country\":{\"id\":\"MX\",\"value\":\"Mexico\"},\"countryiso3code\":\"MEX\",\"date\":\"2023\",\"value\":5.52796087314389,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"FP.CPI.TOTL.ZG\",\"value\":\"Inflation, consumer prices (annual %)\"},\"country\":{\"id\":\"MX\",\"value\":\"Mexico\"},\"countryiso3code\":\"MEX\",\"date\":\"2022\",\"value\":7.8962761916855,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"FP.CPI.TOTL.ZG\",\"value\":\"Inflation, consumer prices (annual %)\"},\"country\":{\"id\":\"MX\",\"value\":\"Mexico\"},\"countryiso3code\":\"MEX\",\"date\":\"2021\",\"value\":5.68920847683753,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"FP.CPI.TOTL.ZG\",\"value\":\"Inflation, consumer prices (annual %)\"},\"country\":{\"id\":\"US\",\"value\":\"United States\"},\"countryiso3code\":\"USA\",\"date\":\"2025\",\"value\":null,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"FP.CPI.TOTL.ZG\",\"value\":\"Inflation, consumer prices (annual %)\"},\"country\":{\"id\":\"US\",\"value\":\"United States\"},\"countryiso3code\":\"USA\",\"date\":\"2024\",\"value\":2.94952520485207,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"FP.CPI.TOTL.ZG\",\"value\":\"Inflation, consumer prices (annual %)\"},\"country\":{\"id\":\"US\",\"value\":\"United States\"},\"countryiso3code\":\"USA\",\"date\":\"2023\",\"value\":4.11633838374488,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"FP.CPI.TOTL.ZG\",\"value\":\"Inflation, consumer prices (annual %)\"},\"country\":{\"id\":\"US\",\"value\":\"United States\"},\"countryiso3code\":\"USA\",\"date\":\"2022\",\"value\":8.00279982052121,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"FP.CPI.TOTL.ZG\",\"value\":\"Inflation, consumer prices (annual %)\"},\"country\":{\"id\":\"US\",\"value\":\"United States\"},\"countryiso3code\":\"USA\",\"date\":\"2021\",\"value\":4.69785886363742,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1}]]"
+  }
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-02T01:23:44+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "14197a7c5a0e"
+}

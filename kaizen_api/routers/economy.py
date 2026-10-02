@@ -1,24 +1,27 @@
 """Calendario económico de México y EE. UU. y tablero de indicadores con comparador de países (stream V5EC).
 
-Lo dejó M5 con cada ruta del contrato registrada y en ``@stub``. Las validaciones ya corren antes
-del 501: una ventana de más de 90 días en el calendario responde 400 ``INVALID_PARAM`` y una lista
-con países o indicadores que no existen, 422. V5EC borra ``@stub`` y el
-``raise not_implemented(...)`` al implementar cada ruta y agrega su capacidad.
+Una ventana de más de 90 días en el calendario responde 400 ``INVALID_PARAM`` y una lista con
+países o indicadores que no existen, 422. Con solo ``start`` o solo ``end`` el calendario abarca
+dos semanas desde la fecha que llegó (``econ_calendar.default_window``); sin fechas, dos semanas
+desde el lunes de hoy. "Hoy" es la fecha del reloj en hora del centro.
 """
 
 from __future__ import annotations
 
+import datetime as _dt
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Query
 
-from kaizen_api.errors import ApiError, field_error, not_implemented
+from kaizen_api.domain import econ_calendar, economy
+from kaizen_api.errors import ApiError, field_error
 from kaizen_api.http_cache import cache_control
-from kaizen_api.routers import ERROR_RESPONSES, IsoDateQuery, check_date_range, stub
+from kaizen_api.provenance import meta, utc_now
+from kaizen_api.routers import ERROR_RESPONSES, IsoDateQuery, check_date_range
 from kaizen_api.schemas import EconomicCalendarResponse, MacroIndicatorsResponse, MacroWorldResponse
 
 router = APIRouter(prefix="/v2", tags=["economía"], responses=ERROR_RESPONSES)
-CAPABILITIES: list[str] = []
+CAPABILITIES: list[str] = ["calendar.economic", "macro.indicators", "macro.world"]
 
 CALENDAR_MAX_DAYS = 90
 WORLD_MAX_COUNTRIES = 10
@@ -39,6 +42,11 @@ def check_calendar_params(start: str | None, end: str | None, country: str) -> l
     return [c for c in ("mx", "us") if c in country.split(",")]
 
 
+def today_mx() -> _dt.date:
+    """Fecha de hoy en hora del centro (el reloj del replay la congela)."""
+    return utc_now().astimezone(econ_calendar.MX_TZ).date()
+
+
 def parse_world(countries: str, indicators: str) -> tuple[list[str], list[str]]:
     codes: list[str] = []
     for code in countries.upper().split(","):
@@ -54,7 +62,6 @@ def parse_world(countries: str, indicators: str) -> tuple[list[str], list[str]]:
     dependencies=[cache_control("reference")],
     summary="Calendario de Banxico, la Fed, INEGI y BLS con dato anterior y publicado",
 )
-@stub
 def economic_calendar(
     start: IsoDateQuery = None,
     end: IsoDateQuery = None,
@@ -62,8 +69,15 @@ def economic_calendar(
         str, Query(pattern=r"^(mx|us)(,(mx|us))?$", description="mx, us o los dos separados por coma")
     ] = "mx,us",
 ) -> EconomicCalendarResponse:
-    check_calendar_params(start, end, country)
-    raise not_implemented("GET /v2/calendar/economic")
+    countries = check_calendar_params(start, end, country)
+    first, last = check_date_range(start, end)
+    data = econ_calendar.build_calendar(first, last, countries, today_mx())
+    return EconomicCalendarResponse(
+        events=data["events"],
+        coverage=data["coverage"],
+        nextDecisions=data["nextDecisions"],
+        meta=meta(data["source"], as_of=data["asOf"], notes=data["notes"]),
+    )
 
 
 @router.get(
@@ -72,12 +86,16 @@ def economic_calendar(
     dependencies=[cache_control("macro")],
     summary="Indicadores de economía de México o EE. UU. con su historia y su unidad",
 )
-@stub
 def macro_indicators(
     country: Annotated[Literal["mx", "us"], Query(description="País del tablero")] = "mx",
     years: Annotated[Literal["5", "10", "max"], Query(description="Años de historia")] = "5",
 ) -> MacroIndicatorsResponse:
-    raise not_implemented("GET /v2/macro/indicators")
+    data = economy.macro_indicators(country, years, today_mx())
+    return MacroIndicatorsResponse(
+        country=country,
+        indicators=data["indicators"],
+        meta=meta(data["source"], as_of=data["asOf"], stale=data["stale"], notes=data["notes"]),
+    )
 
 
 @router.get(
@@ -86,7 +104,6 @@ def macro_indicators(
     dependencies=[cache_control("reference")],
     summary="Comparador de países con datos del Banco Mundial (CC BY 4.0)",
 )
-@stub
 def macro_world(
     countries: Annotated[
         str,
@@ -100,5 +117,6 @@ def macro_world(
         Query(pattern=rf"^{_INDICATOR}(,{_INDICATOR}){{0,3}}$", description="gdpUsd, gdpGrowth, inflation, debt"),
     ] = "gdpUsd,gdpGrowth,inflation,debt",
 ) -> MacroWorldResponse:
-    parse_world(countries, indicators)
-    raise not_implemented("GET /v2/macro/world")
+    codes, wanted = parse_world(countries, indicators)
+    data = economy.world_rows(codes, wanted)
+    return MacroWorldResponse(rows=data["rows"], meta=meta("worldbank", as_of=data["asOf"], notes=data["notes"]))

@@ -1,0 +1,135 @@
+/* Economía y calendario (V5EC). Solo tokens: los dos temas salen solos. */
+.econ-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+  padding-block: var(--space-4) var(--space-8);
+}
+.econ-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-4);
+}
+.econ-toolbar__nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.econ-range {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  margin: 0;
+}
+.econ-countdown {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: var(--space-4);
+}
+/* Alto apartado mientras carga o falla: el contenido no empuja lo de abajo al llegar. */
+.econ-agenda-slot {
+  min-height: 420px;
+}
+.econ-days {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.econ-events {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.econ-event {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr) auto;
+  gap: var(--space-2) var(--space-4);
+  align-items: start;
+  padding-block: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+.econ-event:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.econ-event__time {
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  font-size: var(--text-sm, 0.875rem);
+}
+.econ-event__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.econ-event__title {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.econ-event__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+.econ-event__values {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 0 var(--space-4);
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.econ-event__values dt {
+  color: var(--muted);
+  font-size: var(--text-xs, 0.75rem);
+}
+.econ-event__values dd {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+@media (max-width: 600px) {
+  .econ-event {
+    grid-template-columns: 3.25rem minmax(0, 1fr);
+  }
+  .econ-event__values {
+    grid-column: 2;
+  }
+}
+.econ-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
+  gap: var(--space-4);
+}
+.econ-grid-slot {
+  min-height: 640px;
+}
+.econ-tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.econ-tile__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  color: var(--muted);
+  font-size: var(--text-sm, 0.875rem);
+}
+.econ-detail-slot {
+  min-height: 360px;
+}
+.econ-compare {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}

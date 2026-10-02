@@ -1,0 +1,41 @@
+{
+ "key": "http:GET https://api.worldbank.org/v2/country/MEX;USA;BRA/indicator/NY.GDP.MKTP.KD.ZG?format=json&mrv=5&per_page=100",
+ "provider": "http",
+ "method": "GET",
+ "url": "https://api.worldbank.org/v2/country/MEX;USA;BRA/indicator/NY.GDP.MKTP.KD.ZG",
+ "params": {
+  "format": "json",
+  "mrv": 5,
+  "per_page": 100
+ },
+ "kind": "value",
+ "payload": {
+  "status": 200,
+  "reason": "OK",
+  "url": "https://api.worldbank.org/v2/country/MEX;USA;BRA/indicator/NY.GDP.MKTP.KD.ZG?format=json&mrv=5&per_page=100",
+  "encoding": "utf-8",
+  "headers": {
+   "Date": "Fri, 02 Oct 2026 01:23:43 GMT",
+   "Content-Type": "application/json;charset=utf-8",
+   "CF-Ray": "a43fe74449952fde-QRO",
+   "CF-Cache-Status": "MISS",
+   "Access-Control-Allow-Origin": "*",
+   "Cache-Control": "public, max-age=86400",
+   "Expires": "Sat, 03 Oct 2026 01:23:43 GMT",
+   "Last-Modified": "Fri, 02 Oct 2026 01:23:43 GMT",
+   "Server": "cloudflare",
+   "Vary": "accept-encoding",
+   "Access-Control-Allow-Headers": "X-Requested-With",
+   "Access-Control-Allow-Methods": "GET",
+   "Request-Context": "appId=cid-v1:da002513-bd8b-4441-9f30-737944134422",
+   "X-Powered-By": "ASP.NET"
+  },
+  "body": {
+   "text": "[{\"page\":1,\"pages\":1,\"per_page\":100,\"total\":15,\"sourceid\":\"2\",\"lastupdated\":\"2026-07-13\"},[{\"indicator\":{\"id\":\"NY.GDP.MKTP.KD.ZG\",\"value\":\"GDP growth (annual %)\"},\"country\":{\"id\":\"BR\",\"value\":\"Brazil\"},\"countryiso3code\":\"BRA\",\"date\":\"2025\",\"value\":2.2857464902475,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"NY.GDP.MKTP.KD.ZG\",\"value\":\"GDP growth (annual %)\"},\"country\":{\"id\":\"BR\",\"value\":\"Brazil\"},\"countryiso3code\":\"BRA\",\"date\":\"2024\",\"value\":3.41931516501906,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"NY.GDP.MKTP.KD.ZG\",\"value\":\"GDP growth (annual %)\"},\"country\":{\"id\":\"BR\",\"value\":\"Brazil\"},\"countryiso3code\":\"BRA\",\"date\":\"2023\",\"value\":3.24165532906981,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"NY.GDP.MKTP.KD.ZG\",\"value\":\"GDP growth (annual %)\"},\"country\":{\"id\":\"BR\",\"value\":\"Brazil\"},\"countryiso3code\":\"BRA\",\"date\":\"2022\",\"value\":3.01669435393015,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"NY.GDP.MKTP.KD.ZG\",\"value\":\"GDP growth (annual %)\"},\"country\":{\"id\":\"BR\",\"value\":\"Brazil\"},\"countryiso3code\":\"BRA\",\"date\":\"2021\",\"value\":4.76260437908608,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"NY.GDP.MKTP.KD.ZG\",\"value\":\"GDP growth (annual %)\"},\"country\":{\"id\":\"MX\",\"value\":\"Mexico\"},\"countryiso3code\":\"MEX\",\"date\":\"2025\",\"value\":0.561683456144578,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"NY.GDP.MKTP.KD.ZG\",\"value\":\"GDP growth (annual %)\"},\"country\":{\"id\":\"MX\",\"value\":\"Mexico\"},\"countryiso3code\":\"MEX\",\"date\":\"2024\",\"value\":1.35057631384696,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"NY.GDP.MKTP.KD.ZG\",\"value\":\"GDP growth (annual %)\"},\"country\":{\"id\":\"MX\",\"value\":\"Mexico\"},\"countryiso3code\":\"MEX\",\"date\":\"2023\",\"value\":3.1067964131456,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"NY.GDP.MKTP.KD.ZG\",\"value\":\"GDP growth (annual %)\"},\"country\":{\"id\":\"MX\",\"value\":\"Mexico\"},\"countryiso3code\":\"MEX\",\"date\":\"2022\",\"value\":3.70975708309098,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"NY.GDP.MKTP.KD.ZG\",\"value\":\"GDP growth (annual %)\"},\"country\":{\"id\":\"MX\",\"value\":\"Mexico\"},\"countryiso3code\":\"MEX\",\"date\":\"2021\",\"value\":6.04848347173572,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"NY.GDP.MKTP.KD.ZG\",\"value\":\"GDP growth (annual %)\"},\"country\":{\"id\":\"US\",\"value\":\"United States\"},\"countryiso3code\":\"USA\",\"date\":\"2025\",\"value\":2.16138195623856,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"NY.GDP.MKTP.KD.ZG\",\"value\":\"GDP growth (annual %)\"},\"country\":{\"id\":\"US\",\"value\":\"United States\"},\"countryiso3code\":\"USA\",\"date\":\"2024\",\"value\":2.79318715363841,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"NY.GDP.MKTP.KD.ZG\",\"value\":\"GDP growth (annual %)\"},\"country\":{\"id\":\"US\",\"value\":\"United States\"},\"countryiso3code\":\"USA\",\"date\":\"2023\",\"value\":2.93436322440155,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"NY.GDP.MKTP.KD.ZG\",\"value\":\"GDP growth (annual %)\"},\"country\":{\"id\":\"US\",\"value\":\"United States\"},\"countryiso3code\":\"USA\",\"date\":\"2022\",\"value\":2.52421385073222,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"NY.GDP.MKTP.KD.ZG\",\"value\":\"GDP growth (annual %)\"},\"country\":{\"id\":\"US\",\"value\":\"United States\"},\"countryiso3code\":\"USA\",\"date\":\"2021\",\"value\":6.15202247867526,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1}]]"
+  }
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-02T01:23:43+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "14197a7c5a0e"
+}

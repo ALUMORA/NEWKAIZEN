@@ -1,0 +1,41 @@
+{
+ "key": "http:GET https://api.worldbank.org/v2/country/MEX;USA;BRA/indicator/GC.DOD.TOTL.GD.ZS?format=json&mrv=5&per_page=100",
+ "provider": "http",
+ "method": "GET",
+ "url": "https://api.worldbank.org/v2/country/MEX;USA;BRA/indicator/GC.DOD.TOTL.GD.ZS",
+ "params": {
+  "format": "json",
+  "mrv": 5,
+  "per_page": 100
+ },
+ "kind": "value",
+ "payload": {
+  "status": 200,
+  "reason": "OK",
+  "url": "https://api.worldbank.org/v2/country/MEX;USA;BRA/indicator/GC.DOD.TOTL.GD.ZS?format=json&mrv=5&per_page=100",
+  "encoding": "utf-8",
+  "headers": {
+   "Date": "Fri, 02 Oct 2026 01:23:45 GMT",
+   "Content-Type": "application/json;charset=utf-8",
+   "CF-Ray": "a43fe750e9b14f14-QRO",
+   "CF-Cache-Status": "MISS",
+   "Access-Control-Allow-Origin": "*",
+   "Cache-Control": "public, max-age=86400",
+   "Expires": "Sat, 03 Oct 2026 01:23:45 GMT",
+   "Last-Modified": "Fri, 02 Oct 2026 01:23:45 GMT",
+   "Server": "cloudflare",
+   "Vary": "accept-encoding",
+   "Access-Control-Allow-Headers": "X-Requested-With",
+   "Access-Control-Allow-Methods": "GET",
+   "Request-Context": "appId=cid-v1:da002513-bd8b-4441-9f30-737944134422",
+   "X-Powered-By": "ASP.NET"
+  },
+  "body": {
+   "text": "[{\"page\":1,\"pages\":1,\"per_page\":100,\"total\":15,\"sourceid\":\"2\",\"lastupdated\":\"2026-07-13\"},[{\"indicator\":{\"id\":\"GC.DOD.TOTL.GD.ZS\",\"value\":\"Central government debt, total (% of GDP)\"},\"country\":{\"id\":\"BR\",\"value\":\"Brazil\"},\"countryiso3code\":\"BRA\",\"date\":\"2024\",\"value\":81.8554431191023,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"GC.DOD.TOTL.GD.ZS\",\"value\":\"Central government debt, total (% of GDP)\"},\"country\":{\"id\":\"BR\",\"value\":\"Brazil\"},\"countryiso3code\":\"BRA\",\"date\":\"2023\",\"value\":83.0317498523878,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"GC.DOD.TOTL.GD.ZS\",\"value\":\"Central government debt, total (% of GDP)\"},\"country\":{\"id\":\"BR\",\"value\":\"Brazil\"},\"countryiso3code\":\"BRA\",\"date\":\"2022\",\"value\":79.1023218878495,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"GC.DOD.TOTL.GD.ZS\",\"value\":\"Central government debt, total (% of GDP)\"},\"country\":{\"id\":\"BR\",\"value\":\"Brazil\"},\"countryiso3code\":\"BRA\",\"date\":\"2021\",\"value\":85.0115036768016,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"GC.DOD.TOTL.GD.ZS\",\"value\":\"Central government debt, total (% of GDP)\"},\"country\":{\"id\":\"BR\",\"value\":\"Brazil\"},\"countryiso3code\":\"BRA\",\"date\":\"2020\",\"value\":98.7098819468714,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"GC.DOD.TOTL.GD.ZS\",\"value\":\"Central government debt, total (% of GDP)\"},\"country\":{\"id\":\"MX\",\"value\":\"Mexico\"},\"countryiso3code\":\"MEX\",\"date\":\"2024\",\"value\":50.270950655733,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"GC.DOD.TOTL.GD.ZS\",\"value\":\"Central government debt, total (% of GDP)\"},\"country\":{\"id\":\"MX\",\"value\":\"Mexico\"},\"countryiso3code\":\"MEX\",\"date\":\"2023\",\"value\":45.1534859576172,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"GC.DOD.TOTL.GD.ZS\",\"value\":\"Central government debt, total (% of GDP)\"},\"country\":{\"id\":\"MX\",\"value\":\"Mexico\"},\"countryiso3code\":\"MEX\",\"date\":\"2022\",\"value\":43.9694401581611,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"GC.DOD.TOTL.GD.ZS\",\"value\":\"Central government debt, total (% of GDP)\"},\"country\":{\"id\":\"MX\",\"value\":\"Mexico\"},\"countryiso3code\":\"MEX\",\"date\":\"2021\",\"value\":44.860955801458,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"GC.DOD.TOTL.GD.ZS\",\"value\":\"Central government debt, total (% of GDP)\"},\"country\":{\"id\":\"MX\",\"value\":\"Mexico\"},\"countryiso3code\":\"MEX\",\"date\":\"2020\",\"value\":45.8373464207273,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"GC.DOD.TOTL.GD.ZS\",\"value\":\"Central government debt, total (% of GDP)\"},\"country\":{\"id\":\"US\",\"value\":\"United States\"},\"countryiso3code\":\"USA\",\"date\":\"2024\",\"value\":115.768352618316,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"GC.DOD.TOTL.GD.ZS\",\"value\":\"Central government debt, total (% of GDP)\"},\"country\":{\"id\":\"US\",\"value\":\"United States\"},\"countryiso3code\":\"USA\",\"date\":\"2023\",\"value\":114.73462594651,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"GC.DOD.TOTL.GD.ZS\",\"value\":\"Central government debt, total (% of GDP)\"},\"country\":{\"id\":\"US\",\"value\":\"United States\"},\"countryiso3code\":\"USA\",\"date\":\"2022\",\"value\":112.71753248772,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"GC.DOD.TOTL.GD.ZS\",\"value\":\"Central government debt, total (% of GDP)\"},\"country\":{\"id\":\"US\",\"value\":\"United States\"},\"countryiso3code\":\"USA\",\"date\":\"2021\",\"value\":118.284809538371,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1},{\"indicator\":{\"id\":\"GC.DOD.TOTL.GD.ZS\",\"value\":\"Central government debt, total (% of GDP)\"},\"country\":{\"id\":\"US\",\"value\":\"United States\"},\"countryiso3code\":\"USA\",\"date\":\"2020\",\"value\":124.509268439559,\"unit\":\"\",\"obs_status\":\"\",\"decimal\":1}]]"
+  }
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-02T01:23:45+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "14197a7c5a0e"
+}
