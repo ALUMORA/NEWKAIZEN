@@ -1,9 +1,10 @@
-"""Las ocho capas vacías de la fase 5 se apilan sobre el set base y cargan sin red.
+"""Las ocho capas de la fase 5 se apilan sobre el set base y cargan sin red.
 
 M5 las deja creadas para que cada stream pueda reproducir ``--set 2026-09-22,2026-10-01-<stream>``
 desde el primer día. Ninguna trae ``frozen_at``: heredan el reloj del set base, y al grabar la
 primera llamada la sesión les escribe ``frozen_at``, ``layered_on`` y ``lookup_order`` con el orden
-real de la pila (por ejemplo con la capa ``2026-10-01-banxico`` en medio).
+real de la pila (por ejemplo con la capa ``2026-10-01-banxico`` en medio). Ya grabada, la capa
+conserva el reloj de la base y se apila en el orden que anotó.
 """
 
 from __future__ import annotations
@@ -20,16 +21,21 @@ BASE_CLOCK = "2026-09-22T14:51:31+00:00"
 
 
 @pytest.mark.parametrize("stream", PHASE5_LAYERS)
-def test_empty_layer_stacks_on_base_and_keeps_its_clock(stream):
+def test_layer_stacks_on_base_and_keeps_its_clock(stream):
     layer = f"2026-10-01-{stream}"
     index = json.loads((FIXTURES_ROOT / layer / "index.json").read_text(encoding="utf-8"))
     assert index["set"] == layer
-    assert index["entries"] == {}
-    assert "frozen_at" not in index, "la capa hereda el reloj de la base; uno propio rompe check_clock"
+    if index["entries"]:
+        assert index.get("frozen_at") == BASE_CLOCK, "una capa grabada conserva el reloj de la base"
+        stack = [*index.get("layered_on", [DEFAULT_SET]), layer]
+    else:
+        assert "frozen_at" not in index, "la capa vacía hereda el reloj de la base; uno propio rompe check_clock"
+        stack = [DEFAULT_SET, layer]
+    assert stack[0] == DEFAULT_SET
 
     base_keys = FixtureStore.open(DEFAULT_SET).keys()
-    with replaying(f"{DEFAULT_SET},{layer}") as session:
-        assert session.store.names == [DEFAULT_SET, layer]
+    with replaying(",".join(stack)) as session:
+        assert session.store.names == stack
         assert session.store.frozen_at == BASE_CLOCK
-        assert session.store.keys() == base_keys
+        assert base_keys <= session.store.keys()
         assert _dt.datetime.now(_dt.UTC).isoformat(timespec="seconds") == BASE_CLOCK
