@@ -358,8 +358,23 @@ probadas en vivo en `notas/fase5-fuentes.json` e inventario en `notas/fase5-inve
   de un ETF no llega a pantalla porque el contrato no tiene el campo (`docs/requests/V5PF.md`); las
   atribuciones del aviso legal y la integración del glosario de cada stream las pone O al final
   (`docs/requests/V5TS.md`, `V5FX.md`, `V5PF.md`).
-- **Segunda tanda**: V5EC lanzado solo (la cuota iba en 53 %). Faltan V5FI (worktree ya creado), y
-  V5TC, V5MK, V5EM y V5TM (sin worktree todavía).
+- **V5EC mergeado** (`e3bcbd2`): calendario económico (Banxico, FOMC e INEGI curados en JSON, BLS por
+  ICS, descarga .ics) y tablero de economía con comparador de países. Ventana por omisión del
+  calendario: dos semanas. Compuerta integrada con los cuatro streams: `npm run check` 2,431 pruebas y
+  bundle al 80 %, pytest y ruff limpios, e2e 640 pasadas y 1 intermitente que pasa sola (la de
+  `portfolio.spec.js:537`, FIX de respaldo en Rendimiento: ya van dos veces bajo carga, hay que
+  estabilizarla). Recorrido integrado con las siete capas: 36 de 36 limpio, CLS máximo 0.064.
+- **Abiertos de V5EC**: el calendario de INEGI cubre solo el primer semestre de 2027 y el de Banxico
+  2027 no está publicado (retranscribir cada semestre); los periodos de BLS se infieren del rezago
+  habitual (nota visible); PCE y PIB de EE. UU. no tienen evento (son de BEA, sin fuente);
+  el comparador de países solo tiene MEX, USA y BRA grabados.
+- **Siguiente (en este orden)**: V5FI (su worktree ya está al día en `e3bcbd2`, sin trabajo propio),
+  y V5TC, V5MK, V5EM y V5TM (crear worktree desde `analizavende` con `git worktree add` y
+  `cp -cR node_modules`). Con la cuota llena, tandas de 3. Los prompts de esta tarde funcionaron así:
+  sin subagentes propios, commit por pieza, archivos grandes por partes, comandos con timeout, y el
+  replay con `BANXICO_TOKEN=replay-falso`. Al final de la fase, O aplica los `docs/requests/V5*.md`
+  (aviso legal con atribuciones, glosario, P/U del ETF) y los abiertos de arriba, y hace el recorrido y
+  Lighthouse de todas las rutas nuevas.
 - Notas para los streams que faltan: la prueba de llaves prohibidas de V5FI va sobre sus respuestas,
   no sobre todas (`vsTargetBp` es legítimo); la "pestaña" Gráfica de la ficha hoy es sección y
   `pathInstrumentTab` arma `?pestana=` que la ficha aún no lee (V5TC); las capacidades nuevas van en
