@@ -1,0 +1,30 @@
+{
+ "key": "yf:OMAB.MX:calendar",
+ "provider": "yfinance",
+ "symbol": "OMAB.MX",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-05-26"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-22"
+   }
+  ],
+  "Earnings High": 4.37594,
+  "Earnings Low": 4.04,
+  "Earnings Average": 4.16569,
+  "Revenue High": 4906697160,
+  "Revenue Low": 4906697160,
+  "Revenue Average": 4906697160
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:24+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

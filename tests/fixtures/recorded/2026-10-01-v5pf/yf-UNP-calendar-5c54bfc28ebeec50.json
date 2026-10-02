@@ -1,0 +1,34 @@
+{
+ "key": "yf:UNP:calendar",
+ "provider": "yfinance",
+ "symbol": "UNP",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-30"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-08-31"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-22"
+   }
+  ],
+  "Earnings High": 3.53243,
+  "Earnings Low": 3.27169,
+  "Earnings Average": 3.43423,
+  "Revenue High": 7269622330,
+  "Revenue Low": 6707000000,
+  "Revenue Average": 6991579830
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:53+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

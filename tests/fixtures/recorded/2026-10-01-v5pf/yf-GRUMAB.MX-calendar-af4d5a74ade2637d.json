@@ -1,0 +1,30 @@
+{
+ "key": "yf:GRUMAB.MX:calendar",
+ "provider": "yfinance",
+ "symbol": "GRUMAB.MX",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-10-08"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-21"
+   }
+  ],
+  "Earnings High": 7.131,
+  "Earnings Low": 6.01,
+  "Earnings Average": 6.417,
+  "Revenue High": 28823301000,
+  "Revenue Low": 28559682000,
+  "Revenue Average": 28680733670
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:14+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

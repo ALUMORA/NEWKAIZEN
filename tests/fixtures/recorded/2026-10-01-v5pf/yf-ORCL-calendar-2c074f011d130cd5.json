@@ -1,0 +1,34 @@
+{
+ "key": "yf:ORCL:calendar",
+ "provider": "yfinance",
+ "symbol": "ORCL",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-10-23"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-10-09"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-12-10"
+   }
+  ],
+  "Earnings High": 2.04,
+  "Earnings Low": 1.81,
+  "Earnings Average": 1.73834,
+  "Revenue High": 19295700000,
+  "Revenue Low": 18636500000,
+  "Revenue Average": 19129103030
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:33+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

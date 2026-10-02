@@ -1,0 +1,34 @@
+{
+ "key": "yf:APD:calendar",
+ "provider": "yfinance",
+ "symbol": "APD",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-11-09"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-10-01"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-11-05"
+   }
+  ],
+  "Earnings High": 3.65802,
+  "Earnings Low": 3.2,
+  "Earnings Average": 3.58962,
+  "Revenue High": 3441000000,
+  "Revenue Low": 3159000000,
+  "Revenue Average": 3321047820
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:56:04+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

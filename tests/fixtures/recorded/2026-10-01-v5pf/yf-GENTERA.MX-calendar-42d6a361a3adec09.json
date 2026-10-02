@@ -1,0 +1,30 @@
+{
+ "key": "yf:GENTERA.MX:calendar",
+ "provider": "yfinance",
+ "symbol": "GENTERA.MX",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-04-22"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-21"
+   }
+  ],
+  "Earnings High": 1.5,
+  "Earnings Low": 1.42546,
+  "Earnings Average": 1.46365,
+  "Revenue High": 13360425000,
+  "Revenue Low": 13100703030,
+  "Revenue Average": 13213782000
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:19+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

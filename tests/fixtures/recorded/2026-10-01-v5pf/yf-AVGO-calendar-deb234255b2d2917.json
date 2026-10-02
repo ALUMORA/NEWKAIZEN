@@ -1,0 +1,34 @@
+{
+ "key": "yf:AVGO:calendar",
+ "provider": "yfinance",
+ "symbol": "AVGO",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-30"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-21"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-12-09"
+   }
+  ],
+  "Earnings High": 3.92,
+  "Earnings Low": 3.53,
+  "Earnings Average": 3.82763,
+  "Revenue High": 35591502020,
+  "Revenue Low": 34743200000,
+  "Revenue Average": 34888468920
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:32+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

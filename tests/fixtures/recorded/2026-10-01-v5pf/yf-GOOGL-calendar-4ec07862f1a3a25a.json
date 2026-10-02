@@ -1,0 +1,34 @@
+{
+ "key": "yf:GOOGL:calendar",
+ "provider": "yfinance",
+ "symbol": "GOOGL",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-14"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-04"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-28"
+   }
+  ],
+  "Earnings High": 3.68,
+  "Earnings Low": 2.6827,
+  "Earnings Average": 3.03077,
+  "Revenue High": 134908000000,
+  "Revenue Low": 123409000000,
+  "Revenue Average": 127461717080
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:59+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

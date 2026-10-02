@@ -1,0 +1,34 @@
+{
+ "key": "yf:MSFT:calendar",
+ "provider": "yfinance",
+ "symbol": "MSFT",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-12-10"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-11-19"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-28"
+   }
+  ],
+  "Earnings High": 4.83363,
+  "Earnings Low": 4.43,
+  "Earnings Average": 4.72156,
+  "Revenue High": 92655000000,
+  "Revenue Low": 89640000000,
+  "Revenue Average": 90655130410
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:30+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

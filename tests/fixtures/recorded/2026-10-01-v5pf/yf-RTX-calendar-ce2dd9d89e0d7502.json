@@ -1,0 +1,34 @@
+{
+ "key": "yf:RTX:calendar",
+ "provider": "yfinance",
+ "symbol": "RTX",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-03"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-08-14"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-20"
+   }
+  ],
+  "Earnings High": 1.84,
+  "Earnings Low": 1.69,
+  "Earnings Average": 1.76753,
+  "Revenue High": 24556360580,
+  "Revenue Low": 23493000000,
+  "Revenue Average": 24026688350
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:52+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

@@ -1,0 +1,30 @@
+{
+ "key": "yf:Q.MX:calendar",
+ "provider": "yfinance",
+ "symbol": "Q.MX",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-11-04"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-20"
+   }
+  ],
+  "Earnings High": 3.72,
+  "Earnings Low": 2.93,
+  "Earnings Average": 3.44206,
+  "Revenue High": 19223805640,
+  "Revenue Low": 17952000000,
+  "Revenue Average": 18587902820
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:17+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

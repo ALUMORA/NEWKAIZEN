@@ -1,0 +1,30 @@
+{
+ "key": "yf:LIVEPOLC-1.MX:calendar",
+ "provider": "yfinance",
+ "symbol": "LIVEPOLC-1.MX",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-10-08"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-26"
+   }
+  ],
+  "Earnings High": 2.81,
+  "Earnings Low": 2.52,
+  "Earnings Average": 2.65902,
+  "Revenue High": 50278904000,
+  "Revenue Low": 49967985870,
+  "Revenue Average": 50123444940
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:29+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

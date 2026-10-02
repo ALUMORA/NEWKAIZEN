@@ -1,0 +1,34 @@
+{
+ "key": "yf:DIS:calendar",
+ "provider": "yfinance",
+ "symbol": "DIS",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-07-22"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-06-30"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-11-12"
+   }
+  ],
+  "Earnings High": 1.93,
+  "Earnings Low": 1.56,
+  "Earnings Average": 1.69388,
+  "Revenue High": 26339356410,
+  "Revenue Low": 23983635930,
+  "Revenue Average": 25167054930
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:56:01+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

@@ -1,0 +1,78 @@
+{
+ "key": "yf:QQQ:funds_data.top_holdings",
+ "provider": "yfinance",
+ "symbol": "QQQ",
+ "attr": "funds_data.top_holdings",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "__rp__": "DataFrame",
+  "index": {
+   "__rp__": "Index",
+   "name": "Symbol",
+   "data": {
+    "dtype": "str",
+    "v": [
+     "NVDA",
+     "AAPL",
+     "MSFT",
+     "MU",
+     "AMZN",
+     "AMD",
+     "GOOGL",
+     "TSLA",
+     "GOOG",
+     "AVGO"
+    ]
+   }
+  },
+  "columns": {
+   "__rp__": "Index",
+   "name": null,
+   "data": {
+    "dtype": "str",
+    "v": [
+     "Name",
+     "Holding Percent"
+    ]
+   }
+  },
+  "data": [
+   {
+    "dtype": "str",
+    "v": [
+     "NVIDIA Corp",
+     "Apple Inc",
+     "Microsoft Corp",
+     "Micron Technology Inc",
+     "Amazon.com Inc",
+     "Advanced Micro Devices Inc",
+     "Alphabet Inc Class A",
+     "Tesla Inc",
+     "Alphabet Inc Class C",
+     "Broadcom Inc"
+    ]
+   },
+   {
+    "dtype": "float64",
+    "np": true,
+    "v": [
+     0.0850652,
+     0.0740928,
+     0.059995297,
+     0.047521602,
+     0.044489898,
+     0.033736803,
+     0.0314663,
+     0.029264601,
+     0.029135698,
+     0.0279556
+    ]
+   }
+  ]
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:54:42+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

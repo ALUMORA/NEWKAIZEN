@@ -1,0 +1,34 @@
+{
+ "key": "yf:PEP:calendar",
+ "provider": "yfinance",
+ "symbol": "PEP",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-30"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-04"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-08"
+   }
+  ],
+  "Earnings High": 2.33,
+  "Earnings Low": 2.26,
+  "Earnings Average": 2.29642,
+  "Revenue High": 25324500000,
+  "Revenue Low": 24653205000,
+  "Revenue Average": 24970633960
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:49+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

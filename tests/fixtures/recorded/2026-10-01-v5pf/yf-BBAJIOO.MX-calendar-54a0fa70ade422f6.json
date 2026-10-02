@@ -1,0 +1,30 @@
+{
+ "key": "yf:BBAJIOO.MX:calendar",
+ "provider": "yfinance",
+ "symbol": "BBAJIOO.MX",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-03"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-26"
+   }
+  ],
+  "Earnings High": 1.89861,
+  "Earnings Low": 1.70768,
+  "Earnings Average": 1.80293,
+  "Revenue High": 6652719870,
+  "Revenue Low": 6253000000,
+  "Revenue Average": 6485583600
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:18+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

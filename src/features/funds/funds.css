@@ -1,0 +1,9 @@
+/* Fondos y rayos X (V5PF). Solo tokens. */
+.funds-page { padding-block: var(--space-4) var(--space-8); }
+.funds-grid { display: grid; gap: var(--space-4); grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1100px) {
+  .funds-grid[data-cols="2"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.funds-note { margin: 0; color: var(--muted); font-size: var(--text-sm); }
+.funds-skeleton { display: grid; gap: var(--space-3); }
+.funds-list { margin: 0; padding-left: var(--space-5); font-size: var(--text-md); }

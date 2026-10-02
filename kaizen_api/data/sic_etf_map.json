@@ -1,0 +1,34 @@
+{
+  "asOf": "2026-10-01",
+  "note": "Mapeo curado a mano de claves de la BMV y del SIC al ETF de Estados Unidos cuya composición publica Yahoo. Solo entra un mapeo cuando el fondo mexicano invierte en ese ETF o es el mismo valor listado en el SIC. Los ETF de la BMV sin datos en Yahoo quedan en bmvWithoutData y responden 404.",
+  "map": {
+    "IVVPESO.MX": {
+      "target": "IVV",
+      "source": "BlackRock México, prospecto de iShares S&P 500 MXN (IVVPESO): invierte en iShares Core S&P 500 ETF (IVV)",
+      "asOf": "2026-10-01"
+    },
+    "IVV.MX": {
+      "target": "IVV",
+      "source": "SIC de la BMV: el mismo valor de iShares Core S&P 500 ETF listado en el Sistema Internacional de Cotizaciones",
+      "asOf": "2026-10-01"
+    },
+    "SPY.MX": {
+      "target": "SPY",
+      "source": "SIC de la BMV: el mismo valor de SPDR S&P 500 ETF Trust listado en el Sistema Internacional de Cotizaciones",
+      "asOf": "2026-10-01"
+    },
+    "QQQ.MX": {
+      "target": "QQQ",
+      "source": "SIC de la BMV: el mismo valor de Invesco QQQ Trust listado en el Sistema Internacional de Cotizaciones",
+      "asOf": "2026-10-01"
+    },
+    "VOO.MX": {
+      "target": "VOO",
+      "source": "SIC de la BMV: el mismo valor de Vanguard S&P 500 ETF listado en el Sistema Internacional de Cotizaciones",
+      "asOf": "2026-10-01"
+    }
+  },
+  "bmvWithoutData": {
+    "NAFTRAC.MX": "ETF de la BMV que replica el S&P/BMV IPC; Yahoo no publica su composición"
+  }
+}

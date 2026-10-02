@@ -1,0 +1,30 @@
+{
+ "key": "yf:CHDRAUIB.MX:calendar",
+ "provider": "yfinance",
+ "symbol": "CHDRAUIB.MX",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-11-24"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-20"
+   }
+  ],
+  "Earnings High": 1.66703,
+  "Earnings Low": 1.64849,
+  "Earnings Average": 1.65776,
+  "Revenue High": 70162117320,
+  "Revenue Low": 70092979860,
+  "Revenue Average": 70127548590
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:12+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

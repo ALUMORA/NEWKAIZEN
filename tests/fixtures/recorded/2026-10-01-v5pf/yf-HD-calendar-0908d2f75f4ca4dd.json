@@ -1,0 +1,34 @@
+{
+ "key": "yf:HD:calendar",
+ "provider": "yfinance",
+ "symbol": "HD",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-17"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-03"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-11-17"
+   }
+  ],
+  "Earnings High": 3.98009,
+  "Earnings Low": 3.71,
+  "Earnings Average": 3.83653,
+  "Revenue High": 43691000000,
+  "Revenue Low": 42099290000,
+  "Revenue Average": 42758077880
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:41+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

@@ -1,0 +1,34 @@
+{
+ "key": "yf:MCD:calendar",
+ "provider": "yfinance",
+ "symbol": "MCD",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-12-15"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-12-01"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-11-05"
+   }
+  ],
+  "Earnings High": 3.5,
+  "Earnings Low": 3.22928,
+  "Earnings Average": 3.38333,
+  "Revenue High": 7403806200,
+  "Revenue Low": 7004000000,
+  "Revenue Average": 7299071970
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:42+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

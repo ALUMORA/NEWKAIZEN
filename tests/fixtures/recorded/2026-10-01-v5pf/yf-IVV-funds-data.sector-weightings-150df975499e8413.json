@@ -1,0 +1,25 @@
+{
+ "key": "yf:IVV:funds_data.sector_weightings",
+ "provider": "yfinance",
+ "symbol": "IVV",
+ "attr": "funds_data.sector_weightings",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "realestate": 0.018,
+  "consumer_cyclical": 0.093100004,
+  "basic_materials": 0.0168,
+  "consumer_defensive": 0.0446,
+  "technology": 0.38689998,
+  "communication_services": 0.095,
+  "financial_services": 0.120699994,
+  "utilities": 0.0198,
+  "industrials": 0.0775,
+  "energy": 0.0348,
+  "healthcare": 0.0928
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:54:50+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

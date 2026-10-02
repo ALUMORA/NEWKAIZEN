@@ -1,0 +1,30 @@
+{
+ "key": "yf:GMEXICOB.MX:calendar",
+ "provider": "yfinance",
+ "symbol": "GMEXICOB.MX",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-08-27"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-20"
+   }
+  ],
+  "Earnings High": 0.23555,
+  "Earnings Low": 0.20892,
+  "Earnings Average": 0.21816,
+  "Revenue High": 6126000000,
+  "Revenue Low": 5659868000,
+  "Revenue Average": 5894822770
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:20+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

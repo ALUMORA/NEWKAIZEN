@@ -1,0 +1,30 @@
+{
+ "key": "yf:ALSEA.MX:calendar",
+ "provider": "yfinance",
+ "symbol": "ALSEA.MX",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-05-06"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-21"
+   }
+  ],
+  "Earnings High": 1.28092,
+  "Earnings Low": 0.618,
+  "Earnings Average": 0.95137,
+  "Revenue High": 21590029000,
+  "Revenue Low": 21174000000,
+  "Revenue Average": 21437863800
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:28+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

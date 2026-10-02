@@ -1,0 +1,30 @@
+{
+ "key": "yf:GFNORTEO.MX:calendar",
+ "provider": "yfinance",
+ "symbol": "GFNORTEO.MX",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-05-28"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-27"
+   }
+  ],
+  "Earnings High": 5.66882,
+  "Earnings Low": 5.59,
+  "Earnings Average": 5.63691,
+  "Revenue High": 45122374010,
+  "Revenue Low": 42067000000,
+  "Revenue Average": 43732985240
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:16+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

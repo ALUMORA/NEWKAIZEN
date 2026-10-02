@@ -1,0 +1,34 @@
+{
+ "key": "yf:LOW:calendar",
+ "provider": "yfinance",
+ "symbol": "LOW",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-11-04"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-10-21"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-11-18"
+   }
+  ],
+  "Earnings High": 3.12,
+  "Earnings Low": 2.82,
+  "Earnings Average": 2.87524,
+  "Revenue High": 22732000000,
+  "Revenue Low": 21346000000,
+  "Revenue Average": 22371307360
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:44+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

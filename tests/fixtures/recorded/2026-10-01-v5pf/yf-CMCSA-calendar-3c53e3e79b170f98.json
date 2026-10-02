@@ -1,0 +1,34 @@
+{
+ "key": "yf:CMCSA:calendar",
+ "provider": "yfinance",
+ "symbol": "CMCSA",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-10-28"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-10-07"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-22"
+   }
+  ],
+  "Earnings High": 1.06,
+  "Earnings Low": 0.91,
+  "Earnings Average": 0.98613,
+  "Revenue High": 29900000000,
+  "Revenue Low": 28660011090,
+  "Revenue Average": 29242937470
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:56:02+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

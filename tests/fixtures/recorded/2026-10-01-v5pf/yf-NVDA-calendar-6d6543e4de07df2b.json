@@ -1,0 +1,34 @@
+{
+ "key": "yf:NVDA:calendar",
+ "provider": "yfinance",
+ "symbol": "NVDA",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-10-01"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-10"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-11-17"
+   }
+  ],
+  "Earnings High": 2.7,
+  "Earnings Low": 2.34,
+  "Earnings Average": 2.47332,
+  "Revenue High": 116251000000,
+  "Revenue Low": 104937000000,
+  "Revenue Average": 108995424980
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:31+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

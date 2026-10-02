@@ -1,0 +1,26 @@
+{
+ "key": "yf:AMZN:calendar",
+ "provider": "yfinance",
+ "symbol": "AMZN",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-29"
+   }
+  ],
+  "Earnings High": 2.22,
+  "Earnings Low": 1.85,
+  "Earnings Average": 1.97667,
+  "Revenue High": 205272000000,
+  "Revenue Low": 199369000000,
+  "Revenue Average": 201980771440
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:40+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}

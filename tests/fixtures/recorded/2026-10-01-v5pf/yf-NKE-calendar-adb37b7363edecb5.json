@@ -1,0 +1,34 @@
+{
+ "key": "yf:NKE:calendar",
+ "provider": "yfinance",
+ "symbol": "NKE",
+ "attr": "calendar",
+ "kwargs": {},
+ "kind": "value",
+ "payload": {
+  "Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-10-01"
+  },
+  "Ex-Dividend Date": {
+   "__rp__": "date",
+   "v": "2026-09-01"
+  },
+  "Earnings Date": [
+   {
+    "__rp__": "date",
+    "v": "2026-10-01"
+   }
+  ],
+  "Earnings High": 0.54,
+  "Earnings Low": 0.45,
+  "Earnings Average": 0.49825,
+  "Revenue High": 12185000000,
+  "Revenue Low": 11269610450,
+  "Revenue Average": 11796665600
+ },
+ "soft_failure": false,
+ "recorded_at": "2026-10-01T23:55:43+00:00",
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "run_id": "be879771f9d2"
+}
