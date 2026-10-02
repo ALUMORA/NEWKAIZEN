@@ -82,3 +82,5 @@ Es un **precio teórico sin margen bancario**: no es cotización ni sugerencia d
   solo si el servidor anuncia esa capacidad; si no, sale s/d.
 
 No hay probabilidades de rebasar el presupuesto: se quitaron porque se leían como pronóstico.
+
+Nada de esto es una recomendación de inversión ni una sugerencia de cubrirse. La regla del DOF es una lectura del artículo 20 del CFF y la decide tu área fiscal.
