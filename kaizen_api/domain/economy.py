@@ -161,8 +161,9 @@ def _banxico_raw(ids: list[str], today: _dt.date, notes: list[str]) -> dict[str,
         notes.append("Falta el token de Banxico en el servidor: inflación, remesas y reserva de México salen s/d.")
         return {}
     try:
-        reasons = banxico.verification(list(banxico.catalog()))
-        reasons.update(banxico.verification(list(banxico.extra_group("macro"))))
+        # Copia: verification() devuelve el dict que guarda la caché, y mutarlo cambia lo que
+        # leen después /v2/rates/mx y los demás (pasó en el recorrido: pedía 14 series en vez de 12).
+        reasons = {**banxico.verification(list(banxico.catalog())), **banxico.verification(list(banxico.extra_group("macro")))}
     except ApiError:
         notes.append("Banxico no respondió: sus indicadores salen s/d.")
         return {}

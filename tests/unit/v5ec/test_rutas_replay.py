@@ -83,3 +83,11 @@ def test_comparador_de_paises(client):
     usa = next(r for r in body["rows"] if r["country"] == "USA" and r["indicator"] == "inflation")
     assert usa["value"] is None and usa["unit"] == "fraction"
     assert len(body["rows"]) == 12
+
+
+def test_el_tablero_no_ensucia_la_verificacion_que_usa_rates_mx(client):
+    """verification() devuelve el dict de la caché: el tablero no debe agregarle remesas y reserva."""
+    from kaizen_api.providers import banxico
+
+    assert client.get("/v2/macro/indicators?country=mx&years=5").status_code == 200
+    assert set(banxico.verification(list(banxico.catalog()))) == set(banxico.catalog())
