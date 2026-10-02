@@ -368,9 +368,36 @@ probadas en vivo en `notas/fase5-fuentes.json` e inventario en `notas/fase5-inve
   2027 no está publicado (retranscribir cada semestre); los periodos de BLS se infieren del rezago
   habitual (nota visible); PCE y PIB de EE. UU. no tienen evento (son de BEA, sin fuente);
   el comparador de países solo tiene MEX, USA y BRA grabados.
-- **Siguiente (en este orden)**: V5FI (su worktree ya está al día en `e3bcbd2`, sin trabajo propio),
-  y V5TC, V5MK, V5EM y V5TM (crear worktree desde `analizavende` con `git worktree add` y
-  `cp -cR node_modules`). Con la cuota llena, tandas de 3. Los prompts de esta tarde funcionaron así:
+- **CI de `6baa8bd` en rojo por `e2e/v5ec.spec.js:123`**: en Linux el clic en el radio de país llegaba
+  antes de que el shell terminara de navegar y se perdía (no era la zona horaria; pasa con `TZ=UTC`
+  en local). Arreglado en `cfb219a` esperando los datos antes del clic.
+- **Tanda del 2 oct en la madrugada (los cinco que faltaban, en paralelo), detenida por cuota a las
+  03:58 con el backend de cada uno commiteado y el frontend a medias.** Ninguno corrió sus compuertas
+  completas ni su recorrido, así que **nada de esto está en `analizavende`**. Cada rama parte de
+  `6baa8bd`; lo no commiteado está en su worktree y en el respaldo `b7b2a5d` de `coord`:
+  - **V5FI** (`ws/V5FI`, `05 NEWKAIZEN.wt/V5FI`): backend hecho en `993a7ff` (earnings, holders,
+    shares, filings, mapa de ADR, capa grabada). Sin commitear: `src/features/company/sections/
+    EarningsSection.jsx` (a medias), `company.css`, `components/CompanySection.jsx`, `lib/model.js` y
+    su prueba, `types.js`. Falta: las otras cuatro secciones, glosario, guía, e2e y compuertas.
+  - **V5TC** (`ws/V5TC`): backend `68ec9b4` (/v2/ohlc y capa), `technical.js` con golden `1b342ca`,
+    `Candles` `c0665cb`. Árbol limpio. Falta: prueba de render de Candles, `TechnicalSection`, glosario,
+    guía, e2e y compuertas.
+  - **V5MK** (`ws/V5MK`): backend `9c08359` (movers, breadth, sectors y grabación). Sin commitear:
+    `src/features/movers/pages/MoversPage.jsx` (a medias), `lib/model.js` y su prueba, `movers.css`,
+    `types.js`. Falta: terminar la página, glosario, e2e y compuertas.
+  - **V5EM** (`ws/V5EM`): `ad7c840` (referencias e INPC), `82ef605` (pantallas de actualización y
+    referencias), `7cc4a55` (industrias). Árbol limpio. Falta: credit-health (backend y sección),
+    pantallas de costo de capital, crédito, contrapartes e índice /empresas, glosario, guía, e2e y
+    compuertas. Revisar las cifras oficiales que transcribió en `mx_reference.json` contra su fuente.
+  - **V5TM** (`ws/V5TM`): `df898b0` (descarga CSV), `fa40799` (varias listas). Sin commitear: paleta
+    (`CommandPalette.jsx`, `palette-model.js` y su prueba, modificados) y alertas
+    (`src/features/alerts/AlertsWatcher.jsx`, `lib/rules.js` y su prueba, `lib/store.js`). Falta:
+    terminar paleta y alertas, resumen del día, `print.css`, e2e y compuertas.
+- **Siguiente (en este orden)**: retomar cada stream en su worktree (sin recrearlo: ya tiene su
+  backend), primero revisando `git status` y el diff sin commitear, y terminar frontend, e2e,
+  compuertas, recorrido y revisión adversaria. Orden por lo que falta: V5TC y V5MK (les falta poco),
+  luego V5FI, V5TM y V5EM. Después, integrar uno por uno en `analizavende` con compuertas y
+  recorrido integrado, y cerrar la fase. Con la cuota llena, tandas de 3. Los prompts de esta tarde funcionaron así:
   sin subagentes propios, commit por pieza, archivos grandes por partes, comandos con timeout, y el
   replay con `BANXICO_TOKEN=replay-falso`. Al final de la fase, O aplica los `docs/requests/V5*.md`
   (aviso legal con atribuciones, glosario, P/U del ETF) y los abiertos de arriba, y hace el recorrido y
