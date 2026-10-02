@@ -1,0 +1,713 @@
+{
+ "fuente": [
+  "https://www.inegi.org.mx/contenidos/saladeprensa/doc/cal_2026.pdf",
+  "https://www.inegi.org.mx/contenidos/saladeprensa/doc/cal_2027.pdf"
+ ],
+ "transcrito": "2026-10-01",
+ "revisar": "Cada semestre: cal_2027.pdf solo trae el primer semestre de 2027.",
+ "coverageUntil": "2027-06-24",
+ "timeZone": "America/Mexico_City",
+ "nota": "INEGI difunde a las 06:00 hora del centro. Sin token de INEGI el dato anterior y el publicado quedan en s/d, salvo la inflación mensual, que publica Banxico (SP30578).",
+ "events": [
+  {
+   "kind": "release",
+   "code": "INPC",
+   "title": "Inflación mensual (INPC)",
+   "period": "dic 2025",
+   "date": "2026-01-08",
+   "time": "06:00",
+   "seriesId": "SP30578",
+   "unit": "fraction"
+  },
+  {
+   "kind": "release",
+   "code": "INPC1Q",
+   "title": "Inflación de la primera quincena (INPC)",
+   "period": "ene 2026",
+   "date": "2026-01-22",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "IGAE",
+   "title": "Indicador Global de la Actividad Económica (IGAE)",
+   "period": "nov 2025",
+   "date": "2026-01-23",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "ENOE",
+   "title": "Indicadores de ocupación y empleo (ENOE)",
+   "period": "dic 2025",
+   "date": "2026-01-26",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "EOPIBT",
+   "title": "Estimación oportuna del PIB trimestral",
+   "period": "4T 2025",
+   "date": "2026-01-30",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC",
+   "title": "Inflación mensual (INPC)",
+   "period": "ene 2026",
+   "date": "2026-02-09",
+   "time": "06:00",
+   "seriesId": "SP30578",
+   "unit": "fraction"
+  },
+  {
+   "kind": "release",
+   "code": "IGAE",
+   "title": "Indicador Global de la Actividad Económica (IGAE)",
+   "period": "dic 2025",
+   "date": "2026-02-23",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "PIBT",
+   "title": "PIB trimestral, cifras a precios constantes",
+   "period": "4T 2025",
+   "date": "2026-02-23",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC1Q",
+   "title": "Inflación de la primera quincena (INPC)",
+   "period": "feb 2026",
+   "date": "2026-02-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "ENOE",
+   "title": "Indicadores de ocupación y empleo (ENOE)",
+   "period": "ene 2026",
+   "date": "2026-02-26",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC",
+   "title": "Inflación mensual (INPC)",
+   "period": "feb 2026",
+   "date": "2026-03-09",
+   "time": "06:00",
+   "seriesId": "SP30578",
+   "unit": "fraction"
+  },
+  {
+   "kind": "release",
+   "code": "IGAE",
+   "title": "Indicador Global de la Actividad Económica (IGAE)",
+   "period": "ene 2026",
+   "date": "2026-03-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC1Q",
+   "title": "Inflación de la primera quincena (INPC)",
+   "period": "mar 2026",
+   "date": "2026-03-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "ENOE",
+   "title": "Indicadores de ocupación y empleo (ENOE)",
+   "period": "feb 2026",
+   "date": "2026-03-27",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC",
+   "title": "Inflación mensual (INPC)",
+   "period": "mar 2026",
+   "date": "2026-04-09",
+   "time": "06:00",
+   "seriesId": "SP30578",
+   "unit": "fraction"
+  },
+  {
+   "kind": "release",
+   "code": "INPC1Q",
+   "title": "Inflación de la primera quincena (INPC)",
+   "period": "abr 2026",
+   "date": "2026-04-23",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "IGAE",
+   "title": "Indicador Global de la Actividad Económica (IGAE)",
+   "period": "feb 2026",
+   "date": "2026-04-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "ENOE",
+   "title": "Indicadores de ocupación y empleo (ENOE)",
+   "period": "mar 2026",
+   "date": "2026-04-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "EOPIBT",
+   "title": "Estimación oportuna del PIB trimestral",
+   "period": "1T 2026",
+   "date": "2026-04-30",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC",
+   "title": "Inflación mensual (INPC)",
+   "period": "abr 2026",
+   "date": "2026-05-07",
+   "time": "06:00",
+   "seriesId": "SP30578",
+   "unit": "fraction"
+  },
+  {
+   "kind": "release",
+   "code": "IGAE",
+   "title": "Indicador Global de la Actividad Económica (IGAE)",
+   "period": "mar 2026",
+   "date": "2026-05-22",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "PIBT",
+   "title": "PIB trimestral, cifras a precios constantes",
+   "period": "1T 2026",
+   "date": "2026-05-22",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC1Q",
+   "title": "Inflación de la primera quincena (INPC)",
+   "period": "may 2026",
+   "date": "2026-05-22",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "ENOE",
+   "title": "Indicadores de ocupación y empleo (ENOE)",
+   "period": "abr 2026",
+   "date": "2026-05-28",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC",
+   "title": "Inflación mensual (INPC)",
+   "period": "may 2026",
+   "date": "2026-06-09",
+   "time": "06:00",
+   "seriesId": "SP30578",
+   "unit": "fraction"
+  },
+  {
+   "kind": "release",
+   "code": "IGAE",
+   "title": "Indicador Global de la Actividad Económica (IGAE)",
+   "period": "abr 2026",
+   "date": "2026-06-23",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC1Q",
+   "title": "Inflación de la primera quincena (INPC)",
+   "period": "jun 2026",
+   "date": "2026-06-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "ENOE",
+   "title": "Indicadores de ocupación y empleo (ENOE)",
+   "period": "may 2026",
+   "date": "2026-06-25",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC",
+   "title": "Inflación mensual (INPC)",
+   "period": "jun 2026",
+   "date": "2026-07-09",
+   "time": "06:00",
+   "seriesId": "SP30578",
+   "unit": "fraction"
+  },
+  {
+   "kind": "release",
+   "code": "IGAE",
+   "title": "Indicador Global de la Actividad Económica (IGAE)",
+   "period": "may 2026",
+   "date": "2026-07-23",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC1Q",
+   "title": "Inflación de la primera quincena (INPC)",
+   "period": "jul 2026",
+   "date": "2026-07-23",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "ENOE",
+   "title": "Indicadores de ocupación y empleo (ENOE)",
+   "period": "jun 2026",
+   "date": "2026-07-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "EOPIBT",
+   "title": "Estimación oportuna del PIB trimestral",
+   "period": "2T 2026",
+   "date": "2026-07-30",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC",
+   "title": "Inflación mensual (INPC)",
+   "period": "jul 2026",
+   "date": "2026-08-07",
+   "time": "06:00",
+   "seriesId": "SP30578",
+   "unit": "fraction"
+  },
+  {
+   "kind": "release",
+   "code": "IGAE",
+   "title": "Indicador Global de la Actividad Económica (IGAE)",
+   "period": "jun 2026",
+   "date": "2026-08-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "PIBT",
+   "title": "PIB trimestral, cifras a precios constantes",
+   "period": "2T 2026",
+   "date": "2026-08-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC1Q",
+   "title": "Inflación de la primera quincena (INPC)",
+   "period": "ago 2026",
+   "date": "2026-08-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "ENOE",
+   "title": "Indicadores de ocupación y empleo (ENOE)",
+   "period": "jul 2026",
+   "date": "2026-08-27",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC",
+   "title": "Inflación mensual (INPC)",
+   "period": "ago 2026",
+   "date": "2026-09-09",
+   "time": "06:00",
+   "seriesId": "SP30578",
+   "unit": "fraction"
+  },
+  {
+   "kind": "release",
+   "code": "IGAE",
+   "title": "Indicador Global de la Actividad Económica (IGAE)",
+   "period": "jul 2026",
+   "date": "2026-09-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC1Q",
+   "title": "Inflación de la primera quincena (INPC)",
+   "period": "sep 2026",
+   "date": "2026-09-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "ENOE",
+   "title": "Indicadores de ocupación y empleo (ENOE)",
+   "period": "ago 2026",
+   "date": "2026-09-25",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC",
+   "title": "Inflación mensual (INPC)",
+   "period": "sep 2026",
+   "date": "2026-10-08",
+   "time": "06:00",
+   "seriesId": "SP30578",
+   "unit": "fraction"
+  },
+  {
+   "kind": "release",
+   "code": "INPC1Q",
+   "title": "Inflación de la primera quincena (INPC)",
+   "period": "oct 2026",
+   "date": "2026-10-22",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "ENOE",
+   "title": "Indicadores de ocupación y empleo (ENOE)",
+   "period": "sep 2026",
+   "date": "2026-10-22",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "IGAE",
+   "title": "Indicador Global de la Actividad Económica (IGAE)",
+   "period": "ago 2026",
+   "date": "2026-10-23",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "EOPIBT",
+   "title": "Estimación oportuna del PIB trimestral",
+   "period": "3T 2026",
+   "date": "2026-10-30",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC",
+   "title": "Inflación mensual (INPC)",
+   "period": "oct 2026",
+   "date": "2026-11-09",
+   "time": "06:00",
+   "seriesId": "SP30578",
+   "unit": "fraction"
+  },
+  {
+   "kind": "release",
+   "code": "IGAE",
+   "title": "Indicador Global de la Actividad Económica (IGAE)",
+   "period": "sep 2026",
+   "date": "2026-11-23",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "PIBT",
+   "title": "PIB trimestral, cifras a precios constantes",
+   "period": "3T 2026",
+   "date": "2026-11-23",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC1Q",
+   "title": "Inflación de la primera quincena (INPC)",
+   "period": "nov 2026",
+   "date": "2026-11-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "ENOE",
+   "title": "Indicadores de ocupación y empleo (ENOE)",
+   "period": "oct 2026",
+   "date": "2026-11-26",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC",
+   "title": "Inflación mensual (INPC)",
+   "period": "nov 2026",
+   "date": "2026-12-09",
+   "time": "06:00",
+   "seriesId": "SP30578",
+   "unit": "fraction"
+  },
+  {
+   "kind": "release",
+   "code": "IGAE",
+   "title": "Indicador Global de la Actividad Económica (IGAE)",
+   "period": "oct 2026",
+   "date": "2026-12-23",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC1Q",
+   "title": "Inflación de la primera quincena (INPC)",
+   "period": "dic 2026",
+   "date": "2026-12-23",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "ENOE",
+   "title": "Indicadores de ocupación y empleo (ENOE)",
+   "period": "nov 2026",
+   "date": "2026-12-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC",
+   "title": "Inflación mensual (INPC)",
+   "period": "dic 2026",
+   "date": "2027-01-07",
+   "time": "06:00",
+   "seriesId": "SP30578",
+   "unit": "fraction"
+  },
+  {
+   "kind": "release",
+   "code": "ENOE",
+   "title": "Indicadores de ocupación y empleo (ENOE)",
+   "period": "dic 2026",
+   "date": "2027-01-21",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC1Q",
+   "title": "Inflación de la primera quincena (INPC)",
+   "period": "ene 2027",
+   "date": "2027-01-22",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "IGAE",
+   "title": "Indicador Global de la Actividad Económica (IGAE)",
+   "period": "nov 2026",
+   "date": "2027-01-25",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "EOPIBT",
+   "title": "Estimación oportuna del PIB trimestral",
+   "period": "4T 2026",
+   "date": "2027-01-29",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC",
+   "title": "Inflación mensual (INPC)",
+   "period": "ene 2027",
+   "date": "2027-02-09",
+   "time": "06:00",
+   "seriesId": "SP30578",
+   "unit": "fraction"
+  },
+  {
+   "kind": "release",
+   "code": "IGAE",
+   "title": "Indicador Global de la Actividad Económica (IGAE)",
+   "period": "dic 2026",
+   "date": "2027-02-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "PIBT",
+   "title": "PIB trimestral, cifras a precios constantes",
+   "period": "4T 2026",
+   "date": "2027-02-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC1Q",
+   "title": "Inflación de la primera quincena (INPC)",
+   "period": "feb 2027",
+   "date": "2027-02-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "ENOE",
+   "title": "Indicadores de ocupación y empleo (ENOE)",
+   "period": "ene 2027",
+   "date": "2027-03-04",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC",
+   "title": "Inflación mensual (INPC)",
+   "period": "feb 2027",
+   "date": "2027-03-09",
+   "time": "06:00",
+   "seriesId": "SP30578",
+   "unit": "fraction"
+  },
+  {
+   "kind": "release",
+   "code": "INPC1Q",
+   "title": "Inflación de la primera quincena (INPC)",
+   "period": "mar 2027",
+   "date": "2027-03-23",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "IGAE",
+   "title": "Indicador Global de la Actividad Económica (IGAE)",
+   "period": "ene 2027",
+   "date": "2027-03-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "ENOE",
+   "title": "Indicadores de ocupación y empleo (ENOE)",
+   "period": "feb 2027",
+   "date": "2027-04-06",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC",
+   "title": "Inflación mensual (INPC)",
+   "period": "mar 2027",
+   "date": "2027-04-08",
+   "time": "06:00",
+   "seriesId": "SP30578",
+   "unit": "fraction"
+  },
+  {
+   "kind": "release",
+   "code": "INPC1Q",
+   "title": "Inflación de la primera quincena (INPC)",
+   "period": "abr 2027",
+   "date": "2027-04-22",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "IGAE",
+   "title": "Indicador Global de la Actividad Económica (IGAE)",
+   "period": "feb 2027",
+   "date": "2027-04-23",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "ENOE",
+   "title": "Indicadores de ocupación y empleo (ENOE)",
+   "period": "mar 2027",
+   "date": "2027-04-29",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "EOPIBT",
+   "title": "Estimación oportuna del PIB trimestral",
+   "period": "1T 2027",
+   "date": "2027-04-30",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC",
+   "title": "Inflación mensual (INPC)",
+   "period": "abr 2027",
+   "date": "2027-05-07",
+   "time": "06:00",
+   "seriesId": "SP30578",
+   "unit": "fraction"
+  },
+  {
+   "kind": "release",
+   "code": "IGAE",
+   "title": "Indicador Global de la Actividad Económica (IGAE)",
+   "period": "mar 2027",
+   "date": "2027-05-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "PIBT",
+   "title": "PIB trimestral, cifras a precios constantes",
+   "period": "1T 2027",
+   "date": "2027-05-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC1Q",
+   "title": "Inflación de la primera quincena (INPC)",
+   "period": "may 2027",
+   "date": "2027-05-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "ENOE",
+   "title": "Indicadores de ocupación y empleo (ENOE)",
+   "period": "abr 2027",
+   "date": "2027-06-03",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC",
+   "title": "Inflación mensual (INPC)",
+   "period": "may 2027",
+   "date": "2027-06-09",
+   "time": "06:00",
+   "seriesId": "SP30578",
+   "unit": "fraction"
+  },
+  {
+   "kind": "release",
+   "code": "IGAE",
+   "title": "Indicador Global de la Actividad Económica (IGAE)",
+   "period": "abr 2027",
+   "date": "2027-06-24",
+   "time": "06:00"
+  },
+  {
+   "kind": "release",
+   "code": "INPC1Q",
+   "title": "Inflación de la primera quincena (INPC)",
+   "period": "jun 2027",
+   "date": "2027-06-24",
+   "time": "06:00"
+  }
+ ]
+}

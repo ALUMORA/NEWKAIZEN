@@ -1,4 +1,134 @@
 {
  "set": "2026-10-01-v5ec",
- "entries": {}
+ "entries": {
+  "http:GET https://api.worldbank.org/v2/country/MEX;USA;BRA/indicator/FP.CPI.TOTL.ZG?format=json&mrv=5&per_page=100": {
+   "file": "http-GET-https-api.worldbank.org-v2-country-MEX-USA-B-96ee75016ce60535.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-02T01:23:44+00:00"
+  },
+  "http:GET https://api.worldbank.org/v2/country/MEX;USA;BRA/indicator/GC.DOD.TOTL.GD.ZS?format=json&mrv=5&per_page=100": {
+   "file": "http-GET-https-api.worldbank.org-v2-country-MEX-USA-B-4c1358fb62a724f9.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-02T01:23:45+00:00"
+  },
+  "http:GET https://api.worldbank.org/v2/country/MEX;USA;BRA/indicator/NY.GDP.MKTP.CD?format=json&mrv=5&per_page=100": {
+   "file": "http-GET-https-api.worldbank.org-v2-country-MEX-USA-B-bfcd812de382515a.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-02T01:23:43+00:00"
+  },
+  "http:GET https://api.worldbank.org/v2/country/MEX;USA;BRA/indicator/NY.GDP.MKTP.KD.ZG?format=json&mrv=5&per_page=100": {
+   "file": "http-GET-https-api.worldbank.org-v2-country-MEX-USA-B-f48c7298c5266b5b.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-02T01:23:43+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=A191RL1Q225SBEA": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-235e86e614874fd5.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-02T01:23:36+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPIAUCSL": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-09af0bd20380508a.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-02T01:23:29+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=CPILFESL": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-fd7fcae83b163da5.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-02T01:23:32+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=DCOILWTICO": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-4d24df50a7b72557.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-02T01:23:37+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=GDPC1": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-7d25ba316eb01c49.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-02T01:23:35+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=LRHUTTTTMXM156S": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-f3f1c787f64abd3f.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-02T01:23:30+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=NGDPRSAXDCMXQ": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-990801c53d61b5c3.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-02T01:23:31+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=PAYEMS": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-577903e66dd84731.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-02T01:23:28+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=PCEPILFE": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-916f546154864b56.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-02T01:23:33+00:00"
+  },
+  "http:GET https://fred.stlouisfed.org/graph/fredgraph.csv?id=UNRATE": {
+   "file": "http-GET-https-fred.stlouisfed.org-graph-fredgraph.cs-f3e0f4aed0343c47.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-02T01:23:34+00:00"
+  },
+  "http:GET https://www.bls.gov/schedule/news_release/bls.ics": {
+   "file": "http-GET-https-www.bls.gov-schedule-news-release-bls.-2291ad6bd832f3a1.json",
+   "provider": "http",
+   "kind": "value",
+   "soft_failure": false,
+   "recorded_at": "2026-10-02T01:23:27+00:00"
+  }
+ },
+ "frozen_at": "2026-09-22T14:51:31+00:00",
+ "created_at": "2026-10-02T01:23:26+00:00",
+ "yfinance_version": "1.7.0",
+ "layered_on": [
+  "2026-09-22",
+  "2026-10-01-banxico"
+ ],
+ "lookup_order": [
+  "2026-09-22",
+  "2026-10-01-banxico",
+  "2026-10-01-v5ec"
+ ],
+ "summary": {
+  "keys_total": 15,
+  "keys_by_provider": {
+   "http:api.worldbank.org": 4,
+   "http:fred.stlouisfed.org": 10,
+   "http:www.bls.gov": 1
+  },
+  "exceptions_by_provider": {},
+  "empty_by_provider": {},
+  "symbols_with_failed_or_empty_calls": {}
+ },
+ "updated_at": "2026-10-02T01:23:45+00:00"
 }

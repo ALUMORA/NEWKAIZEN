@@ -1,0 +1,40 @@
+{
+ "revisado": "2026-10-01",
+ "porQue": "Series del tablero de economía (/v2/macro/indicators). transform dice cómo se llega a la unidad del contrato: yoy = variación anual de un índice (se calcula), pct = la fuente publica por ciento y se divide entre 100 (no se recalcula), level = nivel tal cual, annualizedQoq = variación trimestral anualizada de un nivel. oecdMirror marca los espejos de la OCDE en FRED: si su último dato tiene más de 18 meses se rechazan con stale. nextRelease es el código del evento del calendario que publica el dato.",
+ "oecdMaxAgeMonths": 18,
+ "indicators": {
+  "mx": [
+   {"id": "inflation", "label": "Inflación anual (INPC)", "kind": "rate", "unit": "fraction", "frequency": "monthly", "source": "banxico", "seriesId": "SP30578", "transform": "pct", "nextRelease": "INPC"},
+   {"id": "coreInflation", "label": "Inflación subyacente anual", "kind": "rate", "unit": "fraction", "frequency": "monthly", "source": "banxico", "seriesId": "SP74662", "transform": "pct", "nextRelease": "INPC"},
+   {"id": "unemployment", "label": "Tasa de desempleo (espejo OCDE)", "kind": "rate", "unit": "fraction", "frequency": "monthly", "source": "fred", "seriesId": "LRHUTTTTMXM156S", "transform": "pct", "oecdMirror": true, "nextRelease": "ENOE"},
+   {"id": "gdpReal", "label": "PIB real (espejo OCDE)", "kind": "level", "unit": "mxnMillions2018", "frequency": "quarterly", "source": "fred", "seriesId": "NGDPRSAXDCMXQ", "transform": "level", "oecdMirror": true, "nextRelease": "PIBT"},
+   {"id": "gdpGrowth", "label": "Crecimiento del PIB, trimestral anualizado", "kind": "rate", "unit": "fraction", "frequency": "quarterly", "source": "fred,computed", "seriesId": "NGDPRSAXDCMXQ", "transform": "annualizedQoq", "oecdMirror": true, "nextRelease": "PIBT"},
+   {"id": "remittances", "label": "Remesas familiares", "kind": "level", "unit": "usdMillions", "frequency": "monthly", "source": "banxico", "seriesId": "SE27803", "transform": "level", "nextRelease": null},
+   {"id": "reserves", "label": "Reserva internacional", "kind": "level", "unit": "usdMillions", "frequency": "weekly", "source": "banxico", "seriesId": "SF43707", "transform": "level", "nextRelease": null}
+  ],
+  "us": [
+   {"id": "inflation", "label": "Inflación anual (CPI)", "kind": "rate", "unit": "fraction", "frequency": "monthly", "source": "fred", "seriesId": "CPIAUCSL", "transform": "yoy", "nextRelease": "CPI"},
+   {"id": "coreInflation", "label": "Inflación subyacente anual (CPI)", "kind": "rate", "unit": "fraction", "frequency": "monthly", "source": "fred", "seriesId": "CPILFESL", "transform": "yoy", "nextRelease": "CPI"},
+   {"id": "pceCore", "label": "PCE subyacente anual", "kind": "rate", "unit": "fraction", "frequency": "monthly", "source": "fred", "seriesId": "PCEPILFE", "transform": "yoy", "nextRelease": null},
+   {"id": "unemployment", "label": "Tasa de desempleo", "kind": "rate", "unit": "fraction", "frequency": "monthly", "source": "fred", "seriesId": "UNRATE", "transform": "pct", "nextRelease": "EMPSIT"},
+   {"id": "payrolls", "label": "Nómina no agrícola", "kind": "level", "unit": "thousandsPersons", "frequency": "monthly", "source": "fred", "seriesId": "PAYEMS", "transform": "level", "nextRelease": "EMPSIT"},
+   {"id": "gdpReal", "label": "PIB real", "kind": "level", "unit": "usdBillionsChained2017", "frequency": "quarterly", "source": "fred", "seriesId": "GDPC1", "transform": "level", "nextRelease": null},
+   {"id": "gdpGrowth", "label": "Crecimiento del PIB, trimestral anualizado", "kind": "rate", "unit": "fraction", "frequency": "quarterly", "source": "fred", "seriesId": "A191RL1Q225SBEA", "transform": "pct", "nextRelease": null},
+   {"id": "wti", "label": "Petróleo WTI", "kind": "level", "unit": "usdPerBarrel", "frequency": "daily", "source": "fred", "seriesId": "DCOILWTICO", "transform": "level", "nextRelease": null}
+  ]
+ },
+ "world": {
+  "fuente": "https://api.worldbank.org/v2 (CC BY 4.0)",
+  "indicators": {
+   "gdpUsd": {"code": "NY.GDP.MKTP.CD", "unit": "usd", "scale": 1},
+   "gdpGrowth": {"code": "NY.GDP.MKTP.KD.ZG", "unit": "fraction", "scale": 0.01},
+   "inflation": {"code": "FP.CPI.TOTL.ZG", "unit": "fraction", "scale": 0.01},
+   "debt": {"code": "GC.DOD.TOTL.GD.ZS", "unit": "fraction", "scale": 0.01}
+  },
+  "names": {
+   "MEX": "México", "USA": "Estados Unidos", "BRA": "Brasil", "CAN": "Canadá", "ARG": "Argentina", "CHL": "Chile",
+   "COL": "Colombia", "PER": "Perú", "CHN": "China", "JPN": "Japón", "DEU": "Alemania", "FRA": "Francia",
+   "GBR": "Reino Unido", "ESP": "España", "ITA": "Italia", "IND": "India", "KOR": "Corea del Sur", "URY": "Uruguay"
+  }
+ }
+}

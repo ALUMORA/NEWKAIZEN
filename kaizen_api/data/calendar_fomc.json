@@ -1,0 +1,204 @@
+{
+ "fuente": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+ "transcrito": "2026-10-01",
+ "revisar": "Cada fecha es tentativa hasta que se confirma en la reunión anterior; revisar cada semestre.",
+ "coverageUntil": "2027-12-08",
+ "timeZone": "America/New_York",
+ "events": [
+  {
+   "kind": "decision",
+   "title": "Decisión de la Reserva Federal (FOMC)",
+   "date": "2026-01-28",
+   "time": "14:00",
+   "meetingStart": "2026-01-27",
+   "projections": false,
+   "seriesId": "DFF",
+   "unit": "fraction"
+  },
+  {
+   "kind": "minutes",
+   "title": "Minuta del FOMC",
+   "period": "ene 2026",
+   "date": "2026-02-18",
+   "time": "14:00"
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de la Reserva Federal (FOMC)",
+   "date": "2026-03-18",
+   "time": "14:00",
+   "meetingStart": "2026-03-17",
+   "projections": true,
+   "seriesId": "DFF",
+   "unit": "fraction"
+  },
+  {
+   "kind": "minutes",
+   "title": "Minuta del FOMC",
+   "period": "mar 2026",
+   "date": "2026-04-08",
+   "time": "14:00"
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de la Reserva Federal (FOMC)",
+   "date": "2026-04-29",
+   "time": "14:00",
+   "meetingStart": "2026-04-28",
+   "projections": false,
+   "seriesId": "DFF",
+   "unit": "fraction"
+  },
+  {
+   "kind": "minutes",
+   "title": "Minuta del FOMC",
+   "period": "abr 2026",
+   "date": "2026-05-20",
+   "time": "14:00"
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de la Reserva Federal (FOMC)",
+   "date": "2026-06-17",
+   "time": "14:00",
+   "meetingStart": "2026-06-16",
+   "projections": true,
+   "seriesId": "DFF",
+   "unit": "fraction"
+  },
+  {
+   "kind": "minutes",
+   "title": "Minuta del FOMC",
+   "period": "jun 2026",
+   "date": "2026-07-08",
+   "time": "14:00"
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de la Reserva Federal (FOMC)",
+   "date": "2026-07-29",
+   "time": "14:00",
+   "meetingStart": "2026-07-28",
+   "projections": false,
+   "seriesId": "DFF",
+   "unit": "fraction"
+  },
+  {
+   "kind": "minutes",
+   "title": "Minuta del FOMC",
+   "period": "jul 2026",
+   "date": "2026-08-19",
+   "time": "14:00"
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de la Reserva Federal (FOMC)",
+   "date": "2026-09-16",
+   "time": "14:00",
+   "meetingStart": "2026-09-15",
+   "projections": true,
+   "seriesId": "DFF",
+   "unit": "fraction"
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de la Reserva Federal (FOMC)",
+   "date": "2026-10-28",
+   "time": "14:00",
+   "meetingStart": "2026-10-27",
+   "projections": false,
+   "seriesId": "DFF",
+   "unit": "fraction"
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de la Reserva Federal (FOMC)",
+   "date": "2026-12-09",
+   "time": "14:00",
+   "meetingStart": "2026-12-08",
+   "projections": true,
+   "seriesId": "DFF",
+   "unit": "fraction"
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de la Reserva Federal (FOMC)",
+   "date": "2027-01-27",
+   "time": "14:00",
+   "meetingStart": "2027-01-26",
+   "projections": false,
+   "seriesId": "DFF",
+   "unit": "fraction"
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de la Reserva Federal (FOMC)",
+   "date": "2027-03-17",
+   "time": "14:00",
+   "meetingStart": "2027-03-16",
+   "projections": true,
+   "seriesId": "DFF",
+   "unit": "fraction"
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de la Reserva Federal (FOMC)",
+   "date": "2027-04-28",
+   "time": "14:00",
+   "meetingStart": "2027-04-27",
+   "projections": false,
+   "seriesId": "DFF",
+   "unit": "fraction"
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de la Reserva Federal (FOMC)",
+   "date": "2027-06-09",
+   "time": "14:00",
+   "meetingStart": "2027-06-08",
+   "projections": true,
+   "seriesId": "DFF",
+   "unit": "fraction"
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de la Reserva Federal (FOMC)",
+   "date": "2027-07-28",
+   "time": "14:00",
+   "meetingStart": "2027-07-27",
+   "projections": false,
+   "seriesId": "DFF",
+   "unit": "fraction"
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de la Reserva Federal (FOMC)",
+   "date": "2027-09-15",
+   "time": "14:00",
+   "meetingStart": "2027-09-14",
+   "projections": true,
+   "seriesId": "DFF",
+   "unit": "fraction"
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de la Reserva Federal (FOMC)",
+   "date": "2027-10-27",
+   "time": "14:00",
+   "meetingStart": "2027-10-26",
+   "projections": false,
+   "seriesId": "DFF",
+   "unit": "fraction"
+  },
+  {
+   "kind": "decision",
+   "title": "Decisión de la Reserva Federal (FOMC)",
+   "date": "2027-12-08",
+   "time": "14:00",
+   "meetingStart": "2027-12-07",
+   "projections": true,
+   "seriesId": "DFF",
+   "unit": "fraction"
+  }
+ ]
+}
